@@ -1,0 +1,108 @@
+import 'dart:convert';
+import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'package:larosa_block/Services/auth_service.dart';
+import 'package:larosa_block/Utils/links.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+
+class HomeFeedsController extends ChangeNotifier {
+  List<dynamic> posts = [];
+  ValueNotifier<bool> isLoading = ValueNotifier(false);
+  ScrollController scrollController = ScrollController();
+
+  HomeFeedsController() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _restoreScrollPosition();
+      if (posts.isEmpty) {
+        fetchPosts();
+      }
+    });
+  }
+
+  Future<void> fetchPosts() async {
+    try {
+      isLoading.value = true;
+      final int? profileId = AuthService.getProfileId();
+      await _fetchPostsFromServer(profileId);
+    } catch (e) {
+      await _loadPostsFromLocalStorage();
+    } finally {
+      isLoading.value = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> _fetchPostsFromServer(int? profileId) async {
+    String token = AuthService.getToken();
+    Map<String, String> headers = {
+      "Content-Type": "application/json",
+      "Access-Control-Allow-Origin": "*",
+      'Authorization': token.isNotEmpty ? 'Bearer $token' : '',
+    };
+
+    var url = Uri.https(LarosaLinks.nakedBaseUrl, LarosaLinks.allFeeds);
+
+    Map<String, dynamic> body = {
+      'countryId': '1',
+    };
+
+    if (profileId != null) {
+      body['profileId'] = profileId.toString();
+    }
+
+    final response = await http.post(
+      url,
+      body: jsonEncode(body),
+      headers: headers,
+    );
+
+    if (response.statusCode == 200) {
+      List<dynamic> data = json.decode(response.body);
+      posts = data;
+      await _savePostsToLocalStorage(data);
+      notifyListeners();
+    } else if (response.statusCode == 302 || response.statusCode == 403) {
+      await AuthService.refreshToken();
+      await _fetchPostsFromServer(profileId);
+    } else {
+      throw Exception('Failed to load posts');
+    }
+  }
+
+  Future<void> _savePostsToLocalStorage(List<dynamic> data) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    await prefs.setString('posts', jsonEncode(data));
+  }
+
+  Future<void> _loadPostsFromLocalStorage() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String? postsString = prefs.getString('posts');
+    if (postsString != null) {
+      posts = jsonDecode(postsString);
+      notifyListeners();
+    }
+  }
+
+  Future<void> _saveScrollPosition() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    await prefs.setDouble('scrollPosition', scrollController.offset);
+  }
+
+  Future<void> _restoreScrollPosition() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    double? scrollPosition = prefs.getDouble('scrollPosition');
+    if (scrollPosition != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        scrollController.jumpTo(scrollPosition);
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _saveScrollPosition();
+    scrollController.dispose();
+    super.dispose();
+  }
+}
