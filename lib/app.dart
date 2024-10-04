@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:larosa_block/Features/Auth/signin.dart';
 import 'package:larosa_block/Features/Cart/main_cart.dart';
 import 'package:larosa_block/Features/Chat/chats_land.dart';
 import 'package:larosa_block/Features/Chat/conversation.dart';
@@ -8,6 +9,7 @@ import 'package:larosa_block/Features/Feeds/home_feeds.dart';
 import 'package:larosa_block/Features/Profiles/profile_edit.dart';
 import 'package:larosa_block/Features/Profiles/profile_visit.dart';
 import 'package:larosa_block/Features/Profiles/self_profile.dart';
+import 'package:larosa_block/Features/Reels/reels.dart';
 import 'package:larosa_block/Features/Search/search.dart';
 import 'package:larosa_block/Features/Settings/settings.dart';
 import 'package:larosa_block/Services/log_service.dart';
@@ -74,6 +76,20 @@ class _AppState extends State<App> {
         name: 'maincart',
         path: '/maincart',
         builder: (context, state) => MyCart(),
+      ),
+
+      // reels routes
+      GoRoute(
+        name: 'reels',
+        path: '/reels',
+        builder: (context, state) => const DeReelsScreen(),
+      ),
+
+      // login routes
+      GoRoute(
+        name: 'login',
+        path: '/login',
+        builder: (context, state) => const SigninScreen(),
       ),
 
       // profile visit routes

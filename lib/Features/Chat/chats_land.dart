@@ -10,6 +10,7 @@ import 'package:http/http.dart' as http;
 import 'package:iconsax/iconsax.dart';
 import 'package:larosa_block/Services/auth_service.dart';
 import 'package:larosa_block/Utils/colors.dart';
+import 'package:larosa_block/Utils/helpers.dart';
 import 'package:larosa_block/Utils/links.dart';
 import 'package:timeago/timeago.dart' as timeago;
 
@@ -38,11 +39,11 @@ class _ChatsLandState extends State<ChatsLand> {
     final profileId = box.get('profileId');
 
     if (profileId == null) {
-      //Get.off(() => const SigninScreen());
+      HelperFunctions.logout(context);
+      context.go('/login');
       return;
     }
 
-    // Step 1: Fetch local chats first
     List<dynamic>? localChats = box.get('chatList');
     if (localChats != null) {
       setState(() {
@@ -99,7 +100,9 @@ class _ChatsLandState extends State<ChatsLand> {
         appBar: AppBar(
           centerTitle: true,
           leading: IconButton(
-            onPressed: () {},
+            onPressed: () {
+              context.pop();
+            },
             icon: const Icon(Iconsax.arrow_left_2),
           ),
           title: const Text('Chats'),

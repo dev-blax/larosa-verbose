@@ -1,6 +1,5 @@
 import 'dart:convert';
 import 'dart:ui';
-import 'package:flutter/widgets.dart';
 import 'package:hive/hive.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
@@ -13,14 +12,9 @@ import 'package:larosa_block/Features/Auth/Components/oauth_buttons.dart';
 import 'package:larosa_block/Services/log_service.dart';
 import 'package:larosa_block/Utils/colors.dart';
 import 'package:larosa_block/Utils/links.dart';
+import 'package:larosa_block/Utils/routing.dart';
 import 'package:larosa_block/Utils/validation_helpers.dart';
-// import 'package:larosa/Components/textinput_component.dart';
-// import 'package:larosa/Features/Auth/account_type.dart';
-// import 'package:larosa/Features/Auth/components/oauth.dart';
-// import 'package:larosa/Features/Feeds/home_feed.dart';
-// import 'package:larosa/Utils/larosa_colors.dart';
-// import 'package:larosa/Utils/links.dart';
-// import 'package:larosa/Utils/validation_helpers.dart';
+
 
 class SigninScreen extends StatefulWidget {
   const SigninScreen({super.key});
@@ -77,6 +71,7 @@ class _SigninScreenState extends State<SigninScreen> {
       );
 
       // Get.offAll(const HomeFeedsScreen());
+      Routings.home(context);
     } catch (e) {
       //Get.snackbar('Explore Larosa', 'An error occured! Please try again');
     }

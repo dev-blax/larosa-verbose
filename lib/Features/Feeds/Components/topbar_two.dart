@@ -1,6 +1,8 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:go_router/go_router.dart';
+import 'package:iconsax/iconsax.dart';
 
 class TopBar2 extends StatelessWidget {
   const TopBar2({
@@ -31,9 +33,10 @@ class TopBar2 extends StatelessWidget {
               // );
             },
             child: const CircleAvatar(
-              backgroundImage: CachedNetworkImageProvider(
-                'https://images.pexels.com/photos/18325432/pexels-photo-18325432/free-photo-of-hiker-and-a-camera-standing-by-a-lake-in-the-forest-with-her-arms-spread.jpeg?auto=compress&cs=tinysrgb&w=600&lazy=load',
-              ),
+              // backgroundImage: CachedNetworkImageProvider(
+              //   'https://images.pexels.com/photos/18325432/pexels-photo-18325432/free-photo-of-hiker-and-a-camera-standing-by-a-lake-in-the-forest-with-her-arms-spread.jpeg?auto=compress&cs=tinysrgb&w=600&lazy=load',
+              // ),
+              child: Icon(Iconsax.user),
             ),
           ),
           IconButton(
@@ -41,6 +44,7 @@ class TopBar2 extends StatelessWidget {
               // Get.to(
               //   const DeReelsScreen(),
               // );
+              context.push('/reels');
             },
             icon: SvgPicture.asset(
               'assets/svg_icons/reels.svg',

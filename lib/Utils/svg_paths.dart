@@ -5,6 +5,8 @@ class SvgIconsPaths {
 
   static const String cameraRotate = 'assets/svg_icons/camera_rotate.svg';
 
+  static const String sharpVerified = 'assets/svg_icons/IcSharpVerified.svg';
+
   static const String addOutline = 'assets/svg_icons/addOutline.svg';
 
   static const String mailBold = 'assets/svg_icons/emailBold.svg';
@@ -15,6 +17,12 @@ class SvgIconsPaths {
 
   static const String streamlineSend =
       'assets/svg_icons/StreamlineSendEmail.svg';
+
+  static const String checkCircle =
+      'assets/svg_icons/MaterialSymbolsCheckCircle.svg';
+
+  static const String checkOutlines =
+      'assets/svg_icons/MaterialSymbolsLightCheckCircleOutlineRounded.svg';
 
   static const String commentBold = 'assets/svg_icons/commentBold.svg';
 

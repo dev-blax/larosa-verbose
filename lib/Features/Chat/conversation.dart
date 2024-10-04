@@ -3,17 +3,39 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:gap/gap.dart';
 import 'package:hive/hive.dart';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:iconsax/iconsax.dart';
 import 'package:http/http.dart' as http;
+import 'package:intl/intl.dart';
 import 'package:larosa_block/Features/Chat/Components/chat_bubble.dart';
 import 'package:larosa_block/Services/auth_service.dart';
+import 'package:larosa_block/Services/log_service.dart';
 import 'package:larosa_block/Utils/colors.dart';
 import 'package:larosa_block/Utils/helpers.dart';
 import 'package:larosa_block/Utils/links.dart';
 import 'package:stomp_dart_client/stomp_dart_client.dart';
+import 'package:timeago/timeago.dart' as timeago;
+import 'package:go_router/go_router.dart';
+
+class TimeBubble extends StatelessWidget {
+  final String duration;
+  const TimeBubble({super.key, required this.duration});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(8.0),
+      child: Text(
+        duration,
+        style: const TextStyle(
+          color: Colors.white,
+        ),
+        textAlign: TextAlign.center,
+      ),
+    );
+  }
+}
 
 class LarosaConversation extends StatefulWidget {
   final int profileId;
@@ -42,6 +64,25 @@ class _LarosaConversationState extends State<LarosaConversation> {
   String profilePicture = '';
   bool isLoadingProfile = true;
   List<Widget> messageWidgets = [];
+  List<String> timeBubbleTexts = [];
+
+  String formatTime(int duration) {
+    final now = DateTime.now();
+    final dateTime = now.subtract(Duration(seconds: duration));
+
+    final differenceInDays = now.difference(dateTime).inDays;
+
+    if (differenceInDays == 0) {
+      return timeago.format(dateTime, locale: 'en_short');
+    } else if (differenceInDays == 1) {
+      return 'Yesterday';
+    } else if (differenceInDays < 7) {
+      return timeago.format(dateTime); // '5 days ago'
+    } else {
+      final dateFormat = DateFormat('EEEE, MMMM d');
+      return dateFormat.format(dateTime); // 'Friday, June 7'
+    }
+  }
 
   Future<void> _fetchUserDetails() async {
     String token = AuthService.getToken();
@@ -89,26 +130,37 @@ class _LarosaConversationState extends State<LarosaConversation> {
 
     List<dynamic>? localMessages = box.get(localStorageKey);
     if (localMessages != null) {
+      LogService.logInfo('we have local messages');
       List<Widget> bubbles = [];
       for (var chat in localMessages) {
         bool isSentByMe = chat['senderId'] == AuthService.getProfileId();
 
-        if(chat['content'].isNotEmpty){
-bubbles.add(
-          Animate(
-            effects: const [
-              SlideEffect(),
-            ],
-            child: ChatBubbleComponent(
-              message: chat['content'],
-              isSentByMe: isSentByMe,
-              messageType: MessageType.text,
-              comment: chat,
+        if (chat['content'].isNotEmpty) {
+          String timeBubbleText = formatTime(chat['duration']);
+
+          if (!timeBubbleTexts.contains(timeBubbleText)) {
+            timeBubbleTexts.add(timeBubbleText);
+            bubbles.add(
+              TimeBubble(
+                duration: timeBubbleText,
+              ),
+            );
+          }
+
+          bubbles.add(
+            Animate(
+              effects: const [
+                SlideEffect(),
+              ],
+              child: ChatBubbleComponent(
+                message: chat['content'],
+                isSentByMe: isSentByMe,
+                messageType: MessageType.text,
+                comment: chat,
+              ),
             ),
-          ),
-        );
+          );
         }
-        
       }
 
       bubbles = bubbles.reversed.toList();
@@ -131,24 +183,40 @@ bubbles.add(
     );
 
     try {
+      LogService.logInfo('requesting chats');
       final response = await http.get(
         url,
         headers: headers,
       );
 
       if (response.statusCode != 200) {
-        // Get.snackbar(
-        //   'Explore Larosa',
-        //   response.body,
-        // );
+        LogService.logError(' Non 200');
         return;
       }
+
+      LogService.logInfo('got chats');
 
       List<dynamic> data = json.decode(response.body);
 
       List<Widget> bubbles = [];
+
+      timeBubbleTexts.clear();
+
       for (var chat in data) {
         bool isSentByMe = chat['senderId'] == AuthService.getProfileId();
+
+        LogService.logInfo(chat.toString());
+
+        String timeBubbleText = formatTime(chat['duration']);
+
+        if (!timeBubbleTexts.contains(timeBubbleText)) {
+          timeBubbleTexts.add(timeBubbleText);
+          bubbles.add(
+            TimeBubble(
+              duration: timeBubbleText,
+            ),
+          );
+        }
 
         bubbles.add(
           Animate(
@@ -173,7 +241,7 @@ bubbles.add(
 
       box.put(localStorageKey, data);
     } catch (e) {
-      print('error: $e');
+      LogService.logError('error: $e');
     }
   }
 
@@ -377,6 +445,7 @@ bubbles.add(
           leading: IconButton(
             onPressed: () {
               // Get.back();
+              context.pop();
             },
             icon: const Icon(
               Iconsax.arrow_left_2,
@@ -472,7 +541,7 @@ bubbles.add(
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 6),
               child: _chatInputs(),
-            )
+            ),
           ],
         ),
       ),

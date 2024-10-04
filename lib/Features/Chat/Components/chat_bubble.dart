@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
+import 'package:flutter_svg/svg.dart';
 import 'package:gap/gap.dart';
 import 'package:iconsax/iconsax.dart';
+import 'package:intl/intl.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:larosa_block/Utils/colors.dart';
+import 'package:larosa_block/Utils/svg_paths.dart';
 import 'package:timeago/timeago.dart' as timeago;
 
 enum MessageType {
@@ -39,36 +42,37 @@ class ChatBubbleComponent extends HookWidget {
       ),
     );
 
-    String formattedDifference = timeago.format(messageTime, locale: 'en_short');
+    String formattedDifference =
+        timeago.format(messageTime, locale: 'en_short');
 
-    useEffect(() {
-      audioPlayer.setFilePath(message).then((value) {
-        duration.value = audioPlayer.duration ?? Duration.zero;
-      });
+    // useEffect(() {
+    //   audioPlayer.setFilePath(message).then((value) {
+    //     duration.value = audioPlayer.duration ?? Duration.zero;
+    //   });
 
-      final positionSubscription = audioPlayer.positionStream.listen((pos) {
-        position.value = pos;
-      });
+    //   final positionSubscription = audioPlayer.positionStream.listen((pos) {
+    //     position.value = pos;
+    //   });
 
-      final playerStateSubscription =
-          audioPlayer.playerStateStream.listen((state) {
-        if (state.playing != isPlaying.value) {
-          isPlaying.value = state.playing;
-        }
+    //   final playerStateSubscription =
+    //       audioPlayer.playerStateStream.listen((state) {
+    //     if (state.playing != isPlaying.value) {
+    //       isPlaying.value = state.playing;
+    //     }
 
-        if (state.processingState == ProcessingState.completed) {
-          isPlaying.value = false;
-          position.value = Duration.zero;
-          audioPlayer.seek(Duration.zero);
-        }
-      });
+    //     if (state.processingState == ProcessingState.completed) {
+    //       isPlaying.value = false;
+    //       position.value = Duration.zero;
+    //       audioPlayer.seek(Duration.zero);
+    //     }
+    //   });
 
-      return () {
-        positionSubscription.cancel();
-        playerStateSubscription.cancel();
-        audioPlayer.dispose();
-      };
-    }, []);
+    //   return () {
+    //     positionSubscription.cancel();
+    //     playerStateSubscription.cancel();
+    //     audioPlayer.dispose();
+    //   };
+    // }, []);
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0),
@@ -94,13 +98,37 @@ class ChatBubbleComponent extends HookWidget {
                   isSentByMe ? MainAxisAlignment.end : MainAxisAlignment.start,
               children: [
                 Text(
-                  formattedDifference,
+                  DateFormat.Hm().format(messageTime),
                   style: Theme.of(context).textTheme.bodySmall,
                 ),
                 if (isSentByMe) ...[
                   const Gap(5),
-                  const Icon(Iconsax.tick_circle, size: 12),
-                  const Icon(Iconsax.tick_circle, size: 12),
+                  Stack(
+                    alignment: Alignment.centerLeft,
+                    children: [
+                      SvgPicture.asset(
+                        SvgIconsPaths.checkOutlines,
+                        colorFilter: const ColorFilter.mode(
+                          Colors.grey,
+                          BlendMode.srcIn,
+                        ),
+                        height: 16,
+                      ),
+                      // Row(
+                      //   children: [
+                      //     const Gap(5),
+                      //     SvgPicture.asset(
+                      //       SvgIconsPaths.checkCircle,
+                      //       colorFilter: const ColorFilter.mode(
+                      //         Colors.blue,
+                      //         BlendMode.srcIn,
+                      //       ),
+                      //       height: 16,
+                      //     ),
+                      //   ],
+                      // ),
+                    ],
+                  )
                 ],
               ],
             ),

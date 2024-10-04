@@ -7,13 +7,13 @@ import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:gap/gap.dart';
 import 'package:http/http.dart' as http;
-import 'package:iconsax/iconsax.dart';
 import 'package:larosa_block/Components/bottom_navigation.dart';
 import 'package:larosa_block/Features/Search/Components/search_delegate.dart';
 import 'package:larosa_block/Services/auth_service.dart';
 import 'package:larosa_block/Services/log_service.dart';
 import 'package:larosa_block/Utils/colors.dart';
 import 'package:larosa_block/Utils/links.dart';
+import 'package:larosa_block/Utils/svg_paths.dart';
 import 'package:mime/mime.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -268,11 +268,11 @@ class _SearchScreenState extends State<SearchScreen> {
                           ),
                         ),
                         Container(
-                          height: 40,
+                          height: 70,
                           decoration: BoxDecoration(
                             gradient: LinearGradient(
                               colors: [
-                                Colors.black.withOpacity(.6),
+                                Colors.black.withOpacity(.8),
                                 Colors.transparent,
                               ],
                               begin: Alignment.bottomCenter,
@@ -295,9 +295,23 @@ class _SearchScreenState extends State<SearchScreen> {
                                         as ImageProvider<Object>,
                               ),
                               const Gap(5),
-                              Text(name),
+                              Text(
+                                name,
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .labelLarge!
+                                    .copyWith(color: Colors.white),
+                              ),
                               const Gap(5),
-                              if (isVerified) const Icon(Iconsax.verify5)
+                              if (isVerified)
+                                SvgPicture.asset(
+                                  SvgIconsPaths.sharpVerified,
+                                  colorFilter: const ColorFilter.mode(
+                                    Colors.blue,
+                                    BlendMode.srcIn,
+                                  ),
+                                  height: 20,
+                                )
                             ],
                           ),
                         ),
