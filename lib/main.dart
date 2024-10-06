@@ -11,6 +11,8 @@ void main() async {
     DeviceOrientation.portraitDown,
   ]);
 
+
+
   HiveService hiveService = HiveService();
   await hiveService.init();
   await hiveService.openBox('userBox');

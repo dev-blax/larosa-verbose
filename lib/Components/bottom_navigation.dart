@@ -107,6 +107,8 @@ class BottomNavigation extends StatelessWidget {
                   //     transition: Transition.downToUp,
                   //   curve: Curves.decelerate,
                   // );
+
+                  context.pushNamed('cameraContent');
                 },
                 icon: const Icon(
                   Iconsax.add_circle5,

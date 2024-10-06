@@ -9,6 +9,7 @@ import 'package:hive/hive.dart';
 import 'package:http/http.dart' as http;
 import 'package:iconsax/iconsax.dart';
 import 'package:larosa_block/Services/auth_service.dart';
+import 'package:larosa_block/Services/log_service.dart';
 import 'package:larosa_block/Utils/colors.dart';
 import 'package:larosa_block/Utils/helpers.dart';
 import 'package:larosa_block/Utils/links.dart';
@@ -49,6 +50,11 @@ class _ChatsLandState extends State<ChatsLand> {
       setState(() {
         isLoadingChats = false;
         chatList = localChats;
+        chatList.sort((a, b) {
+          int durationA = a['lastMessage']['duration'];
+          int durationB = b['lastMessage']['duration'];
+          return durationA.compareTo(durationB);
+        });
       });
     }
 
@@ -72,6 +78,11 @@ class _ChatsLandState extends State<ChatsLand> {
         setState(() {
           isLoadingChats = false;
           chatList = data;
+          chatList.sort((a, b) {
+            int durationA = a['lastMessage']['duration'];
+            int durationB = b['lastMessage']['duration'];
+            return durationA.compareTo(durationB);
+          });
         });
         box.put(
           'chatList',
@@ -130,9 +141,11 @@ class _ChatsLandState extends State<ChatsLand> {
                   : ListView.builder(
                       itemCount: chatList.length,
                       itemBuilder: (context, index) {
-                        // HelperFunctions.larosaLogger(
-                        //   chatList[index]['verificationStatus'],
-                        // );
+                        int duration =
+                            chatList[index]['lastMessage']['duration'];
+                        LogService.logInfo(
+                          ' ${chatList[index]['lastMessage']['duration']}',
+                        );
                         return Animate(
                           effects: [
                             SlideEffect(
@@ -155,7 +168,7 @@ class _ChatsLandState extends State<ChatsLand> {
                             chatList[index]['profilePicture'],
                             chatList[index]['lastMessage']['content'],
                             chatList[index]['unreadMessages'],
-                            chatList[index]['lastMessage']['duration'],
+                            duration,
                             chatList[index]['verificationStatus'] == 'VERIFIED',
                             chatList[index]['profileId'],
                           ),

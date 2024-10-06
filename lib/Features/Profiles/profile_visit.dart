@@ -165,19 +165,19 @@ class _ProfileVisitScreenState extends State<ProfileVisitScreen> {
     };
     var url = Uri.https(
       LarosaLinks.nakedBaseUrl,
-      !isBusiness ? '/profile/visit' : '/profile/visit',
+      !isBusiness ? '/personal/visit' : '/brand/visit',
     );
 
     try {
+      LogService.logDebug('owner id: ${widget.profileId}');
+      
       final response = await http.post(
         url,
         body: jsonEncode({
-          'profileId': widget.profileId,
+          'ownerId': widget.profileId,
         }),
         headers: headers,
       );
-
-      LogService.logTrace('requesting profile: ');
 
       if (response.statusCode == 302 || response.statusCode == 403) {
         LogService.logDebug('Unauthorized ${response.statusCode}');
@@ -204,6 +204,8 @@ class _ProfileVisitScreenState extends State<ProfileVisitScreen> {
 
         return;
       }
+
+      LogService.logFatal('response ${response.statusCode}');
 
       // Get.snackbar(
       //   'Explore Larosa',

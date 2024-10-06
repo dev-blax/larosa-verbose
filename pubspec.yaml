@@ -85,6 +85,8 @@ dependencies:
   logger: ^2.4.0
   connectivity_plus: ^6.0.5
   fluttertoast: ^8.2.8
+  another_flutter_splash_screen: ^1.2.1
+  flutter_content_placeholder: ^0.0.3
 
 dev_dependencies:
   flutter_test:

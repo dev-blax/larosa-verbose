@@ -4,7 +4,9 @@ import 'package:larosa_block/Features/Cart/main_cart.dart';
 import 'package:larosa_block/Features/Chat/chats_land.dart';
 import 'package:larosa_block/Features/Chat/conversation.dart';
 import 'package:larosa_block/Features/Delivery/main_delivery.dart';
+import 'package:larosa_block/Features/Feeds/Controllers/content_controller.dart';
 import 'package:larosa_block/Features/Feeds/Controllers/home_feeds_controller.dart';
+import 'package:larosa_block/Features/Feeds/camera_content.dart';
 import 'package:larosa_block/Features/Feeds/home_feeds.dart';
 import 'package:larosa_block/Features/Profiles/profile_edit.dart';
 import 'package:larosa_block/Features/Profiles/profile_visit.dart';
@@ -15,6 +17,7 @@ import 'package:larosa_block/Features/Settings/settings.dart';
 import 'package:larosa_block/Services/log_service.dart';
 import 'package:larosa_block/Utils/theme.dart';
 import 'package:go_router/go_router.dart';
+import 'package:larosa_block/splash_screen.dart';
 import 'package:provider/provider.dart';
 
 class App extends StatefulWidget {
@@ -26,6 +29,7 @@ class App extends StatefulWidget {
 
 class _AppState extends State<App> {
   final GoRouter _router = GoRouter(
+    initialLocation: '/splash',
     routes: [
       // bottom nav routes
       GoRoute(
@@ -121,13 +125,39 @@ class _AppState extends State<App> {
         path: '/profile_edit',
         builder: (context, state) => const EditProfileScreen(),
       ),
+
+      // Splash
+      GoRoute(
+        path: '/splash',
+        builder: (context, state) => const SplashScreen(),
+      ),
+
+      // camera content
+      GoRoute(
+        name: 'cameraContent',
+        path: '/cameraContent',
+        builder: (context, state) => const CameraContent(),
+      ),
     ],
   );
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider(
-      create: (_) => HomeFeedsController(),
-      child: MaterialApp.router(
+    // return ChangeNotifierProvider(
+    //   create: (_) => HomeFeedsController(),
+    //   child: MaterialApp.router(
+    //     routerConfig: _router,
+    //     themeMode: ThemeMode.system,
+    //     theme: LarosaAppTheme.lightTheme,
+    //     darkTheme: LarosaAppTheme.darkTheme,
+    //   ),
+    // );
+
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => HomeFeedsController()),
+        ChangeNotifierProvider(create: (_) => ContentController()),
+      ],
+        child: MaterialApp.router(
         routerConfig: _router,
         themeMode: ThemeMode.system,
         theme: LarosaAppTheme.lightTheme,
