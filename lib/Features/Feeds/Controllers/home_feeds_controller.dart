@@ -2,9 +2,9 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:larosa_block/Services/auth_service.dart';
+import 'package:larosa_block/Services/log_service.dart';
 import 'package:larosa_block/Utils/links.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
 
 class HomeFeedsController extends ChangeNotifier {
   List<dynamic> posts = [];
@@ -60,6 +60,7 @@ class HomeFeedsController extends ChangeNotifier {
     if (response.statusCode == 200) {
       List<dynamic> data = json.decode(response.body);
       posts = data;
+      LogService.logInfo('posts $posts');
       await _savePostsToLocalStorage(data);
       notifyListeners();
     } else if (response.statusCode == 302 || response.statusCode == 403) {

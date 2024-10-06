@@ -56,6 +56,10 @@ class _SearchScreenState extends State<SearchScreen> {
     );
 
     if (thumbnailPath != null) {
+      // Save the thumbnail path to local storage
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      prefs.setString('video_thumbnail_$index', thumbnailPath);
+
       setState(() {
         _videoThumbnails[index] = thumbnailPath;
       });
@@ -71,6 +75,19 @@ class _SearchScreenState extends State<SearchScreen> {
         suggestions = json.decode(savedSuggestions);
         isLoadingSuggestions = false;
       });
+
+      // Load previously saved video thumbnails
+      for (int i = 0; i < suggestions.length; i++) {
+        String? thumbnailPath = prefs.getString('video_thumbnail_$i');
+        if (thumbnailPath != null) {
+          _videoThumbnails[i] = thumbnailPath;
+        } else {
+          String firstMedia = suggestions[i]['names'].split(',').toList()[0];
+          if (_isVideo(firstMedia)) {
+            _generateVideoThumbnail(firstMedia, i);
+          }
+        }
+      }
     } else {
       _loadSuggestions();
     }
@@ -137,7 +154,7 @@ class _SearchScreenState extends State<SearchScreen> {
   Widget build(BuildContext context) {
     return RefreshIndicator(
       onRefresh: () async {
-        await _loadSuggestions(); // Fetch new suggestions and update SharedPreferences
+        await _loadSuggestions();
       },
       child: Scaffold(
         appBar: AppBar(
@@ -167,8 +184,11 @@ class _SearchScreenState extends State<SearchScreen> {
                   mainAxisSpacing: 2.0,
                   childAspectRatio: 1,
                 ),
-                itemCount: isLoadingSuggestions ? 10 : suggestions.length,
+                itemCount: isLoadingSuggestions ? 10 : suggestions.length + 2,
                 itemBuilder: (context, index) {
+                  if (index >= suggestions.length) {
+                    return const SizedBox.shrink();
+                  }
                   if (isLoadingSuggestions) {
                     return Animate(
                       effects: const [
@@ -288,11 +308,11 @@ class _SearchScreenState extends State<SearchScreen> {
                                 radius: 14,
                                 backgroundImage: profilePicturePath != null
                                     ? CachedNetworkImageProvider(
-                                            profilePicturePath)
-                                        as ImageProvider<Object>
+                                        profilePicturePath,
+                                      ) as ImageProvider<Object>
                                     : const AssetImage(
-                                            'assets/images/EXPLORE.png')
-                                        as ImageProvider<Object>,
+                                        'assets/images/EXPLORE.png',
+                                      ) as ImageProvider<Object>,
                               ),
                               const Gap(5),
                               Text(
@@ -300,7 +320,9 @@ class _SearchScreenState extends State<SearchScreen> {
                                 style: Theme.of(context)
                                     .textTheme
                                     .labelLarge!
-                                    .copyWith(color: Colors.white),
+                                    .copyWith(
+                                      color: Colors.white,
+                                    ),
                               ),
                               const Gap(5),
                               if (isVerified)

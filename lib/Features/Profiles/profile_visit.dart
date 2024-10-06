@@ -18,6 +18,7 @@ import 'package:larosa_block/Features/Profiles/Components/statistics.dart';
 import 'package:larosa_block/Services/auth_service.dart';
 import 'package:larosa_block/Services/log_service.dart';
 import 'package:larosa_block/Utils/colors.dart';
+import 'package:larosa_block/Utils/helpers.dart';
 import 'package:larosa_block/Utils/links.dart';
 import 'package:larosa_block/Utils/svg_paths.dart';
 import 'package:share_plus/share_plus.dart';
@@ -147,13 +148,15 @@ class _ProfileVisitScreenState extends State<ProfileVisitScreen> {
   }
 
   Future<void> _fetchProfile() async {
+    LogService.logInfo('Requesting profile');
     String token = AuthService.getToken();
     if (token.isEmpty) {
-      //Get.off(const SigninScreen());
+      LogService.logError('No token found for profile');
+      HelperFunctions.logout(context);
       return;
     }
 
-    LogService.logTrace('token $token');
+    LogService.logInfo('token $token');
 
     Map<String, String> headers = {
       "Content-Type": "application/json",
@@ -162,14 +165,14 @@ class _ProfileVisitScreenState extends State<ProfileVisitScreen> {
     };
     var url = Uri.https(
       LarosaLinks.nakedBaseUrl,
-      !isBusiness ? '/profile/visit' : '/brand/myProfile',
+      !isBusiness ? '/profile/visit' : '/profile/visit',
     );
 
     try {
       final response = await http.post(
         url,
         body: jsonEncode({
-          'id': widget.profileId,
+          'profileId': widget.profileId,
         }),
         headers: headers,
       );
@@ -177,6 +180,8 @@ class _ProfileVisitScreenState extends State<ProfileVisitScreen> {
       LogService.logTrace('requesting profile: ');
 
       if (response.statusCode == 302 || response.statusCode == 403) {
+        LogService.logDebug('Unauthorized ${response.statusCode}');
+        LogService.logWarning(response.body);
         LogService.logTrace('Refreshing');
         AuthService.refreshToken();
         LogService.logTrace('fetching profile again');
@@ -184,8 +189,8 @@ class _ProfileVisitScreenState extends State<ProfileVisitScreen> {
         return;
       }
 
-      if (response.statusCode == 200) {
-        LogService.logTrace('Got profile');
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        LogService.logInfo('Got profile');
 
         final Map<String, dynamic> data = json.decode(response.body);
 
@@ -205,13 +210,11 @@ class _ProfileVisitScreenState extends State<ProfileVisitScreen> {
       //   response.statusCode.toString(),
       // );
     } catch (e) {
-      print('some error: $e ');
+      LogService.logError('some error: $e');
     }
   }
 
   Future<void> _fetchUserPosts() async {
-    //
-    print('fetching user posts');
     String token = AuthService.getToken();
     Map<String, String> headers = {
       "Content-Type": "application/json",
