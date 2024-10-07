@@ -3,6 +3,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:get/get.dart';
+import 'package:go_router/go_router.dart';
 import 'package:http/http.dart' as http;
 import 'package:larosa_block/Services/auth_service.dart';
 import 'package:larosa_block/Utils/links.dart';
@@ -136,13 +137,12 @@ class _SelfImagePostsComponentState extends State<SelfImagePostsComponent> {
           ],
           child: GestureDetector(
             onTap: () {
-            //   => Get.to(
-            //   ProfilePostsScreen(
-            //     posts: imagePosts,
-            //     activePost: index,
-            //     title: 'Strings',
-            //   ),
-            // )
+           
+
+            context.push(
+                '/profilePosts?title=Strings&activePost=$index',
+                extra: imagePosts,
+              );
             },
             child: ClipRRect(
               borderRadius: BorderRadius.circular(10),

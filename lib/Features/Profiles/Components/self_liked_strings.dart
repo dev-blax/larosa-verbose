@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:go_router/go_router.dart';
 import 'package:larosa_block/Services/auth_service.dart';
 import 'package:larosa_block/Utils/colors.dart';
 import 'package:larosa_block/Utils/links.dart';
@@ -165,6 +166,11 @@ class _SelfLikedStringsComponentState extends State<SelfLikedStringsComponent> {
               //   posts: imagePosts,
               //   activePost: index,
               // ))
+
+              context.push(
+                '/profilePosts?title=LikedStrings&activePost=$index',
+                extra: imagePosts,
+              );
             },
             child: ClipRRect(
               borderRadius: BorderRadius.circular(10),
@@ -208,11 +214,10 @@ class _SelfLikedStringsComponentState extends State<SelfLikedStringsComponent> {
           ],
           child: GestureDetector(
             onTap: () {
-              //   => Get.to(ProfilePostsScreen(
-              //   title: 'Liked Strings',
-              //   posts: imagePosts,
-              //   activePost: index,
-              // ))
+              context.push(
+                '/profilePosts?title=Liked Strings&activePost=$index',
+                extra: imagePosts,
+              );
             },
             child: ClipRRect(
               borderRadius: BorderRadius.circular(10),

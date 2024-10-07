@@ -10,7 +10,7 @@ import 'package:larosa_block/Services/auth_service.dart';
 import 'package:larosa_block/Services/log_service.dart';
 import 'package:larosa_block/Utils/colors.dart';
 import 'package:larosa_block/Utils/links.dart';
-
+import 'package:go_router/go_router.dart';
 import 'package:mime/mime.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:video_thumbnail/video_thumbnail.dart';
@@ -152,11 +152,10 @@ class _FavouritesComponentState extends State<FavouritesComponent> {
           String? thumbnailPath = _videoThumbnails[index];
           return GestureDetector(
             onTap: () {
-              //   => Get.to(ProfilePostsScreen(
-              //   title: 'Favourites',
-              //   posts: posts,
-              //   activePost: index,
-              // ))
+              context.push(
+                '/profilePosts?title=Favourites&activePost=$index',
+                extra: posts,
+              );
             },
             child: ClipRRect(
               borderRadius: BorderRadius.circular(10),
@@ -200,11 +199,10 @@ class _FavouritesComponentState extends State<FavouritesComponent> {
           ],
           child: GestureDetector(
             onTap: () {
-              //   => Get.to(ProfilePostsScreen(
-              //   title: 'Favourites',
-              //   posts: posts,
-              //   activePost: index,
-              // ))
+              context.push(
+                '/profilePosts?title=Favourites&activePost=$index',
+                extra: posts,
+              );
             },
             child: ClipRRect(
               borderRadius: BorderRadius.circular(10),

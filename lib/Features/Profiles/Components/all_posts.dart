@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:go_router/go_router.dart';
 import 'package:http/http.dart' as http;
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
@@ -120,6 +121,11 @@ class _AllPostsState extends State<AllPosts> {
               //   posts: posts,
               //   activePost: index,
               // ))
+
+              context.push(
+                '/profilePosts?title=Strings&activePost=$index',
+                extra: posts,
+              );
             },
             child: ClipRRect(
               borderRadius: BorderRadius.circular(10),
@@ -170,6 +176,11 @@ class _AllPostsState extends State<AllPosts> {
               //     activePost: index,
               //   ),
               // )
+
+              context.push(
+                '/profilePosts?title=Strings&activePost=$index',
+                extra: posts,
+              );
             },
             child: ClipRRect(
               borderRadius: BorderRadius.circular(10),

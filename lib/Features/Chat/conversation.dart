@@ -94,7 +94,7 @@ class _LarosaConversationState extends State<LarosaConversation> {
 
     var url = Uri.https(
       LarosaLinks.nakedBaseUrl,
-      widget.isBusiness ? '/brand/myProfile' : '/personal/myProfile',
+      widget.isBusiness ? '/brand/visit' : '/personal/visit',
     );
 
     try {
@@ -113,11 +113,13 @@ class _LarosaConversationState extends State<LarosaConversation> {
 
       final Map<String, dynamic> data = json.decode(response.body);
 
+      LogService.logInfo('profile data: $data');
+
       setState(() {
         profile = data;
         isLoadingProfile = false;
         fullname = profile!['username'];
-        isVerified = profile!['verificationStatus'] != 'UNVERIFIED';
+        isVerified = profile!['verificationStatus'] != 'VERIFIED';
         profilePicture = profile!['profilePicture'];
       });
     } catch (e) {}

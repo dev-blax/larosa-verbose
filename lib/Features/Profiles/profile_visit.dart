@@ -3,9 +3,9 @@ import 'dart:convert';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:gap/gap.dart';
+import 'package:go_router/go_router.dart';
 import 'package:iconsax/iconsax.dart';
 import 'package:http/http.dart' as http;
 import 'package:larosa_block/Features/Profiles/Components/all_posts.dart';
@@ -43,53 +43,7 @@ class _ProfileVisitScreenState extends State<ProfileVisitScreen> {
   late int _followers;
   late bool _isFollowing;
   List<dynamic> data = [];
-  bool _isCheckingFollowStatus = true;
   List<dynamic> posts = [];
-
-  Future<void> _isFollowingFuture() async {
-    String token = AuthService.getToken();
-    Map<String, String> headers = {
-      "Content-Type": "application/json",
-      "Access-Control-Allow-Origin": "*",
-      'Authorization': 'Bearer $token',
-    };
-
-    var url = Uri.https(
-      LarosaLinks.nakedBaseUrl,
-      '/engage/followers',
-    );
-
-    try {
-      final response = await http.post(
-        url,
-        body: jsonEncode({
-          'profileId': widget.profileId,
-        }),
-        headers: headers,
-      );
-
-      if (response.statusCode != 200) {
-        // Get.snackbar('Explore Larosa', response.body);
-        return;
-      }
-
-      List<dynamic> followers = jsonDecode(response.body);
-
-      bool isFollowing = followers.any((follower) {
-        return follower['profileId'] == AuthService.getProfileId();
-      });
-
-      setState(() {
-        _isFollowing = isFollowing;
-        _isCheckingFollowStatus = false;
-      });
-
-      await _fetchUserPosts();
-    } catch (e) {
-      print('An error occurred: $e');
-      return;
-    }
-  }
 
   Future<void> _handleFollowUnfollow() async {
     print('un/following');
@@ -170,7 +124,7 @@ class _ProfileVisitScreenState extends State<ProfileVisitScreen> {
 
     try {
       LogService.logDebug('owner id: ${widget.profileId}');
-      
+
       final response = await http.post(
         url,
         body: jsonEncode({
@@ -194,13 +148,18 @@ class _ProfileVisitScreenState extends State<ProfileVisitScreen> {
 
         final Map<String, dynamic> data = json.decode(response.body);
 
+        LogService.logInfo('profile ${response.body}');
+
         setState(() {
           profile = data;
+          _isFollowing = profile!['followProfile'];
           isLoading = false;
           _followers = profile!['followers'];
         });
 
-        await _isFollowingFuture();
+        //await _isFollowingFuture();
+
+        await _fetchUserPosts();
 
         return;
       }
@@ -276,88 +235,82 @@ class _ProfileVisitScreenState extends State<ProfileVisitScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          _isCheckingFollowStatus
-              ? const SpinKitThreeBounce(
-                  color: Colors.blue,
-                )
-              : Animate(
-                  effects: const [
-                    SlideEffect(
-                      begin: Offset(0, .4),
-                      end: Offset(0, 0),
-                      curve: Curves.elasticOut,
-                      duration: Duration(seconds: 2),
-                    )
-                  ],
-                  child: Expanded(
-                    flex: 4,
-                    child: InkWell(
-                      onTap: () async {
-                        setState(() {
-                          _isFollowing = !_isFollowing;
-                          if (_isFollowing) {
-                            _followers++;
-                          } else {
-                            _followers--;
-                          }
-                        });
-                        await _handleFollowUnfollow();
-                      },
-                      child: ClipRRect(
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            vertical: 10,
-                          ),
-                          decoration: BoxDecoration(
-                            color: !_isFollowing ? null : Colors.grey,
-                            gradient: !_isFollowing
-                                ? const LinearGradient(
-                                    colors: [
-                                      LarosaColors.primary,
-                                      LarosaColors.secondary,
-                                    ],
-                                    begin: Alignment.centerLeft,
-                                    end: Alignment.centerRight,
-                                  )
-                                : null,
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: Center(
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                _isFollowing
-                                    ? const Icon(
-                                        Iconsax.tick_circle,
-                                        size: 25,
-                                        color: Colors.white,
-                                      )
-                                    : const Icon(
-                                        Iconsax.user_add,
-                                        size: 25,
-                                        color: Colors.white,
-                                      ),
-                                const SizedBox(
-                                  width: 4,
-                                ),
-                                Text(
-                                  _isFollowing ? 'Following' : 'Follow',
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .bodyLarge!
-                                      .copyWith(
-                                        color: LarosaColors.softGrey,
-                                      ),
-                                  overflow: TextOverflow.visible,
-                                )
+          Animate(
+            effects: const [
+              SlideEffect(
+                begin: Offset(0, .4),
+                end: Offset(0, 0),
+                curve: Curves.elasticOut,
+                duration: Duration(seconds: 2),
+              )
+            ],
+            child: Expanded(
+              flex: 4,
+              child: InkWell(
+                onTap: () async {
+                  setState(() {
+                    _isFollowing = !_isFollowing;
+                    if (_isFollowing) {
+                      _followers++;
+                    } else {
+                      _followers--;
+                    }
+                  });
+                  await _handleFollowUnfollow();
+                },
+                child: ClipRRect(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 10,
+                    ),
+                    decoration: BoxDecoration(
+                      color: !_isFollowing ? null : Colors.grey,
+                      gradient: !_isFollowing
+                          ? const LinearGradient(
+                              colors: [
+                                LarosaColors.primary,
+                                LarosaColors.secondary,
                               ],
-                            ),
+                              begin: Alignment.centerLeft,
+                              end: Alignment.centerRight,
+                            )
+                          : null,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Center(
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          _isFollowing
+                              ? const Icon(
+                                  Iconsax.tick_circle,
+                                  size: 25,
+                                  color: Colors.white,
+                                )
+                              : const Icon(
+                                  Iconsax.user_add,
+                                  size: 25,
+                                  color: Colors.white,
+                                ),
+                          const SizedBox(
+                            width: 4,
                           ),
-                        ),
+                          Text(
+                            _isFollowing ? 'Following' : 'Follow',
+                            style:
+                                Theme.of(context).textTheme.bodyLarge!.copyWith(
+                                      color: LarosaColors.softGrey,
+                                    ),
+                            overflow: TextOverflow.visible,
+                          )
+                        ],
                       ),
                     ),
                   ),
                 ),
+              ),
+            ),
+          ),
 
           const Gap(5),
 
@@ -382,6 +335,12 @@ class _ProfileVisitScreenState extends State<ProfileVisitScreen> {
                   //     isBusiness: widget.isBusiness,
                   //   ),
                   // );
+
+                  String isBusiness = profile!['accountTypeId'] == 1 ? "false" : "true";
+
+                  context.push(
+                    '/conversation/${widget.profileId}?username=${profile!['username']}&isBusiness=$isBusiness',
+                  );
                 },
                 child: Container(
                   padding: const EdgeInsets.symmetric(
@@ -494,14 +453,21 @@ class _ProfileVisitScreenState extends State<ProfileVisitScreen> {
     return Stack(
       clipBehavior: Clip.none,
       children: [
-        CachedNetworkImage(
-          imageUrl: profile!['coverPhoto'] ??
-              'https://images.pexels.com/photos/1123250/pexels-photo-1123250.jpeg?auto=compress&cs=tinysrgb&w=600',
+        Image.asset(
+          'assets/images/banner_business.png',
           height: 200,
           width: MediaQuery.of(context).size.width,
           fit: BoxFit.cover,
           filterQuality: FilterQuality.low,
         ),
+        // Image.asset(
+        //   imageUrl: profile!['coverPhoto'] ??
+        //       'assets/images/banner_business.png',
+        //   height: 200,
+        //   width: MediaQuery.of(context).size.width,
+        //   fit: BoxFit.cover,
+        //   filterQuality: FilterQuality.low,
+        // ),
         Positioned.fill(
           child: Container(
             decoration: const BoxDecoration(
@@ -526,14 +492,21 @@ class _ProfileVisitScreenState extends State<ProfileVisitScreen> {
           bottom: -70,
           child: ClipRRect(
             borderRadius: BorderRadius.circular(70),
-            child: CachedNetworkImage(
-              imageUrl: profile!['profilePicture'] ??
-                  'https://images.pexels.com/photos/4202392/pexels-photo-4202392.jpeg?auto=compress&cs=tinysrgb&w=600',
-              fit: BoxFit.cover,
-              height: 140,
-              width: 140,
-              filterQuality: FilterQuality.low,
-            ),
+            child: profile!['profilePicture'] != null
+                ? CachedNetworkImage(
+                    imageUrl: profile!['profilePicture'],
+                    fit: BoxFit.cover,
+                    height: 140,
+                    width: 140,
+                    filterQuality: FilterQuality.low,
+                  )
+                : const CircleAvatar(
+                    radius: 70,
+                    child: Icon(
+                      Iconsax.shop,
+                      size: 60,
+                    ),
+                  ),
           ),
         ),
       ],
@@ -546,14 +519,33 @@ class _ProfileVisitScreenState extends State<ProfileVisitScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Angie Snacks',
-            style: Theme.of(context).textTheme.bodyLarge,
+          Row(
+            children: [
+              Text(
+                profile!['name'],
+                style: Theme.of(context).textTheme.bodyLarge,
+              ),
+              const Gap(10),
+              if (profile!['verificationStatus'] == 'VERIFIED')
+                SvgPicture.asset(
+                  SvgIconsPaths.sharpVerified,
+                  height: 20,
+                  colorFilter: const ColorFilter.mode(
+                    Colors.blue,
+                    BlendMode.srcIn,
+                  ),
+                )
+            ],
           ),
+          const Gap(5),
           Text(
-            'Restaurant',
-            style: Theme.of(context).textTheme.bodyMedium,
+            profile!['bio'],
+            style: Theme.of(context)
+                .textTheme
+                .labelLarge!
+                .copyWith(color: Colors.grey),
           ),
+          const Gap(5),
           Row(
             children: [
               SvgPicture.asset(
@@ -567,9 +559,9 @@ class _ProfileVisitScreenState extends State<ProfileVisitScreen> {
               const SizedBox(
                 width: 5,
               ),
-              const Text(
-                '4.8',
-                style: TextStyle(fontWeight: FontWeight.w700),
+              Text(
+                profile!['rates'].toString(),
+                style: const TextStyle(fontWeight: FontWeight.w700),
               )
             ],
           )

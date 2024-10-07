@@ -1,12 +1,12 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:go_router/go_router.dart';
 import 'package:http/http.dart' as http;
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:flutter_svg/svg.dart';
-import 'package:get/get.dart';
 import 'package:larosa_block/Services/auth_service.dart';
 import 'package:larosa_block/Utils/colors.dart';
 import 'package:larosa_block/Utils/links.dart';
@@ -76,7 +76,7 @@ class _SelfAllPostsState extends State<SelfAllPosts> {
       );
 
       if (response.statusCode != 200) {
-        Get.snackbar('Explore Larosa', response.body);
+        //Get.snackbar('Explore Larosa', response.body);
         return;
       }
       final List<dynamic> data = json.decode(response.body);
@@ -130,7 +130,6 @@ class _SelfAllPostsState extends State<SelfAllPosts> {
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
-      // Display skeleton while loading posts
       return GridView.builder(
         gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
           crossAxisCount: 2,
@@ -181,7 +180,12 @@ class _SelfAllPostsState extends State<SelfAllPosts> {
         if (_isVideo(firstMedia)) {
           String? thumbnailPath = _videoThumbnails[index];
           return GestureDetector(
-            onTap: () {},
+            onTap: () {
+              context.push(
+                '/profilePosts?title=Strings&activePost=$index',
+                extra: posts,
+              );
+            },
             child: ClipRRect(
               borderRadius: BorderRadius.circular(10),
               child: Stack(
@@ -199,7 +203,6 @@ class _SelfAllPostsState extends State<SelfAllPosts> {
                         child: SpinKitCircle(
                       color: LarosaColors.primary,
                     )),
-
                   Padding(
                     padding: const EdgeInsets.all(8.0),
                     child: SvgPicture.asset(
@@ -222,12 +225,17 @@ class _SelfAllPostsState extends State<SelfAllPosts> {
             ShimmerEffect(),
           ],
           child: GestureDetector(
-            onTap: (){
-            //   Get.to(ProfilePostsScreen(
-            //   title: 'Strings',
-            //   posts: posts,
-            //   activePost: index,
-            // ))
+            onTap: () {
+              //   Get.to(ProfilePostsScreen(
+              //   title: 'Strings',
+              //   posts: posts,
+              //   activePost: index,
+              // ))
+
+              context.push(
+                '/profilePosts?title=Strings&activePost=$index',
+                extra: posts,
+              );
             },
             child: ClipRRect(
               borderRadius: BorderRadius.circular(10),

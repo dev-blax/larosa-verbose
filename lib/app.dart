@@ -8,6 +8,7 @@ import 'package:larosa_block/Features/Feeds/Controllers/content_controller.dart'
 import 'package:larosa_block/Features/Feeds/Controllers/home_feeds_controller.dart';
 import 'package:larosa_block/Features/Feeds/camera_content.dart';
 import 'package:larosa_block/Features/Feeds/home_feeds.dart';
+import 'package:larosa_block/Features/Feeds/profile_posts.dart';
 import 'package:larosa_block/Features/Profiles/profile_edit.dart';
 import 'package:larosa_block/Features/Profiles/profile_visit.dart';
 import 'package:larosa_block/Features/Profiles/self_profile.dart';
@@ -75,6 +76,22 @@ class _AppState extends State<App> {
         },
       ),
 
+      GoRoute(
+      path: '/profilePosts',
+      builder: (context, state) {
+        final posts = state.extra as List<dynamic>; 
+        final activePost = state.uri.queryParameters['activePost'];
+        final title = state.uri.queryParameters['title'];
+
+        return ProfilePostsScreen(
+          posts: posts,
+          activePost: int.tryParse(activePost ?? '0') ?? 0,
+          title: title ?? 'Default Title',
+        );
+      },
+    ),
+
+
       // cart routes
       GoRoute(
         name: 'maincart',
@@ -101,15 +118,15 @@ class _AppState extends State<App> {
         name: 'profilevisit',
         path: '/profilevisit',
         builder: (context, state) {
-          final profileId = state.uri.queryParameters['profileId'];
+          final String profileId = state.uri.queryParameters['profileId']!;
           final bool isBusiness =
-              state.uri.queryParameters['accountType'] == '1';
+              state.uri.queryParameters['accountType'] == '2';
           LogService.logDebug(
-            'profileId $profileId isBusiness $isBusiness ',
+            'profileId $profileId isBusiness ${state.uri.queryParameters['accountType']} ',
           );
 
           return ProfileVisitScreen(
-            profileId: int.parse(profileId!),
+            profileId: int.parse(profileId),
             isBusiness: isBusiness,
           );
         },
@@ -157,7 +174,7 @@ class _AppState extends State<App> {
         ChangeNotifierProvider(create: (_) => HomeFeedsController()),
         ChangeNotifierProvider(create: (_) => ContentController()),
       ],
-        child: MaterialApp.router(
+      child: MaterialApp.router(
         routerConfig: _router,
         themeMode: ThemeMode.system,
         theme: LarosaAppTheme.lightTheme,

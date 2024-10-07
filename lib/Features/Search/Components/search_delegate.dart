@@ -190,21 +190,15 @@ class CustomSearchDelegate extends SearchDelegate {
                           ),
                     onTap: () {
                       final int accountType = result['account_type'];
-                      LogService.logDebug(
-                        'accounttype: $accountType',
-                      );
+                      LogService.logDebug('account type: $accountType');
+
+                      if (AuthService.getProfileId() == result['profileId']) {
+                        context.pushNamed('homeprofile');
+                        return;
+                      }
                       context.push(
                         '/profilevisit/?profileId=${result['profileId']}&accountType=$accountType',
                       );
-                      // Get.to(
-                      //   ProfileVisitScreen(
-                      //     isBusiness: result['account_type'] != 1,
-                      //     profileId: result['profileId'],
-                      //   ),
-                      // );
-
-                      // query = result['username'];
-                      // showResults(context);
                     },
                   ),
                 );

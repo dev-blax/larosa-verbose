@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:go_router/go_router.dart';
 import 'package:larosa_block/Services/auth_service.dart';
 import 'package:larosa_block/Utils/colors.dart';
 import 'package:larosa_block/Utils/links.dart';
@@ -116,11 +117,10 @@ class _LikedStringsComponentState extends State<LikedStringsComponent> {
           String? thumbnailPath = _videoThumbnails[index];
           return GestureDetector(
             onTap: () {
-              //   => Get.to(ProfilePostsScreen(
-              //   title: 'Liked Strings',
-              //   posts: posts,
-              //   activePost: index,
-              // ))
+              context.push(
+                '/profilePosts?title=Liked Strings&activePost=$index',
+                extra: posts,
+              );
             },
             child: ClipRRect(
               borderRadius: BorderRadius.circular(10),
@@ -164,13 +164,10 @@ class _LikedStringsComponentState extends State<LikedStringsComponent> {
           ],
           child: GestureDetector(
             onTap: () {
-            //   => Get.to(
-            //   ProfilePostsScreen(
-            //     title: 'Liked Strings',
-            //     posts: posts,
-            //     activePost: index,
-            //   ),
-            // )
+              context.push(
+                '/profilePosts?title=Liked Strings&activePost=$index',
+                extra: posts,
+              );
             },
             child: ClipRRect(
               borderRadius: BorderRadius.circular(10),
