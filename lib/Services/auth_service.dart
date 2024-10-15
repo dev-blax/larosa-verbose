@@ -13,6 +13,11 @@ class AuthService {
     return box.get('token');
   }
 
+  static bool isBusinessAccount(){
+    var box = Hive.box('userBox');
+    return box.get('isBusinessAccount');
+  }
+
   static String getRefreshToken() {
     var box = Hive.box('userBox');
     return box.get('refreshToken');

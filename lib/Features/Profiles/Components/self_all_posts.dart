@@ -157,7 +157,7 @@ class _SelfAllPostsState extends State<SelfAllPosts> {
     if (posts.isEmpty) {
       return const Center(
         child: Text(
-          'No posts available',
+          'Your Posts will appear here',
           style: TextStyle(
             color: LarosaColors.primary,
             fontSize: 18,

@@ -13,7 +13,6 @@ import 'package:larosa_block/Services/log_service.dart';
 import 'package:larosa_block/Utils/colors.dart';
 import 'package:larosa_block/Utils/helpers.dart';
 import 'package:larosa_block/Utils/links.dart';
-import 'package:timeago/timeago.dart' as timeago;
 
 class ChatsLand extends StatefulWidget {
   const ChatsLand({super.key});
@@ -193,8 +192,6 @@ class _ChatsLandState extends State<ChatsLand> {
   ) {
     DateTime messageTime = DateTime.now().subtract(Duration(seconds: time));
 
-    String formattedTime = timeago.format(messageTime, locale: 'en_short');
-
     return InkWell(
       onTap: () {
         context.push(
@@ -250,7 +247,10 @@ class _ChatsLandState extends State<ChatsLand> {
                   ),
                   Column(
                     children: [
-                      Text(formattedTime),
+                      Text(
+                        HelperFunctions.formatLastMessageTime(messageTime),
+                        style: Theme.of(context).textTheme.labelMedium,
+                      ),
                       const Gap(5),
                       if (unreadMessages > 0)
                         Container(

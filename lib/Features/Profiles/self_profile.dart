@@ -8,7 +8,6 @@ import 'package:flutter_svg/svg.dart';
 import 'package:gap/gap.dart';
 import 'package:go_router/go_router.dart';
 import 'package:iconsax/iconsax.dart';
-
 import 'package:http/http.dart' as http;
 import 'package:larosa_block/Components/bottom_navigation.dart';
 import 'package:larosa_block/Features/Profiles/Components/favourites.dart';
@@ -41,6 +40,7 @@ class _HomeProfileScreenState extends State<HomeProfileScreen> {
 
   Future<void> _saveProfileLocally(Map<String, dynamic> data) async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
+    LogService.logDebug('saving profile locally: data $data');
     prefs.setString('profileData', jsonEncode(data));
   }
 
@@ -48,6 +48,7 @@ class _HomeProfileScreenState extends State<HomeProfileScreen> {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String? profileData = prefs.getString('profileData');
     if (profileData != null) {
+      LogService.logDebug('retrieved profile locally: $profileData');
       return jsonDecode(profileData);
     }
     return null;
@@ -57,8 +58,8 @@ class _HomeProfileScreenState extends State<HomeProfileScreen> {
     String token = AuthService.getToken();
 
     if (token.isEmpty) {
-      //Get.off(const SigninScreen());
       LogService.logError('no token found');
+      HelperFunctions.logout(context);
       return;
     }
 
@@ -88,9 +89,9 @@ class _HomeProfileScreenState extends State<HomeProfileScreen> {
       HelperFunctions.larosaLogger('profile Id: ${AuthService.getProfileId()}');
       final response = await http.post(
         url,
-        body: jsonEncode({
-          'id': AuthService.getProfileId(),
-        }),
+        // body: jsonEncode({
+        //   'id': AuthService.getProfileId(),
+        // }),
         headers: headers,
       );
 
@@ -116,7 +117,7 @@ class _HomeProfileScreenState extends State<HomeProfileScreen> {
         return;
       }
 
-      //Get.snackbar('Explore Larosa', response.statusCode.toString());
+      LogService.logInfo('neither 200 nor 403: status code is ${response.statusCode}');
     } catch (e) {
       LogService.logError(
         'An error occurred while loading profile: ',
@@ -178,10 +179,8 @@ class _HomeProfileScreenState extends State<HomeProfileScreen> {
                     width: 140,
                     filterQuality: FilterQuality.low,
                   )
-                : Container(
-                    child: const Icon(
-                      Iconsax.user4,
-                    ),
+                : const Icon(
+                    Iconsax.user4,
                   ),
           ),
         ),

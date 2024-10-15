@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:ui';
+import 'package:go_router/go_router.dart';
 import 'package:hive/hive.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
@@ -11,10 +12,10 @@ import 'package:larosa_block/Components/text_input.dart';
 import 'package:larosa_block/Features/Auth/Components/oauth_buttons.dart';
 import 'package:larosa_block/Services/log_service.dart';
 import 'package:larosa_block/Utils/colors.dart';
+import 'package:larosa_block/Utils/helpers.dart';
 import 'package:larosa_block/Utils/links.dart';
 import 'package:larosa_block/Utils/routing.dart';
 import 'package:larosa_block/Utils/validation_helpers.dart';
-
 
 class SigninScreen extends StatefulWidget {
   const SigninScreen({super.key});
@@ -41,7 +42,7 @@ class _SigninScreenState extends State<SigninScreen> {
     );
 
     try {
-      LogService.logDebug('Send request to background');
+      LogService.logDebug('Sending login request');
       var response = await http.post(
         uri,
         headers: headers,
@@ -52,12 +53,17 @@ class _SigninScreenState extends State<SigninScreen> {
       );
 
       if (response.statusCode != 200) {
-        // Get.snackbar('Explore Larosa', response.body.toString());
+        HelperFunctions.showToast(
+          'Wrong credentials',
+          false,
+        );
         return;
       }
 
       final data = jsonDecode(response.body);
-      var box = Hive.box('userBox');
+
+      var box = await Hive.openBox('userBox');
+      await box.clear();
 
       box.put('profileId', data['profileId']);
       box.put('accountId', data['accountType']['id']);
@@ -70,10 +76,13 @@ class _SigninScreenState extends State<SigninScreen> {
         data['jwtAuthenticationResponse']['refreshToken'],
       );
 
-      // Get.offAll(const HomeFeedsScreen());
       Routings.home(context);
     } catch (e) {
-      //Get.snackbar('Explore Larosa', 'An error occured! Please try again');
+      HelperFunctions.showToast(
+        'An error occured! Please try again',
+        false,
+      );
+      LogService.logError('error $e');
     }
   }
 
@@ -260,9 +269,7 @@ class _SigninScreenState extends State<SigninScreen> {
 
                           TextButton(
                             onPressed: () {
-                              // Get.to(
-                              //   const AccountType(),
-                              // );
+                              context.pushNamed('accountType');
                             },
                             child: const Text(
                               'Go to Register',

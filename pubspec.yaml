@@ -87,6 +87,10 @@ dependencies:
   fluttertoast: ^8.2.8
   another_flutter_splash_screen: ^1.2.1
   flutter_content_placeholder: ^0.0.3
+  hugeicons: ^0.0.7
+  awesome_snackbar_content: ^0.1.4
+  toastification: ^2.3.0
+  file_picker: ^8.0.7
   
 
 dev_dependencies:

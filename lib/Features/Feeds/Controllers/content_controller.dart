@@ -65,26 +65,11 @@ class ContentController extends ChangeNotifier {
         LogService.logDebug('uploading again');
         await uploadPost(caption);
       } else if (response.statusCode == 201) {
-        // ScaffoldMessenger.of(context).showSnackBar(
-        //   const SnackBar(content: Text('Success')),
-        // );
-        // Navigator.pushReplacement(
-        //   context,
-        //   MaterialPageRoute(builder: (context) => const HomeFeedsScreen()),
-        // );
-
         HelperFunctions.showToast('Success', true);
       } else {
-        // ScaffoldMessenger.of(context).showSnackBar(
-        //   SnackBar(content: Text(response.data.toString())),
-        // );
         LogService.logError('non 200 ${response.data}');
       }
     } catch (e) {
-      // ScaffoldMessenger.of(context).showSnackBar(
-      //   SnackBar(content: Text('An error occurred: $e')),
-      // );
-      //HelperFunctions.showToast('Error occurred', false);
       LogService.logError('Error: $e');
     }
   }

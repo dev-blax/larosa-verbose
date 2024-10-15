@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_emoji/flutter_emoji.dart';
 import 'package:http/http.dart' as http;
@@ -7,6 +8,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:gap/gap.dart';
+import 'package:hugeicons/hugeicons.dart';
 import 'package:iconsax/iconsax.dart';
 import 'package:larosa_block/Features/Feeds/Components/carousel.dart';
 import 'package:larosa_block/Features/Feeds/Components/comments_component.dart';
@@ -302,13 +304,21 @@ class _PostComponentState extends State<PostComponent>
                     ),
                   ],
                 ),
-                CircleAvatar(
-                  backgroundColor: Colors.blue,
+                Container(
+                  decoration: BoxDecoration(
+                    color: Colors.blue,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
                   child: IconButton(
                     onPressed: () {},
-                    icon: const Icon(
-                      Icons.add_shopping_cart_rounded,
+                    // icon: const Icon(
+                    //   Icons.add_shopping_cart_rounded,
+                    //   color: Colors.white,
+                    // ),
+                    icon: const HugeIcon(
+                      icon: HugeIcons.strokeRoundedShoppingCartCheckIn01,
                       color: Colors.white,
+                      size: 25,
                     ),
                   ),
                 )

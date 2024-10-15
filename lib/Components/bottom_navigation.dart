@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:go_router/go_router.dart';
 import 'package:iconsax/iconsax.dart';
+import 'package:larosa_block/Services/auth_service.dart';
 
 import 'package:larosa_block/Utils/svg_paths.dart';
 
@@ -14,20 +15,12 @@ enum ActivePage {
   account,
 }
 
-// class BottomNavigationController extends GetxController {
-//   var selectedIndex = 0.obs;
-
-//   void changeIndex(int index) {
-//     selectedIndex.value = index;
-//   }
-// }
-
 class BottomNavigation extends StatelessWidget {
   final ActivePage activePage;
-  const BottomNavigation({super.key, required this.activePage});
-
-  // final BottomNavigationController controller =
-  //     Get.put(BottomNavigationController());
+  const BottomNavigation({
+    super.key,
+    required this.activePage,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -46,13 +39,7 @@ class BottomNavigation extends StatelessWidget {
             children: [
               IconButton(
                 onPressed: () {
-                  // controller.changeIndex(0);
-                  // Get.offUntil(
-                  //   MaterialPageRoute(
-                  //       builder: (_) => const HomeFeedsScreen()),
-                  //   (route) => route.isFirst,
-                  // );
-
+                  
                   context.goNamed('home');
                 },
                 icon: SvgPicture.asset(
@@ -60,9 +47,6 @@ class BottomNavigation extends StatelessWidget {
                       ? SvgIconsPaths.homeBold
                       : SvgIconsPaths.homeOutline,
                   colorFilter: ColorFilter.mode(
-                    // controller.selectedIndex.value == 0
-                    //     ? Theme.of(context).colorScheme.secondary
-                    //     : Theme.of(context).colorScheme.secondary,
                     Theme.of(context).colorScheme.secondary,
                     BlendMode.srcIn,
                   ),
@@ -70,20 +54,7 @@ class BottomNavigation extends StatelessWidget {
               ),
               IconButton(
                 onPressed: () {
-                  // controller.changeIndex(1);
-                  // if (Get.currentRoute == '/search') {
-                  //  // HelperFunctions.larosaLogger('in stack');
-                  //   Get.offNamedUntil(
-                  //     '/search',
-                  //     (route) => false,
-                  //   );
-                  // } else {
-                  //   HelperFunctions.larosaLogger('Not in stack');
-                  //   Get.toNamed(
-                  //     '/search',
-                  //   );
-                  // }
-                  context.go('/search');
+                  context.push('/search');
                 },
                 icon: SvgPicture.asset(
                   'assets/svg_icons/searchOutline.svg',
@@ -96,18 +67,10 @@ class BottomNavigation extends StatelessWidget {
               ),
               IconButton(
                 onPressed: () {
-                  // controller.changeIndex(2);
-                  // Get.to(
-                  //   const CameraContent(),
-                  //   transition: Transition.downToUp,
-                  //   curve: Curves.decelerate,
-                  // );
-                  // Get.to(
-                  //   const NewBusinessPost(),
-                  //     transition: Transition.downToUp,
-                  //   curve: Curves.decelerate,
-                  // );
-
+                  if (AuthService.getToken().isEmpty) {
+                    context.pushNamed('login');
+                    return;
+                  }
                   context.pushNamed('cameraContent');
                 },
                 icon: const Icon(
@@ -118,11 +81,11 @@ class BottomNavigation extends StatelessWidget {
               ),
               IconButton(
                 onPressed: () {
-                  // controller.changeIndex(3);
-                  // Get.to(
-                  //   const MainDeliveryScreen(),
-                  // );
-                  context.goNamed('maindelivery');
+                  if (AuthService.getToken().isEmpty) {
+                    context.pushNamed('login');
+                    return;
+                  }
+                  context.pushNamed('maindelivery');
                 },
                 icon: SvgPicture.asset(
                   'assets/svg_icons/transportOutline.svg',
@@ -135,22 +98,11 @@ class BottomNavigation extends StatelessWidget {
               ),
               IconButton(
                 onPressed: () {
-                  // controller.changeIndex(4);
-
-                  // if (Get.currentRoute == '/myprofile') {
-                  //   HelperFunctions.larosaLogger('My profile in stack');
-                  //   Get.offNamedUntil(
-                  //     '/myprofile',
-                  //     (route) => false,
-                  //   );
-                  // } else {
-                  //   HelperFunctions.larosaLogger(
-                  //       ' my profile Not in stack');
-                  //   Get.toNamed(
-                  //     '/myprofile',
-                  //   );
-                  // }
-                  context.goNamed('homeprofile');
+                  if (AuthService.getToken().isEmpty) {
+                    context.pushNamed('login');
+                    return;
+                  }
+                  context.pushNamed('homeprofile');
                 },
                 icon: SvgPicture.asset(
                   activePage == ActivePage.account

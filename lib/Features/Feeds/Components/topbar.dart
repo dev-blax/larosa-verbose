@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:go_router/go_router.dart';
+import 'package:larosa_block/Services/auth_service.dart';
 
 class TopBar1 extends StatelessWidget {
   const TopBar1({super.key});
@@ -14,6 +15,10 @@ class TopBar1 extends StatelessWidget {
         children: [
           IconButton(
             onPressed: () {
+              if (AuthService.getToken().isEmpty) {
+                context.pushNamed('login');
+                return;
+              }
               context.pushNamed('chatsland');
             },
             icon: SvgPicture.asset(

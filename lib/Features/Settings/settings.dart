@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:gap/gap.dart';
+import 'package:go_router/go_router.dart';
 import 'package:hive/hive.dart';
 import 'package:iconsax/iconsax.dart';
+import 'package:larosa_block/Utils/helpers.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
@@ -67,7 +69,7 @@ class SettingsScreen extends StatelessWidget {
             const Gap(20),
             InkWell(
               onTap: () {
-                // Get.to(const BusinessVerificationScreen())
+                context.push('/verification');
               },
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 8.0),
@@ -107,6 +109,8 @@ class SettingsScreen extends StatelessWidget {
                 await userbox.clear();
                 await onboardingBox.clear();
 
+                if (context.mounted) HelperFunctions.logout(context);
+
                 // Get.offAll(const SigninScreen());
               },
               child: Padding(
@@ -133,7 +137,7 @@ class SettingsScreen extends StatelessWidget {
                         await userbox.clear();
                         await onboardingBox.clear();
 
-                       // Get.offAll(const SigninScreen());
+                        // Get.offAll(const SigninScreen());
                       },
                       icon: const Icon(
                         Iconsax.logout_1,

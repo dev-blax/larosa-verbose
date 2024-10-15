@@ -74,7 +74,11 @@ class _DeReelsScreenState extends State<DeReelsScreen> {
         return;
       }
     } catch (e) {
-      HelperFunctions.displaySnackbar('An unknown error occured');
+      HelperFunctions.displaySnackbar(
+        'An unknown error occured',
+        context,
+        false,
+      );
     }
   }
 
@@ -132,7 +136,11 @@ class _DeReelsScreenState extends State<DeReelsScreen> {
 
       setState(() {});
     } catch (e) {
-      HelperFunctions.displaySnackbar('An unknown error occurred!');
+      HelperFunctions.displaySnackbar(
+        'An unknown error occurred!',
+        context,
+        false,
+      );
     }
   }
 
@@ -176,7 +184,11 @@ class _DeReelsScreenState extends State<DeReelsScreen> {
         //Get.snackbar('Explore Larosa', 'Error occured');
       }
     } catch (e) {
-      HelperFunctions.displaySnackbar('Failed to perform action...!');
+      HelperFunctions.displaySnackbar(
+        'Failed to perform action...!',
+        context,
+        false,
+      );
     }
   }
 

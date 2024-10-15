@@ -2,12 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:gap/gap.dart';
-import 'package:iconsax/iconsax.dart';
 import 'package:intl/intl.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:larosa_block/Utils/colors.dart';
 import 'package:larosa_block/Utils/svg_paths.dart';
-import 'package:timeago/timeago.dart' as timeago;
 
 enum MessageType {
   text,
@@ -41,9 +39,6 @@ class ChatBubbleComponent extends HookWidget {
         seconds: comment['duration'],
       ),
     );
-
-    String formattedDifference =
-        timeago.format(messageTime, locale: 'en_short');
 
     // useEffect(() {
     //   audioPlayer.setFilePath(message).then((value) {
@@ -98,7 +93,7 @@ class ChatBubbleComponent extends HookWidget {
                   isSentByMe ? MainAxisAlignment.end : MainAxisAlignment.start,
               children: [
                 Text(
-                  DateFormat.Hm().format(messageTime),
+                  DateFormat.jm().format(messageTime),
                   style: Theme.of(context).textTheme.bodySmall,
                 ),
                 if (isSentByMe) ...[
@@ -153,7 +148,7 @@ class ChatBubbleComponent extends HookWidget {
           begin: Alignment.topLeft,
           end: Alignment.centerRight,
         ),
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(10),
       ),
       child: Text(
         message,

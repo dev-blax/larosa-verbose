@@ -28,9 +28,7 @@ class TimeBubble extends StatelessWidget {
       padding: const EdgeInsets.all(8.0),
       child: Text(
         duration,
-        style: const TextStyle(
-          color: Colors.white,
-        ),
+        style: Theme.of(context).textTheme.labelMedium,
         textAlign: TextAlign.center,
       ),
     );
@@ -446,7 +444,6 @@ class _LarosaConversationState extends State<LarosaConversation> {
         appBar: AppBar(
           leading: IconButton(
             onPressed: () {
-              // Get.back();
               context.pop();
             },
             icon: const Icon(
@@ -462,12 +459,9 @@ class _LarosaConversationState extends State<LarosaConversation> {
               children: [
                 GestureDetector(
                   onTap: () {
-                    // Get.to(
-                    //   ProfileVisitScreen(
-                    //     isBusiness: widget.isBusiness,
-                    //     profileId: widget.profileId,
-                    //   ),
-                    // );
+                    context.push(
+                      '/profilevisit/?profileId=${widget.profileId}&accountType=${widget.isBusiness}',
+                    );
                   },
                   child: profilePicture.isEmpty
                       ? ClipOval(
@@ -493,12 +487,9 @@ class _LarosaConversationState extends State<LarosaConversation> {
                   children: [
                     GestureDetector(
                       onTap: () {
-                        // Get.to(
-                        //   ProfileVisitScreen(
-                        //     isBusiness: widget.isBusiness,
-                        //     profileId: widget.profileId,
-                        //   ),
-                        // );
+                        context.push(
+                          '/profilevisit/?profileId=${widget.profileId}&accountType=${widget.isBusiness}',
+                        );
                       },
                       child: Row(
                         children: [

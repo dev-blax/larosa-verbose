@@ -9,18 +9,25 @@ import 'package:shared_preferences/shared_preferences.dart';
 class HomeFeedsController extends ChangeNotifier {
   List<dynamic> posts = [];
   ValueNotifier<bool> isLoading = ValueNotifier(false);
-  ScrollController scrollController = ScrollController();
+  final ScrollController scrollController = ScrollController();
+  bool isFetchingMore = false;
+  int currentPage = 1;
+  final int itemsPerPage = 10;
 
   HomeFeedsController() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _restoreScrollPosition();
       if (posts.isEmpty) {
-        fetchPosts();
+        fetchPosts(false);
       }
     });
   }
 
-  Future<void> fetchPosts() async {
+  Future<void> fetchPosts(bool refresh) async {
+    if (refresh) {
+      currentPage = 1;
+      posts.clear();
+    }
     try {
       isLoading.value = true;
       final int? profileId = AuthService.getProfileId();
@@ -33,7 +40,23 @@ class HomeFeedsController extends ChangeNotifier {
     }
   }
 
-  Future<void> _fetchPostsFromServer(int? profileId) async {
+  Future<void> fetchMorePosts() async {
+    if (isFetchingMore) return;
+
+    try {
+      isFetchingMore = true;
+      final int? profileId = AuthService.getProfileId();
+      await _fetchPostsFromServer(profileId, isPaginated: true);
+    } catch (e) {
+      LogService.logError('Error fetching more posts: $e');
+    } finally {
+      isFetchingMore = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> _fetchPostsFromServer(int? profileId,
+      {bool isPaginated = false}) async {
     String token = AuthService.getToken();
     Map<String, String> headers = {
       "Content-Type": "application/json",
@@ -45,6 +68,8 @@ class HomeFeedsController extends ChangeNotifier {
 
     Map<String, dynamic> body = {
       'countryId': '1',
+      'page': currentPage.toString(),
+      'itemsPerPage': itemsPerPage.toString(),
     };
 
     if (profileId != null) {
@@ -59,13 +84,22 @@ class HomeFeedsController extends ChangeNotifier {
 
     if (response.statusCode == 200) {
       List<dynamic> data = json.decode(response.body);
-      posts = data;
-      LogService.logInfo('posts $posts');
-      await _savePostsToLocalStorage(data);
+      if (isPaginated) {
+        posts.addAll(data);
+        currentPage++;
+      } else {
+        posts = data;
+      }
+
+      for (var element in data) {
+        LogService.logInfo('Received post: $element ');
+      }
+      //LogService.logInfo('Loaded $data ');
+      await _savePostsToLocalStorage(posts);
       notifyListeners();
     } else if (response.statusCode == 302 || response.statusCode == 403) {
       await AuthService.refreshToken();
-      await _fetchPostsFromServer(profileId);
+      await _fetchPostsFromServer(profileId, isPaginated: isPaginated);
     } else {
       throw Exception('Failed to load posts');
     }
@@ -103,7 +137,6 @@ class HomeFeedsController extends ChangeNotifier {
   @override
   void dispose() {
     _saveScrollPosition();
-    scrollController.dispose();
     super.dispose();
   }
 }

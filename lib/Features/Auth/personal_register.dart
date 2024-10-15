@@ -5,12 +5,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:gap/gap.dart';
+import 'package:go_router/go_router.dart';
 import 'package:hive/hive.dart';
 import 'package:iconsax/iconsax.dart';
 
 import 'package:http/http.dart' as http;
 import 'package:larosa_block/Components/text_input.dart';
 import 'package:larosa_block/Features/Auth/Components/oauth_buttons.dart';
+import 'package:larosa_block/Services/log_service.dart';
 import 'package:larosa_block/Utils/colors.dart';
 import 'package:larosa_block/Utils/links.dart';
 import 'package:larosa_block/Utils/validation_helpers.dart';
@@ -77,7 +79,7 @@ class _PersonalRegisterScreenState extends State<PersonalRegisterScreen> {
       //   const HomeFeedsScreen(),
       // );
     } catch (e) {
-      print('error: $e');
+      LogService.logError('Error $e');
     }
   }
 
@@ -291,6 +293,8 @@ class _PersonalRegisterScreenState extends State<PersonalRegisterScreen> {
                           TextButton(
                             onPressed: () {
                               // Get.to(const SigninScreen());
+
+                              context.pushNamed('login');
                             },
                             child: const Text(
                               'Go to Login',
