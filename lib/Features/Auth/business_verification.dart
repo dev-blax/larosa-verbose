@@ -168,22 +168,16 @@ class _BusinessVerificationScreenState
                 onSaved: (value) => otherNames = value ?? '',
               ),
               const Gap(10),
-              // TextFormField(
-              //   decoration: const InputDecoration(labelText: 'Profile ID'),
-              //   keyboardType: TextInputType.number,
-              //   validator: (value) =>
-              //       value!.isEmpty ? 'Profile ID is required' : null,
-              //   onSaved: (value) => profileId = int.parse(value!),
-              // ),
-              // Additional fields for documentTypeId, notableCategoryId, and countryId...
               ElevatedButton(
                 onPressed: _pickFiles,
                 child: const Text('Pick Attachments'),
               ),
               const Gap(10),
-              Text(attachments.isNotEmpty
-                  ? '${attachments.length} file(s) selected'
-                  : 'No files selected'),
+              Text(
+                attachments.isNotEmpty
+                ? '${attachments.length} file(s) selected'
+                : 'No files selected',
+              ),
               const Gap(10),
               ElevatedButton(
                 onPressed: _submitRequest,

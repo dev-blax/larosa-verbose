@@ -91,6 +91,7 @@ dependencies:
   awesome_snackbar_content: ^0.1.4
   toastification: ^2.3.0
   file_picker: ^8.0.7
+  crop_your_image: ^1.1.0
   
 
 dev_dependencies:
