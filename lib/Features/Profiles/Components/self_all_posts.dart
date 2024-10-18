@@ -226,12 +226,6 @@ class _SelfAllPostsState extends State<SelfAllPosts> {
           ],
           child: GestureDetector(
             onTap: () {
-              //   Get.to(ProfilePostsScreen(
-              //   title: 'Strings',
-              //   posts: posts,
-              //   activePost: index,
-              // ))
-
               context.push(
                 '/profilePosts?title=Strings&activePost=$index',
                 extra: posts,

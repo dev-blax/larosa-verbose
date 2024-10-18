@@ -28,8 +28,8 @@ class _BusinessVerificationScreenState
   int documentTypeId = 0;
   int notableCategoryId = 0;
   int countryId = 1;
-  List<int> linkTypeIds = [];
-  List<String> linkValues = [];
+  int linkTypeIds = 1;
+  String linkValues = "bom.com";
 
   final String _submitUrl =
       '${LarosaLinks.baseurl}/api/v1/verification-requests/new-request';
@@ -59,13 +59,13 @@ class _BusinessVerificationScreenState
     // using dio
     final client = dio.Dio();
     dio.FormData formData = dio.FormData.fromMap({
-      'fullName': fullName,
+      'fulName': fullName,
       'otherNames': otherNames,
       'documentTypeId': documentTypeId.toString(),
       'notableCategoryId': notableCategoryId.toString(),
       'countryId': countryId.toString(),
-      'linkTypeIds': linkTypeIds.map((id) => id.toString()).join(','),
-      'linkValues': linkValues,
+      'linkTypeIds': [linkTypeIds],
+      'linkValues': [linkValues],
     });
 
     for (var file in attachments) {
@@ -92,6 +92,7 @@ class _BusinessVerificationScreenState
     );
 
     try {
+      LogService.logTrace('form-data: ${formData.fields}');
       dio.Response dioResponse = await client.post(
         _submitUrl,
         data: formData,
@@ -175,8 +176,8 @@ class _BusinessVerificationScreenState
               const Gap(10),
               Text(
                 attachments.isNotEmpty
-                ? '${attachments.length} file(s) selected'
-                : 'No files selected',
+                    ? '${attachments.length} file(s) selected'
+                    : 'No files selected',
               ),
               const Gap(10),
               ElevatedButton(

@@ -7,6 +7,7 @@ import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:gap/gap.dart';
 import 'package:go_router/go_router.dart';
+import 'package:hive/hive.dart';
 import 'package:iconsax/iconsax.dart';
 import 'package:http/http.dart' as http;
 import 'package:larosa_block/Components/bottom_navigation.dart';
@@ -24,7 +25,6 @@ import 'package:larosa_block/Utils/helpers.dart';
 import 'package:larosa_block/Utils/links.dart';
 import 'package:larosa_block/Utils/svg_paths.dart';
 import 'package:share_plus/share_plus.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 class HomeProfileScreen extends StatefulWidget {
   const HomeProfileScreen({super.key});
@@ -36,17 +36,16 @@ class HomeProfileScreen extends StatefulWidget {
 class _HomeProfileScreenState extends State<HomeProfileScreen> {
   Map<String, dynamic>? profile;
   bool isLoading = true;
-  bool isBusiness = false;
 
   Future<void> _saveProfileLocally(Map<String, dynamic> data) async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
+    var box = Hive.box('profileBox');
     LogService.logDebug('saving profile locally: data $data');
-    prefs.setString('profileData', jsonEncode(data));
+    await box.put('profileData', jsonEncode(data));
   }
 
   Future<Map<String, dynamic>?> _getProfileFromLocal() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    String? profileData = prefs.getString('profileData');
+    var box = Hive.box('profileBox');
+    String? profileData = box.get('profileData');
     if (profileData != null) {
       LogService.logDebug('retrieved profile locally: $profileData');
       return jsonDecode(profileData);
@@ -65,7 +64,6 @@ class _HomeProfileScreenState extends State<HomeProfileScreen> {
 
     Map<String, dynamic>? localProfile = await _getProfileFromLocal();
 
-    // If profile already exists
     if (localProfile != null) {
       setState(() {
         profile = localProfile;
@@ -78,8 +76,12 @@ class _HomeProfileScreenState extends State<HomeProfileScreen> {
     Map<String, String> headers = {
       "Content-Type": "application/json",
       "Access-Control-Allow-Origin": "*",
-      'Authorization': token.isNotEmpty ? 'Bearer $token' : '',
+      'Authorization': 'Bearer $token',
     };
+
+    final bool isBusiness = AuthService.isBusinessAccount();
+
+    LogService.logInfo('isBusinessAccount $isBusiness');
     var url = Uri.https(
       LarosaLinks.nakedBaseUrl,
       !isBusiness ? '/personal/myProfile' : '/brand/myProfile',
@@ -98,7 +100,9 @@ class _HomeProfileScreenState extends State<HomeProfileScreen> {
       if (response.statusCode == 200) {
         HelperFunctions.larosaLogger('200 OK Fetching profile');
         LogService.logInfo('loaded profile successfully');
+
         final Map<String, dynamic> data = json.decode(response.body);
+        LogService.logInfo('profiel data: $data');
 
         setState(() {
           profile = data;
@@ -117,7 +121,8 @@ class _HomeProfileScreenState extends State<HomeProfileScreen> {
         return;
       }
 
-      LogService.logInfo('neither 200 nor 403: status code is ${response.statusCode}');
+      LogService.logInfo(
+          'neither 200 nor 403: status code is ${response.statusCode}');
     } catch (e) {
       LogService.logError(
         'An error occurred while loading profile: ',
@@ -170,7 +175,7 @@ class _HomeProfileScreenState extends State<HomeProfileScreen> {
           bottom: -70,
           child: ClipRRect(
             borderRadius: BorderRadius.circular(70),
-            child: profile!['profilePicture'] != null
+            child: profile!['profilePicture'] == null
                 ? CachedNetworkImage(
                     imageUrl: profile!['profilePicture'] ??
                         'https://images.pexels.com/photos/4202392/pexels-photo-4202392.jpeg?auto=compress&cs=tinysrgb&w=600',
@@ -181,6 +186,8 @@ class _HomeProfileScreenState extends State<HomeProfileScreen> {
                   )
                 : const Icon(
                     Iconsax.user4,
+                    color: Colors.red,
+                    size: 140,
                   ),
           ),
         ),
@@ -194,12 +201,23 @@ class _HomeProfileScreenState extends State<HomeProfileScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Angie Snacks',
-            style: Theme.of(context).textTheme.bodyLarge,
+          Row(
+            children: [
+              Text(
+                profile!['name'],
+                style: Theme.of(context).textTheme.bodyLarge,
+              ),
+              const Gap(5),
+              SvgPicture.asset(
+                SvgIconsPaths.sharpVerified,
+                colorFilter:
+                    const ColorFilter.mode(Colors.blue, BlendMode.srcIn),
+                height: 20,
+              ),
+            ],
           ),
           Text(
-            'Restaurant',
+            profile!['businessCategories']['name'],
             style: Theme.of(context).textTheme.bodyMedium,
           ),
           Row(
@@ -210,14 +228,14 @@ class _HomeProfileScreenState extends State<HomeProfileScreen> {
                 height: 20,
                 colorFilter:
                     const ColorFilter.mode(Colors.orange, BlendMode.srcIn),
-                semanticsLabel: 'Like icon',
+                semanticsLabel: 'Rate Icon',
               ),
               const SizedBox(
                 width: 5,
               ),
-              const Text(
-                '4.8',
-                style: TextStyle(fontWeight: FontWeight.w700),
+              Text(
+                profile!['rates'].toString(),
+                style: const TextStyle(fontWeight: FontWeight.w700),
               )
             ],
           )

@@ -50,12 +50,12 @@ class _BusinessPostScreenState extends State<BusinessPostScreen> {
         return AlertDialog(
           contentPadding: EdgeInsets.zero,
           content: SizedBox(
-            height: 400, 
-            width: 300, 
+            height: 400,
+            width: 300,
             child: Crop(
               image: _selectedImage!,
               controller: _cropController,
-              aspectRatio: 4 / 3,
+              aspectRatio: 3 / 4,
               onCropped: (croppedData) {
                 Navigator.pop(context);
                 _addCroppedImage(croppedData);
@@ -91,8 +91,24 @@ class _BusinessPostScreenState extends State<BusinessPostScreen> {
         .addToNewContentMediaStrings(imageFile.path);
   }
 
+  Future<double> _getMaxImageHeight(List<String> imagePaths) async {
+    double maxHeight = 0;
+
+    for (var path in imagePaths) {
+      final File imageFile = File(path);
+      final decodedImage = await decodeImageFromList(imageFile.readAsBytesSync());
+
+      if (decodedImage.height > maxHeight) {
+        maxHeight = decodedImage.height.toDouble();
+      }
+    }
+
+    return maxHeight;
+  }
+
   @override
   Widget build(BuildContext context) {
+    final contentController = Provider.of<ContentController>(context);
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
@@ -183,6 +199,16 @@ class _BusinessPostScreenState extends State<BusinessPostScreen> {
                     maxLines: 10,
                     controller: _priceController,
                     decoration: const InputDecoration(
+                      prefix: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            'Tsh',
+                            style: TextStyle(color: LarosaColors.mediumGray),
+                          ),
+                          Gap(10),
+                        ],
+                      ),
                       fillColor: Colors.green,
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.all(Radius.circular(20)),
@@ -214,15 +240,44 @@ class _BusinessPostScreenState extends State<BusinessPostScreen> {
                           borderRadius: BorderRadius.all(Radius.circular(40)),
                         ),
                       ),
-                      onPressed: () async {},
+                      onPressed: () async {
+                        if (contentController.newContentMediaStrings.isEmpty) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                                content: Text('Cannot post empty images')),
+                          );
+                          return;
+                        }
+
+                        if (_formKey.currentState!.validate()) {
+                          setState(() {
+                            isCreatingPost = true;
+                          });
+
+                          // Get the maximum height of the images
+                          double maxHeight = await _getMaxImageHeight(
+                            contentController.newContentMediaStrings,
+                          );
+
+                          await contentController.postBusiness(
+                            _captionController.text,
+                            double.parse(_priceController.text),
+                            maxHeight, 
+                          );
+
+                          setState(() {
+                            isCreatingPost = false;
+                          });
+                        }
+                      },
                       icon: isCreatingPost
-                          ? const SpinKitCircle(size: 14, color: Colors.white)
+                          ? const SpinKitCircle(size: 24, color: Colors.white)
                           : const Icon(Iconsax.document_upload,
                               color: Colors.white),
                       label: Padding(
                         padding: const EdgeInsets.symmetric(vertical: 16.0),
                         child: Text(
-                          isCreatingPost ? '' : 'CREATE POST',
+                          isCreatingPost ? '' : 'CREATE BUSINESS POST',
                           style: const TextStyle(color: Colors.white),
                         ),
                       ),
@@ -236,6 +291,4 @@ class _BusinessPostScreenState extends State<BusinessPostScreen> {
       ),
     );
   }
-
-  // Show action sheet to choose between gallery or camera
 }
