@@ -511,7 +511,6 @@ class _PostComponentState extends State<PostComponent>
       mainAxisSize: MainAxisSize.min,
       children: [
         _mediaAndIntro(),
-        //_mediaTest(),
         _postInteracts(),
         PostDetails(
           caption: widget.post['caption'],

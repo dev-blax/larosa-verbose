@@ -15,7 +15,11 @@ class AuthService {
 
   static bool isBusinessAccount(){
     var box = Hive.box('userBox');
-    return box.get('isBusinessAccount');
+    final int accountType = box.get('accountId');
+    if (accountType == 2) {
+      return true;
+    }
+    return false;
   }
 
   static String getRefreshToken() {

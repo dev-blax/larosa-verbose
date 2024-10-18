@@ -5,6 +5,7 @@ import 'package:larosa_block/Features/Auth/business_register.dart';
 import 'package:larosa_block/Features/Auth/business_verification.dart';
 import 'package:larosa_block/Features/Auth/personal_register.dart';
 import 'package:larosa_block/Features/Auth/signin.dart';
+import 'package:larosa_block/Features/Cart/add_to_cart.dart';
 import 'package:larosa_block/Features/Cart/main_cart.dart';
 import 'package:larosa_block/Features/Chat/chats_land.dart';
 import 'package:larosa_block/Features/Chat/conversation.dart';
@@ -12,6 +13,7 @@ import 'package:larosa_block/Features/Delivery/main_delivery.dart';
 import 'package:larosa_block/Features/Feeds/business_post.dart';
 import 'package:larosa_block/Features/Feeds/camera_content.dart';
 import 'package:larosa_block/Features/Feeds/home_feeds.dart';
+import 'package:larosa_block/Features/Feeds/image_post_screen.dart';
 import 'package:larosa_block/Features/Feeds/profile_posts.dart';
 import 'package:larosa_block/Features/Onboarding/onboarding_screen.dart';
 import 'package:larosa_block/Features/Profiles/profile_edit.dart';
@@ -30,7 +32,7 @@ class RouterService {
   }
 
   final GoRouter router = GoRouter(
-    initialLocation: _onboarded() ? '/maindelivery' : '/onboarding',
+    initialLocation: _onboarded() ? '/add-to-cart' : '/onboarding',
     routes: [
 
       // busines post
@@ -38,6 +40,12 @@ class RouterService {
         name: 'business-post',
         path: '/business-post',
         builder: (context, state) => const BusinessPostScreen(),
+      ),
+
+      GoRoute(
+        name: 'add-to-cart',
+        path: '/add-to-cart',
+        builder: (context, state) => const AddToCartScreen(),
       ),
 
       // verification routes
@@ -73,6 +81,11 @@ class RouterService {
         name: 'maindelivery',
         path: '/maindelivery',
         builder: (context, state) => const MainDeliveryScreen(),
+      ),
+      GoRoute(
+        name: 'main-post',
+        path: '/main-post',
+        builder: (context, state) => const ImagePostScreen(),
       ),
 
       // chat routes

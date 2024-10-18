@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:iconsax/iconsax.dart';
 import 'package:larosa_block/Features/Feeds/Components/post_component.dart';
+import 'package:larosa_block/Services/log_service.dart';
 
 class ProfilePostsScreen extends StatefulWidget {
   final List<dynamic> posts;
@@ -10,7 +11,8 @@ class ProfilePostsScreen extends StatefulWidget {
   const ProfilePostsScreen({
     super.key,
     required this.posts,
-    required this.activePost, required this.title,
+    required this.activePost,
+    required this.title,
   });
 
   @override
@@ -24,6 +26,7 @@ class _ProfilePostsScreenState extends State<ProfilePostsScreen> {
   void initState() {
     super.initState();
     _scrollController = ScrollController();
+    LogService.logTrace('posts ${widget.posts}');
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _scrollToActivePost();
     });
@@ -75,7 +78,9 @@ class _ProfilePostsScreenState extends State<ProfilePostsScreen> {
             Iconsax.arrow_left_2,
           ),
         ),
-        title:  Text(widget.title, style: Theme.of(context).textTheme.headlineSmall,
+        title: Text(
+          widget.title,
+          style: Theme.of(context).textTheme.headlineSmall,
         ),
         centerTitle: true,
       ),

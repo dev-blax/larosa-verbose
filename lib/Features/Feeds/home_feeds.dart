@@ -158,18 +158,18 @@ class HomeFeedsScreen extends StatelessWidget {
                     ),
                   ),
                 ),
-                SliverToBoxAdapter(
-                  child: SingleChildScrollView(
-                    child: Column(
-                      children: [
-                        ...controller.posts.map((post) {
-                          return PostComponent(post: post);
-                        }),
-                        const SizedBox(height: 100),
-                      ],
-                    ),
-                  ),
-                ),
+                // SliverToBoxAdapter(
+                //   child: SingleChildScrollView(
+                //     child: Column(
+                //       children: [
+                //         ...controller.posts.map((post) {
+                //           return PostComponent(post: post);
+                //         }),
+                //         const SizedBox(height: 100),
+                //       ],
+                //     ),
+                //   ),
+                // ),
               ],
             ),
             const Positioned(

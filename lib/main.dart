@@ -11,11 +11,10 @@ void main() async {
     DeviceOrientation.portraitDown,
   ]);
 
-
-
   HiveService hiveService = HiveService();
   await hiveService.init();
   await hiveService.openBox('userBox');
+  await hiveService.openBox('profileBox');
   await hiveService.openBox('onboardingBox');
 
   await dotenv.load(fileName: ".env");

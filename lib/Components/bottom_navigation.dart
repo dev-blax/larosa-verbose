@@ -71,7 +71,7 @@ class BottomNavigation extends StatelessWidget {
                     context.pushNamed('login');
                     return;
                   }
-                  context.pushNamed('cameraContent');
+                  context.pushNamed('main-post');
                 },
                 icon: const Icon(
                   Iconsax.add_circle5,

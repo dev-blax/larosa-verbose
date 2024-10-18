@@ -2,8 +2,10 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:gap/gap.dart';
+import 'package:go_router/go_router.dart';
 import 'package:larosa_block/Features/Feeds/Controllers/content_controller.dart';
 import 'package:larosa_block/Features/Feeds/camera_content.dart';
+import 'package:larosa_block/Services/auth_service.dart';
 import 'package:larosa_block/Utils/colors.dart';
 import 'package:provider/provider.dart';
 import 'package:iconsax/iconsax.dart';
@@ -21,6 +23,7 @@ class _ImagePostScreenState extends State<ImagePostScreen> {
   final TextEditingController _businessController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
   bool isCreatingPost = false;
+  bool isBusinessAccount = AuthService.isBusinessAccount();
 
   @override
   Widget build(BuildContext context) {
@@ -41,6 +44,13 @@ class _ImagePostScreenState extends State<ImagePostScreen> {
             color: LarosaColors.primary,
           ),
         ),
+        actions: [
+          if(isBusinessAccount)
+          FilledButton(
+            onPressed: () => context.pushNamed('business-post'),
+            child: const Text('Business Post'),
+          ),
+        ],
       ),
       body: SingleChildScrollView(
         child: Column(

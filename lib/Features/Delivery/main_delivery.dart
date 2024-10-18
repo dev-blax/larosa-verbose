@@ -1,8 +1,6 @@
 import 'dart:convert';
 import 'dart:math';
 import 'dart:ui';
-import 'package:flutter/rendering.dart';
-import 'package:flutter/widgets.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_polyline_points/flutter_polyline_points.dart';
@@ -13,6 +11,7 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:http/http.dart' as http;
 import 'package:iconsax/iconsax.dart';
 import 'package:larosa_block/Components/bottom_navigation.dart';
+import 'package:larosa_block/Features/Delivery/widget_to_icon.dart';
 
 class MainDeliveryScreen extends StatefulWidget {
   const MainDeliveryScreen({super.key});
@@ -177,6 +176,14 @@ class _MainDeliveryScreenState extends State<MainDeliveryScreen> {
     _getCurrentLocationAndSetState();
   }
 
+  Future<BitmapDescriptor> getCustomIcon() async {
+  return SizedBox(
+    height: 200,
+    width: 200,
+    child: Image.asset("temp image"),
+  ).toBitmapDescriptor();
+}
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -240,7 +247,7 @@ class _MainDeliveryScreenState extends State<MainDeliveryScreen> {
                                     position: _destination!,
                                     infoWindow: const InfoWindow(
                                       title: 'Destination',
-                                      snippet: 'You tapped here!',
+                                      //snippet: 'You tapped here!',
                                     ),
                                   ),
                                 }
