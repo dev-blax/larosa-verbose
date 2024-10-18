@@ -32,7 +32,7 @@ class RouterService {
   }
 
   final GoRouter router = GoRouter(
-    initialLocation: _onboarded() ? '/add-to-cart' : '/onboarding',
+    initialLocation: _onboarded() ? '/' : '/onboarding',
     routes: [
 
       // busines post
@@ -42,11 +42,11 @@ class RouterService {
         builder: (context, state) => const BusinessPostScreen(),
       ),
 
-      GoRoute(
-        name: 'add-to-cart',
-        path: '/add-to-cart',
-        builder: (context, state) => const AddToCartScreen(),
-      ),
+      // GoRoute(
+      //   name: 'add-to-cart',
+      //   path: '/add-to-cart',
+      //   builder: (context, state) => const AddToCartScreen(),
+      // ),
 
       // verification routes
       GoRoute(
