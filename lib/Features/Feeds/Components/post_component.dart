@@ -520,6 +520,7 @@ class _PostComponentState extends State<PostComponent>
                       constraints: const BoxConstraints(minHeight: 200),
                       child: CommentSection(
                         postId: widget.post['id'],
+                        names: widget.post['names'],
                       ),
                     ),
                   );
