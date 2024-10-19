@@ -26,7 +26,8 @@ class HomeFeedsController extends ChangeNotifier {
   Future<void> fetchPosts(bool refresh) async {
     if (refresh) {
       currentPage = 1;
-      posts.clear();
+      LogService.logError('clearing');
+      // posts.clear();
     }
     try {
       isLoading.value = true;
@@ -57,6 +58,7 @@ class HomeFeedsController extends ChangeNotifier {
 
   Future<void> _fetchPostsFromServer(int? profileId,
       {bool isPaginated = false}) async {
+        
     String token = AuthService.getToken();
     Map<String, String> headers = {
       "Content-Type": "application/json",
