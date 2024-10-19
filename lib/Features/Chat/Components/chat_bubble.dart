@@ -127,6 +127,7 @@ class ChatBubbleComponent extends HookWidget {
                 ],
               ],
             ),
+            Text('hello')
           ],
         ),
       ),
@@ -138,7 +139,7 @@ class ChatBubbleComponent extends HookWidget {
       constraints: BoxConstraints(
         maxWidth: MediaQuery.of(context).size.width * .7,
       ),
-      padding: const EdgeInsets.all(15),
+      padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [

@@ -1,9 +1,10 @@
+import 'dart:async';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-// import 'package:video_player/video_player.dart';
 import 'package:mime/mime.dart';
 import 'package:cached_video_player_plus/cached_video_player_plus.dart';
+import 'package:shimmer/shimmer.dart';
 
 class CenterSnapCarousel extends StatefulWidget {
   final List<String> mediaUrls;
@@ -17,11 +18,13 @@ class CenterSnapCarousel extends StatefulWidget {
 class _CenterSnapCarouselState extends State<CenterSnapCarousel> {
   final ScrollController _scrollController = ScrollController();
   final Map<int, CachedVideoPlayerPlusController> _videoControllers = {};
+  final Map<int, double> _heights = {}; // Store heights of each media item
 
   @override
   void initState() {
     super.initState();
     _scrollController.addListener(_onScroll);
+    _calculateMediaHeights();
   }
 
   @override
@@ -55,6 +58,54 @@ class _CenterSnapCarouselState extends State<CenterSnapCarousel> {
     }
   }
 
+  Future<void> _calculateMediaHeights() async {
+    for (int i = 0; i < widget.mediaUrls.length; i++) {
+      String url = widget.mediaUrls[i];
+      if (!_isVideo(url)) {
+        // For images
+        final image = Image.network(url);
+        final completer = Completer<void>();
+        image.image.resolve(const ImageConfiguration()).addListener(
+          ImageStreamListener((info, _) {
+            final double aspectRatio = info.image.width / info.image.height;
+            final double calculatedHeight = MediaQuery.of(context).size.width / aspectRatio;
+            setState(() {
+              _heights[i] = calculatedHeight;
+            });
+            print('Calculated height of image at index $i: $calculatedHeight');
+            completer.complete();
+          }),
+        );
+        await completer.future;
+      } else {
+        // For videos
+        _videoControllers[i] = CachedVideoPlayerPlusController.networkUrl(Uri.parse(url))
+          ..initialize().then((_) {
+            final double aspectRatio = _videoControllers[i]!.value.aspectRatio;
+            final double calculatedHeight = MediaQuery.of(context).size.width / aspectRatio;
+            setState(() {
+              _heights[i] = calculatedHeight;
+            });
+            print('Calculated height of video at index $i: $calculatedHeight');
+          }).catchError((error) {
+            print('Error initializing video at index $i: $error');
+          });
+      }
+    }
+  }
+
+  Widget _buildShimmerLoader(double width, double height) {
+    return Shimmer.fromColors(
+      baseColor: Colors.grey[800]!,
+      highlightColor: Colors.grey[500]!,
+      child: Container(
+        width: width,
+        height: height,
+        color: Colors.grey[300],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
@@ -69,20 +120,18 @@ class _CenterSnapCarouselState extends State<CenterSnapCarousel> {
           children: widget.mediaUrls.map((url) {
             final index = widget.mediaUrls.indexOf(url);
 
+            double calculatedHeight =
+                _heights[index] ?? MediaQuery.of(context).size.width / (16 / 9); // Default height if not yet calculated
+
             if (_isVideo(url)) {
               if (!_videoControllers.containsKey(index)) {
-                _videoControllers[index] =
-                    // VideoPlayerController.networkUrl(Uri.parse(url))
-                    //   ..initialize().then((_) {
-                    //     setState(() {});
-                    //     _videoControllers[index]!.pause();
-                    //   });
-                  CachedVideoPlayerPlusController.networkUrl(Uri.parse(url))
-                   ..initialize().then((_) {
-                        setState(() {});
-                        _videoControllers[index]!.pause();
-                      });
-                    
+                _videoControllers[index] = CachedVideoPlayerPlusController.networkUrl(Uri.parse(url))
+                  ..initialize().then((_) {
+                    setState(() {});
+                    _videoControllers[index]!.pause();
+                  }).catchError((error) {
+                    print('Error initializing video at index $index: $error');
+                  });
               }
               final controller = _videoControllers[index]!;
 
@@ -98,47 +147,39 @@ class _CenterSnapCarouselState extends State<CenterSnapCarousel> {
                           : 16 / 9,
                       child: controller.value.isInitialized
                           ? CachedVideoPlayerPlus(controller)
-                          : Center(
-                              child: Image.asset(
-                                'assets/gifs/loader.gif',
-                                width: MediaQuery.of(context).size.width,
-                                fit: BoxFit.cover,
-                              ),
-                            ),
+                          : _buildShimmerLoader(
+                              MediaQuery.of(context).size.width,
+                              calculatedHeight),
                     ),
                   ),
                   if (controller.value.isInitialized)
                     GestureDetector(
-  onTap: () => _togglePlayPause(index),
-  child: Padding(
-    padding: const EdgeInsets.only(right:6.0),
-    child: Icon(
-      controller.value.isPlaying
-          ? CupertinoIcons.pause
-          : CupertinoIcons.play,
-      size: 30.0, // Adjust the size to fit nicely within the container
-      color: Colors.white.withOpacity(0.7),
-    ),
-  ),
-)
-
+                      onTap: () => _togglePlayPause(index),
+                      child: Padding(
+                        padding: const EdgeInsets.only(right: 6.0),
+                        child: Icon(
+                          controller.value.isPlaying
+                              ? CupertinoIcons.pause
+                              : CupertinoIcons.play,
+                          size: 30.0,
+                          color: Colors.white.withOpacity(0.7),
+                        ),
+                      ),
+                    )
                 ],
               );
             } else {
               return ConstrainedBox(
-                constraints: const BoxConstraints(
-                  maxHeight: 600,
+                constraints: BoxConstraints(
+                  maxHeight: calculatedHeight,
                 ),
                 child: CachedNetworkImage(
                   width: MediaQuery.of(context).size.width,
                   imageUrl: url,
                   fit: BoxFit.cover,
-                  placeholder: (context, url) => Center(
-                    child: Image.asset(
-                      'assets/gifs/loader.gif',
-                      width: MediaQuery.of(context).size.width,
-                      fit: BoxFit.cover,
-                    ),
+                  placeholder: (context, url) => _buildShimmerLoader(
+                    MediaQuery.of(context).size.width,
+                    calculatedHeight,
                   ),
                   errorWidget: (context, url, error) => const Icon(Icons.error),
                 ),
