@@ -17,7 +17,7 @@ void main() async {
   await hiveService.init();
   await hiveService.openBox('userBox');
   await hiveService.openBox('onboardingBox');
-
+  await hiveService.openBox('profileBox');
   await dotenv.load(fileName: ".env");
   runApp(const App());
 }

@@ -10,6 +10,7 @@ import 'package:larosa_block/Features/Cart/main_cart.dart';
 import 'package:larosa_block/Features/Chat/chats_land.dart';
 import 'package:larosa_block/Features/Chat/conversation.dart';
 import 'package:larosa_block/Features/Delivery/main_delivery.dart';
+import 'package:larosa_block/Features/Delivery/new_delivery.dart';
 import 'package:larosa_block/Features/Feeds/business_post.dart';
 import 'package:larosa_block/Features/Feeds/camera_content.dart';
 import 'package:larosa_block/Features/Feeds/home_feeds.dart';
@@ -32,7 +33,7 @@ class RouterService {
   }
 
   final GoRouter router = GoRouter(
-    initialLocation: _onboarded() ? '/add-to-cart' : '/onboarding',
+    initialLocation: _onboarded() ? '/' : '/onboarding',
     routes: [
 
       // busines post
@@ -80,7 +81,7 @@ class RouterService {
       GoRoute(
         name: 'maindelivery',
         path: '/maindelivery',
-        builder: (context, state) => const MainDeliveryScreen(),
+        builder: (context, state) => const NewDelivery(),
       ),
       GoRoute(
         name: 'main-post',

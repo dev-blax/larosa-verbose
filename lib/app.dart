@@ -90,7 +90,6 @@ class _AppState extends State<App> {
           theme: LarosaAppTheme.lightTheme,
           darkTheme: LarosaAppTheme.darkTheme,
           builder: (context, child) {
-            // Update system overlays dynamically based on the theme
             Brightness brightness = Theme.of(context).brightness;
             SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
               statusBarColor: Colors.transparent,
