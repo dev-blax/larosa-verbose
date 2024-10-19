@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:flutter_svg/svg.dart';
@@ -11,10 +12,16 @@ import 'package:larosa_block/Services/auth_service.dart';
 import 'package:larosa_block/Services/log_service.dart';
 import 'package:larosa_block/Utils/colors.dart';
 import 'package:larosa_block/Utils/links.dart';
+import 'package:video_player/video_player.dart';
 
 class CommentSection extends StatefulWidget {
   final int postId;
-  const CommentSection({super.key, required this.postId});
+  final String names;
+  const CommentSection({
+    super.key,
+    required this.postId,
+    required this.names,
+  });
 
   @override
   State<CommentSection> createState() => _CommentSectionState();
@@ -23,6 +30,8 @@ class CommentSection extends StatefulWidget {
 class _CommentSectionState extends State<CommentSection> {
   final TextEditingController _commentController = TextEditingController();
   List<dynamic> postComments = [];
+  List<String> mediaFiles = []; // List to hold media files (URLs)
+
   bool _isLoading = true;
   String? replyToUsername;
   int? parentCommentId;
@@ -103,7 +112,55 @@ class _CommentSectionState extends State<CommentSection> {
   @override
   void initState() {
     fetchComments();
+    mediaFiles = widget.names
+        .split(',')
+        .map((e) => e.trim())
+        .toList(); // Split and trim the URLs
     super.initState();
+  }
+
+  Widget _buildMediaFile(String url) {
+    if (url.endsWith('.mp4')) {
+      return _buildVideoPlayer(url);
+    } else if (url.endsWith('.jpg') ||
+        url.endsWith('.png') ||
+        url.endsWith('.jpeg')) {
+      return _buildImage(url);
+    } else {
+      return const Text('Unsupported file format');
+    }
+  }
+
+  Widget _buildImage(String url) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: CachedNetworkImage(
+        imageUrl: url,
+        placeholder: (context, url) => const Center(
+          child: SpinKitCircle(color: Colors.blue),
+        ),
+        errorWidget: (context, url, error) => const Icon(Icons.error),
+        height: 200,
+        fit: BoxFit.cover,
+      ),
+    );
+  }
+
+  Widget _buildVideoPlayer(String url) {
+    VideoPlayerController _controller = VideoPlayerController.network(url);
+    return FutureBuilder(
+      future: _controller.initialize(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.done) {
+          return AspectRatio(
+            aspectRatio: _controller.value.aspectRatio,
+            child: VideoPlayer(_controller),
+          );
+        } else {
+          return const Center(child: CircularProgressIndicator());
+        }
+      },
+    );
   }
 
   Future<void> fetchComments() async {
@@ -156,165 +213,177 @@ class _CommentSectionState extends State<CommentSection> {
               ],
             ),
           )
-        : SafeArea(
-            child: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 12.0),
-                    child: Text(
-                      'Post file of the comment',
-                      style:
-                          TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                    ),
-                  ),
-                  const Divider(),
-                  postComments.isEmpty
-                      ? const Expanded(
-                          child: Center(
-                            child: Text('Be the first to comment on this post'),
-                          ),
-                        )
-                      : Column(
-                          children: [
-                            ...postComments.map((postComment) {
-                              return PostCommentTile(
-                                  comment: postComment,
-                                  onReply: (username, commentId) {
-                                    setState(() {
-                                      replyToUsername = username;
-                                      parentCommentId = commentId;
-                                    });
-                                  },
-                                  postId: widget.postId);
-                            })
-                          ],
-                        ),
-                  if (replyToUsername != null)
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            'Replying to $replyToUsername',
-                            style: TextStyle(
-                              fontStyle: FontStyle.italic,
-                              color: Colors.grey[700],
-                            ),
-                          ),
-                        ),
-                        IconButton(
-                          icon: const Icon(Icons.cancel),
-                          onPressed: () {
-                            setState(() {
-                              replyToUsername = null;
-                              parentCommentId = null;
-                            });
+        : SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 0.0),
+                child: mediaFiles.isEmpty
+                    ? const Center(
+                        child: Text('No media available for this post'),
+                      )
+                    : SizedBox(
+                        height: 400, // Set a fixed height for the PageView
+                        child: PageView.builder(
+                          itemCount: mediaFiles.length,
+                          itemBuilder: (context, index) {
+                            return _buildMediaFile(mediaFiles[index]);
                           },
-                        )
-                      ],
-                    ),
-                  Container(
-                    decoration: BoxDecoration(
-                      gradient: LarosaColors.blueGradient,
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: TextField(
-                            controller: _commentController,
-                            decoration: InputDecoration(
-                              enabledBorder: const OutlineInputBorder(
-                                borderSide: BorderSide.none,
-                              ),
-                              focusedBorder: const OutlineInputBorder(
-                                borderSide: BorderSide.none,
-                              ),
-                              hintStyle: const TextStyle(color: Colors.white),
-                              hintText: replyToUsername != null
-                                  ? 'Write your reply!'
-                                  : 'Write your comment!',
-                              border: const OutlineInputBorder(),
-                            ),
-                            onSubmitted: (value) async {
-                              if (value.isEmpty) {
-                                Get.snackbar(
-                                  'Explore Larosa',
-                                  'You can not post an empty comment',
-                                );
-                                return;
-                              }
-                              await _sendComment(
-                                value,
-                                replyToUsername != null,
-                                parentCommentId ?? 0,
-                              );
-                            },
-                          ),
                         ),
-                        const Gap(5),
-                        GestureDetector(
-                          onTap: () async {
-                            if (_commentController.text.isNotEmpty ||
-                                isCommenting) {
-                              setState(() {
-                                isCommenting = true;
-                              });
-                              await _sendComment(
-                                _commentController.text,
-                                replyToUsername != null,
-                                parentCommentId ?? 0,
-                              );
-
-                              setState(() {
-                                isCommenting = false;
-                              });
-                            } else {
-                              // HelperFunctions.displaySnackbar(
-                              //   'Cannot comment',
-                              // );
-                            }
-                          },
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              vertical: 6,
-                              horizontal: 10,
-                            ),
-                            decoration: BoxDecoration(
-                              gradient: LarosaColors.blueGradient,
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: isCommenting
-                                ? const SpinKitCircle(
-                                    color: LarosaColors.light,
-                                    size: 25,
-                                  )
-                                : const Row(
-                                    children: [
-                                      Text(
-                                        'Send',
-                                        style: TextStyle(
-                                          color: Colors.white,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                      Gap(5),
-                                      Icon(
-                                        Iconsax.send_14,
-                                        color: Colors.white,
-                                      )
-                                    ],
-                                  ),
-                          ),
-                        )
-                      ],
-                    ),
-                  ),
-                ],
+                      ),
+        
+                // child: Text(
+                //   'Post file of the comment',
+                //   style:
+                //       TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                // ),
               ),
-            ),
-          );
+              const Divider(),
+              postComments.isEmpty
+                  ? const Expanded(
+                      child: Center(
+                        child: Text('Be the first to comment on this post'),
+                      ),
+                    )
+                  : Column(
+                      children: [
+                        ...postComments.map((postComment) {
+                          return PostCommentTile(
+                              comment: postComment,
+                              onReply: (username, commentId) {
+                                setState(() {
+                                  replyToUsername = username;
+                                  parentCommentId = commentId;
+                                });
+                              },
+                              postId: widget.postId);
+                        })
+                      ],
+                    ),
+              if (replyToUsername != null)
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        'Replying to $replyToUsername',
+                        style: TextStyle(
+                          fontStyle: FontStyle.italic,
+                          color: Colors.grey[700],
+                        ),
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.cancel),
+                      onPressed: () {
+                        setState(() {
+                          replyToUsername = null;
+                          parentCommentId = null;
+                        });
+                      },
+                    )
+                  ],
+                ),
+              Container(
+                decoration: BoxDecoration(
+                  gradient: LarosaColors.blueGradient,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: _commentController,
+                        decoration: InputDecoration(
+                          enabledBorder: const OutlineInputBorder(
+                            borderSide: BorderSide.none,
+                          ),
+                          focusedBorder: const OutlineInputBorder(
+                            borderSide: BorderSide.none,
+                          ),
+                          hintStyle: const TextStyle(color: Colors.white),
+                          hintText: replyToUsername != null
+                              ? 'Write your reply!'
+                              : 'Write your comment!',
+                          border: const OutlineInputBorder(),
+                        ),
+                        onSubmitted: (value) async {
+                          if (value.isEmpty) {
+                            Get.snackbar(
+                              'Explore Larosa',
+                              'You can not post an empty comment',
+                            );
+                            return;
+                          }
+                          await _sendComment(
+                            value,
+                            replyToUsername != null,
+                            parentCommentId ?? 0,
+                          );
+                        },
+                      ),
+                    ),
+                    const Gap(5),
+                    GestureDetector(
+                      onTap: () async {
+                        if (_commentController.text.isNotEmpty ||
+                            isCommenting) {
+                          setState(() {
+                            isCommenting = true;
+                          });
+                          await _sendComment(
+                            _commentController.text,
+                            replyToUsername != null,
+                            parentCommentId ?? 0,
+                          );
+        
+                          setState(() {
+                            isCommenting = false;
+                          });
+                        } else {
+                          // HelperFunctions.displaySnackbar(
+                          //   'Cannot comment',
+                          // );
+                        }
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          vertical: 6,
+                          horizontal: 10,
+                        ),
+                        decoration: BoxDecoration(
+                          gradient: LarosaColors.blueGradient,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: isCommenting
+                            ? const SpinKitCircle(
+                                color: LarosaColors.light,
+                                size: 25,
+                              )
+                            : const Row(
+                                children: [
+                                  Text(
+                                    'Send',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  Gap(5),
+                                  Icon(
+                                    Iconsax.send_14,
+                                    color: Colors.white,
+                                  )
+                                ],
+                              ),
+                      ),
+                    )
+                  ],
+                ),
+              ),
+            ],
+          ),
+        );
   }
 }
 
@@ -364,7 +433,7 @@ class _PostCommentTileState extends State<PostCommentTile> {
   Widget build(BuildContext context) {
     print('comment: ${widget.comment}');
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4.0),
+      padding: const EdgeInsets.symmetric(vertical: 0.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -408,13 +477,13 @@ class _PostCommentTileState extends State<PostCommentTile> {
               gradient: LarosaColors.blueGradient,
               borderRadius: BorderRadius.circular(10),
             ),
-            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12),
+            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 5),
             child: Text(
               widget.comment['message'],
               style: const TextStyle(color: Colors.white),
             ),
           ),
-          const Gap(5),
+          const Gap(0),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [

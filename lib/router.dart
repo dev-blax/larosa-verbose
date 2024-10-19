@@ -43,11 +43,11 @@ class RouterService {
         builder: (context, state) => const BusinessPostScreen(),
       ),
 
-      GoRoute(
-        name: 'add-to-cart',
-        path: '/add-to-cart',
-        builder: (context, state) => const AddToCartScreen(),
-      ),
+      // GoRoute(
+      //   name: 'add-to-cart',
+      //   path: '/add-to-cart',
+      //   builder: (context, state) => const AddToCartScreen(),
+      // ),
 
       // verification routes
       GoRoute(

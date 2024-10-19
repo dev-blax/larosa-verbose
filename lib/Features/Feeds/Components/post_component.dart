@@ -17,6 +17,8 @@ import 'package:larosa_block/Utils/links.dart';
 import 'package:larosa_block/Utils/svg_paths.dart';
 import 'package:modal_bottom_sheet/modal_bottom_sheet.dart';
 
+import '../../Cart/add_to_cart.dart';
+
 class PostComponent extends StatefulWidget {
   final dynamic post;
   const PostComponent({
@@ -305,44 +307,74 @@ class _PostComponentState extends State<PostComponent>
                 ),
                 // Display the Container only if accountType is 'BUSINESS'
                 if (widget.post['accountType'] == 'BUSINESS')
-                  Container(
-                    width:
-                        41, // Set the width and height to be equal for a perfect circle
-                    height: 41,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle, // Makes the container a circle
-                      border: Border.all(
-                        color: Colors.grey, // Set the border color here
-                        width: 1.0, // Set the border width
-                      ),
-                    ),
-                    child: IconButton(
-                      onPressed: () {
-                        String username = widget
-                            .post['username']; // Replace with your data source
-                        double price = double.parse(widget.post['price']
-                            .toString()); // Ensure to convert to double
-                        String names = widget
-                            .post['names']; // Replace with your data source
+  Row(
+    children: [
+      // Price and Rating Column
+      Column(
+        children: [
+          Text(
+            'Tsh ${widget.post['price'].toString()}', // Display the price
+            style: const TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 13,
+            ),
+          ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(
+                Iconsax.star1,
+                color: Colors.yellow,
+                size: 16,
+              ),
+              const SizedBox(width: 4),
+              Text(
+                widget.post['rate'].toString(), // Replace with actual rating value
+                style: const TextStyle(fontSize: 12),
+              ),
+            ],
+          ),
+        ],
+      ),
+      const SizedBox(width: 10),
+      // "Add to Cart" Button Container
+      Container(
+        width: 41, // Set the width and height to be equal for a perfect circle
+        height: 41,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle, // Makes the container a circle
+          border: Border.all(
+            color: Colors.grey, // Set the border color here
+            width: 1.0, // Set the border width
+          ),
+        ),
+        child: IconButton(
+          onPressed: () {
+            String username = widget.post['username'];
+            double price = double.parse(widget.post['price'].toString());
+            String names = widget.post['names'];
 
-                        // Navigator.push(
-                        //   context,
-                        //   MaterialPageRoute(
-                        //     builder: (context) => AddToCartScreen(
-                        //       username: username,
-                        //       price: price,
-                        //       names: names,
-                        //     ),
-                        //   ),
-                        // );
-                      },
-                      icon: const HugeIcon(
-                        icon: HugeIcons.strokeRoundedShoppingCartCheckIn01,
-                        color: Colors.grey,
-                        size: 25,
-                      ),
-                    ),
-                  )
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => AddToCartScreen(
+                  username: username,
+                  price: price,
+                  names: names,
+                ),
+              ),
+            );
+          },
+          icon: const HugeIcon(
+            icon: HugeIcons.strokeRoundedShoppingCartCheckIn01,
+            color: Colors.grey,
+            size: 25,
+          ),
+        ),
+      ),
+    ],
+  )
+
               ],
             ),
           ),
@@ -487,6 +519,7 @@ class _PostComponentState extends State<PostComponent>
                       constraints: const BoxConstraints(minHeight: 200),
                       child: CommentSection(
                         postId: widget.post['id'],
+                        names: widget.post['names'],
                       ),
                     ),
                   );

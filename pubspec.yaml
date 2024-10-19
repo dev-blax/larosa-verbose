@@ -92,8 +92,6 @@ dependencies:
   toastification: ^2.3.0
   file_picker: ^8.0.7
   crop_your_image: ^1.1.0
-  better_player: ^0.0.84
-  chewie: ^1.8.5
   
 
 dev_dependencies:
