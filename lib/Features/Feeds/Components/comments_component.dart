@@ -433,7 +433,7 @@ class _PostCommentTileState extends State<PostCommentTile> {
   Widget build(BuildContext context) {
     print('comment: ${widget.comment}');
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4.0),
+      padding: const EdgeInsets.symmetric(vertical: 0.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -477,13 +477,13 @@ class _PostCommentTileState extends State<PostCommentTile> {
               gradient: LarosaColors.blueGradient,
               borderRadius: BorderRadius.circular(10),
             ),
-            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12),
+            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 5),
             child: Text(
               widget.comment['message'],
               style: const TextStyle(color: Colors.white),
             ),
           ),
-          const Gap(5),
+          const Gap(0),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
