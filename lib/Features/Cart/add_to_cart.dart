@@ -347,6 +347,7 @@ class _AddToCartScreenState extends State<AddToCartScreen> {
                         context: context,
                         builder: (BuildContext context) {
                           return AlertDialog(
+                            contentPadding: const EdgeInsets.all(8.0), // Reduce padding here
                             title: const Text('Select Destination'),
                             content: ClipRRect(
                               borderRadius: BorderRadius.circular(20),

@@ -22,6 +22,7 @@ import 'package:larosa_block/Utils/helpers.dart';
 import 'package:larosa_block/Utils/links.dart';
 import 'package:larosa_block/Utils/svg_paths.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:shimmer/shimmer.dart';
 
 class ProfileVisitScreen extends StatefulWidget {
   final bool isBusiness;
@@ -570,11 +571,232 @@ class _ProfileVisitScreenState extends State<ProfileVisitScreen> {
     );
   }
 
+  Widget profileShimmer(BuildContext context) {
+  return Scaffold(
+    backgroundColor: Colors.black,
+    body: SingleChildScrollView(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Cover Image Shimmer
+          Stack(
+            children: [
+              Shimmer.fromColors(
+                baseColor: Colors.grey[900]!,
+                highlightColor: Colors.grey[700]!,
+                child: Container(
+                  height: 180, // Adjust height to match your cover image
+                  width: double.infinity,
+                  color: Colors.grey[300],
+                ),
+              ),
+              // Profile Image Shimmer (positioned inside and to the right)
+              Positioned(
+                bottom: 10,
+                right: 16,
+                child: Shimmer.fromColors(
+                  baseColor: Colors.grey[900]!,
+                  highlightColor: Colors.grey[700]!,
+                  child: Container(
+                    width: 80,
+                    height: 80,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(15),
+                      color: Colors.grey[300],
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          // Profile Info Section
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const SizedBox(width: 16), // Add spacing for alignment
+                // Text Shimmer for Username, Handle, and Bio
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Shimmer.fromColors(
+                      baseColor: Colors.grey[900]!,
+                      highlightColor: Colors.grey[700]!,
+                      child: Container(
+                        width: 150,
+                        height: 15,
+                        color: Colors.grey[300],
+                      ),
+                    ),
+                    const SizedBox(height: 5),
+                    Shimmer.fromColors(
+                      baseColor: Colors.grey[900]!,
+                      highlightColor: Colors.grey[700]!,
+                      child: Container(
+                        width: 100,
+                        height: 10,
+                        color: Colors.grey[300],
+                      ),
+                    ),
+                    const SizedBox(height: 5),
+                    Shimmer.fromColors(
+                      baseColor: Colors.grey[900]!,
+                      highlightColor: Colors.grey[700]!,
+                      child: Container(
+                        width: 200,
+                        height: 10,
+                        color: Colors.grey[300],
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 20),
+          // Info Counters (Powersize, Strings, Following, Followers)
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: List.generate(4, (index) {
+                return Column(
+                  children: [
+                    Shimmer.fromColors(
+                      baseColor: Colors.grey[900]!,
+                      highlightColor: Colors.grey[700]!,
+                      child: Container(
+                        width: 60,
+                        height: 10,
+                        color: Colors.grey[300],
+                      ),
+                    ),
+                    const SizedBox(height: 5),
+                    Shimmer.fromColors(
+                      baseColor: Colors.grey[900]!,
+                      highlightColor: Colors.grey[700]!,
+                      child: Container(
+                        width: 40,
+                        height: 10,
+                        color: Colors.grey[300],
+                      ),
+                    ),
+                  ],
+                );
+              }),
+            ),
+          ),
+          const SizedBox(height: 20),
+          // Buttons (Settings, Edit Profile, Share)
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Shimmer.fromColors(
+                  baseColor: Colors.grey[900]!,
+                  highlightColor: Colors.grey[700]!,
+                  child: Container(
+                    width: 100,
+                    height: 35,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(5),
+                      color: Colors.grey[300],
+                    ),
+                  ),
+                ),
+                Shimmer.fromColors(
+                  baseColor: Colors.grey[900]!,
+                  highlightColor: Colors.grey[700]!,
+                  child: Container(
+                    width: 100,
+                    height: 35,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(5),
+                      color: Colors.grey[300],
+                    ),
+                  ),
+                ),
+                Shimmer.fromColors(
+                  baseColor: Colors.grey[900]!,
+                  highlightColor: Colors.grey[700]!,
+                  child: Container(
+                    width: 100,
+                    height: 35,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(5),
+                      color: Colors.grey[300],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 20),
+          // Four small buttons above the grid
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: List.generate(4, (index) {
+                return Shimmer.fromColors(
+                  baseColor: Colors.grey[900]!,
+                  highlightColor: Colors.grey[700]!,
+                  child: Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.rectangle,
+                      color: Colors.grey[300],
+                    ),
+                  ),
+                );
+              }),
+            ),
+          ),
+
+          // Grid Items Placeholder
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0),
+            child: GridView.builder(
+              physics: const NeverScrollableScrollPhysics(),
+              shrinkWrap: true,
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 2, // Matching the 2-column structure in your screenshot
+                crossAxisSpacing: 10,
+                mainAxisSpacing: 10,
+                childAspectRatio: 1,
+              ),
+              itemCount: 4, // Placeholder count for grid items
+              itemBuilder: (context, index) {
+                return Shimmer.fromColors(
+                  baseColor: Colors.grey[900]!,
+                  highlightColor: Colors.grey[700]!,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: Colors.grey[300],
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
   @override
   Widget build(BuildContext context) {
     return RefreshIndicator(
       onRefresh: _fetchProfile,
-      child: Scaffold(
+      child:  isLoading
+        ? profileShimmer(context) // Use the ProfileShimmer widget when loading
+        : Scaffold(
         body: isLoading
             ? NestedScrollView(
                 headerSliverBuilder:

@@ -367,35 +367,38 @@ class _LarosaConversationState extends State<LarosaConversation> {
       child: Row(
         children: [
           Expanded(
-            child: TextField(
-              controller: messageController,
-              decoration: InputDecoration(
-                prefixIcon: IconButton(
-                  onPressed: () {},
-                  icon: const Icon(
-                    Iconsax.microphone,
-                    color: Colors.white,
+            child: SizedBox(
+              height: 40,
+              child: TextField(
+                controller: messageController,
+                decoration: InputDecoration(
+                  prefixIcon: IconButton(
+                    onPressed: () {},
+                    icon: const Icon(
+                      Iconsax.microphone,
+                      color: Colors.white,
+                    ),
                   ),
-                ),
-                enabledBorder: const OutlineInputBorder(
-                  borderSide: BorderSide.none,
-                ),
-                focusedBorder: const OutlineInputBorder(
-                  borderSide: BorderSide.none,
-                ),
-                filled: false,
-                fillColor: Colors.grey.withOpacity(.2),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
-                  borderSide: BorderSide.none,
-                ),
-                contentPadding: const EdgeInsets.all(8),
-                hintText: 'Write your message!',
-                suffixIcon: IconButton(
-                  onPressed: () {},
-                  icon: const Icon(
-                    Iconsax.camera,
-                    color: Colors.white,
+                  enabledBorder: const OutlineInputBorder(
+                    borderSide: BorderSide.none,
+                  ),
+                  focusedBorder: const OutlineInputBorder(
+                    borderSide: BorderSide.none,
+                  ),
+                  filled: false,
+                  fillColor: Colors.grey.withOpacity(.2),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: BorderSide.none,
+                  ),
+                  contentPadding: const EdgeInsets.all(8),
+                  hintText: 'Write your message!',
+                  suffixIcon: IconButton(
+                    onPressed: () {},
+                    icon: const Icon(
+                      Iconsax.camera,
+                      color: Colors.white,
+                    ),
                   ),
                 ),
               ),
@@ -441,6 +444,7 @@ class _LarosaConversationState extends State<LarosaConversation> {
     return RefreshIndicator(
       onRefresh: _fetchChatMessages,
       child: Scaffold(
+        backgroundColor: Colors.black,
         appBar: AppBar(
           leading: IconButton(
             onPressed: () {

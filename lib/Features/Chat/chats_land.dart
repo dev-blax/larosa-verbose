@@ -107,6 +107,7 @@ class _ChatsLandState extends State<ChatsLand> {
     return RefreshIndicator(
       onRefresh: _fetchChats,
       child: Scaffold(
+        backgroundColor: Colors.black,
         appBar: AppBar(
           centerTitle: true,
           leading: IconButton(

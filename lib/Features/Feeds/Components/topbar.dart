@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:go_router/go_router.dart';
@@ -41,7 +42,7 @@ class TopBar1 extends StatelessWidget {
             },
             icon: Icon(
               size: 28,
-              Icons.shopping_cart_outlined,
+              CupertinoIcons.cart,
               color: Theme.of(context).colorScheme.secondary,
             ),
           ),
