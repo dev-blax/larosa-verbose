@@ -1,6 +1,8 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_typeahead/flutter_typeahead.dart';
+import 'package:geocoding/geocoding.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:ionicons/ionicons.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:gap/gap.dart';
@@ -27,6 +29,8 @@ class _NewDeliveryState extends State<NewDelivery> {
   String? selectedDestinationStreetName;
   double? destinationLatitude;
   double? destinationLongitude;
+  bool isLoadingSource = false;
+  bool isLoadingDestination = false;
 
   Future<List<Map<String, String>>> _getPlaceSuggestions(String input) async {
     final String apiKey = dotenv.env['GOOGLE_MAPS_PLACES_API_KEY']!;
@@ -71,17 +75,79 @@ class _NewDeliveryState extends State<NewDelivery> {
               sourceLatitude = lat;
               sourceLongitude = lng;
               selectedSourceStreetName = address;
-              _sourceController.text = address; // Auto-fill the input
+              _sourceController.text = address;
+              isLoadingSource = false;
             } else {
               destinationLatitude = lat;
               destinationLongitude = lng;
               selectedDestinationStreetName = address;
-              _destinationController.text = address; // Auto-fill the input
+              _destinationController.text = address;
+              isLoadingDestination = false;
             }
           });
         }
       }
     } catch (e) {
+      setState(() {
+        isLoadingSource = false;
+        isLoadingDestination = false;
+      });
+      print('Error: $e');
+    }
+  }
+
+  Future<void> _getCurrentLocation(bool isSource) async {
+    setState(() {
+      if (isSource) {
+        isLoadingSource = true;
+      } else {
+        isLoadingDestination = true;
+      }
+    });
+
+    try {
+      LocationPermission permission = await Geolocator.requestPermission();
+      if (permission == LocationPermission.denied ||
+          permission == LocationPermission.deniedForever) {
+        setState(() {
+          isLoadingSource = false;
+          isLoadingDestination = false;
+        });
+        return;
+      }
+
+      Position position = await Geolocator.getCurrentPosition(
+          desiredAccuracy: LocationAccuracy.high);
+
+      List<Placemark> placemarks = await placemarkFromCoordinates(
+          position.latitude, position.longitude);
+
+      if (placemarks.isNotEmpty) {
+        Placemark place = placemarks[0];
+        String address =
+            '${place.name}, ${place.locality}, ${place.country}';
+
+        setState(() {
+          if (isSource) {
+            sourceLatitude = position.latitude;
+            sourceLongitude = position.longitude;
+            selectedSourceStreetName = address;
+            _sourceController.text = address;
+            isLoadingSource = false;
+          } else {
+            destinationLatitude = position.latitude;
+            destinationLongitude = position.longitude;
+            selectedDestinationStreetName = address;
+            _destinationController.text = address;
+            isLoadingDestination = false;
+          }
+        });
+      }
+    } catch (e) {
+      setState(() {
+        isLoadingSource = false;
+        isLoadingDestination = false;
+      });
       print('Error: $e');
     }
   }
@@ -116,14 +182,23 @@ class _NewDeliveryState extends State<NewDelivery> {
                     return TextField(
                       controller: controller,
                       focusNode: focusNode,
-                      decoration: const InputDecoration(
-                        prefixIcon: Icon(
+                      decoration: InputDecoration(
+                        prefixIcon: const Icon(
                           Iconsax.search_normal,
                           color: Colors.white,
                         ),
+                        suffixIcon: isLoadingSource
+                            ? const Padding(
+                                padding: EdgeInsets.all(8.0),
+                                child: SizedBox(height: 1, width: 1,child: CircularProgressIndicator(strokeWidth: 2)),
+                              )
+                            : IconButton(
+                                icon: const Icon(Ionicons.locate),
+                                onPressed: () => _getCurrentLocation(true),
+                              ),
                         border: InputBorder.none,
                         labelText: 'Search for a source location',
-                        labelStyle: TextStyle(color: Colors.white),
+                        labelStyle: const TextStyle(color: Colors.white),
                       ),
                     );
                   },
@@ -148,14 +223,23 @@ class _NewDeliveryState extends State<NewDelivery> {
                     return TextField(
                       controller: controller,
                       focusNode: focusNode,
-                      decoration: const InputDecoration(
-                        prefixIcon: Icon(
+                      decoration: InputDecoration(
+                        prefixIcon: const Icon(
                           Iconsax.search_normal,
                           color: Colors.white,
                         ),
+                        suffixIcon: isLoadingDestination
+                            ? const Padding(
+                                padding: EdgeInsets.all(8.0),
+                                child: SizedBox(height: 1, width: 1,child: CircularProgressIndicator(strokeWidth: 2,)),
+                              )
+                            : IconButton(
+                                icon: const Icon(Ionicons.locate),
+                                onPressed: () => _getCurrentLocation(false),
+                              ),
                         border: InputBorder.none,
                         labelText: 'Search for a destination',
-                        labelStyle: TextStyle(color: Colors.white),
+                        labelStyle: const TextStyle(color: Colors.white),
                       ),
                     );
                   },
