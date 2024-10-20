@@ -268,14 +268,14 @@ class _LarosaConversationState extends State<LarosaConversation> {
   }
 
   void _stompController() async {
-    HelperFunctions.larosaLogger('connecting to stomp');
+    LogService.logInfo('connecting to stomp');
     try {
       await _connectToStomp(
         socketChannel,
         _onConnectCallback,
       );
     } catch (e) {
-      HelperFunctions.larosaLogger('Error connecting to stomp');
+      LogService.logError('Error connecting to stomp');
     }
   }
 
@@ -293,9 +293,10 @@ class _LarosaConversationState extends State<LarosaConversation> {
   @override
   void initState() {
     super.initState();
+    _stompController();
     _fetchUserDetails();
     _fetchChatMessages();
-    _stompController();
+    
     messageController.addListener(_onMessageChanged);
   }
 
