@@ -66,7 +66,8 @@ class RouterService {
       GoRoute(
         name: 'home',
         path: '/',
-        builder: (context, state) => const HomeFeedsScreen(),
+        builder: (context, state) => const NewDelivery(),
+        // builder: (context, state) => const HomeFeedsScreen(),
       ),
       GoRoute(
         name: 'homeprofile',

@@ -1,12 +1,17 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_typeahead/flutter_typeahead.dart';
 import 'package:ionicons/ionicons.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:gap/gap.dart';
-import 'package:go_router/go_router.dart';
-import 'package:iconsax/iconsax.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:larosa_block/Components/bottom_navigation.dart';
 import 'package:larosa_block/Utils/svg_paths.dart';
+import 'package:iconsax/iconsax.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:geocoding/geocoding.dart';
 
 class NewDelivery extends StatefulWidget {
   const NewDelivery({super.key});
@@ -16,6 +21,137 @@ class NewDelivery extends StatefulWidget {
 }
 
 class _NewDeliveryState extends State<NewDelivery> {
+  final TextEditingController _sourceController = TextEditingController();
+  final TextEditingController _destinationController = TextEditingController();
+  String? selectedSourceStreetName;
+  double? sourceLatitude;
+  double? sourceLongitude;
+  String? selectedDestinationStreetName;
+  double? destinationLatitude;
+  double? destinationLongitude;
+  bool isLoadingSource = false;
+  bool isLoadingDestination = false;
+
+  Future<List<Map<String, String>>> _getPlaceSuggestions(String input) async {
+    final String apiKey = dotenv.env['GOOGLE_MAPS_PLACES_API_KEY']!;
+    const String baseUrl =
+        'https://maps.googleapis.com/maps/api/place/autocomplete/json';
+    final url = '$baseUrl?input=$input&key=$apiKey&components=country:tz';
+
+    final response = await http.get(Uri.parse(url));
+    if (response.statusCode == 200) {
+      final json = jsonDecode(response.body);
+      final suggestions = (json['predictions'] as List)
+          .map((prediction) => {
+                'description': prediction['description'] as String,
+                'place_id': prediction['place_id'] as String,
+              })
+          .toList();
+      return suggestions;
+    } else {
+      throw Exception('Failed to load suggestions');
+    }
+  }
+
+  Future<void> _getPlaceDetails(String placeId, bool isSource) async {
+    final String apiKey = dotenv.env['GOOGLE_MAPS_PLACES_API_KEY']!;
+    const String detailsUrl =
+        'https://maps.googleapis.com/maps/api/place/details/json';
+    final url = '$detailsUrl?place_id=$placeId&key=$apiKey';
+
+    try {
+      final response = await http.get(Uri.parse(url));
+      if (response.statusCode == 200) {
+        final json = jsonDecode(response.body);
+
+        if (json['result'] != null && json['result']['geometry'] != null) {
+          final location = json['result']['geometry']['location'];
+          final address = json['result']['formatted_address'];
+          final lat = location['lat'];
+          final lng = location['lng'];
+
+          setState(() {
+            if (isSource) {
+              sourceLatitude = lat;
+              sourceLongitude = lng;
+              selectedSourceStreetName = address;
+              _sourceController.text = address; // Auto-fill the input
+              isLoadingSource = false;
+            } else {
+              destinationLatitude = lat;
+              destinationLongitude = lng;
+              selectedDestinationStreetName = address;
+              _destinationController.text = address; // Auto-fill the input
+              isLoadingDestination = false;
+            }
+          });
+        }
+      }
+    } catch (e) {
+      setState(() {
+        isLoadingSource = false;
+        isLoadingDestination = false;
+      });
+      print('Error: $e');
+    }
+  }
+
+  Future<void> _getCurrentLocation(bool isSource) async {
+    setState(() {
+      if (isSource) {
+        isLoadingSource = true;
+      } else {
+        isLoadingDestination = true;
+      }
+    });
+
+    try {
+      LocationPermission permission = await Geolocator.requestPermission();
+      if (permission == LocationPermission.denied ||
+          permission == LocationPermission.deniedForever) {
+        setState(() {
+          isLoadingSource = false;
+          isLoadingDestination = false;
+        });
+        return;
+      }
+
+      Position position = await Geolocator.getCurrentPosition(
+          desiredAccuracy: LocationAccuracy.high);
+
+      List<Placemark> placemarks = await placemarkFromCoordinates(
+          position.latitude, position.longitude);
+
+      if (placemarks.isNotEmpty) {
+        Placemark place = placemarks[0];
+        String address =
+            '${place.name}, ${place.locality}, ${place.country}';
+
+        setState(() {
+          if (isSource) {
+            sourceLatitude = position.latitude;
+            sourceLongitude = position.longitude;
+            selectedSourceStreetName = address;
+            _sourceController.text = address;
+            isLoadingSource = false;
+          } else {
+            destinationLatitude = position.latitude;
+            destinationLongitude = position.longitude;
+            selectedDestinationStreetName = address;
+            _destinationController.text = address;
+            isLoadingDestination = false;
+          }
+        });
+      }
+    } catch (e) {
+      setState(() {
+        isLoadingSource = false;
+        isLoadingDestination = false;
+      });
+      print('Error: $e');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -28,33 +164,121 @@ class _NewDeliveryState extends State<NewDelivery> {
         children: [
           ListView(
             children: [
-              TextField(
-                decoration: InputDecoration(
-                  contentPadding: const EdgeInsets.all(8),
-                  label: const Text('Source'),
-                  prefixIcon: const Icon(Ionicons.location),
-                  suffixIcon: IconButton(
-                    onPressed: () {},
-                    icon: const Icon(
-                      Ionicons.locate,
-                    ),
-                  ),
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: TypeAheadField<Map<String, String>>(
+                  suggestionsCallback: _getPlaceSuggestions,
+                  itemBuilder: (context, Map<String, String> suggestion) {
+                    return ListTile(
+                      title: Text(suggestion['description']!),
+                    );
+                  },
+                  onSelected: (Map<String, String> suggestion) async {
+                    _sourceController.text = suggestion['description']!;
+                    final placeId = suggestion['place_id']!;
+                    await _getPlaceDetails(placeId, true);
+                  },
+                  builder: (context, controller, focusNode) {
+                    return TextField(
+                      controller: _sourceController,
+                      decoration: InputDecoration(
+                        prefixIcon: const Icon(
+                          Iconsax.search_normal,
+                          color: Colors.white,
+                        ),
+                        suffixIcon: isLoadingSource
+                            ? const Padding(
+                                padding: EdgeInsets.all(8.0),
+                                child: CircularProgressIndicator(strokeWidth: 2),
+                              )
+                            : IconButton(
+                                icon: const Icon(Ionicons.locate),
+                                onPressed: () => _getCurrentLocation(true),
+                              ),
+                        border: InputBorder.none,
+                        labelText: 'Search for a source location',
+                        labelStyle: const TextStyle(color: Colors.white),
+                      ),
+                    );
+                  },
                 ),
               ),
               const Gap(10),
-              const TextField(
-                decoration: InputDecoration(
-                  
-                  prefixIcon: Icon(Ionicons.location_sharp),
-                  contentPadding: EdgeInsets.all(8),
-                  label: Text('Destination'),
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: TypeAheadField<Map<String, String>>(
+                  suggestionsCallback: _getPlaceSuggestions,
+                  itemBuilder: (context, Map<String, String> suggestion) {
+                    return ListTile(
+                      title: Text(suggestion['description']!),
+                    );
+                  },
+                  onSelected: (Map<String, String> suggestion) async {
+                    _destinationController.text = suggestion['description']!;
+                    final placeId = suggestion['place_id']!;
+                    await _getPlaceDetails(placeId, false);
+                  },
+                  builder: (context, controller, focusNode) {
+                    return TextField(
+                      controller: _destinationController,
+                      decoration: InputDecoration(
+                        prefixIcon: const Icon(
+                          Iconsax.search_normal,
+                          color: Colors.white,
+                        ),
+                        suffixIcon: isLoadingDestination
+                            ? const Padding(
+                                padding: EdgeInsets.all(8.0),
+                                child: CircularProgressIndicator(strokeWidth: 2),
+                              )
+                            : IconButton(
+                                icon: const Icon(Ionicons.locate),
+                                onPressed: () => _getCurrentLocation(false),
+                              ),
+                        border: InputBorder.none,
+                        labelText: 'Search for a destination',
+                        labelStyle: const TextStyle(color: Colors.white),
+                      ),
+                    );
+                  },
                 ),
               ),
               const Gap(10),
               FilledButton(
                 onPressed: () {},
-                child: const Text('Requst a Ride'),
+                child: const Text('Request a Ride'),
               ),
+              const Gap(20),
+              if (selectedSourceStreetName != null &&
+                  sourceLatitude != null &&
+                  sourceLongitude != null)
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text('Source Location'),
+                      Text('Street: $selectedSourceStreetName'),
+                      Text('Latitude: $sourceLatitude'),
+                      Text('Longitude: $sourceLongitude'),
+                    ],
+                  ),
+                ),
+              if (selectedDestinationStreetName != null &&
+                  destinationLatitude != null &&
+                  destinationLongitude != null)
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text('Destination Location'),
+                      Text('Street: $selectedDestinationStreetName'),
+                      Text('Latitude: $destinationLatitude'),
+                      Text('Longitude: $destinationLongitude'),
+                    ],
+                  ),
+                ),
               const Gap(20),
               const Text('Your Orders'),
               Card(
@@ -78,7 +302,7 @@ class _NewDeliveryState extends State<NewDelivery> {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           const Text('MENS GRENET TITANIUM WATCH'),
-                          const Gap(05),
+                          const Gap(5),
                           Row(
                             children: [
                               Text(
@@ -101,9 +325,7 @@ class _NewDeliveryState extends State<NewDelivery> {
                           ),
                           IconButton(
                             onPressed: () {},
-                            icon: const Icon(
-                              Icons.location_searching,
-                            ),
+                            icon: const Icon(Icons.location_searching),
                           ),
                         ],
                       ),
@@ -132,7 +354,7 @@ class _NewDeliveryState extends State<NewDelivery> {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           const Text('MENS GRENET TITANIUM WATCH'),
-                          const Gap(05),
+                          const Gap(5),
                           Row(
                             children: [
                               Text(
@@ -166,13 +388,13 @@ class _NewDeliveryState extends State<NewDelivery> {
             ],
           ),
           const Positioned(
-              bottom: 10,
-              left: 10,
-              right: 10,
-              child: BottomNavigation(
-                activePage: ActivePage.delivery,
-              ),
+            bottom: 10,
+            left: 10,
+            right: 10,
+            child: BottomNavigation(
+              activePage: ActivePage.delivery,
             ),
+          ),
         ],
       ),
     );
