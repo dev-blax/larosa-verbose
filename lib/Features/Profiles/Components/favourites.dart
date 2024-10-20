@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 import 'package:http/http.dart' as http;
 import 'package:larosa_block/Services/auth_service.dart';
 import 'package:larosa_block/Services/log_service.dart';
@@ -14,7 +15,6 @@ import 'package:go_router/go_router.dart';
 import 'package:mime/mime.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:video_thumbnail/video_thumbnail.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 
 class FavouritesComponent extends StatefulWidget {
@@ -36,25 +36,28 @@ class _FavouritesComponentState extends State<FavouritesComponent> {
     _fetchLikedPosts();
   }
 
-  Future<void> _loadPostsFromCache() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    final String sharedPrefsKey = 'favourites_${widget.profileId}';
-    String? cachedPostsJson = prefs.getString(sharedPrefsKey);
+// Loading posts from Hive cache
+Future<void> _loadPostsFromCache() async {
+  final String hiveBoxName = 'favourites_${widget.profileId}';
+  var box = await Hive.openBox(hiveBoxName);
 
-    if (cachedPostsJson != null) {
-      final List<dynamic> cachedPosts = json.decode(cachedPostsJson);
-      setState(() {
-        posts = cachedPosts;
-      });
-    }
+  List<dynamic>? cachedPosts = box.get('posts');
+  
+  if (cachedPosts != null) {
+    setState(() {
+      posts = cachedPosts;
+    });
   }
+}
 
-  Future<void> _cachePosts(List<dynamic> posts) async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    String postsJson = json.encode(posts);
-    final String sharedPrefsKey = 'favourites_${widget.profileId}';
-    await prefs.setString(sharedPrefsKey, postsJson);
-  }
+// Caching posts using Hive
+Future<void> _cachePosts(List<dynamic> posts) async {
+  final String hiveBoxName = 'favourites_${widget.profileId}';
+  var box = await Hive.openBox(hiveBoxName);
+  
+  await box.put('posts', posts);
+}
+
 
   Future<void> _fetchLikedPosts() async {
     // Check if network is available using connectivity_plus

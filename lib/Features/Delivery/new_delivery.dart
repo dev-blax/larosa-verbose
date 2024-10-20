@@ -3,8 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:ionicons/ionicons.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:gap/gap.dart';
-import 'package:go_router/go_router.dart';
-import 'package:iconsax/iconsax.dart';
 import 'package:larosa_block/Components/bottom_navigation.dart';
 import 'package:larosa_block/Utils/svg_paths.dart';
 

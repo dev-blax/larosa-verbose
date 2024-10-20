@@ -39,7 +39,6 @@ class BottomNavigation extends StatelessWidget {
             children: [
               IconButton(
                 onPressed: () {
-                  
                   context.goNamed('home');
                 },
                 icon: SvgPicture.asset(
@@ -88,7 +87,9 @@ class BottomNavigation extends StatelessWidget {
                   context.pushNamed('maindelivery');
                 },
                 icon: SvgPicture.asset(
-                  'assets/svg_icons/transportOutline.svg',
+                  activePage == ActivePage.delivery
+                      ? SvgIconsPaths.transportBold
+                      : 'assets/svg_icons/transportOutline.svg',
                   colorFilter: ColorFilter.mode(
                     Theme.of(context).colorScheme.secondary,
                     BlendMode.srcIn,

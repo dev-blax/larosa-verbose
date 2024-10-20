@@ -13,9 +13,7 @@ class SettingsScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
-          onPressed: () {
-            // Get.back();
-          },
+          onPressed: () => context.pop(),
           icon: const Icon(
             Iconsax.arrow_left_2,
           ),

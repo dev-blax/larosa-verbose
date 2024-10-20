@@ -121,7 +121,7 @@ class _HomeProfileScreenState extends State<HomeProfileScreen> {
         return;
       }
 
-      LogService.logInfo(
+      LogService.logError(
           'neither 200 nor 403: status code is ${response.statusCode}');
     } catch (e) {
       LogService.logError(

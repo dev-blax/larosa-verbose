@@ -161,6 +161,7 @@ class _SearchScreenState extends State<SearchScreen> {
           title: const Text(
             'Discover',
           ),
+          
           actions: [
             IconButton(
               onPressed: () {
