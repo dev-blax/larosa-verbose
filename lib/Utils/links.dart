@@ -5,6 +5,7 @@ class LarosaLinks {
   //     'http://explorelarosa2-env.eba-7tvkaxyw.af-south-1.elasticbeanstalk.com';
 
   static const String baseurl = 'https://exploretest.uc.r.appspot.com';
+  static const String socketUrl = 'wss://exploretest.uc.r.appspot.com';
   // static const String nakedBaseUrl =
   //     'explorelarosa2-env.eba-7tvkaxyw.af-south-1.elasticbeanstalk.com';
 
@@ -17,11 +18,8 @@ class LarosaLinks {
   static const String likePost = '$baseurl/like/save';
   static const String fetchComments = '$baseurl/comments/post';
   static const String newComment = '$baseurl/comments/new';
-  // feeds
   static const String newPost = '/PostEditDelete/upload';
   static const String feedsEndpoint = '/feeds/fetch';
-
-  // profiles
   static const String brandProfile = '/brand/myProfile';
 
   // chats

@@ -1,5 +1,6 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:flutter_typeahead/flutter_typeahead.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
@@ -12,10 +13,12 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:larosa_block/Components/bottom_navigation.dart';
 import 'package:larosa_block/Services/auth_service.dart';
 import 'package:larosa_block/Services/log_service.dart';
+import 'package:larosa_block/Utils/helpers.dart';
 import 'package:larosa_block/Utils/links.dart';
 import 'package:larosa_block/Utils/svg_paths.dart';
 import 'package:iconsax/iconsax.dart';
 import 'package:stomp_dart_client/stomp_dart_client.dart';
+import 'package:http/http.dart' as http;
 
 class NewDelivery extends StatefulWidget {
   const NewDelivery({super.key});
@@ -35,58 +38,115 @@ class _NewDeliveryState extends State<NewDelivery> {
   double? destinationLongitude;
   bool isLoadingSource = false;
   bool isLoadingDestination = false;
-  late StompClient _stompClient;
-  final String socketChannel = '${LarosaLinks.baseurl}/ws';
+  bool _connectedToSocket = false;
+  late StompClient stompClient;
+  final String socketChannel =
+      '${LarosaLinks.baseurl}/ws/topic/customer/${AuthService.getProfileId()}';
 
-  Future<void> _connectToStomp(
-    String url,
-    Function(StompFrame) onConnectCallback,
-  ) async {
-    _stompClient = StompClient(
+  Future<void> _socketConnection2() async {
+    const String wsUrl = 'https://exploretest.uc.r.appspot.com/ws';
+    // final channel =
+    //     IOWebSocketChannel.connect('https://exploretest.uc.r.appspot.com/ws');
+
+    stompClient = StompClient(
       config: StompConfig.sockJS(
-        url: url,
-        onConnect: onConnectCallback,
-        onWebSocketError: (dynamic error) {
-          LogService.logError('WebSocket error occurred: $error');
-        },
-        onStompError: (StompFrame frame) {
-          LogService.logError('Stomp error occurred: $frame');
-        },
-        onDisconnect: (_) {
-          LogService.logFatal('Disconnected');
-        },
+        url: wsUrl,
+        onConnect: onConnect,
+        onWebSocketError: (dynamic error) =>
+            LogService.logError('WebSocket error: $error'),
+        onStompError: (StompFrame frame) =>
+            LogService.logWarning('Stomp error: ${frame.body}'),
+        onDisconnect: (StompFrame frame) =>
+            LogService.logFatal('Disconnected from WebSocket'),
       ),
     );
-    _stompClient.activate();
+
+    stompClient.activate();
   }
 
-  void _stompController() async {
-    LogService.logInfo('connecting to stomp');
-    try {
-      await _connectToStomp(
-        socketChannel,
-        _onConnectCallback,
-      );
-    } catch (e) {
-      LogService.logError('Error connecting to stomp');
-    }
-  }
+  // Callback for handling successful connection
+  void onConnect(StompFrame frame) {
+    setState(() {
+      _connectedToSocket = true;
+    });
+    LogService.logInfo('Connected to WebSocket server: $frame');
 
-  void _onConnectCallback(StompFrame connectFrame) {
-    _stompClient.subscribe(
-      destination: '/user/${AuthService.getProfileId()}/queue/ack',
-      callback: _onMessageReceived,
+    stompClient.subscribe(
+      destination: '/topic/customer/${AuthService.getProfileId()}',
+      callback: (StompFrame message) {
+        LogService.logInfo(
+          'Received message from /topic/customer/${AuthService.getProfileId()}: ${message.body}',
+        );
+
+        HelperFunctions.showToast(
+          message.body.toString(),
+          true,
+        );
+      },
     );
-  }
 
-  void _onMessageReceived(StompFrame frame) {
-    // Get.snackbar('Message Received', frame.body!);
+    LogService.logInfo('Successfully subscribed to /topic/customer/48');
   }
 
   @override
   void initState() {
     super.initState();
-    _stompController();
+    // _stompController();
+    _socketConnection2();
+  }
+
+  bool isRequestingRide = false;
+  Future<void> _requestRide() async {
+    setState(() {
+      isRequestingRide = true;
+    });
+    Map<String, String> headers = {
+      "Content-Type": "application/json",
+      "Access-Control-Allow-Origin": "*",
+      'Authorization': 'Bearer ${AuthService.getToken()}',
+    };
+
+    String endpoint =
+        'https://exploretest.uc.r.appspot.com/api/v1/ride/request';
+
+    try {
+      var response = await http.post(
+        Uri.parse(endpoint),
+        headers: headers,
+        body: jsonEncode({
+          "startLat": -6.2395265,
+          "startLng": 35.8273295,
+          "endLat": -6.169613300000001,
+          "endLng": 35.7774005,
+          "vehicleType": "MOTORCYCLE",
+          "paymentMethod": "CASH",
+          "country": "Tanzania",
+          "city": "Dodoma"
+        }),
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        LogService.logInfo('Cool');
+        HelperFunctions.showToast(
+          'We received your ride request',
+          true,
+        );
+        return;
+      }
+
+      if (response.statusCode == 401) {
+        await AuthService.refreshToken();
+        await _requestRide();
+      }
+
+      LogService.logError('Not cool, response: ${response.statusCode} ');
+    } catch (e) {
+      LogService.logError('error $e');
+    } finally {
+      setState(() {
+        isRequestingRide = false;
+      });
+    }
   }
 
   Future<List<Map<String, String>>> _getPlaceSuggestions(String input) async {
@@ -210,7 +270,6 @@ class _NewDeliveryState extends State<NewDelivery> {
 
   @override
   Widget build(BuildContext context) {
-    LogService.logInfo(AuthService.getToken());
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
@@ -311,8 +370,15 @@ class _NewDeliveryState extends State<NewDelivery> {
               ),
               const Gap(10),
               FilledButton(
-                onPressed: () {},
-                child: const Text('Request a Ride'),
+                onPressed: _requestRide,
+                child: isRequestingRide
+                    ? const SpinKitCircle(
+                        color: Colors.white,
+                        size: 20,
+                      )
+                    : const Text(
+                        'Request a Ride',
+                      ),
               ),
               const Gap(20),
               if (selectedSourceStreetName != null &&
@@ -451,6 +517,7 @@ class _NewDeliveryState extends State<NewDelivery> {
                   ),
                 ),
               ),
+              const Gap(100),
             ],
           ),
           const Positioned(

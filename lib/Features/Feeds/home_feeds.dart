@@ -193,6 +193,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:larosa_block/Components/bottom_navigation.dart';
+import 'package:larosa_block/Features/Feeds/Components/post_component.dart';
 import 'package:larosa_block/Features/Feeds/Controllers/home_feeds_controller.dart';
 import 'package:provider/provider.dart';
 import 'package:larosa_block/Features/Feeds/Components/topbar.dart';
@@ -237,34 +238,34 @@ class HomeFeedsScreen extends StatelessWidget {
                     ),
                   ),
                 ),
-                // SliverToBoxAdapter(
-                //   child: ValueListenableBuilder<bool>(
-                //     valueListenable: controller.isLoading,
-                //     builder: (context, isLoading, child) {
-                //       if (isLoading) {
-                //         return _buildShimmerLoading();
-                //       } else if (controller.posts.isEmpty) {
-                //         return const Center(
-                //           child: Padding(
-                //             padding: EdgeInsets.only(top: 50.0),
-                //             child: Text('No posts available'),
-                //           ),
-                //         );
-                //       } else {
-                //         return SingleChildScrollView(
-                //           child: Column(
-                //             children: [
-                //               ...controller.posts.map((post) {
-                //                 return PostComponent(post: post);
-                //               }),
-                //               const SizedBox(height: 100),
-                //             ],
-                //           ),
-                //         );
-                //       }
-                //     },
-                //   ),
-                // ),
+                SliverToBoxAdapter(
+                  child: ValueListenableBuilder<bool>(
+                    valueListenable: controller.isLoading,
+                    builder: (context, isLoading, child) {
+                      if (isLoading) {
+                        return _buildShimmerLoading();
+                      } else if (controller.posts.isEmpty) {
+                        return const Center(
+                          child: Padding(
+                            padding: EdgeInsets.only(top: 50.0),
+                            child: Text('No posts available'),
+                          ),
+                        );
+                      } else {
+                        return SingleChildScrollView(
+                          child: Column(
+                            children: [
+                              ...controller.posts.map((post) {
+                                return PostComponent(post: post);
+                              }),
+                              const SizedBox(height: 100),
+                            ],
+                          ),
+                        );
+                      }
+                    },
+                  ),
+                ),
               ],
             ),
             const Positioned(

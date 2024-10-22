@@ -95,6 +95,7 @@ dependencies:
   file_picker: ^8.0.7
   crop_your_image: ^1.1.0
   ionicons: ^0.2.2
+  web_socket_channel: ^2.4.3
   
 
 dev_dependencies:

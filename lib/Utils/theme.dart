@@ -3,7 +3,6 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:larosa_block/Utils/colors.dart';
 import 'package:larosa_block/Utils/text_theme.dart';
 
-
 class LarosaAppTheme {
   LarosaAppTheme._();
 
@@ -14,6 +13,12 @@ class LarosaAppTheme {
     ),
     useMaterial3: true,
     fontFamily: GoogleFonts.roboto().fontFamily,
+    filledButtonTheme: FilledButtonThemeData(
+      style: FilledButton.styleFrom(
+        backgroundColor: LarosaColors.primary,
+        shape: const ContinuousRectangleBorder(),
+      ),
+    ),
     colorScheme: ColorScheme.fromSeed(
       // secondary: LarosaColors.dark,
       secondary: Colors.black,
