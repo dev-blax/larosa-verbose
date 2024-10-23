@@ -208,6 +208,7 @@ class HomeFeedsScreen extends StatelessWidget {
     final controller = Provider.of<HomeFeedsController>(context);
 
     return Scaffold(
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: RefreshIndicator(
         onRefresh: () async {
           await controller.fetchPosts(true);
