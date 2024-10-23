@@ -257,7 +257,11 @@ class HomeFeedsScreen extends StatelessWidget {
                           child: Column(
                             children: [
                               ...controller.posts.map((post) {
-                                return PostComponent(post: post);
+                                return Column(
+                                  children: [
+                                    PostComponent(post: post),
+                                  ],
+                                );
                               }),
                               const SizedBox(height: 100),
                             ],
