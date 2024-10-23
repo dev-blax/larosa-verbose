@@ -57,7 +57,7 @@ class MediaCarousel extends StatelessWidget {
         itemBuilder: (context, index) {
           String url = mediaUrls[index];
           if (url.endsWith('.mp4') || url.endsWith('.mov')) {
-            return VideoPlayerWidget(videoUrl: url);
+            // return VideoPlayerWidget(videoUrl: url);
           } else {
             return CachedNetworkImage(
               imageUrl: url,

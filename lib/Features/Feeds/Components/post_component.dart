@@ -260,7 +260,7 @@ class _PostComponentState extends State<PostComponent>
                               child: Row(
                                 children: [
                                   Text(
-                                    widget.post['name'],
+                                    widget.post['name'].toString(),
                                     style: const TextStyle(
                                       color: Color.fromARGB(255, 214, 208, 208),
                                       fontSize: 12,
