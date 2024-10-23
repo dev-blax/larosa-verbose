@@ -30,7 +30,7 @@ class LarosaAppTheme {
     ),
     disabledColor: LarosaColors.grey,
     brightness: Brightness.light,
-    scaffoldBackgroundColor: LarosaColors.light,
+    scaffoldBackgroundColor: Colors.white,
     primaryColor: LarosaColors.primary,
     textTheme: LarosaTextTheme.lightTextTheme,
   );
