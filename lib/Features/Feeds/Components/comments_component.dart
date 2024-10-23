@@ -16,6 +16,7 @@ import 'package:shimmer/shimmer.dart';
 import 'package:video_player/video_player.dart';
 
 import '../../../Components/video_player.dart';
+import 'carousel.dart';
 
 class CommentSection extends StatefulWidget {
   final int postId;
@@ -123,7 +124,7 @@ class _CommentSectionState extends State<CommentSection> {
   }
 
 Widget _buildVideoPlayer(String url) {
-  return VideoPlayerWidget(url: url); // Ensure VideoPlayerWidget is a widget class
+  return CenterSnapCarousel(mediaUrls: [url]); // Ensure VideoPlayerWidget is a widget class
 }
 
   Widget _buildMediaFile(String url) {
@@ -229,7 +230,7 @@ Widget commentsShimmer(BuildContext context) {
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16.0),
                   child: Column(
-                    children: List.generate(4, (index) {
+                    children: List.generate(10, (index) {
                       return Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -343,224 +344,226 @@ Widget commentsShimmer(BuildContext context) {
   Widget build(BuildContext context) {
     return _isLoading
         ? commentsShimmer(context)
-        : Column(
-          children: [
-            Flexible(
-  child: CustomScrollView(
-    slivers: [
-      SliverAppBar(
-        expandedHeight: 400, // Height for the media section when expanded
-        floating: false,
-        pinned: true,
-        backgroundColor: Colors.black,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () {
-            Navigator.pop(context);
-          },
-        ),
-        flexibleSpace: LayoutBuilder(
-          builder: (BuildContext context, BoxConstraints constraints) {
-            // Calculate the percentage of collapse for the SliverAppBar
-            double percentCollapsed = ((constraints.maxHeight - kToolbarHeight) /
-                    (400 - kToolbarHeight))
-                .clamp(0.0, 1.0); // Ensure value is between 0 and 1
-
-                // Define hasVideoFiles here
-                        bool hasVideoFiles = mediaFiles.any((url) => url.endsWith('.mp4'));
-
-            return Stack(
-              children: [
-                // This is the media section when the app bar is expanded
-                Opacity(
-                  opacity: percentCollapsed,
-                  child: PageView.builder(
-                    itemCount: mediaFiles.length,
-                    itemBuilder: (context, index) {
-                      return _buildMediaFile(mediaFiles[index]);
-                    },
+        : Scaffold(
+          body: Column(
+            children: [
+              Flexible(
+            child: CustomScrollView(
+              slivers: [
+                SliverAppBar(
+          expandedHeight: 400, // Height for the media section when expanded
+          floating: false,
+          pinned: true,
+          backgroundColor: Colors.black,
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_downward),
+            onPressed: () {
+              Navigator.pop(context);
+            },
+          ),
+          flexibleSpace: LayoutBuilder(
+            builder: (BuildContext context, BoxConstraints constraints) {
+              // Calculate the percentage of collapse for the SliverAppBar
+              double percentCollapsed = ((constraints.maxHeight - kToolbarHeight) /
+                      (400 - kToolbarHeight))
+                  .clamp(0.0, 1.0); // Ensure value is between 0 and 1
+          
+                  // Define hasVideoFiles here
+                          bool hasVideoFiles = mediaFiles.any((url) => url.endsWith('.mp4'));
+          
+              return Stack(
+                children: [
+                  // This is the media section when the app bar is expanded
+                  Opacity(
+                    opacity: percentCollapsed,
+                    child: PageView.builder(
+                      itemCount: mediaFiles.length,
+                      itemBuilder: (context, index) {
+                        return _buildMediaFile(mediaFiles[index]);
+                      },
+                    ),
                   ),
-                ),
-                // This is the media section when the app bar is collapsed
-                if (!hasVideoFiles)
-                Positioned(
-                  bottom: 0,
-                  left: 0,
-                  right: 0,
-                  child: Opacity(
-                    opacity: 1.0 - percentCollapsed,
-                    child: SizedBox(
-                      height: 300, // Increased height for the collapsed state
-                      child: PageView.builder(
-                        itemCount: mediaFiles.length,
-                        itemBuilder: (context, index) {
-                          return _buildMediaFile(mediaFiles[index]);
-                        },
+                  // This is the media section when the app bar is collapsed
+                  if (!hasVideoFiles)
+                  Positioned(
+                    bottom: 0,
+                    left: 0,
+                    right: 0,
+                    child: Opacity(
+                      opacity: 1.0 - percentCollapsed,
+                      child: SizedBox(
+                        height: 300, // Increased height for the collapsed state
+                        child: PageView.builder(
+                          itemCount: mediaFiles.length,
+                          itemBuilder: (context, index) {
+                            return _buildMediaFile(mediaFiles[index]);
+                          },
+                        ),
                       ),
                     ),
                   ),
+                ],
+              );
+            },
+          ),
                 ),
-              ],
-            );
-          },
-        ),
-      ),
-      SliverToBoxAdapter(
-        child: Column(
-          children: [
-            const Divider(),
-            postComments.isEmpty
-                ? const Center(
-                    child: Text('Be the first to comment on this post'),
-                  )
-                : Column(
-                    children: [
-                      ...postComments.map((postComment) {
-                        return PostCommentTile(
-                          comment: postComment,
-                          onReply: (username, commentId) {
-                            setState(() {
-                              replyToUsername = username;
-                              parentCommentId = commentId;
-                            });
-                          },
-                          postId: widget.postId,
-                        );
-                      })
-                    ],
-                  ),
-          ],
-        ),
-      ),
-    ],
-  ),
-)
-,
-
-            if (replyToUsername != null)
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Text(
-                              'Replying to $replyToUsername',
-                              style: TextStyle(
-                                fontStyle: FontStyle.italic,
-                                color: Colors.grey[700],
-                              ),
-                            ),
-                          ),
-                          IconButton(
-                            icon: const Icon(Icons.cancel),
-                            onPressed: () {
+                SliverToBoxAdapter(
+          child: Column(
+            children: [
+              const Divider(),
+              postComments.isEmpty
+                  ? const Center(
+                      child: Text('Be the first to comment on this post'),
+                    )
+                  : Column(
+                      children: [
+                        ...postComments.map((postComment) {
+                          return PostCommentTile(
+                            comment: postComment,
+                            onReply: (username, commentId) {
                               setState(() {
-                                replyToUsername = null;
-                                parentCommentId = null;
+                                replyToUsername = username;
+                                parentCommentId = commentId;
                               });
                             },
-                          )
-                        ],
-                      ),
-                    Container(
-                      decoration: BoxDecoration(
-                        gradient: LarosaColors.blueGradient,
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: SizedBox(
-                              height: 50,
-                              child: TextField(
-                                controller: _commentController,
-                                decoration: InputDecoration(
-                                  enabledBorder: const OutlineInputBorder(
-                                    borderSide: BorderSide.none,
-                                  ),
-                                  focusedBorder: const OutlineInputBorder(
-                                    borderSide: BorderSide.none,
-                                  ),
-                                  hintStyle: const TextStyle(color: Colors.white),
-                                  hintText: replyToUsername != null
-                                      ? 'Write your reply!'
-                                      : 'Write your comment!',
-                                  border: const OutlineInputBorder(),
+                            postId: widget.postId,
+                          );
+                        })
+                      ],
+                    ),
+            ],
+          ),
+                ),
+              ],
+            ),
+          )
+          ,
+          
+              if (replyToUsername != null)
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                'Replying to $replyToUsername',
+                                style: TextStyle(
+                                  fontStyle: FontStyle.italic,
+                                  color: Colors.grey[700],
                                 ),
-                                onSubmitted: (value) async {
-                                  if (value.isEmpty) {
-                                    Get.snackbar(
-                                      'Explore Larosa',
-                                      'You can not post an empty comment',
+                              ),
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.cancel),
+                              onPressed: () {
+                                setState(() {
+                                  replyToUsername = null;
+                                  parentCommentId = null;
+                                });
+                              },
+                            )
+                          ],
+                        ),
+                      Container(
+                        decoration: BoxDecoration(
+                          gradient: LarosaColors.blueGradient,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: SizedBox(
+                                height: 50,
+                                child: TextField(
+                                  controller: _commentController,
+                                  decoration: InputDecoration(
+                                    enabledBorder: const OutlineInputBorder(
+                                      borderSide: BorderSide.none,
+                                    ),
+                                    focusedBorder: const OutlineInputBorder(
+                                      borderSide: BorderSide.none,
+                                    ),
+                                    hintStyle: const TextStyle(color: Colors.white),
+                                    hintText: replyToUsername != null
+                                        ? 'Write your reply!'
+                                        : 'Write your comment!',
+                                    border: const OutlineInputBorder(),
+                                  ),
+                                  onSubmitted: (value) async {
+                                    if (value.isEmpty) {
+                                      Get.snackbar(
+                                        'Explore Larosa',
+                                        'You can not post an empty comment',
+                                      );
+                                      return;
+                                    }
+                                    await _sendComment(
+                                      value,
+                                      replyToUsername != null,
+                                      parentCommentId ?? 0,
                                     );
-                                    return;
-                                  }
+                                  },
+                                ),
+                              ),
+                            ),
+                            const Gap(5),
+                            GestureDetector(
+                              onTap: () async {
+                                if (_commentController.text.isNotEmpty ||
+                                    isCommenting) {
+                                  setState(() {
+                                    isCommenting = true;
+                                  });
                                   await _sendComment(
-                                    value,
+                                    _commentController.text,
                                     replyToUsername != null,
                                     parentCommentId ?? 0,
                                   );
-                                },
-                              ),
-                            ),
-                          ),
-                          const Gap(5),
-                          GestureDetector(
-                            onTap: () async {
-                              if (_commentController.text.isNotEmpty ||
-                                  isCommenting) {
-                                setState(() {
-                                  isCommenting = true;
-                                });
-                                await _sendComment(
-                                  _commentController.text,
-                                  replyToUsername != null,
-                                  parentCommentId ?? 0,
-                                );
-                        
-                                setState(() {
-                                  isCommenting = false;
-                                });
-                              } else {
-                                // HelperFunctions.displaySnackbar(
-                                //   'Cannot comment',
-                                // );
-                              }
-                            },
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                vertical: 10,
-                                horizontal: 10,
-                              ),
-                              decoration: BoxDecoration(
-                                gradient: LarosaColors.blueGradient,
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              child: isCommenting
-                                  ? const SpinKitCircle(
-                                      color: LarosaColors.light,
-                                      size: 25,
-                                    )
-                                  : const Row(
-                                      children: [
-                                        Text(
-                                          'Send',
-                                          style: TextStyle(
-                                            color: Colors.white,
-                                            fontWeight: FontWeight.bold,
+                          
+                                  setState(() {
+                                    isCommenting = false;
+                                  });
+                                } else {
+                                  // HelperFunctions.displaySnackbar(
+                                  //   'Cannot comment',
+                                  // );
+                                }
+                              },
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 10,
+                                  horizontal: 10,
+                                ),
+                                decoration: BoxDecoration(
+                                  gradient: LarosaColors.blueGradient,
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: isCommenting
+                                    ? const SpinKitCircle(
+                                        color: LarosaColors.light,
+                                        size: 25,
+                                      )
+                                    : const Row(
+                                        children: [
+                                          Text(
+                                            'Send',
+                                            style: TextStyle(
+                                              color: Colors.white,
+                                              fontWeight: FontWeight.bold,
+                                            ),
                                           ),
-                                        ),
-                                        Gap(5),
-                                        Icon(
-                                          Iconsax.send_14,
-                                          color: Colors.white,
-                                        )
-                                      ],
-                                    ),
-                            ),
-                          )
-                        ],
+                                          Gap(5),
+                                          Icon(
+                                            Iconsax.send_14,
+                                            color: Colors.white,
+                                          )
+                                        ],
+                                      ),
+                              ),
+                            )
+                          ],
+                        ),
                       ),
-                    ),
-          ],
+            ],
+          ),
         );
   }
 }

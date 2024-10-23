@@ -113,6 +113,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.1.4"
+  better_player:
+    dependency: "direct main"
+    description:
+      name: better_player
+      sha256: fc8883218ab7a2fd7e916956c1f59b5c26c3cab1e4dfd6f051901f5e4da39619
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.0.84"
   bloc:
     dependency: transitive
     description:
@@ -629,6 +637,14 @@ packages:
     description: flutter
     source: sdk
     version: "0.0.0"
+  flutter_widget_from_html_core:
+    dependency: transitive
+    description:
+      name: flutter_widget_from_html_core
+      sha256: b1048fd119a14762e2361bd057da608148a895477846d6149109b2151d2f7abf
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.15.2"
   fluttertoast:
     dependency: "direct main"
     description:
@@ -1706,14 +1722,22 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.5.3"
+  visibility_detector:
+    dependency: transitive
+    description:
+      name: visibility_detector
+      sha256: dd5cc11e13494f432d15939c3aa8ae76844c42b723398643ce9addb88a5ed420
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.4.0+2"
   vm_service:
     dependency: transitive
     description:
       name: vm_service
-      sha256: "5c5f338a667b4c644744b661f309fb8080bb94b18a7e91ef1dbd343bed00ed6d"
+      sha256: f652077d0bdf60abe4c1f6377448e8655008eef28f128bc023f7b5e8dfeb48fc
       url: "https://pub.dev"
     source: hosted
-    version: "14.2.5"
+    version: "14.2.4"
   wakelock_plus:
     dependency: transitive
     description:
