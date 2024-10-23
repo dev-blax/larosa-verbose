@@ -18,7 +18,6 @@ import 'package:larosa_block/Utils/links.dart';
 import 'package:larosa_block/Utils/svg_paths.dart';
 import 'package:iconsax/iconsax.dart';
 import 'package:stomp_dart_client/stomp_dart_client.dart';
-import 'package:http/http.dart' as http;
 
 class NewDelivery extends StatefulWidget {
   const NewDelivery({super.key});
@@ -38,7 +37,7 @@ class _NewDeliveryState extends State<NewDelivery> {
   double? destinationLongitude;
   bool isLoadingSource = false;
   bool isLoadingDestination = false;
-  bool _connectedToSocket = false;
+  bool connectedToSocket = false;
   late StompClient stompClient;
   final String socketChannel =
       '${LarosaLinks.baseurl}/ws/topic/customer/${AuthService.getProfileId()}';
@@ -67,7 +66,7 @@ class _NewDeliveryState extends State<NewDelivery> {
   // Callback for handling successful connection
   void onConnect(StompFrame frame) {
     setState(() {
-      _connectedToSocket = true;
+      connectedToSocket = true;
     });
     LogService.logInfo('Connected to WebSocket server: $frame');
 

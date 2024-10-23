@@ -9,6 +9,7 @@ import 'package:iconsax/iconsax.dart';
 import 'package:larosa_block/Services/auth_service.dart';
 import 'package:larosa_block/Utils/colors.dart';
 import 'package:larosa_block/Utils/links.dart';
+import 'package:go_router/go_router.dart';
 
 
 class EditProfileScreen extends StatefulWidget {
@@ -156,7 +157,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       appBar: AppBar(
         leading: IconButton(
           onPressed: () {
-           // Get.back();
+           context.pop();
           },
           icon: const Icon(
             Iconsax.arrow_left_2,
@@ -166,6 +167,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         title: const Text(
           'Profile',
         ),
+        centerTitle: true,
         actions: [
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16.0),

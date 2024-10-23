@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
 
 class HomeFeedsScreenTest extends StatefulWidget {
+  const HomeFeedsScreenTest({super.key});
+
   @override
   _HomeFeedsScreenTestState createState() => _HomeFeedsScreenTestState();
 }
@@ -55,7 +57,7 @@ class _HomeFeedsScreenTestState extends State<HomeFeedsScreenTest> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Video Player Debug'),
+        title: const Text('Video Player Debug'),
       ),
       body: Center(
         child: _isInitialized
@@ -64,8 +66,8 @@ class _HomeFeedsScreenTestState extends State<HomeFeedsScreenTest> {
                 child: VideoPlayer(_controller),
               )
             : _isBuffering
-                ? CircularProgressIndicator() // Show buffering indicator
-                : Text('Error loading video'),
+                ? const CircularProgressIndicator() // Show buffering indicator
+                : const Text('Error loading video'),
       ),
       floatingActionButton: _isInitialized
           ? FloatingActionButton(

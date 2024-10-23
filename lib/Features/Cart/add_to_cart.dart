@@ -19,11 +19,11 @@ class AddToCartScreen extends StatefulWidget {
   final String names;
 
   const AddToCartScreen({
-    Key? key,
+    super.key,
     required this.username,
     required this.price,
     required this.names,
-  }) : super(key: key);
+  });
 
   @override
   State<AddToCartScreen> createState() => _AddToCartScreenState();
