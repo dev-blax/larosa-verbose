@@ -12,6 +12,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'dart:ui';
 import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
+import 'package:modal_bottom_sheet/modal_bottom_sheet.dart';
 
 class AddToCartScreen extends StatefulWidget {
   final String username;
@@ -339,6 +340,7 @@ class _AddToCartScreenState extends State<AddToCartScreen> {
                   ],
                 ),
                 const Gap(10),
+                if(selectedStreetName == null)
                 SizedBox(
                   width: double.infinity,
                   child: FilledButton(
@@ -414,23 +416,55 @@ class _AddToCartScreenState extends State<AddToCartScreen> {
                       );
                     },
                     child: const Text(
+                      'Pay Now',
+                      style:
+                          TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ),
+                if(selectedStreetName != null)
+                SizedBox(
+                  width: double.infinity,
+                  child: FilledButton(onPressed: (){
+                    showCupertinoModalBottomSheet(
+                    context: context,
+                    builder: (context) => Container(
+                      height: 400,
+                      color: Colors.white,
+                      child: Column(
+                        children: [
+                          Text('Payment Details'),
+                          Divider(),
+                          Row(
+                            children: [
+                              Image.asset('assets/images/tigo.png', width: 20,),
+                              Image.asset('assets/images/tigo.png', width: 20,),
+                              Image.asset('assets/images/tigo.png', width: 20,),
+                              Image.asset('assets/images/tigo.png', width: 20,),
+                            ],
+                          )
+                        ],
+                      )
+                    ),
+                  );
+                  }, child: Text('Continue'),),
+                ),
+
+                
+                SizedBox(
+                  width: double.infinity,
+                  child: TextButton(
+                    onPressed: () => context.pop(),
+                    child: const Text(
                       'Add To Cart',
                       style:
                           TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
                     ),
                   ),
                 ),
-                SizedBox(
-                  width: double.infinity,
-                  child: TextButton(
-                    onPressed: () => context.pop(),
-                    child: const Text(
-                      'Cancel Order',
-                      style:
-                          TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
-                    ),
-                  ),
-                ),
+
+                
+
               ],
             ),
           )
