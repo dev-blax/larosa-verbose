@@ -207,8 +207,8 @@ class _CenterSnapCarouselState extends State<CenterSnapCarousel> {
 
   Widget _buildShimmerLoader(double width, double height) {
     return Shimmer.fromColors(
-      baseColor: Colors.grey[800]!,
-      highlightColor: Colors.grey[500]!,
+      baseColor: Colors.grey[900]!,
+      highlightColor: Colors.grey[700]!,
       child: Container(
         width: width,
         height: height,
