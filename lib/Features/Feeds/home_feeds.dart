@@ -16,20 +16,32 @@ class HomeFeedsScreen extends StatefulWidget {
 }
 
 class _HomeFeedsScreenState extends State<HomeFeedsScreen> {
-  // Map to keep track of the play state of each post
   final Map<int, ValueNotifier<bool>> _postPlayStates = {};
 
   bool _isVideo(String contentType) {
     return contentType.startsWith('video/');
   }
 
-  // Function to update the play state of a post using ValueNotifier
   void _updatePostState(int postId, bool isPlaying) {
     if (_postPlayStates[postId] == null) {
       _postPlayStates[postId] = ValueNotifier(isPlaying);
     } else {
       _postPlayStates[postId]!.value = isPlaying;
     }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    final controller = Provider.of<HomeFeedsController>(context, listen: false);
+    controller.scrollController.addListener(() {
+      if (controller.scrollController.position.atEdge) {
+        bool isBottom = controller.scrollController.position.pixels != 0;
+        if (isBottom && !controller.isFetchingMore) {
+          controller.fetchMorePosts();
+        }
+      }
+    });
   }
 
   @override
@@ -45,6 +57,7 @@ class _HomeFeedsScreenState extends State<HomeFeedsScreen> {
         child: Stack(
           children: [
             CustomScrollView(
+              controller: controller.scrollController,
               slivers: [
                 SliverAppBar(
                   elevation: 20,
@@ -72,35 +85,38 @@ class _HomeFeedsScreenState extends State<HomeFeedsScreen> {
                   child: ValueListenableBuilder<bool>(
                     valueListenable: controller.isLoading,
                     builder: (context, isLoading, child) {
-                      if (isLoading) {
+                      if (isLoading && controller.posts.isEmpty) {
                         return _buildShimmerLoading();
                       } else if (controller.posts.isEmpty) {
                         return const Center(
                           child: Padding(
                             padding: EdgeInsets.only(top: 50.0),
-                            child: Text('Fetching posts'),
+                            child: Text('No posts available'),
                           ),
                         );
                       } else {
-                        return SingleChildScrollView(
-                          child: Column(
-                            children: [
-                              ...controller.posts.map((post) {
-
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 100.0),
+                          child: ListView.builder(
+                            itemCount: controller.posts.length + (controller.isFetchingMore ? 1 : 0),
+                            shrinkWrap: true,
+                            physics: const NeverScrollableScrollPhysics(),
+                            itemBuilder: (context, index) {
+                              if (index < controller.posts.length) {
+                                final post = controller.posts[index];
+                          
                                 if (_postPlayStates[post['id']] == null) {
-                                  _postPlayStates[post['id']] =
-                                      ValueNotifier(false);
+                                  _postPlayStates[post['id']] = ValueNotifier(false);
                                 }
-
+                          
                                 return VisibilityDetector(
-                                  key: Key('post-${post['id']}'),
+                                  key: Key('post-${post['id']}-${index}'), // Unique key for each post
                                   onVisibilityChanged: (info) {
                                     bool isPlaying = info.visibleFraction > 0.5;
                                     _updatePostState(post['id'], isPlaying);
                                   },
                                   child: ValueListenableBuilder<bool>(
-                                    valueListenable:
-                                        _postPlayStates[post['id']]!,
+                                    valueListenable: _postPlayStates[post['id']]!,
                                     builder: (context, isPlaying, child) {
                                       return PostComponent(
                                         post: post,
@@ -109,9 +125,15 @@ class _HomeFeedsScreenState extends State<HomeFeedsScreen> {
                                     },
                                   ),
                                 );
-                              }),
-                              const SizedBox(height: 100),
-                            ],
+                              } else {
+                                return const Padding(
+                                  padding: EdgeInsets.only(bottom:100.0),
+                                  child: Center(
+                                    child: CircularProgressIndicator(),
+                                  ),
+                                );
+                              }
+                            },
                           ),
                         );
                       }
@@ -133,6 +155,7 @@ class _HomeFeedsScreenState extends State<HomeFeedsScreen> {
       ),
     );
   }
+
 
 // Shimmer loading widget definition
   Widget _buildShimmerLoading() {

@@ -13,7 +13,7 @@ class AuthService {
     return box.get('token');
   }
 
-  static bool isBusinessAccount(){
+  static bool isBusinessAccount() {
     var box = Hive.box('userBox');
     final int accountType = box.get('accountId');
     if (accountType == 2) {
@@ -33,6 +33,7 @@ class AuthService {
   }
 
   static Future<void> refreshToken() async {
+    print('hello toke refresh');
     var headers = {"Content-Type": "application/json"};
 
     var url = Uri.https(LarosaLinks.nakedBaseUrl, '/api/v1/auth/refresh');

@@ -10,10 +10,9 @@ class HomeFeedsController extends ChangeNotifier {
   List<dynamic> posts = [];
   ValueNotifier<bool> isLoading = ValueNotifier(false);
   final ScrollController scrollController = ScrollController();
-  final Map<int, bool> _postPlayStates =
-      {}; // Track play/pause state of each post
+  final Map<int, bool> _postPlayStates = {}; // Track play/pause state of each post
   bool isFetchingMore = false;
-  int currentPage = 1;
+  int currentPage = 0; // Start from 0 as you mentioned
   final int itemsPerPage = 10;
 
   HomeFeedsController() {
@@ -23,13 +22,20 @@ class HomeFeedsController extends ChangeNotifier {
         fetchPosts(false);
       }
     });
+
+    // Listen for scroll events to detect when the user reaches the bottom
+    scrollController.addListener(() {
+      if (scrollController.position.pixels == scrollController.position.maxScrollExtent) {
+        fetchMorePosts();
+      }
+    });
   }
 
   Future<void> fetchPosts(bool refresh) async {
     if (refresh) {
-      currentPage = 1;
+      currentPage = 0; // Reset to 0 when refreshing
       LogService.logError('clearing');
-      // posts.clear();
+      posts.clear(); // Clear existing posts when refreshing
     }
     try {
       isLoading.value = true;
@@ -58,55 +64,60 @@ class HomeFeedsController extends ChangeNotifier {
     }
   }
 
-  Future<void> _fetchPostsFromServer(int? profileId,
-      {bool isPaginated = false}) async {
-    String token = AuthService.getToken();
-    Map<String, String> headers = {
-      "Content-Type": "application/json",
-      "Access-Control-Allow-Origin": "*",
-      'Authorization': token.isNotEmpty ? 'Bearer $token' : '',
-    };
+  Future<void> _fetchPostsFromServer(int? profileId, {bool isPaginated = false}) async {
+  String token = AuthService.getToken();
+  Map<String, String> headers = {
+    "Content-Type": "application/json",
+    "Access-Control-Allow-Origin": "*",
+    'Authorization': token.isNotEmpty ? 'Bearer $token' : '',
+  };
 
-    var url = Uri.https(LarosaLinks.nakedBaseUrl, LarosaLinks.allFeeds);
+  var url = Uri.https(LarosaLinks.nakedBaseUrl, LarosaLinks.allFeeds);
 
-    Map<String, dynamic> body = {
-      'countryId': '1',
-      'page': currentPage.toString(),
-      'itemsPerPage': itemsPerPage.toString(),
-    };
+  Map<String, dynamic> body = {
+    'countryId': '1',
+    'page': currentPage.toString(),
+    'itemsPerPage': itemsPerPage.toString(),
+  };
 
-    if (profileId != null) {
-      body['profileId'] = profileId.toString();
-    }
+  if (profileId != null) {
+    body['profileId'] = profileId.toString();
+  }
 
+  try {
     final response = await http.post(
       url,
       body: jsonEncode(body),
       headers: headers,
     );
 
+    // Log the status code and response body
+    LogService.logInfo('Status Code: ${response.statusCode}');
+    LogService.logInfo('Response Body: ${response.body}');
+
     if (response.statusCode == 200) {
       List<dynamic> data = json.decode(response.body);
       if (isPaginated) {
         posts.addAll(data);
-        currentPage++;
+        currentPage++; // Increment page number after fetching
       } else {
         posts = data;
       }
 
-      for (var element in data) {
-        LogService.logInfo('Received post: $element ');
-      }
-      //LogService.logInfo('Loaded $data ');
       await _savePostsToLocalStorage(posts);
       notifyListeners();
-    } else if (response.statusCode == 302 || response.statusCode == 403) {
+    } else if (response.statusCode == 302 || response.statusCode == 403 || response.statusCode == 401) {
       await AuthService.refreshToken();
       await _fetchPostsFromServer(profileId, isPaginated: isPaginated);
     } else {
       throw Exception('Failed to load posts');
     }
+  } catch (e) {
+    LogService.logError('Error fetching posts: $e');
+    throw Exception('Failed to load posts');
   }
+}
+
 
   Future<void> _savePostsToLocalStorage(List<dynamic> data) async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
