@@ -5,12 +5,16 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:mime/mime.dart';
 import 'package:cached_video_player_plus/cached_video_player_plus.dart';
 import 'package:shimmer/shimmer.dart';
-import 'package:visibility_detector/visibility_detector.dart';
 
 class CenterSnapCarousel extends StatefulWidget {
   final List<String> mediaUrls;
+  final bool isPlayingState;
 
-  const CenterSnapCarousel({super.key, required this.mediaUrls});
+  const CenterSnapCarousel({
+    super.key,
+    required this.mediaUrls,
+    required this.isPlayingState,
+  });
 
   @override
   State<CenterSnapCarousel> createState() => _CenterSnapCarouselState();
@@ -19,14 +23,12 @@ class CenterSnapCarousel extends StatefulWidget {
 class _CenterSnapCarouselState extends State<CenterSnapCarousel> {
   final ScrollController _scrollController = ScrollController();
   final Map<int, CachedVideoPlayerPlusController> _videoControllers = {};
-  final Map<int, bool> _isPlaying = {}; // Track play/pause state for each video
-  final Map<int, double> _heights = {}; // Store heights of each media item
-  int? _currentlyPlayingIndex;
+  final Map<int, double> _heights = {};
+  final Map<int, bool> _manualControlStates = {}; // Track manual play/pause states
 
   @override
   void initState() {
     super.initState();
-    _scrollController.addListener(_onScroll);
     _calculateMediaHeights();
   }
 
@@ -43,13 +45,50 @@ class _CenterSnapCarouselState extends State<CenterSnapCarousel> {
     });
   }
 
-  void _onScroll() {
-    setState(() {});
-  }
-
   bool _isVideo(String url) {
     final mimeType = lookupMimeType(url);
     return mimeType != null && mimeType.startsWith('video/');
+  }
+
+  Future<void> _calculateMediaHeights() async {
+    for (int i = 0; i < widget.mediaUrls.length; i++) {
+      String url = widget.mediaUrls[i];
+      if (!_isVideo(url)) {
+        final image = Image.network(url);
+        final completer = Completer<void>();
+        image.image.resolve(const ImageConfiguration()).addListener(
+          ImageStreamListener((info, _) {
+            final double aspectRatio = info.image.width / info.image.height;
+            final double calculatedHeight =
+                MediaQuery.of(context).size.width / aspectRatio;
+            setState(() {
+              _heights[i] = calculatedHeight;
+            });
+            completer.complete();
+          }),
+        );
+        await completer.future;
+      } else {
+        _videoControllers[i] =
+            CachedVideoPlayerPlusController.networkUrl(Uri.parse(url))
+              ..initialize().then((_) {
+                final double aspectRatio =
+                    _videoControllers[i]!.value.aspectRatio;
+                final double calculatedHeight =
+                    MediaQuery.of(context).size.width / aspectRatio;
+                setState(() {
+                  _heights[i] = calculatedHeight;
+                });
+                _videoControllers[i]!.setLooping(true);
+                // Pause initially if auto-play state is false
+                if (widget.isPlayingState == false) {
+                  _videoControllers[i]!.pause();
+                }
+              }).catchError((error) {
+                print('Error initializing video at index $i: $error');
+              });
+      }
+    }
   }
 
   void _togglePlayPause(int index) {
@@ -58,91 +97,13 @@ class _CenterSnapCarouselState extends State<CenterSnapCarousel> {
       setState(() {
         if (controller.value.isPlaying) {
           controller.pause();
-          _isPlaying[index] = false;
+          _manualControlStates[index] = false;
         } else {
           controller.play();
-          _isPlaying[index] = true;
+          _manualControlStates[index] = true;
         }
       });
     }
-  }
-
-  Future<void> _calculateMediaHeights() async {
-  for (int i = 0; i < widget.mediaUrls.length; i++) {
-    String url = widget.mediaUrls[i];
-    if (!_isVideo(url)) {
-      // For images
-      final image = Image.network(url);
-      final completer = Completer<void>();
-      image.image.resolve(const ImageConfiguration()).addListener(
-        ImageStreamListener((info, _) {
-          final double aspectRatio = info.image.width / info.image.height;
-          final double calculatedHeight = MediaQuery.of(context).size.width / aspectRatio;
-          setState(() {
-            _heights[i] = calculatedHeight;
-          });
-          completer.complete();
-        }),
-      );
-      await completer.future;
-    } else {
-      // For videos
-      _videoControllers[i] = CachedVideoPlayerPlusController.networkUrl(Uri.parse(url))
-        ..initialize().then((_) {
-          final double aspectRatio = _videoControllers[i]!.value.aspectRatio;
-          final double calculatedHeight = MediaQuery.of(context).size.width / aspectRatio;
-          setState(() {
-            _heights[i] = calculatedHeight;
-            _isPlaying[i] = false; // Initialize play state as false
-          });
-          _videoControllers[i]!.setLooping(true); // Set video to loop
-        }).catchError((error) {
-          print('Error initializing video at index $i: $error');
-        });
-    }
-  }
-}
-
-
-  void _handleVisibilityChange(int index, double visibleFraction) {
-    final controller = _videoControllers[index];
-
-    if (controller == null) return;
-
-    setState(() {
-      if (visibleFraction > 0.5) {
-        // Video is in view and should be played
-        if (_currentlyPlayingIndex != index) {
-          // Pause the currently playing video (if any) and play the new one
-          if (_currentlyPlayingIndex != null && _videoControllers[_currentlyPlayingIndex!] != null) {
-            _videoControllers[_currentlyPlayingIndex!]!.pause();
-            _isPlaying[_currentlyPlayingIndex!] = false; // Update play state for paused video
-          }
-          controller.play();
-          _isPlaying[index] = true; // Update play state for new video
-          _currentlyPlayingIndex = index;
-        }
-      } else {
-        // Video is out of view and should be paused
-        if (_currentlyPlayingIndex == index) {
-          controller.pause();
-          _isPlaying[index] = false; // Update play state for paused video
-          _currentlyPlayingIndex = null;
-        }
-      }
-    });
-  }
-
-  Widget _buildShimmerLoader(double width, double height) {
-    return Shimmer.fromColors(
-      baseColor: Colors.grey[800]!,
-      highlightColor: Colors.grey[500]!,
-      child: Container(
-        width: width,
-        height: height,
-        color: Colors.grey[300],
-      ),
-    );
   }
 
   @override
@@ -152,9 +113,7 @@ class _CenterSnapCarouselState extends State<CenterSnapCarousel> {
       child: SingleChildScrollView(
         controller: _scrollController,
         scrollDirection: Axis.horizontal,
-        physics: CustomSnapScrollPhysics(
-          itemWidth: MediaQuery.of(context).size.width,
-        ),
+        physics: const PageScrollPhysics(),
         child: Row(
           children: widget.mediaUrls.map((url) {
             final index = widget.mediaUrls.indexOf(url);
@@ -164,55 +123,64 @@ class _CenterSnapCarouselState extends State<CenterSnapCarousel> {
 
             if (_isVideo(url)) {
               if (!_videoControllers.containsKey(index)) {
-                _videoControllers[index] = CachedVideoPlayerPlusController.networkUrl(Uri.parse(url))
-                  ..initialize().then((_) {
-                    setState(() {});
-                    _videoControllers[index]!.pause();
-                  }).catchError((error) {
-                    print('Error initializing video at index $index: $error');
-                  });
+                _videoControllers[index] =
+                    CachedVideoPlayerPlusController.networkUrl(Uri.parse(url))
+                      ..initialize().then((_) {
+                        setState(() {});
+                        if (widget.isPlayingState == false) {
+                          _videoControllers[index]!.pause();
+                        }
+                      }).catchError((error) {
+                        print(
+                            'Error initializing video at index $index: $error');
+                      });
               }
               final controller = _videoControllers[index]!;
 
-              return VisibilityDetector(
-                key: Key('video-$index'),
-                onVisibilityChanged: (info) {
-                  _handleVisibilityChange(index, info.visibleFraction);
-                },
-                child: Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    Container(
-                      alignment: Alignment.center,
-                      width: MediaQuery.of(context).size.width,
-                      child: AspectRatio(
-                        aspectRatio: controller.value.isInitialized
-                            ? controller.value.aspectRatio
-                            : 16 / 9,
-                        child: controller.value.isInitialized
-                            ? CachedVideoPlayerPlus(controller)
-                            : _buildShimmerLoader(
-                                MediaQuery.of(context).size.width,
-                                calculatedHeight),
-                      ),
+              // Automatically play or pause based on the auto-play state
+              if (_manualControlStates[index] == null) {
+                // Only manage auto-play if manual control isn't active
+                if (widget.isPlayingState == true) {
+                  controller.play();
+                } else {
+                  controller.pause();
+                }
+              }
+
+              return Stack(
+                alignment: Alignment.center,
+                children: [
+                  Container(
+                    alignment: Alignment.center,
+                    width: MediaQuery.of(context).size.width,
+                    child: AspectRatio(
+                      aspectRatio: controller.value.isInitialized
+                          ? controller.value.aspectRatio
+                          : 16 / 9,
+                      child: controller.value.isInitialized
+                          ? CachedVideoPlayerPlus(controller)
+                          : _buildShimmerLoader(
+                              MediaQuery.of(context).size.width,
+                              calculatedHeight),
                     ),
-                    if (controller.value.isInitialized)
-                      Positioned(
-                        right: 10,
-                        // bottom: 10,
-                        child: GestureDetector(
-                          onTap: () => _togglePlayPause(index),
-                          child: Icon(
-                            _isPlaying[index] == true
-                                ? CupertinoIcons.pause
-                                : CupertinoIcons.play,
-                            size: 30.0,
-                            color: Colors.white.withOpacity(0.7),
-                          ),
+                  ),
+                  if (controller.value.isInitialized)
+                    Positioned(
+                      right: 10,
+                      child: GestureDetector(
+                        onTap: () => _togglePlayPause(index),
+                        child: Icon(
+                          _manualControlStates[index] == true ||
+                                  (controller.value.isPlaying &&
+                                      _manualControlStates[index] == null)
+                              ? CupertinoIcons.pause
+                              : CupertinoIcons.play,
+                          size: 30.0,
+                          color: Colors.white.withOpacity(0.7),
                         ),
-                      )
-                  ],
-                ),
+                      ),
+                    )
+                ],
               );
             } else {
               return ConstrainedBox(
@@ -236,43 +204,17 @@ class _CenterSnapCarouselState extends State<CenterSnapCarousel> {
       ),
     );
   }
-}
 
-class CustomSnapScrollPhysics extends ScrollPhysics {
-  final double itemWidth;
-
-  const CustomSnapScrollPhysics({super.parent, required this.itemWidth});
-
-  @override
-  CustomSnapScrollPhysics applyTo(ScrollPhysics? ancestor) {
-    return CustomSnapScrollPhysics(
-        parent: buildParent(ancestor), itemWidth: itemWidth);
-  }
-
-  double _getTargetPixels(
-      ScrollMetrics position, Tolerance tolerance, double velocity) {
-    double page = position.pixels / itemWidth;
-    if (velocity < -tolerance.velocity) {
-      page -= 0.5;
-    } else if (velocity > tolerance.velocity) {
-      page += 0.5;
-    }
-    return page.roundToDouble() * itemWidth;
-  }
-
-  @override
-  Simulation? createBallisticSimulation(
-      ScrollMetrics position, double velocity) {
-    if (velocity.abs() >= tolerance.velocity || position.outOfRange) {
-      final double target = _getTargetPixels(position, tolerance, velocity);
-      return ScrollSpringSimulation(
-        spring,
-        position.pixels,
-        target.clamp(position.minScrollExtent, position.maxScrollExtent),
-        velocity,
-        tolerance: Tolerance.defaultTolerance,
-      );
-    }
-    return super.createBallisticSimulation(position, velocity);
+  Widget _buildShimmerLoader(double width, double height) {
+    return Shimmer.fromColors(
+      baseColor: Colors.grey[800]!,
+      highlightColor: Colors.grey[500]!,
+      child: Container(
+        width: width,
+        height: height,
+        color: Colors.grey[300],
+      ),
+    );
   }
 }
+

@@ -92,7 +92,7 @@ class _ProfilePostsScreenState extends State<ProfilePostsScreen> {
               child: Column(
                 children: [
                   ...widget.posts.map((post) {
-                    return PostComponent(post: post);
+                    return PostComponent(post: post, isPlaying: false,);
                   }),
                   const SizedBox(height: 100),
                 ],
