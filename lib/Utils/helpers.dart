@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hive/hive.dart';
@@ -23,6 +25,21 @@ class HelperFunctions {
       context: context,
       backgroundColor: success ? Colors.blue : Colors.red,
     );
+  }
+
+  static   Future<double> getMaxImageHeight(List<String> imagePaths) async {
+    double maxHeight = 0;
+
+    for (var path in imagePaths) {
+      final File imageFile = File(path);
+      final decodedImage = await decodeImageFromList(imageFile.readAsBytesSync());
+
+      if (decodedImage.height > maxHeight) {
+        maxHeight = decodedImage.height.toDouble();
+      }
+    }
+
+    return maxHeight;
   }
 
   static larosaLogger(String message) {

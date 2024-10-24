@@ -22,11 +22,12 @@ class ContentController extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> uploadPost(String caption) async {
+  Future<bool> uploadPost(String caption, double height) async {
     Dio.FormData formData = Dio.FormData.fromMap({
       "caption": caption,
       "profileId": AuthService.getProfileId(),
       "countryId": 1,
+      'height': height,
     });
 
     for (String mediaPath in newContentMediaStrings) {
@@ -63,14 +64,17 @@ class ContentController extends ChangeNotifier {
         LogService.logDebug('refreshing');
         await AuthService.refreshToken();
         LogService.logDebug('uploading again');
-        await uploadPost(caption);
+        return uploadPost(caption, height);
       } else if (response.statusCode == 201) {
         HelperFunctions.showToast('Success', true);
+        return true;
       } else {
         LogService.logError('non 200 ${response.data}');
+        return false;
       }
     } catch (e) {
       LogService.logError('Error: $e');
+      return false;
     }
   }
 

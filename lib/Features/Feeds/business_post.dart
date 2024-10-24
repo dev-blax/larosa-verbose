@@ -8,6 +8,7 @@ import 'package:go_router/go_router.dart';
 import 'package:iconsax/iconsax.dart';
 import 'package:larosa_block/Features/Feeds/Controllers/content_controller.dart';
 import 'package:larosa_block/Utils/colors.dart';
+import 'package:larosa_block/Utils/helpers.dart';
 import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
 
@@ -91,20 +92,6 @@ class _BusinessPostScreenState extends State<BusinessPostScreen> {
         .addToNewContentMediaStrings(imageFile.path);
   }
 
-  Future<double> _getMaxImageHeight(List<String> imagePaths) async {
-    double maxHeight = 0;
-
-    for (var path in imagePaths) {
-      final File imageFile = File(path);
-      final decodedImage = await decodeImageFromList(imageFile.readAsBytesSync());
-
-      if (decodedImage.height > maxHeight) {
-        maxHeight = decodedImage.height.toDouble();
-      }
-    }
-
-    return maxHeight;
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -255,7 +242,7 @@ class _BusinessPostScreenState extends State<BusinessPostScreen> {
                           });
 
                           // Get the maximum height of the images
-                          double maxHeight = await _getMaxImageHeight(
+                          double maxHeight = await HelperFunctions.getMaxImageHeight(
                             contentController.newContentMediaStrings,
                           );
 

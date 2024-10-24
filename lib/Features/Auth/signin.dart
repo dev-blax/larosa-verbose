@@ -262,7 +262,7 @@ class _SigninScreenState extends State<SigninScreen> {
                                     ),
                                   ),
                                 )
-                              : const SpinKitThreeBounce(
+                              : const SpinKitCircle(
                                   color: Colors.blue,
                                 ),
                           const Gap(10),

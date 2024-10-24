@@ -13,6 +13,7 @@ import 'package:larosa_block/Features/Feeds/Components/carousel.dart';
 import 'package:larosa_block/Features/Feeds/Components/comments_component.dart';
 import 'package:larosa_block/Services/auth_service.dart';
 import 'package:larosa_block/Utils/colors.dart';
+import 'package:larosa_block/Utils/helpers.dart';
 import 'package:larosa_block/Utils/links.dart';
 import 'package:larosa_block/Utils/svg_paths.dart';
 import 'package:modal_bottom_sheet/modal_bottom_sheet.dart';
@@ -486,33 +487,6 @@ class _PostComponentState extends State<PostComponent>
             children: [
               IconButton(
                 onPressed: () {
-                  // Get.bottomSheet(
-                  //   persistent: true,
-                  //   backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-                  //   isScrollControlled: true,
-                  //   enableDrag: true,
-
-                  //   CommentSection(
-                  //     postId: widget.post['id'],
-                  //   ),
-                  // );
-                  // Scaffold.of(context).showBottomSheet((context) => Container(
-                  //       constraints: const BoxConstraints(minHeight: 200),
-                  //       child: CommentSection(
-                  //         postId: widget.post['id'],
-                  //       ),
-                  //     ));
-
-                  // showModalBottomSheet(
-                  //   context: context,
-                  //   builder: (BuildContext context) => Container(
-                  //     constraints: const BoxConstraints(minHeight: 200),
-                  //     child: CommentSection(
-                  //       postId: widget.post['id'],
-                  //     ),
-                  //   ),
-                  // );
-
                   showMaterialModalBottomSheet(
                     context: context,
                     builder: (BuildContext context) => Container(
@@ -540,9 +514,9 @@ class _PostComponentState extends State<PostComponent>
           // Share
           IconButton(
             onPressed: () {
-              // HelperFunctions.shareLink(
-              //   widget.post['id'].toString(),
-              // );
+              HelperFunctions.shareLink(
+                widget.post['id'].toString(),
+              );
             },
             icon: SvgPicture.asset(
               'assets/svg_icons/share.svg',

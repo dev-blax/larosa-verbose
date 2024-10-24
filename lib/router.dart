@@ -23,7 +23,6 @@ import 'package:larosa_block/Features/Search/search.dart';
 import 'package:larosa_block/Features/Settings/settings.dart';
 import 'package:larosa_block/splash_screen.dart';
 
-
 class RouterService {
   static bool _onboarded() {
     var box = Hive.box('onboardingBox');
@@ -32,7 +31,7 @@ class RouterService {
   }
 
   final GoRouter router = GoRouter(
-    initialLocation: _onboarded() ? '/' : '/onboarding',
+    initialLocation: _onboarded() ? '/main-post' : '/onboarding',
     routes: [
 
       // busines post
