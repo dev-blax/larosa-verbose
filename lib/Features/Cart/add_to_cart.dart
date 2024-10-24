@@ -9,9 +9,8 @@ import 'package:flutter_typeahead/flutter_typeahead.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:larosa_block/Services/log_service.dart';
 import 'dart:ui';
-import 'package:geolocator/geolocator.dart';
-import 'package:geocoding/geocoding.dart';
 import 'package:modal_bottom_sheet/modal_bottom_sheet.dart';
 
 class AddToCartScreen extends StatefulWidget {
@@ -36,6 +35,13 @@ class _AddToCartScreenState extends State<AddToCartScreen> {
   String? selectedStreetName;
   double? latitude;
   double? longitude;
+
+    // Variable to hold the currently selected value
+  String _selectedOption = 'Option 1';
+
+  // List of radio options
+  final List<String> _options = ['Option 1', 'Option 2', 'Option 3', 'Option 4'];
+
 
   Future<List<Map<String, String>>> _getPlaceSuggestions(String input) async {
     final String apiKey = dotenv.env['GOOGLE_MAPS_PLACES_API_KEY']!;
@@ -68,7 +74,7 @@ class _AddToCartScreenState extends State<AddToCartScreen> {
       final response = await http.get(Uri.parse(url));
       if (response.statusCode == 200) {
         final json = jsonDecode(response.body);
-        print('Response body: ${response.body}'); // Debugging response
+        LogService.logInfo('Response body: ${response.body}'); // Debugging response
 
         if (json['result'] != null && json['result']['geometry'] != null) {
           final location = json['result']['geometry']['location'];
@@ -77,9 +83,9 @@ class _AddToCartScreenState extends State<AddToCartScreen> {
           final lng = location['lng'];
 
           // Print the latitude, longitude, and street name
-          print('Address: $address');
-          print('Latitude: $lat');
-          print('Longitude: $lng');
+          LogService.logInfo('Address: $address');
+          LogService.logInfo('Latitude: $lat');
+          LogService.logInfo('Longitude: $lng');
 
           setState(() {
             latitude = lat;
@@ -87,14 +93,14 @@ class _AddToCartScreenState extends State<AddToCartScreen> {
             selectedStreetName = address;
           });
         } else {
-          print('Error: Geometry or result field is missing in the response.');
+          LogService.logError('Error: Geometry or result field is missing in the response.');
         }
       } else {
-        print('Error: Failed to load place details with status code ${response.statusCode}.');
-        print('Response body: ${response.body}');
+        LogService.logError('Error: Failed to load place details with status code ${response.statusCode}.');
+        LogService.logError('Response body: ${response.body}');
       }
     } catch (e) {
-      print('Error: $e');
+      LogService.logError('Error: $e');
     }
   }
 
@@ -426,23 +432,47 @@ class _AddToCartScreenState extends State<AddToCartScreen> {
                 SizedBox(
                   width: double.infinity,
                   child: FilledButton(onPressed: (){
-                    showCupertinoModalBottomSheet(
+                    showMaterialModalBottomSheet(
                     context: context,
                     builder: (context) => Container(
                       height: 400,
                       color: Colors.white,
-                      child: Column(
+                      child: ListView(
                         children: [
-                          Text('Payment Details'),
-                          Divider(),
+                          Padding(padding: const EdgeInsets.all(20),
+                          child: Text('Payment Details', style: Theme.of(context).textTheme.bodyMedium,),
+                          ),
+                          
+                          const Divider(),
+                          Text('Mobile Payments', style: Theme.of(context).textTheme.bodyMedium,),
+                          Gap(10),
                           Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceAround,
                             children: [
-                              Image.asset('assets/images/tigo.png', width: 20,),
-                              Image.asset('assets/images/tigo.png', width: 20,),
-                              Image.asset('assets/images/tigo.png', width: 20,),
-                              Image.asset('assets/images/tigo.png', width: 20,),
+                              Image.asset('assets/images/tigo.png', width: 50,),
+                              Image.asset('assets/images/airtel-money.jpg', width: 50,),
+                              Image.asset('assets/images/tigo.png', width: 50,),
+                              Image.asset('assets/images/tigo.png', width: 50,),
                             ],
+                          ),
+                          SingleChildScrollView(
+                            scrollDirection: Axis.horizontal,
+                            child: Row(
+                            children: _options.map((String option) {
+                              return RadioListTile<String>(
+                                title: Text(option),
+                                value: option,
+                                groupValue: _selectedOption,
+                                onChanged: (String? value) {
+                                  setState(() {
+                                    _selectedOption = value!;
+                                  });
+                                },
+                              );
+                            }).toList(),
+                          ),
                           )
+                          
                         ],
                       )
                     ),

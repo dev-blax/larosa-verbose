@@ -12,10 +12,12 @@ import 'package:iconsax/iconsax.dart';
 import 'package:larosa_block/Features/Feeds/Components/carousel.dart';
 import 'package:larosa_block/Features/Feeds/Components/comments_component.dart';
 import 'package:larosa_block/Services/auth_service.dart';
+import 'package:larosa_block/Services/log_service.dart';
 import 'package:larosa_block/Utils/colors.dart';
 import 'package:larosa_block/Utils/helpers.dart';
 import 'package:larosa_block/Utils/links.dart';
 import 'package:larosa_block/Utils/svg_paths.dart';
+import 'package:go_router/go_router.dart';
 import 'package:modal_bottom_sheet/modal_bottom_sheet.dart';
 
 import '../../Cart/add_to_cart.dart';
@@ -212,16 +214,17 @@ class _PostComponentState extends State<PostComponent>
                             if (widget.post['profileId'] ==
                                 AuthService.getProfileId()) {
                               //Get.to(const HomeProfileScreen());
+                              context.pushNamed('homeprofile');
                               return;
                             }
-                            // Get.to(
-                            //   ProfileVisitScreen(
-                            //     isBusiness:
-                            //         widget.post['accountType'] != 'PERSONAL',
-                            //     profileId: widget.post['profileId'],
-                            //   ),
-                            //   transition: Transition.size,
+                            context.pushNamed('homeprofile');
+
+                            LogService.logInfo(widget.post);
+
+                            // context.push(
+                            //   '/profilevisit/?profileId=${widget.post['profileId']}&accountType=$accountType',
                             // );
+                            
                           },
                           child: widget.post['profile_picture'] != null
                               ? CircleAvatar(
