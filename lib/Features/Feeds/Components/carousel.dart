@@ -24,7 +24,7 @@ class _CenterSnapCarouselState extends State<CenterSnapCarousel> {
   final ScrollController _scrollController = ScrollController();
   final Map<int, CachedVideoPlayerPlusController> _videoControllers = {};
   final Map<int, double> _heights = {};
-  int? _currentlyPlayingIndex; // Track which video is currently playing
+  final Map<int, bool> _manualControlStates = {}; // Track manual play/pause states
 
   @override
   void initState() {
@@ -80,7 +80,7 @@ class _CenterSnapCarouselState extends State<CenterSnapCarousel> {
                   _heights[i] = calculatedHeight;
                 });
                 _videoControllers[i]!.setLooping(true);
-                // Pause initially
+                // Pause initially if auto-play state is false
                 if (widget.isPlayingState == false) {
                   _videoControllers[i]!.pause();
                 }
@@ -93,35 +93,17 @@ class _CenterSnapCarouselState extends State<CenterSnapCarousel> {
 
   void _togglePlayPause(int index) {
     final controller = _videoControllers[index];
-
     if (controller != null) {
       setState(() {
         if (controller.value.isPlaying) {
           controller.pause();
-          _currentlyPlayingIndex = null; // No video is currently playing
+          _manualControlStates[index] = false;
         } else {
-          // Pause the currently playing video if it's not the one being tapped
-          if (_currentlyPlayingIndex != null &&
-              _currentlyPlayingIndex != index) {
-            _videoControllers[_currentlyPlayingIndex!]!.pause();
-          }
           controller.play();
-          _currentlyPlayingIndex = index; // Update the currently playing index
+          _manualControlStates[index] = true;
         }
       });
     }
-  }
-
-  Widget _buildShimmerLoader(double width, double height) {
-    return Shimmer.fromColors(
-      baseColor: Colors.grey[800]!,
-      highlightColor: Colors.grey[500]!,
-      child: Container(
-        width: width,
-        height: height,
-        color: Colors.grey[300],
-      ),
-    );
   }
 
   @override
@@ -155,11 +137,14 @@ class _CenterSnapCarouselState extends State<CenterSnapCarousel> {
               }
               final controller = _videoControllers[index]!;
 
-              // Automatically play or pause based on the isPlayingState passed from the parent
-              if (widget.isPlayingState == true && index == _currentlyPlayingIndex) {
-                controller.play();
-              } else {
-                controller.pause();
+              // Automatically play or pause based on the auto-play state
+              if (_manualControlStates[index] == null) {
+                // Only manage auto-play if manual control isn't active
+                if (widget.isPlayingState == true) {
+                  controller.play();
+                } else {
+                  controller.pause();
+                }
               }
 
               return Stack(
@@ -185,7 +170,9 @@ class _CenterSnapCarouselState extends State<CenterSnapCarousel> {
                       child: GestureDetector(
                         onTap: () => _togglePlayPause(index),
                         child: Icon(
-                          controller.value.isPlaying
+                          _manualControlStates[index] == true ||
+                                  (controller.value.isPlaying &&
+                                      _manualControlStates[index] == null)
                               ? CupertinoIcons.pause
                               : CupertinoIcons.play,
                           size: 30.0,
@@ -217,4 +204,17 @@ class _CenterSnapCarouselState extends State<CenterSnapCarousel> {
       ),
     );
   }
+
+  Widget _buildShimmerLoader(double width, double height) {
+    return Shimmer.fromColors(
+      baseColor: Colors.grey[800]!,
+      highlightColor: Colors.grey[500]!,
+      child: Container(
+        width: width,
+        height: height,
+        color: Colors.grey[300],
+      ),
+    );
+  }
 }
+
