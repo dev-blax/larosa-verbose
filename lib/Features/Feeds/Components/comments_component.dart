@@ -121,7 +121,7 @@ class _CommentSectionState extends State<CommentSection> {
   }
 
 Widget _buildVideoPlayer(String url) {
-  return CenterSnapCarousel(mediaUrls: [url]); // Ensure VideoPlayerWidget is a widget class
+  return CenterSnapCarousel(mediaUrls: [url], isPlayingState: false,); // Ensure VideoPlayerWidget is a widget class
 }
 
   Widget _buildMediaFile(String url) {

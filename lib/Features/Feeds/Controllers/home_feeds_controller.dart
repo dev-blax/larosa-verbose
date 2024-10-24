@@ -10,6 +10,8 @@ class HomeFeedsController extends ChangeNotifier {
   List<dynamic> posts = [];
   ValueNotifier<bool> isLoading = ValueNotifier(false);
   final ScrollController scrollController = ScrollController();
+  final Map<int, bool> _postPlayStates =
+      {}; // Track play/pause state of each post
   bool isFetchingMore = false;
   int currentPage = 1;
   final int itemsPerPage = 10;
@@ -58,7 +60,6 @@ class HomeFeedsController extends ChangeNotifier {
 
   Future<void> _fetchPostsFromServer(int? profileId,
       {bool isPaginated = false}) async {
-        
     String token = AuthService.getToken();
     Map<String, String> headers = {
       "Content-Type": "application/json",
@@ -134,6 +135,16 @@ class HomeFeedsController extends ChangeNotifier {
         scrollController.jumpTo(scrollPosition);
       });
     }
+  }
+
+  void updatePostState(int postId, bool isPlaying) {
+    _postPlayStates[postId] = isPlaying;
+    notifyListeners();
+  }
+
+  // Manage the play/pause state of posts
+  bool getPostState(int postId) {
+    return _postPlayStates[postId] ?? false; // Default to paused if not set
   }
 
   @override
