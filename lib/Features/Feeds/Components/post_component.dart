@@ -12,7 +12,6 @@ import 'package:iconsax/iconsax.dart';
 import 'package:larosa_block/Features/Feeds/Components/carousel.dart';
 import 'package:larosa_block/Features/Feeds/Components/comments_component.dart';
 import 'package:larosa_block/Services/auth_service.dart';
-import 'package:larosa_block/Services/log_service.dart';
 import 'package:larosa_block/Utils/colors.dart';
 import 'package:larosa_block/Utils/helpers.dart';
 import 'package:larosa_block/Utils/links.dart';
@@ -263,7 +262,7 @@ class _PostComponentState extends State<PostComponent>
                                   Text(
                                     widget.post['name'].toString(),
                                     style: const TextStyle(
-                                      color: Color.fromARGB(255, 214, 208, 208),
+                                      color: Colors.white,
                                       fontSize: 12,
                                       fontWeight: FontWeight.w600,
                                     ),
@@ -273,7 +272,7 @@ class _PostComponentState extends State<PostComponent>
                                     SvgPicture.asset(
                                       'assets/svg_icons/IcSharpVerified.svg',
                                       colorFilter: const ColorFilter.mode(
-                                        Colors.grey,
+                                        Colors.white,
                                         BlendMode.srcIn,
                                       ),
                                       height: 16,
@@ -285,7 +284,7 @@ class _PostComponentState extends State<PostComponent>
                               children: [
                                 const Icon(
                                   Iconsax.location5,
-                                  color: Color.fromARGB(255, 214, 208, 208),
+                                  color: Colors.white,
                                   size: 15,
                                 ),
                                 const SizedBox(
@@ -294,7 +293,7 @@ class _PostComponentState extends State<PostComponent>
                                 Text(
                                   widget.post['country'],
                                   style: const TextStyle(
-                                    color: Color.fromARGB(255, 214, 208, 208),
+                                    color: Colors.white,
                                     fontSize: 12,
                                   ),
                                 )
@@ -318,6 +317,7 @@ class _PostComponentState extends State<PostComponent>
                             style: const TextStyle(
                               fontWeight: FontWeight.bold,
                               fontSize: 13,
+                              color: Colors.white,
                             ),
                           ),
                           Row(
@@ -332,7 +332,7 @@ class _PostComponentState extends State<PostComponent>
                               Text(
                                 widget.post['rate']
                                     .toString(), // Replace with actual rating value
-                                style: const TextStyle(fontSize: 12),
+                                style: const TextStyle(fontSize: 12, color: Colors.white,),
                               ),
                             ],
                           ),
@@ -372,7 +372,7 @@ class _PostComponentState extends State<PostComponent>
                           },
                           icon: const HugeIcon(
                             icon: HugeIcons.strokeRoundedShoppingCartCheckIn01,
-                            color: Colors.grey,
+                            color: Colors.white,
                             size: 25,
                           ),
                         ),

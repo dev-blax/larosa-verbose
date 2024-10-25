@@ -18,9 +18,6 @@ class HomeFeedsScreen extends StatefulWidget {
 class _HomeFeedsScreenState extends State<HomeFeedsScreen> {
   final Map<int, ValueNotifier<bool>> _postPlayStates = {};
 
-  bool _isVideo(String contentType) {
-    return contentType.startsWith('video/');
-  }
 
   void _updatePostState(int postId, bool isPlaying) {
     if (_postPlayStates[postId] == null) {

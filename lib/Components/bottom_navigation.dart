@@ -33,7 +33,7 @@ class BottomNavigation extends StatelessWidget {
         ),
         child: Container(
           padding: const EdgeInsets.all(8),
-          color: Colors.black.withOpacity(.2),
+          color: Theme.of(context).colorScheme.background.withOpacity(.2),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
