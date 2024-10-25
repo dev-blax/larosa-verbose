@@ -106,22 +106,23 @@ class _HomeFeedsScreenState extends State<HomeFeedsScreen> {
                                   _postPlayStates[post['id']] = ValueNotifier(false);
                                 }
                           
-                                return VisibilityDetector(
-                                  key: Key('post-${post['id']}-${index}'), // Unique key for each post
-                                  onVisibilityChanged: (info) {
-                                    bool isPlaying = info.visibleFraction > 0.5;
-                                    _updatePostState(post['id'], isPlaying);
-                                  },
-                                  child: ValueListenableBuilder<bool>(
-                                    valueListenable: _postPlayStates[post['id']]!,
-                                    builder: (context, isPlaying, child) {
+                                // return VisibilityDetector(
+                                //   key: Key('post-${post['id']}-${index}'), // Unique key for each post
+                                //   onVisibilityChanged: (info) {
+                                //     bool isPlaying = info.visibleFraction > 0.5;
+                                //     _updatePostState(post['id'], isPlaying);
+                                //   },
+                                //   child: ValueListenableBuilder<bool>(
+                                //     valueListenable: _postPlayStates[post['id']]!,
+                                //     builder: (context, isPlaying, child) {
                                       return PostComponent(
                                         post: post,
-                                        isPlaying: isPlaying,
+                                        isPlaying: false,
+                                        // isPlaying: isPlaying,
                                       );
-                                    },
-                                  ),
-                                );
+                                //     },
+                                //   ),
+                                // );
                               } else {
                                 return const Padding(
                                   padding: EdgeInsets.only(bottom:100.0),
