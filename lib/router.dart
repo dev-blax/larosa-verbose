@@ -31,7 +31,7 @@ class RouterService {
   }
 
   final GoRouter router = GoRouter(
-    initialLocation: _onboarded() ? '/' : '/onboarding',
+    initialLocation: _onboarded() ? '/maindelivery' : '/onboarding',
     routes: [
 
       // busines post

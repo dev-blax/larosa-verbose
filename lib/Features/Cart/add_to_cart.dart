@@ -455,23 +455,23 @@ class _AddToCartScreenState extends State<AddToCartScreen> {
                               Image.asset('assets/images/tigo.png', width: 50,),
                             ],
                           ),
-                          SingleChildScrollView(
-                            scrollDirection: Axis.horizontal,
-                            child: Row(
-                            children: _options.map((String option) {
-                              return RadioListTile<String>(
-                                title: Text(option),
-                                value: option,
-                                groupValue: _selectedOption,
-                                onChanged: (String? value) {
-                                  setState(() {
-                                    _selectedOption = value!;
-                                  });
-                                },
-                              );
-                            }).toList(),
-                          ),
-                          )
+                          // SingleChildScrollView(
+                          //   scrollDirection: Axis.horizontal,
+                          //   child: Row(
+                          //   children: _options.map((String option) {
+                          //     return RadioListTile<String>(
+                          //       title: Text(option),
+                          //       value: option,
+                          //       groupValue: _selectedOption,
+                          //       onChanged: (String? value) {
+                          //         setState(() {
+                          //           _selectedOption = value!;
+                          //         });
+                          //       },
+                          //     );
+                          //   }).toList(),
+                          // ),
+                          // )
                           
                         ],
                       )

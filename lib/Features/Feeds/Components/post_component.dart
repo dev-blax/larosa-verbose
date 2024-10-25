@@ -19,7 +19,6 @@ import 'package:larosa_block/Utils/links.dart';
 import 'package:larosa_block/Utils/svg_paths.dart';
 import 'package:go_router/go_router.dart';
 import 'package:modal_bottom_sheet/modal_bottom_sheet.dart';
-
 import '../../Cart/add_to_cart.dart';
 
 class PostComponent extends StatefulWidget {
@@ -213,17 +212,15 @@ class _PostComponentState extends State<PostComponent>
                           onTap: () {
                             if (widget.post['profileId'] ==
                                 AuthService.getProfileId()) {
-                              //Get.to(const HomeProfileScreen());
                               context.pushNamed('homeprofile');
                               return;
                             }
-                            context.pushNamed('homeprofile');
 
-                            LogService.logInfo(widget.post);
+                            double accountType = widget.post['accountType'] == 'BUSINESS' ? 2 : 1;
 
-                            // context.push(
-                            //   '/profilevisit/?profileId=${widget.post['profileId']}&accountType=$accountType',
-                            // );
+                            context.push(
+                              '/profilevisit/?profileId=${widget.post['profileId']}&accountType=$accountType',
+                            );
                             
                           },
                           child: widget.post['profile_picture'] != null
@@ -249,19 +246,17 @@ class _PostComponentState extends State<PostComponent>
                           children: [
                             GestureDetector(
                               onTap: () {
-                                if (widget.post['profileId'] ==
-                                    AuthService.getProfileId()) {
-                                  // Get.to(const HomeProfileScreen());
-                                  return;
-                                }
-                                // Get.to(
-                                //   ProfileVisitScreen(
-                                //     isBusiness: widget.post['accountType'] !=
-                                //         'PERSONAL',
-                                //     profileId: widget.post['profileId'],
-                                //   ),
-                                //   transition: Transition.size,
-                                // );
+                                 if (widget.post['profileId'] ==
+                                AuthService.getProfileId()) {
+                              context.pushNamed('homeprofile');
+                              return;
+                            }
+
+                            double accountType = widget.post['accountType'] == 'BUSINESS' ? 2 : 1;
+
+                            context.push(
+                              '/profilevisit/?profileId=${widget.post['profileId']}&accountType=$accountType',
+                            );
                               },
                               child: Row(
                                 children: [
