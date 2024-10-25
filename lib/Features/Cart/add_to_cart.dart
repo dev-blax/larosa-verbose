@@ -10,6 +10,7 @@ import 'package:flutter_typeahead/flutter_typeahead.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:larosa_block/Services/log_service.dart';
 import 'dart:ui';
 import 'package:geolocator/geolocator.dart';
 
@@ -137,7 +138,7 @@ class _AddToCartScreenState extends State<AddToCartScreen> {
         }
       }
     } catch (e) {
-      print('Error: $e');
+      LogService.logError('Error: $e');
     }
   }
 
@@ -600,6 +601,9 @@ class _AddToCartScreenState extends State<AddToCartScreen> {
                   startColor: LarosaColors.primary,
                   endColor: Colors.purple,
                 ),
+
+                
+
               ],
             ),
             const Gap(10),

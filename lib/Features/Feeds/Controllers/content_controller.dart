@@ -78,7 +78,7 @@ class ContentController extends ChangeNotifier {
     }
   }
 
-  Future<void> postBusiness(String caption, double price, double height) async {
+  Future<bool> postBusiness(String caption, double price, double height) async {
     Dio.FormData formData = Dio.FormData.fromMap({
       "caption": caption,
       "countryId": 1,
@@ -127,18 +127,22 @@ class ContentController extends ChangeNotifier {
         LogService.logDebug('refreshing');
         await AuthService.refreshToken();
         LogService.logDebug('uploading again');
-        await postBusiness(
+        return await postBusiness(
           caption,
           price,
           height,
         );
       } else if (response.statusCode == 201 || response.statusCode == 200) {
         HelperFunctions.showToast('Success', true);
+        return true;
       } else {
         LogService.logError('non 200 ${response.data}');
+        return false;
       }
     } catch (e) {
       LogService.logError('Error: $e');
+      HelperFunctions.showToast('An Error Occurred! Pleae try again', false,);
+      return false;
     }
   }
 }

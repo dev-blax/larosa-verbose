@@ -6,6 +6,7 @@ import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:gap/gap.dart';
 import 'package:go_router/go_router.dart';
 import 'package:iconsax/iconsax.dart';
+import 'package:ionicons/ionicons.dart';
 import 'package:larosa_block/Features/Feeds/Controllers/content_controller.dart';
 import 'package:larosa_block/Utils/colors.dart';
 import 'package:larosa_block/Utils/helpers.dart';
@@ -104,6 +105,13 @@ class _BusinessPostScreenState extends State<BusinessPostScreen> {
         ),
         title: const Text("Business Post"),
         centerTitle: true,
+        actions: [
+          FilledButton.icon(
+            icon: const Icon(Ionicons.sunny, size: 20,),
+          onPressed: () => context.push('/main-post'), 
+          label: const Text('Personal Post'),)
+           ,
+        ],
       ),
       body: ListView(
         children: [
@@ -246,7 +254,7 @@ class _BusinessPostScreenState extends State<BusinessPostScreen> {
                             contentController.newContentMediaStrings,
                           );
 
-                          await contentController.postBusiness(
+                          bool success = await contentController.postBusiness(
                             _captionController.text,
                             double.parse(_priceController.text),
                             maxHeight, 
@@ -255,6 +263,10 @@ class _BusinessPostScreenState extends State<BusinessPostScreen> {
                           setState(() {
                             isCreatingPost = false;
                           });
+
+                          if (success && context.mounted){
+                            context.go('/');
+                          }
                         }
                       },
                       icon: isCreatingPost

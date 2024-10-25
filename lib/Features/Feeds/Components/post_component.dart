@@ -16,8 +16,8 @@ import 'package:larosa_block/Utils/colors.dart';
 import 'package:larosa_block/Utils/helpers.dart';
 import 'package:larosa_block/Utils/links.dart';
 import 'package:larosa_block/Utils/svg_paths.dart';
+import 'package:go_router/go_router.dart';
 import 'package:modal_bottom_sheet/modal_bottom_sheet.dart';
-
 import '../../Cart/add_to_cart.dart';
 
 class PostComponent extends StatefulWidget {
@@ -211,17 +211,16 @@ class _PostComponentState extends State<PostComponent>
                           onTap: () {
                             if (widget.post['profileId'] ==
                                 AuthService.getProfileId()) {
-                              //Get.to(const HomeProfileScreen());
+                              context.pushNamed('homeprofile');
                               return;
                             }
-                            // Get.to(
-                            //   ProfileVisitScreen(
-                            //     isBusiness:
-                            //         widget.post['accountType'] != 'PERSONAL',
-                            //     profileId: widget.post['profileId'],
-                            //   ),
-                            //   transition: Transition.size,
-                            // );
+
+                            double accountType = widget.post['accountType'] == 'BUSINESS' ? 2 : 1;
+
+                            context.push(
+                              '/profilevisit/?profileId=${widget.post['profileId']}&accountType=$accountType',
+                            );
+                            
                           },
                           child: widget.post['profile_picture'] != null
                               ? CircleAvatar(
@@ -246,26 +245,24 @@ class _PostComponentState extends State<PostComponent>
                           children: [
                             GestureDetector(
                               onTap: () {
-                                if (widget.post['profileId'] ==
-                                    AuthService.getProfileId()) {
-                                  // Get.to(const HomeProfileScreen());
-                                  return;
-                                }
-                                // Get.to(
-                                //   ProfileVisitScreen(
-                                //     isBusiness: widget.post['accountType'] !=
-                                //         'PERSONAL',
-                                //     profileId: widget.post['profileId'],
-                                //   ),
-                                //   transition: Transition.size,
-                                // );
+                                 if (widget.post['profileId'] ==
+                                AuthService.getProfileId()) {
+                              context.pushNamed('homeprofile');
+                              return;
+                            }
+
+                            double accountType = widget.post['accountType'] == 'BUSINESS' ? 2 : 1;
+
+                            context.push(
+                              '/profilevisit/?profileId=${widget.post['profileId']}&accountType=$accountType',
+                            );
                               },
                               child: Row(
                                 children: [
                                   Text(
                                     widget.post['name'].toString(),
                                     style: const TextStyle(
-                                      color: Color.fromARGB(255, 214, 208, 208),
+                                      color: Colors.white,
                                       fontSize: 12,
                                       fontWeight: FontWeight.w600,
                                     ),
@@ -275,7 +272,7 @@ class _PostComponentState extends State<PostComponent>
                                     SvgPicture.asset(
                                       'assets/svg_icons/IcSharpVerified.svg',
                                       colorFilter: const ColorFilter.mode(
-                                        Colors.grey,
+                                        Colors.white,
                                         BlendMode.srcIn,
                                       ),
                                       height: 16,
@@ -287,7 +284,7 @@ class _PostComponentState extends State<PostComponent>
                               children: [
                                 const Icon(
                                   Iconsax.location5,
-                                  color: Color.fromARGB(255, 214, 208, 208),
+                                  color: Colors.white,
                                   size: 15,
                                 ),
                                 const SizedBox(
@@ -296,7 +293,7 @@ class _PostComponentState extends State<PostComponent>
                                 Text(
                                   widget.post['country'],
                                   style: const TextStyle(
-                                    color: Color.fromARGB(255, 214, 208, 208),
+                                    color: Colors.white,
                                     fontSize: 12,
                                   ),
                                 )
@@ -320,6 +317,7 @@ class _PostComponentState extends State<PostComponent>
                             style: const TextStyle(
                               fontWeight: FontWeight.bold,
                               fontSize: 13,
+                              color: Colors.white,
                             ),
                           ),
                           Row(
@@ -334,7 +332,7 @@ class _PostComponentState extends State<PostComponent>
                               Text(
                                 widget.post['rate']
                                     .toString(), // Replace with actual rating value
-                                style: const TextStyle(fontSize: 12),
+                                style: const TextStyle(fontSize: 12, color: Colors.white,),
                               ),
                             ],
                           ),
@@ -376,7 +374,7 @@ class _PostComponentState extends State<PostComponent>
                           },
                           icon: const HugeIcon(
                             icon: HugeIcons.strokeRoundedShoppingCartCheckIn01,
-                            color: Colors.grey,
+                            color: Colors.white,
                             size: 25,
                           ),
                         ),

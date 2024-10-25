@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:gap/gap.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:ionicons/ionicons.dart';
 import 'package:larosa_block/Features/Feeds/Controllers/content_controller.dart';
 import 'package:larosa_block/Services/log_service.dart';
 import 'package:larosa_block/Utils/colors.dart';
@@ -88,6 +89,13 @@ class _ImagePostScreenState extends State<ImagePostScreen> {
 
     return Scaffold(
       appBar: AppBar(
+        actions: [
+          FilledButton.icon(
+            icon: const Icon(Ionicons.sunny, size: 20,),
+          onPressed: () => context.push('/business-post'), 
+          label: const Text('Business Post'),)
+           ,
+        ],
         centerTitle: true,
         title: const Text(
           'New Post',

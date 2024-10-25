@@ -26,7 +26,7 @@ class LarosaAppTheme {
       brightness: Brightness.light,
       //secondaryContainer: LarosaPalette.secondaryContainerLight,
       //tertiaryContainer: LarosaPalette.onPrimaryColorLight,
-      background: LarosaColors.light,
+      background: Colors.white,
     ),
     disabledColor: LarosaColors.grey,
     brightness: Brightness.light,
