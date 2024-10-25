@@ -761,7 +761,7 @@ class _HomeFeedsScreenState extends State<HomeFeedsScreen> {
                         return const Center(
                           child: Padding(
                             padding: EdgeInsets.only(top: 50.0),
-                            child: Text('No posts available'),
+                            child: Text('Fetching posts'),
                           ),
                         );
                       } else {

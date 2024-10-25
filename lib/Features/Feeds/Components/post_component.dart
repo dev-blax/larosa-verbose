@@ -360,6 +360,7 @@ class _PostComponentState extends State<PostComponent>
                             double price =
                                 double.parse(widget.post['price'].toString());
                             String names = widget.post['names'];
+                            int postId = widget.post['id'];
 
                             Navigator.push(
                               context,
@@ -368,6 +369,7 @@ class _PostComponentState extends State<PostComponent>
                                   username: username,
                                   price: price,
                                   names: names,
+                                  postId: postId
                                 ),
                               ),
                             );

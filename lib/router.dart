@@ -64,6 +64,7 @@ class RouterService {
       GoRoute(
         name: 'home',
         path: '/',
+        // builder: (context, state) => const AddToCartScreen(),
         // builder: (context, state) => const NewDelivery(),
         // builder: (context, state) => VideoFeedsPage(),
         builder: (context, state) => const HomeFeedsScreen(),

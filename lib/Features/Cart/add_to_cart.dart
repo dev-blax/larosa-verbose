@@ -2,6 +2,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:gap/gap.dart';
+import 'package:geocoding/geocoding.dart';
 import 'package:go_router/go_router.dart';
 import 'package:iconsax/iconsax.dart';
 import 'package:intl/intl.dart';
@@ -11,18 +12,24 @@ import 'dart:convert';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'dart:ui';
 import 'package:geolocator/geolocator.dart';
-import 'package:geocoding/geocoding.dart';
+
+import '../../Components/cart_button.dart';
+import '../../Components/PaymentModals/payment_method_modal.dart';
+import '../../Components/wavy_border_clipper.dart';
+import '../../Utils/colors.dart';
 
 class AddToCartScreen extends StatefulWidget {
   final String username;
   final double price;
   final String names;
+  final int postId;
 
   const AddToCartScreen({
     super.key,
     required this.username,
     required this.price,
     required this.names,
+    required this.postId,
   });
 
   @override
@@ -32,9 +39,58 @@ class AddToCartScreen extends StatefulWidget {
 class _AddToCartScreenState extends State<AddToCartScreen> {
   int itemCount = 1;
   final TextEditingController _typeAheadController = TextEditingController();
+  Position? _currentPosition;
   String? selectedStreetName;
+  String? currentStreetName;
+
   double? latitude;
   double? longitude;
+
+  Future<void> _getCurrentLocation() async {
+  bool serviceEnabled;
+  LocationPermission permission;
+
+  serviceEnabled = await Geolocator.isLocationServiceEnabled();
+  if (!serviceEnabled) {
+    return Future.error('Location services are disabled.');
+  }
+
+  permission = await Geolocator.checkPermission();
+  if (permission == LocationPermission.denied) {
+    permission = await Geolocator.requestPermission();
+    if (permission == LocationPermission.denied) {
+      return Future.error('Location permissions are denied');
+    }
+  }
+
+  if (permission == LocationPermission.deniedForever) {
+    return Future.error(
+        'Location permissions are permanently denied, we cannot request permissions.');
+  }
+
+  final position = await Geolocator.getCurrentPosition(
+      desiredAccuracy: LocationAccuracy.high);
+
+  setState(() {
+    _currentPosition = position;
+  });
+
+  // Fetch the street name using reverse geocoding
+  try {
+    List<Placemark> placemarks = await placemarkFromCoordinates(
+      position.latitude,
+      position.longitude,
+    );
+    if (placemarks.isNotEmpty) {
+      setState(() {
+        currentStreetName = placemarks[0].street;
+      });
+    }
+  } catch (e) {
+    print('Error: $e');
+  }
+}
+
 
   Future<List<Map<String, String>>> _getPlaceSuggestions(String input) async {
     final String apiKey = dotenv.env['GOOGLE_MAPS_PLACES_API_KEY']!;
@@ -67,30 +123,18 @@ class _AddToCartScreenState extends State<AddToCartScreen> {
       final response = await http.get(Uri.parse(url));
       if (response.statusCode == 200) {
         final json = jsonDecode(response.body);
-        print('Response body: ${response.body}'); // Debugging response
-
         if (json['result'] != null && json['result']['geometry'] != null) {
           final location = json['result']['geometry']['location'];
           final address = json['result']['formatted_address'];
           final lat = location['lat'];
           final lng = location['lng'];
 
-          // Print the latitude, longitude, and street name
-          print('Address: $address');
-          print('Latitude: $lat');
-          print('Longitude: $lng');
-
           setState(() {
             latitude = lat;
             longitude = lng;
             selectedStreetName = address;
           });
-        } else {
-          print('Error: Geometry or result field is missing in the response.');
         }
-      } else {
-        print('Error: Failed to load place details with status code ${response.statusCode}.');
-        print('Response body: ${response.body}');
       }
     } catch (e) {
       print('Error: $e');
@@ -98,10 +142,14 @@ class _AddToCartScreenState extends State<AddToCartScreen> {
   }
 
   @override
-  Widget build(BuildContext context) {
-    // Convert comma-separated names into a list of image URLs
-    List<String> imageUrls = widget.names.split(',');
+  void initState() {
+    super.initState();
+    _getCurrentLocation();
+  }
 
+  @override
+  Widget build(BuildContext context) {
+    List<String> imageUrls = widget.names.split(',');
     double totalPrice = widget.price * itemCount;
 
     return Scaffold(
@@ -164,277 +212,399 @@ class _AddToCartScreenState extends State<AddToCartScreen> {
                   ),
                 ),
                 const Gap(10),
-                // Display selected location details if available
-                if (selectedStreetName != null && latitude != null && longitude != null)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 10),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'Delivery Location',
-                          style: TextStyle(
-                              fontSize: 15, fontWeight: FontWeight.bold),
-                        ),
-                        Text(
-                          'Street: $selectedStreetName',
-                          style: const TextStyle(fontSize: 14),
-                        ),
-                        Text(
-                          'Latitude: $latitude',
-                          style: const TextStyle(fontSize: 14),
-                        ),
-                        Text(
-                          'Longitude: $longitude',
-                          style: const TextStyle(fontSize: 14),
-                        ),
-                      ],
-                    ),
+                // Display current location if available
+                // Table for Current Location
+                if (_currentPosition != null)
+                  Table(
+                    border:
+                        TableBorder.all(color: LarosaColors.primary, width: 1),
+                    children: [
+                      const TableRow(
+                        children: [
+                          Padding(
+                            padding: EdgeInsets.all(8.0),
+                            child: Text(
+                              'Current Location',
+                              style: TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                          Padding(
+                            padding: EdgeInsets.all(8.0),
+                            child: Text('Now, 12 Jan 2024'),
+                          ),
+                        ],
+                      ),
+                      TableRow(
+                        children: [
+                          const Padding(
+                            padding: EdgeInsets.all(8.0),
+                            child: Text('Latitude'),
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: Text('${_currentPosition!.latitude}'),
+                          ),
+                        ],
+                      ),
+                      TableRow(
+                        children: [
+                          const Padding(
+                            padding: EdgeInsets.all(8.0),
+                            child: Text('Longitude'),
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: Text('${_currentPosition!.longitude}'),
+                          ),
+                        ],
+                      ),
+                      TableRow(
+                        children: [
+                          const Padding(
+                            padding: EdgeInsets.all(8.0),
+                            child: Text('Street Name'),
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: Text(currentStreetName ?? 'N/A'),
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
+
                 const Gap(10),
-                const Text('Description'),
+
+// Table for Delivery Destination
+                if (latitude != null &&
+                    longitude != null &&
+                    selectedStreetName != null)
+                  Table(
+                    border: TableBorder.all(color: Colors.purple, width: 1),
+                    children: [
+                      const TableRow(
+                        children: [
+                          Padding(
+                            padding: EdgeInsets.all(8.0),
+                            child: Text(
+                              'Delivery Destination',
+                              style: TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                          Padding(
+                            padding: EdgeInsets.all(8.0),
+                            child: Text('Approx 2300, 12 Oct 2024'),
+                          ),
+                        ],
+                      ),
+                      TableRow(
+                        children: [
+                          const Padding(
+                            padding: EdgeInsets.all(8.0),
+                            child: Text('Latitude'),
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: Text('$latitude'),
+                          ),
+                        ],
+                      ),
+                      TableRow(
+                        children: [
+                          const Padding(
+                            padding: EdgeInsets.all(8.0),
+                            child: Text('Longitude'),
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: Text('$longitude'),
+                          ),
+                        ],
+                      ),
+                      TableRow(
+                        children: [
+                          const Padding(
+                            padding: EdgeInsets.all(8.0),
+                            child: Text('Street Name'),
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: Text('$selectedStreetName'),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+
+                const Gap(10),
+
+                // Delivery Destination TextField
                 const Text(
-                  'Some cool caption about the above product to make the customer buy',
-                ),
-                const Gap(20),
-                // Decrease Buttons
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.start,
-                  children: [
-                    FilledButton(
-                      onPressed: () {
-                        setState(() {
-                          itemCount = (itemCount - 1 < 1) ? 1 : itemCount - 1;
-                        });
-                      },
-                      child: const Text(
-                        '-1',
-                        style: TextStyle(
-                            fontSize: 16, fontWeight: FontWeight.bold),
-                      ),
-                    ),
-                    const Gap(4),
-                    FilledButton(
-                      onPressed: () {
-                        setState(() {
-                          itemCount = (itemCount - 5 < 1) ? 1 : itemCount - 5;
-                        });
-                      },
-                      child: const Text(
-                        '-5',
-                        style: TextStyle(
-                            fontSize: 16, fontWeight: FontWeight.bold),
-                      ),
-                    ),
-                    const Gap(4),
-                    FilledButton(
-                      onPressed: () {
-                        setState(() {
-                          itemCount = (itemCount - 10 < 1) ? 1 : itemCount - 10;
-                        });
-                      },
-                      child: const Text(
-                        '-10',
-                        style: TextStyle(
-                            fontSize: 16, fontWeight: FontWeight.bold),
-                      ),
-                    ),
-                    const Gap(4),
-                    FilledButton(
-                      onPressed: () {
-                        setState(() {
-                          itemCount = (itemCount - 20 < 1) ? 1 : itemCount - 20;
-                        });
-                      },
-                      child: const Text(
-                        '-20',
-                        style: TextStyle(
-                            fontSize: 16, fontWeight: FontWeight.bold),
-                      ),
-                    ),
-                    const Gap(4),
-                    FilledButton(
-                      onPressed: () {
-                        setState(() {
-                          itemCount = (itemCount - 50 < 1) ? 1 : itemCount - 50;
-                        });
-                      },
-                      child: const Text(
-                        '-50',
-                        style: TextStyle(
-                            fontSize: 16, fontWeight: FontWeight.bold),
-                      ),
-                    ),
-                  ],
-                ),
-                const Gap(5),
-                // Increase Buttons
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.start,
-                  children: [
-                    FilledButton(
-                      onPressed: () {
-                        setState(() {
-                          itemCount++;
-                        });
-                      },
-                      child: const Text(
-                        '+1',
-                        style: TextStyle(
-                            fontSize: 16, fontWeight: FontWeight.bold),
-                      ),
-                    ),
-                    const Gap(4),
-                    FilledButton(
-                      onPressed: () {
-                        setState(() {
-                          itemCount += 5;
-                        });
-                      },
-                      child: const Text(
-                        '+5',
-                        style: TextStyle(
-                            fontSize: 16, fontWeight: FontWeight.bold),
-                      ),
-                    ),
-                    const Gap(4),
-                    FilledButton(
-                      onPressed: () {
-                        setState(() {
-                          itemCount += 10;
-                        });
-                      },
-                      child: const Text(
-                        '+10',
-                        style: TextStyle(
-                            fontSize: 16, fontWeight: FontWeight.bold),
-                      ),
-                    ),
-                    const Gap(4),
-                    FilledButton(
-                      onPressed: () {
-                        setState(() {
-                          itemCount += 20;
-                        });
-                      },
-                      child: const Text(
-                        '+20',
-                        style: TextStyle(
-                            fontSize: 16, fontWeight: FontWeight.bold),
-                      ),
-                    ),
-                    const Gap(4),
-                    FilledButton(
-                      onPressed: () {
-                        setState(() {
-                          itemCount += 50;
-                        });
-                      },
-                      child: const Text(
-                        '+50',
-                        style: TextStyle(
-                            fontSize: 16, fontWeight: FontWeight.bold),
-                      ),
-                    ),
-                  ],
+                  'Delivery Destination',
+                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
                 ),
                 const Gap(10),
-                SizedBox(
-                  width: double.infinity,
-                  child: FilledButton(
-                    onPressed: () {
-                      showDialog(
-                        context: context,
-                        builder: (BuildContext context) {
-                          return AlertDialog(
-                            contentPadding: const EdgeInsets.all(8.0), // Reduce padding here
-                            title: const Text('Select Destination'),
-                            content: ClipRRect(
-                              borderRadius: BorderRadius.circular(20),
-                              child: BackdropFilter(
-                                filter: ImageFilter.blur(
-                                  sigmaX: 10,
-                                  sigmaY: 10,
-                                ),
-                                child: Container(
-                                  decoration: BoxDecoration(
-                                    color: Colors.black.withOpacity(.2),
-                                  ),
-                                  padding: const EdgeInsets.all(8.0),
-                                  child: TypeAheadField<Map<String, String>>(
-                                    suggestionsCallback: _getPlaceSuggestions,
-                                    itemBuilder: (context, Map<String, String> suggestion) {
-                                      return ListTile(
-                                        title: Text(suggestion['description']!),
-                                      );
-                                    },
-                                    onSelected: (Map<String, String> suggestion) async {
-                                      _typeAheadController.text = suggestion['description']!;
-                                      final placeId = suggestion['place_id']!;
-                                      await _getPlaceDetails(placeId);
-                                    },
-                                    builder: (context, controller, focusNode) {
-                                      return TextField(
-                                        controller: controller,
-                                        focusNode: focusNode,
-                                        decoration: const InputDecoration(
-                                          // border: OutlineInputBorder(
-                                          //   borderRadius: BorderRadius.circular(8),
-                                          // ),
-                                          prefixIcon: Icon(
-                                            Iconsax.search_normal,
-                                            color: Colors.white,
-                                          ),
-                                          border: InputBorder.none,
-                                          labelText: 'Search for a destination',
-                                          labelStyle:
-                                              TextStyle(color: Colors.white),
-                                        ),
-                                      );
-                                    },
-                                  ),
-                                ),
+                TypeAheadField<Map<String, String>>(
+                  suggestionsCallback: _getPlaceSuggestions,
+                  itemBuilder: (context, Map<String, String> suggestion) {
+                    return ListTile(
+                      title: Text(suggestion['description']!),
+                    );
+                  },
+                  onSelected: (Map<String, String> suggestion) async {
+                    // Automatically fill the form field with the selected suggestion
+                    _typeAheadController.text = suggestion['description']!;
+                    final placeId = suggestion['place_id']!;
+                    await _getPlaceDetails(placeId);
+                  },
+                  direction: VerticalDirection.up,
+                  builder: (context, controller, focusNode) {
+                    return TextField(
+                      controller: controller,
+                      focusNode: focusNode,
+                      decoration: const InputDecoration(
+                        labelText: 'Enter delivery destination',
+                        border: OutlineInputBorder(),
+                        prefixIcon: Icon(Iconsax.location),
+                      ),
+                    );
+                  },
+                  controller:
+                      _typeAheadController, // Make sure to assign the controller here
+                ),
+
+                const Gap(20),
+
+                buildQuantityAdjustmentRow(),
+
+                const Gap(20),
+
+                // Confirm Order Button
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: buildWideGradientButton(
+                        onTap: () {
+                          showModalBottomSheet(
+                            context: context,
+                            shape: const RoundedRectangleBorder(
+                              borderRadius: BorderRadius.vertical(
+                                top: Radius.circular(20),
                               ),
                             ),
-                            actions: [
-                              TextButton(
-                                onPressed: () => Navigator.of(context).pop(),
-                                child: const Text('Cancel'),
-                              ),
-                              FilledButton(
-                                onPressed: () {
-                                  Navigator.of(context).pop();
-                                  // Add logic to process the selected destination and order
-                                },
-                                child: const Text('Confirm'),
-                              ),
-                            ],
+                            isScrollControlled:
+                                true, // This allows the modal to take more space
+                            builder: (BuildContext context) {
+                              return FractionallySizedBox(
+                                heightFactor:
+                                    0.95, // Adjust this value to control the height (0.0 - 1.0)
+                                child: PaymentMethodModal(
+                                  currentPosition: _currentPosition,
+                                  deliveryDestination: selectedStreetName,
+                                  deliveryLatitude:
+                                      latitude, // Pass the latitude of the delivery destination
+                                  deliveryLongitude:
+                                      longitude, // Pass the longitude of the delivery destination
+                                  totalPrice: widget.price * itemCount,
+                                  quantity: itemCount,
+                                  postId: widget.postId,
+                                ),
+                              );
+                            },
                           );
                         },
-                      );
-                    },
-                    child: const Text(
-                      'Add To Cart',
-                      style:
-                          TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+                        label: 'Confirm Order',
+                        startColor: LarosaColors.secondary,
+                        endColor: Colors.purple,
+                      ),
                     ),
-                  ),
+                    const SizedBox(
+                        width: 70), // Add some spacing between the buttons
+                    Expanded(
+                      child: buildWideGradientButton(
+                        onTap: () {
+                          // Handle add to cart
+                        },
+                        label: 'Add to Cart',
+                        startColor: LarosaColors.secondary,
+                        endColor: Colors.purple,
+                      ),
+                    ),
+                  ],
+                )
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget buildQuantityAdjustmentRow() {
+    return ClipPath(
+      clipper: WavyBorderClipper(),
+      child: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              LarosaColors.secondary,
+              LarosaColors.secondary,
+            ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+        ),
+        padding: const EdgeInsets.only(top: 8.0, bottom: 30),
+        child: Column(
+          children: [
+            const Gap(10),
+            // Decrease Buttons
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                buildGradientButton(
+                  onTap: () {
+                    setState(() {
+                      itemCount = (itemCount - 1 < 1) ? 1 : itemCount - 1;
+                    });
+                  },
+                  label: '-1',
+                  startColor: LarosaColors.primary,
+                  endColor: Colors.purple,
                 ),
-                SizedBox(
-                  width: double.infinity,
-                  child: TextButton(
-                    onPressed: () => context.pop(),
-                    child: const Text(
-                      'Cancel Order',
-                      style:
-                          TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
-                    ),
-                  ),
+                const Gap(6),
+                buildGradientButton(
+                  onTap: () {
+                    setState(() {
+                      itemCount = (itemCount - 5 < 1) ? 1 : itemCount - 5;
+                    });
+                  },
+                  label: '-5',
+                  startColor: LarosaColors.primary,
+                  endColor: Colors.purple,
+                ),
+                const Gap(6),
+                buildGradientButton(
+                  onTap: () {
+                    setState(() {
+                      itemCount = (itemCount - 10 < 1) ? 1 : itemCount - 10;
+                    });
+                  },
+                  label: '-10',
+                  startColor: LarosaColors.primary,
+                  endColor: Colors.purple,
+                ),
+                const Gap(6),
+                buildGradientButton(
+                  onTap: () {
+                    setState(() {
+                      itemCount = (itemCount - 20 < 1) ? 1 : itemCount - 20;
+                    });
+                  },
+                  label: '-20',
+                  startColor: LarosaColors.primary,
+                  endColor: Colors.purple,
+                ),
+                const Gap(6),
+                buildGradientButton(
+                  onTap: () {
+                    setState(() {
+                      itemCount = (itemCount - 50 < 1) ? 1 : itemCount - 50;
+                    });
+                  },
+                  label: '-50',
+                  startColor: LarosaColors.primary,
+                  endColor: Colors.purple,
+                ),
+                const Gap(6),
+                buildGradientButton(
+                  onTap: () {
+                    setState(() {
+                      itemCount = (itemCount - 100 < 1) ? 1 : itemCount - 100;
+                    });
+                  },
+                  label: '-100',
+                  startColor: LarosaColors.primary,
+                  endColor: Colors.purple,
                 ),
               ],
             ),
-          )
-        ],
+            const Gap(5),
+            // Increase Buttons
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                buildGradientButton(
+                  onTap: () {
+                    setState(() {
+                      itemCount++;
+                    });
+                  },
+                  label: '+1',
+                  startColor: LarosaColors.primary,
+                  endColor: Colors.purple,
+                ),
+                const Gap(6),
+                buildGradientButton(
+                  onTap: () {
+                    setState(() {
+                      itemCount += 5;
+                    });
+                  },
+                  label: '+5',
+                  startColor: LarosaColors.primary,
+                  endColor: Colors.purple,
+                ),
+                const Gap(6),
+                buildGradientButton(
+                  onTap: () {
+                    setState(() {
+                      itemCount += 10;
+                    });
+                  },
+                  label: '+10',
+                  startColor: LarosaColors.primary,
+                  endColor: Colors.purple,
+                ),
+                const Gap(6),
+                buildGradientButton(
+                  onTap: () {
+                    setState(() {
+                      itemCount += 20;
+                    });
+                  },
+                  label: '+20',
+                  startColor: LarosaColors.primary,
+                  endColor: Colors.purple,
+                ),
+                const Gap(6),
+                buildGradientButton(
+                  onTap: () {
+                    setState(() {
+                      itemCount += 50;
+                    });
+                  },
+                  label: '+50',
+                  startColor: LarosaColors.primary,
+                  endColor: Colors.purple,
+                ),
+                const Gap(6),
+                buildGradientButton(
+                  onTap: () {
+                    setState(() {
+                      itemCount += 100;
+                    });
+                  },
+                  label: '+100',
+                  startColor: LarosaColors.primary,
+                  endColor: Colors.purple,
+                ),
+              ],
+            ),
+            const Gap(10),
+          ],
+        ),
       ),
     );
   }
