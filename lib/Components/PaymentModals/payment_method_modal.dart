@@ -154,7 +154,10 @@ class PaymentMethodModal extends StatelessWidget {
                 ),
                 const SizedBox(height: 8),
                 SizedBox(
-                  height: MediaQuery.of(context).size.height * .25,
+                  height: deliveryDestination
+                                        ?.isNotEmpty ==
+                                    true
+                                ? MediaQuery.of(context).size.height * .25 : MediaQuery.of(context).size.height * .40,
                   child: GridView.builder(
                     shrinkWrap: true,
                     gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
