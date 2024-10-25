@@ -114,4 +114,11 @@ class HelperFunctions {
     final mimeType = lookupMimeType(url);
     return mimeType != null && mimeType.startsWith('video/');
   }
+
+  // Place this outside any class in your helpers file
+static String formatPrice(double price) {
+    String priceStr = price.toStringAsFixed(0);
+    RegExp regExp = RegExp(r'\B(?=(\d{3})+(?!\d))');
+    return priceStr.replaceAllMapped(regExp, (match) => ',');
+  }
 }

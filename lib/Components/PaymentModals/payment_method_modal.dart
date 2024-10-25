@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:iconsax/iconsax.dart';
+import '../../Utils/helpers.dart';
 import 'payment_processing_modal.dart';
 
 class PaymentMethodModal extends StatelessWidget {
@@ -316,7 +317,7 @@ class PaymentMethodModal extends StatelessWidget {
           ),
           Padding(
             padding: const EdgeInsets.all(8.0),
-            child: Text('Tsh ${totalPrice.toStringAsFixed(2)}'),
+            child: Text('Tsh ${HelperFunctions.formatPrice(totalPrice)}')
           ),
         ],
       ),
