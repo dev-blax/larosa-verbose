@@ -109,8 +109,12 @@ class _PaymentProcessingModalState extends State<PaymentProcessingModal> {
       LogService.logInfo('Status Code: ${response.statusCode}');
       LogService.logInfo('Response Body: ${response.body}');
 
+_showSuccessDialog(r'esponse.body');
+
       if (response.statusCode == 200) {
-        _showSuccessDialog(response.body);
+
+        // _showSuccessDialog(response.body);
+
       } else if (response.statusCode == 302 ||
           response.statusCode == 403 ||
           response.statusCode == 401) {
