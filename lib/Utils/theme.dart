@@ -41,7 +41,7 @@ class LarosaAppTheme {
     colorScheme: ColorScheme.fromSeed(
       //tertiaryContainer: LarosaPalette.onPrimaryColorDark,
       //secondaryContainer: LarosaPalette.secondaryContainerDark,
-      secondary: LarosaColors.light,
+      secondary: Colors.white,
       seedColor: LarosaColors.primary,
       brightness: Brightness.dark,
       background: Colors.black,
