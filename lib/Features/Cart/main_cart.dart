@@ -22,7 +22,7 @@ class Product {
 }
 
 class MyCart extends StatefulWidget {
-  MyCart({Key? key}) : super(key: key);
+  const MyCart({super.key});
 
   @override
   _MyCartState createState() => _MyCartState();
@@ -180,12 +180,12 @@ class CartItemWidget extends StatelessWidget {
   final Function(Product) onDelete;
 
   const CartItemWidget({
-    Key? key,
+    super.key,
     required this.product,
     required this.onAdd,
     required this.onRemove,
     required this.onDelete,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

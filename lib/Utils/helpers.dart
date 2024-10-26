@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hive/hive.dart';
@@ -23,6 +25,21 @@ class HelperFunctions {
       context: context,
       backgroundColor: success ? Colors.blue : Colors.red,
     );
+  }
+
+  static   Future<double> getMaxImageHeight(List<String> imagePaths) async {
+    double maxHeight = 0;
+
+    for (var path in imagePaths) {
+      final File imageFile = File(path);
+      final decodedImage = await decodeImageFromList(imageFile.readAsBytesSync());
+
+      if (decodedImage.height > maxHeight) {
+        maxHeight = decodedImage.height.toDouble();
+      }
+    }
+
+    return maxHeight;
   }
 
   static larosaLogger(String message) {
@@ -96,5 +113,12 @@ class HelperFunctions {
   static bool isVideo(String url) {
     final mimeType = lookupMimeType(url);
     return mimeType != null && mimeType.startsWith('video/');
+  }
+
+  // Place this outside any class in your helpers file
+static String formatPrice(double price) {
+    String priceStr = price.toStringAsFixed(0);
+    RegExp regExp = RegExp(r'\B(?=(\d{3})+(?!\d))');
+    return priceStr.replaceAllMapped(regExp, (match) => ',');
   }
 }

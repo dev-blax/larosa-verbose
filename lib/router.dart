@@ -23,8 +23,6 @@ import 'package:larosa_block/Features/Search/search.dart';
 import 'package:larosa_block/Features/Settings/settings.dart';
 import 'package:larosa_block/splash_screen.dart';
 
-import 'testing/video_play_onscroll.dart';
-
 class RouterService {
   static bool _onboarded() {
     var box = Hive.box('onboardingBox');
@@ -66,6 +64,7 @@ class RouterService {
       GoRoute(
         name: 'home',
         path: '/',
+        // builder: (context, state) => const AddToCartScreen(),
         // builder: (context, state) => const NewDelivery(),
         // builder: (context, state) => VideoFeedsPage(),
         builder: (context, state) => const HomeFeedsScreen(),

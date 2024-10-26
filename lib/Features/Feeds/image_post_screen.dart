@@ -1,12 +1,19 @@
 import 'dart:io';
+import 'dart:typed_data';
+import 'package:crop_your_image/crop_your_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:gap/gap.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:ionicons/ionicons.dart';
 import 'package:larosa_block/Features/Feeds/Controllers/content_controller.dart';
-import 'package:larosa_block/Features/Feeds/camera_content.dart';
+import 'package:larosa_block/Services/log_service.dart';
 import 'package:larosa_block/Utils/colors.dart';
+import 'package:larosa_block/Utils/helpers.dart';
 import 'package:provider/provider.dart';
 import 'package:iconsax/iconsax.dart';
+import 'package:go_router/go_router.dart';
+
 
 class ImagePostScreen extends StatefulWidget {
   const ImagePostScreen({super.key});
@@ -18,9 +25,63 @@ class ImagePostScreen extends StatefulWidget {
 class _ImagePostScreenState extends State<ImagePostScreen> {
   final TextEditingController _captionController = TextEditingController();
   final TextEditingController _locationController = TextEditingController();
-  final TextEditingController _businessController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
+  final CropController _cropController = CropController();
+  Uint8List? _selectedImage;
+  
   bool isCreatingPost = false;
+  final ImagePicker _imagePicker = ImagePicker();
+
+  void _addCroppedImage(Uint8List croppedData) {
+    final String tempPath =
+        '${Directory.systemTemp.path}/${DateTime.now().millisecondsSinceEpoch}.png';
+    final File imageFile = File(tempPath)..writeAsBytesSync(croppedData);
+
+    Provider.of<ContentController>(context, listen: false)
+        .addToNewContentMediaStrings(imageFile.path);
+  }
+
+
+    void _showCropper() {
+    if (_selectedImage == null) return;
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          contentPadding: EdgeInsets.zero,
+          content: SizedBox(
+            height: 400,
+            width: 300,
+            child: Crop(
+              image: _selectedImage!,
+              controller: _cropController,
+              aspectRatio: 3 / 4,
+              onCropped: (croppedData) {
+                Navigator.pop(context);
+                _addCroppedImage(croppedData);
+              },
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                // Call crop method here
+                _cropController.crop();
+              },
+              child: const Text('Crop'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+              },
+              child: const Text('Cancel'),
+            ),
+          ],
+        );
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -28,6 +89,13 @@ class _ImagePostScreenState extends State<ImagePostScreen> {
 
     return Scaffold(
       appBar: AppBar(
+        actions: [
+          FilledButton.icon(
+            icon: const Icon(Ionicons.sunny, size: 20,),
+          onPressed: () => context.push('/business-post'), 
+          label: const Text('Business Post'),)
+           ,
+        ],
         centerTitle: true,
         title: const Text(
           'New Post',
@@ -101,11 +169,26 @@ class _ImagePostScreenState extends State<ImagePostScreen> {
                         ),
                         child: Center(
                           child: InkWell(
-                            onTap: () => Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                  builder: (_) => const CameraContent()),
-                            ),
+                            onTap: () async { 
+                            //   Navigator.push(
+                            //   context,
+                            //   MaterialPageRoute(
+                            //       builder: (_) => const CameraContent(),),
+                            // );
+
+                            final XFile? image = await _imagePicker.pickImage(source: ImageSource.gallery);
+                            // final contentController = Provider.of<ContentController>(context, listen: false);
+                            if(image != null){
+                                  final imageData = await image.readAsBytes();
+                            setState(() {
+                              _selectedImage = imageData;
+                            });
+
+                              _showCropper();
+                            }
+                            
+                            LogService.logInfo(image!.name);
+                            },
                             child: const Column(
                               crossAxisAlignment: CrossAxisAlignment.center,
                               mainAxisAlignment: MainAxisAlignment.center,
@@ -159,20 +242,7 @@ class _ImagePostScreenState extends State<ImagePostScreen> {
                       ),
                     ),
                     const Gap(20),
-                    TextFormField(
-                      minLines: 1,
-                      maxLines: 10,
-                      controller: _businessController,
-                      decoration: const InputDecoration(
-                        fillColor: Colors.green,
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.all(Radius.circular(20)),
-                        ),
-                        hintText: 'Related Business',
-                        prefixIcon: Icon(Iconsax.shop),
-                      ),
-                    ),
-                    const Gap(20),
+                    
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton.icon(
@@ -197,13 +267,22 @@ class _ImagePostScreenState extends State<ImagePostScreen> {
                               isCreatingPost = true;
                             });
 
-                            await contentController.uploadPost(
+                            double maxHeight = await HelperFunctions.getMaxImageHeight(
+                            contentController.newContentMediaStrings,
+                          );
+
+                            bool success = await contentController.uploadPost(
                               _captionController.text,
+                              maxHeight,
                             );
 
                             setState(() {
                               isCreatingPost = false;
                             });
+
+                            if(success && context.mounted){
+                              context.go('/');
+                            }
                           }
                         },
                         icon: isCreatingPost

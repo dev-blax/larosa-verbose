@@ -13,17 +13,19 @@ import 'package:larosa_block/Features/Feeds/Components/carousel.dart';
 import 'package:larosa_block/Features/Feeds/Components/comments_component.dart';
 import 'package:larosa_block/Services/auth_service.dart';
 import 'package:larosa_block/Utils/colors.dart';
+import 'package:larosa_block/Utils/helpers.dart';
 import 'package:larosa_block/Utils/links.dart';
 import 'package:larosa_block/Utils/svg_paths.dart';
+import 'package:go_router/go_router.dart';
 import 'package:modal_bottom_sheet/modal_bottom_sheet.dart';
-
 import '../../Cart/add_to_cart.dart';
 
 class PostComponent extends StatefulWidget {
   final dynamic post;
+  final bool isPlaying;
   const PostComponent({
     super.key,
-    required this.post,
+    required this.post, required this.isPlaying,
   });
 
   @override
@@ -151,6 +153,7 @@ class _PostComponentState extends State<PostComponent>
         children: [
           CenterSnapCarousel(
             mediaUrls: images,
+            isPlayingState: widget.isPlaying,
           ),
           Positioned(
             bottom: 0,
@@ -208,17 +211,16 @@ class _PostComponentState extends State<PostComponent>
                           onTap: () {
                             if (widget.post['profileId'] ==
                                 AuthService.getProfileId()) {
-                              //Get.to(const HomeProfileScreen());
+                              context.pushNamed('homeprofile');
                               return;
                             }
-                            // Get.to(
-                            //   ProfileVisitScreen(
-                            //     isBusiness:
-                            //         widget.post['accountType'] != 'PERSONAL',
-                            //     profileId: widget.post['profileId'],
-                            //   ),
-                            //   transition: Transition.size,
-                            // );
+
+                            double accountType = widget.post['accountType'] == 'BUSINESS' ? 2 : 1;
+
+                            context.push(
+                              '/profilevisit/?profileId=${widget.post['profileId']}&accountType=$accountType',
+                            );
+                            
                           },
                           child: widget.post['profile_picture'] != null
                               ? CircleAvatar(
@@ -243,26 +245,24 @@ class _PostComponentState extends State<PostComponent>
                           children: [
                             GestureDetector(
                               onTap: () {
-                                if (widget.post['profileId'] ==
-                                    AuthService.getProfileId()) {
-                                  // Get.to(const HomeProfileScreen());
-                                  return;
-                                }
-                                // Get.to(
-                                //   ProfileVisitScreen(
-                                //     isBusiness: widget.post['accountType'] !=
-                                //         'PERSONAL',
-                                //     profileId: widget.post['profileId'],
-                                //   ),
-                                //   transition: Transition.size,
-                                // );
+                                 if (widget.post['profileId'] ==
+                                AuthService.getProfileId()) {
+                              context.pushNamed('homeprofile');
+                              return;
+                            }
+
+                            double accountType = widget.post['accountType'] == 'BUSINESS' ? 2 : 1;
+
+                            context.push(
+                              '/profilevisit/?profileId=${widget.post['profileId']}&accountType=$accountType',
+                            );
                               },
                               child: Row(
                                 children: [
                                   Text(
                                     widget.post['name'].toString(),
                                     style: const TextStyle(
-                                      color: Color.fromARGB(255, 214, 208, 208),
+                                      color: Colors.white,
                                       fontSize: 12,
                                       fontWeight: FontWeight.w600,
                                     ),
@@ -272,7 +272,7 @@ class _PostComponentState extends State<PostComponent>
                                     SvgPicture.asset(
                                       'assets/svg_icons/IcSharpVerified.svg',
                                       colorFilter: const ColorFilter.mode(
-                                        Colors.grey,
+                                        Colors.white,
                                         BlendMode.srcIn,
                                       ),
                                       height: 16,
@@ -284,7 +284,7 @@ class _PostComponentState extends State<PostComponent>
                               children: [
                                 const Icon(
                                   Iconsax.location5,
-                                  color: Color.fromARGB(255, 214, 208, 208),
+                                  color: Colors.white,
                                   size: 15,
                                 ),
                                 const SizedBox(
@@ -293,7 +293,7 @@ class _PostComponentState extends State<PostComponent>
                                 Text(
                                   widget.post['country'],
                                   style: const TextStyle(
-                                    color: Color.fromARGB(255, 214, 208, 208),
+                                    color: Colors.white,
                                     fontSize: 12,
                                   ),
                                 )
@@ -306,75 +306,82 @@ class _PostComponentState extends State<PostComponent>
                   ],
                 ),
                 // Display the Container only if accountType is 'BUSINESS'
-                if (widget.post['accountType'] == 'BUSINESS')
-  Row(
-    children: [
-      // Price and Rating Column
-      Column(
-        children: [
-          Text(
-            'Tsh ${widget.post['price'].toString()}', // Display the price
-            style: const TextStyle(
-              fontWeight: FontWeight.bold,
-              fontSize: 13,
-            ),
-          ),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(
-                Iconsax.star1,
-                color: Colors.yellow,
-                size: 16,
-              ),
-              const SizedBox(width: 4),
-              Text(
-                widget.post['rate'].toString(), // Replace with actual rating value
-                style: const TextStyle(fontSize: 12),
-              ),
-            ],
-          ),
-        ],
-      ),
-      const SizedBox(width: 10),
-      // "Add to Cart" Button Container
-      Container(
-        width: 41, // Set the width and height to be equal for a perfect circle
-        height: 41,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle, // Makes the container a circle
-          border: Border.all(
-            color: Colors.grey, // Set the border color here
-            width: 1.0, // Set the border width
-          ),
-        ),
-        child: IconButton(
-          onPressed: () {
-            String username = widget.post['username'];
-            double price = double.parse(widget.post['price'].toString());
-            String names = widget.post['names'];
+                if (widget.post['accountType'] == 'BUSINESS' && widget.post['price'] != null)
+                  Row(
+                    children: [
+                      // Price and Rating Column
+                      Column(
+                        children: [
+                            // 'Tsh ${widget.post['price'].toString()}',
+                          Text(
+                          'Tsh ${HelperFunctions.formatPrice(widget.post['price']).toString()}',
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 13,
+                              color: Colors.white,
+                            ),
+                          ),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Icon(
+                                Iconsax.star1,
+                                color: Colors.yellow,
+                                size: 16,
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                widget.post['rate']
+                                    .toString(), // Replace with actual rating value
+                                style: const TextStyle(fontSize: 12, color: Colors.white,),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                      const SizedBox(width: 10),
+                      // "Add to Cart" Button Container
+                      Container(
+                        width:
+                            41, // Set the width and height to be equal for a perfect circle
+                        height: 41,
+                        decoration: BoxDecoration(
+                          shape:
+                              BoxShape.circle, // Makes the container a circle
+                          border: Border.all(
+                            color: Colors.grey, // Set the border color here
+                            width: 1.0, // Set the border width
+                          ),
+                        ),
+                        child: IconButton(
+                          onPressed: () {
+                            String username = widget.post['username'];
+                            double price =
+                                double.parse(widget.post['price'].toString());
+                            String names = widget.post['names'];
+                            int postId = widget.post['id'];
 
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => AddToCartScreen(
-                  username: username,
-                  price: price,
-                  names: names,
-                ),
-              ),
-            );
-          },
-          icon: const HugeIcon(
-            icon: HugeIcons.strokeRoundedShoppingCartCheckIn01,
-            color: Colors.grey,
-            size: 25,
-          ),
-        ),
-      ),
-    ],
-  )
-
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => AddToCartScreen(
+                                  username: username,
+                                  price: price,
+                                  names: names,
+                                  postId: postId
+                                ),
+                              ),
+                            );
+                          },
+                          icon: const HugeIcon(
+                            icon: HugeIcons.strokeRoundedShoppingCartCheckIn01,
+                            color: Colors.white,
+                            size: 25,
+                          ),
+                        ),
+                      ),
+                    ],
+                  )
               ],
             ),
           ),
@@ -486,33 +493,6 @@ class _PostComponentState extends State<PostComponent>
             children: [
               IconButton(
                 onPressed: () {
-                  // Get.bottomSheet(
-                  //   persistent: true,
-                  //   backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-                  //   isScrollControlled: true,
-                  //   enableDrag: true,
-
-                  //   CommentSection(
-                  //     postId: widget.post['id'],
-                  //   ),
-                  // );
-                  // Scaffold.of(context).showBottomSheet((context) => Container(
-                  //       constraints: const BoxConstraints(minHeight: 200),
-                  //       child: CommentSection(
-                  //         postId: widget.post['id'],
-                  //       ),
-                  //     ));
-
-                  // showModalBottomSheet(
-                  //   context: context,
-                  //   builder: (BuildContext context) => Container(
-                  //     constraints: const BoxConstraints(minHeight: 200),
-                  //     child: CommentSection(
-                  //       postId: widget.post['id'],
-                  //     ),
-                  //   ),
-                  // );
-
                   showMaterialModalBottomSheet(
                     context: context,
                     builder: (BuildContext context) => Container(
@@ -540,9 +520,9 @@ class _PostComponentState extends State<PostComponent>
           // Share
           IconButton(
             onPressed: () {
-              // HelperFunctions.shareLink(
-              //   widget.post['id'].toString(),
-              // );
+              HelperFunctions.shareLink(
+                widget.post['id'].toString(),
+              );
             },
             icon: SvgPicture.asset(
               'assets/svg_icons/share.svg',

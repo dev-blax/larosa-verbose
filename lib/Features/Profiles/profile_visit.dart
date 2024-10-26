@@ -47,7 +47,7 @@ class _ProfileVisitScreenState extends State<ProfileVisitScreen> {
   List<dynamic> posts = [];
 
   Future<void> _handleFollowUnfollow() async {
-    print('un/following');
+    LogService.logInfo('un/following');
     String token = AuthService.getToken();
     Map<String, String> headers = {
       "Content-Type": "application/json",

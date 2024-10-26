@@ -127,7 +127,7 @@ class ChatBubbleComponent extends HookWidget {
                 ],
               ],
             ),
-            Text('hello')
+            const Text('hello')
           ],
         ),
       ),

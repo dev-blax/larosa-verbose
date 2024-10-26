@@ -5,21 +5,23 @@ import '../Features/Feeds/Controllers/home_feeds_controller.dart';
 import 'video_player.dart';
 
 class VideoFeedsPage extends StatelessWidget {
+  const VideoFeedsPage({super.key});
+
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
       create: (_) => HomeFeedsController(),
       child: Scaffold(
         appBar: AppBar(
-          title: Text('Media Feeds'),
+          title: const Text('Media Feeds'),
         ),
         body: Consumer<HomeFeedsController>(
           builder: (context, controller, child) {
             if (controller.isLoading.value) {
-              return Center(child: CircularProgressIndicator());
+              return const Center(child: CircularProgressIndicator());
             }
             if (controller.posts.isEmpty) {
-              return Center(child: Text('No media available.'));
+              return const Center(child: Text('No media available.'));
             }
             return ListView.builder(
               controller: controller.scrollController,
@@ -44,7 +46,7 @@ class VideoFeedsPage extends StatelessWidget {
 class MediaCarousel extends StatelessWidget {
   final List<String> mediaUrls;
 
-  MediaCarousel({required this.mediaUrls});
+  const MediaCarousel({super.key, required this.mediaUrls});
 
   @override
   Widget build(BuildContext context) {
@@ -63,7 +65,7 @@ class MediaCarousel extends StatelessWidget {
               imageUrl: url,
               placeholder: (context, url) =>
                   const Center(child: CircularProgressIndicator()),
-              errorWidget: (context, url, error) => Icon(Icons.error),
+              errorWidget: (context, url, error) => const Icon(Icons.error),
               fit: BoxFit.contain,
             );
           }

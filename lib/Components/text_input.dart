@@ -71,6 +71,7 @@ class _TextInputComponentState extends State<TextInputComponent> {
     return TextFormField(
       controller: _controller,
       decoration: InputDecoration(
+        
         hintText: widget.label,
         hintStyle: const TextStyle(color: Colors.white),
         suffixIcon: widget.isPassword

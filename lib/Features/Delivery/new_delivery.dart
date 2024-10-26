@@ -18,7 +18,6 @@ import 'package:larosa_block/Utils/links.dart';
 import 'package:larosa_block/Utils/svg_paths.dart';
 import 'package:iconsax/iconsax.dart';
 import 'package:stomp_dart_client/stomp_dart_client.dart';
-import 'package:http/http.dart' as http;
 
 class NewDelivery extends StatefulWidget {
   const NewDelivery({super.key});
@@ -38,16 +37,15 @@ class _NewDeliveryState extends State<NewDelivery> {
   double? destinationLongitude;
   bool isLoadingSource = false;
   bool isLoadingDestination = false;
-  bool _connectedToSocket = false;
+  bool connectedToSocket = false;
+  String paymentMethod = 'CASH';
+  String vehicleType = 'MOTORCYCLE';
   late StompClient stompClient;
   final String socketChannel =
       '${LarosaLinks.baseurl}/ws/topic/customer/${AuthService.getProfileId()}';
 
   Future<void> _socketConnection2() async {
     const String wsUrl = 'https://exploretest.uc.r.appspot.com/ws';
-    // final channel =
-    //     IOWebSocketChannel.connect('https://exploretest.uc.r.appspot.com/ws');
-
     stompClient = StompClient(
       config: StompConfig.sockJS(
         url: wsUrl,
@@ -67,7 +65,7 @@ class _NewDeliveryState extends State<NewDelivery> {
   // Callback for handling successful connection
   void onConnect(StompFrame frame) {
     setState(() {
-      _connectedToSocket = true;
+      connectedToSocket = true;
     });
     LogService.logInfo('Connected to WebSocket server: $frame');
 
@@ -91,7 +89,6 @@ class _NewDeliveryState extends State<NewDelivery> {
   @override
   void initState() {
     super.initState();
-    // _stompController();
     _socketConnection2();
   }
 
@@ -107,19 +104,19 @@ class _NewDeliveryState extends State<NewDelivery> {
     };
 
     String endpoint =
-        'https://exploretest.uc.r.appspot.com/api/v1/ride/request';
+        '${LarosaLinks.baseurl}/api/v1/ride/request';
 
     try {
       var response = await http.post(
         Uri.parse(endpoint),
         headers: headers,
         body: jsonEncode({
-          "startLat": -6.2395265,
-          "startLng": 35.8273295,
-          "endLat": -6.169613300000001,
-          "endLng": 35.7774005,
-          "vehicleType": "MOTORCYCLE",
-          "paymentMethod": "CASH",
+          "startLat": sourceLatitude,
+          "startLng": sourceLongitude,
+          "endLat": destinationLatitude,
+          "endLng": destinationLongitude,
+          "vehicleType": vehicleType,
+          "paymentMethod": paymentMethod,
           "country": "Tanzania",
           "city": "Dodoma"
         }),

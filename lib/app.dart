@@ -46,7 +46,13 @@ import 'package:larosa_block/Features/Onboarding/onboarding_controller.dart';
 import 'package:larosa_block/Utils/theme.dart';
 import 'package:larosa_block/router.dart';
 import 'package:provider/provider.dart';
+import 'package:stomp_dart_client/stomp_dart_client.dart';
 import 'package:toastification/toastification.dart';
+
+import 'Services/auth_service.dart';
+import 'Services/log_service.dart';
+import 'Utils/helpers.dart';
+import 'Utils/links.dart';
 
 class App extends StatefulWidget {
   const App({super.key});
@@ -58,9 +64,59 @@ class App extends StatefulWidget {
 class _AppState extends State<App> {
   final routerService = RouterService();
 
+  bool connectedToSocket = false;
+
+  late StompClient stompClient;
+  final String socketChannel =
+      '${LarosaLinks.baseurl}/ws/topic/customer/${AuthService.getProfileId()}';
+
+  Future<void> _socketConnection2() async {
+    const String wsUrl = 'https://exploretest.uc.r.appspot.com/ws';
+    stompClient = StompClient(
+      config: StompConfig.sockJS(
+        url: wsUrl,
+        onConnect: onConnect,
+        onWebSocketError: (dynamic error) =>
+            LogService.logError('WebSocket error: $error'),
+        onStompError: (StompFrame frame) =>
+            LogService.logWarning('Stomp error: ${frame.body}'),
+        onDisconnect: (StompFrame frame) =>
+            LogService.logFatal('Disconnected from WebSocket'),
+      ),
+    );
+
+    stompClient.activate();
+  }
+  
+// Callback for handling successful connection
+  void onConnect(StompFrame frame) {
+    setState(() {
+      connectedToSocket = true;
+    });
+    LogService.logInfo('Connected to WebSocket server: $frame');
+
+    stompClient.subscribe(
+      destination: '/topic/customer/${AuthService.getProfileId()}',
+      callback: (StompFrame message) {
+        LogService.logInfo(
+          'Received message from /topic/customer/${AuthService.getProfileId()}: ${message.body}',
+        );
+
+        HelperFunctions.showToast(
+          message.body.toString(),
+          true,
+        );
+      },
+    );
+
+    LogService.logInfo('Successfully subscribed to /topic/customer/48');
+  }
+
+
   @override
   void initState() {
     super.initState();
+    _socketConnection2();
     _setSystemUIOverlayStyle();
   }
 

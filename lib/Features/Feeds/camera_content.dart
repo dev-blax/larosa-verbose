@@ -65,8 +65,8 @@ class _CameraContentState extends State<CameraContent> {
     try {
       cameras = await availableCameras();
       cameraController = CameraController(
-        cameras[isFrontCamera ? 1 : 0],
-        ResolutionPreset.high,
+        cameras[0],
+        ResolutionPreset.low,
         enableAudio: isVideoMode,
       );
       _initializeControllerFuture = cameraController?.initialize();
