@@ -10,6 +10,8 @@ class LarosaColors {
   // static const Color secondary = Color(0xff0a1282);
   static const Color accent = Color(0xFFb0c7ff);
 
+  static const Color purple = Color.fromARGB(255, 68, 7, 79);
+
   static const Color mediumGray = Color(0xffbbc3c6);
 
   // Icon colors

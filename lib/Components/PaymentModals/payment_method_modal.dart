@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:iconsax/iconsax.dart';
+import '../../Utils/colors.dart';
 import '../../Utils/helpers.dart';
 import 'payment_processing_modal.dart';
 
@@ -60,7 +61,7 @@ class PaymentMethodModal extends StatelessWidget {
           ),
           const SizedBox(height: 10),
           Table(
-            border: TableBorder.all(color: Colors.grey, width: 1),
+            border: TableBorder.all(color: Colors.purple, width: 1),
             children: getTableRows(),
           ),
           const SizedBox(height: 20),
@@ -104,12 +105,12 @@ class PaymentMethodModal extends StatelessWidget {
                                     true
                                 ? deliveryDestination
                                 : '${currentPosition?.latitude}, ${currentPosition?.longitude}';
-                  
+
                             showModalBottomSheet(
                               context: context,
                               isScrollControlled: true,
                               builder: (context) => PaymentProcessingModal(
-                                paymentMethod: method['name']!,
+                                paymentMethod: method['value']!,
                                 paymentType: method['type']!,
                                 totalPrice: totalPrice,
                                 quantity: quantity,
@@ -126,19 +127,38 @@ class PaymentMethodModal extends StatelessWidget {
                               ),
                             );
                           },
-                          child: Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                const Icon(Iconsax.bank),
-                                const SizedBox(height: 8.0),
-                                Text(
-                                  method['name']!,
-                                  textAlign: TextAlign.center,
-                                  style: const TextStyle(fontSize: 14.0),
-                                ),
-                              ],
+                          child: Container(
+                            decoration: BoxDecoration(
+                              gradient: const LinearGradient(
+                                colors: [
+                                  LarosaColors.secondary,
+                                  LarosaColors.purple,
+                                ],
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                              ),
+                              borderRadius: BorderRadius.circular(12.0),
+                            ),
+                            child: Padding(
+                              padding: const EdgeInsets.all(8.0),
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  const Icon(Iconsax.bank,
+                                      color: Colors
+                                          .white), // Change icon color if needed
+                                  const SizedBox(height: 8.0),
+                                  Text(
+                                    method['name']!,
+                                    textAlign: TextAlign.center,
+                                    style: const TextStyle(
+                                      fontSize: 14.0,
+                                      color: Colors
+                                          .white, // Adjust text color for better contrast
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
                         ),
@@ -155,10 +175,9 @@ class PaymentMethodModal extends StatelessWidget {
                 ),
                 const SizedBox(height: 8),
                 SizedBox(
-                  height: deliveryDestination
-                                        ?.isNotEmpty ==
-                                    true
-                                ? MediaQuery.of(context).size.height * .25 : MediaQuery.of(context).size.height * .40,
+                  height: deliveryDestination?.isNotEmpty == true
+                      ? MediaQuery.of(context).size.height * .25
+                      : MediaQuery.of(context).size.height * .40,
                   child: GridView.builder(
                     shrinkWrap: true,
                     gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
@@ -187,12 +206,12 @@ class PaymentMethodModal extends StatelessWidget {
                                     true
                                 ? deliveryDestination
                                 : '${currentPosition?.latitude}, ${currentPosition?.longitude}';
-                  
+
                             showModalBottomSheet(
                               context: context,
                               isScrollControlled: true,
                               builder: (context) => PaymentProcessingModal(
-                                paymentMethod: method['name']!,
+                                paymentMethod: method['value']!,
                                 paymentType: method['type']!,
                                 totalPrice: totalPrice,
                                 quantity: quantity,
@@ -209,19 +228,40 @@ class PaymentMethodModal extends StatelessWidget {
                               ),
                             );
                           },
-                          child: Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                const Icon(Iconsax.mobile),
-                                const SizedBox(height: 8.0),
-                                Text(
-                                  method['name']!,
-                                  textAlign: TextAlign.center,
-                                  style: const TextStyle(fontSize: 14.0),
-                                ),
-                              ],
+                          child: Container(
+                            decoration: BoxDecoration(
+                              gradient: const LinearGradient(
+                                colors: [
+                                  LarosaColors.secondary,
+                                  LarosaColors.purple,
+                                ],
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                              ),
+                              borderRadius: BorderRadius.circular(12.0),
+                            ),
+                            child: Padding(
+                              padding: const EdgeInsets.all(8.0),
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  const Icon(
+                                    Iconsax.mobile,
+                                    color: Colors
+                                        .white, // Adjust the icon color for contrast
+                                  ),
+                                  const SizedBox(height: 8.0),
+                                  Text(
+                                    method['name']!,
+                                    textAlign: TextAlign.center,
+                                    style: const TextStyle(
+                                      fontSize: 14.0,
+                                      color: Colors
+                                          .white, // Adjust text color for better contrast
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
                         ),
@@ -316,9 +356,8 @@ class PaymentMethodModal extends StatelessWidget {
             ),
           ),
           Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Text('Tsh ${HelperFunctions.formatPrice(totalPrice)}')
-          ),
+              padding: const EdgeInsets.all(8.0),
+              child: Text('Tsh ${HelperFunctions.formatPrice(totalPrice)}')),
         ],
       ),
       TableRow(

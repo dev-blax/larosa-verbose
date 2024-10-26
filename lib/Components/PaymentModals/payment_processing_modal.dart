@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:iconsax/iconsax.dart';
 import 'package:larosa_block/Utils/helpers.dart';
+import 'package:lottie/lottie.dart';
 import 'package:stomp_dart_client/stomp_dart_client.dart';
 import 'dart:convert';
 import '../../Services/auth_service.dart';
@@ -58,54 +59,6 @@ class _PaymentProcessingModalState extends State<PaymentProcessingModal> {
 
   bool _isLoading = false;
 
-  bool connectedToSocket = false;
-
-  late StompClient stompClient;
-  final String socketChannel =
-      '${LarosaLinks.baseurl}/ws/topic/customer/${AuthService.getProfileId()}';
-
-  Future<void> _socketConnection2() async {
-    const String wsUrl = 'https://exploretest.uc.r.appspot.com/ws';
-    stompClient = StompClient(
-      config: StompConfig.sockJS(
-        url: wsUrl,
-        onConnect: onConnect,
-        onWebSocketError: (dynamic error) =>
-            LogService.logError('WebSocket error: $error'),
-        onStompError: (StompFrame frame) =>
-            LogService.logWarning('Stomp error: ${frame.body}'),
-        onDisconnect: (StompFrame frame) =>
-            LogService.logFatal('Disconnected from WebSocket'),
-      ),
-    );
-
-    stompClient.activate();
-  }
-
-  // Callback for handling successful connection
-  void onConnect(StompFrame frame) {
-    setState(() {
-      connectedToSocket = true;
-    });
-    LogService.logInfo('Connected to WebSocket server: $frame');
-
-    stompClient.subscribe(
-      destination: '/topic/customer/${AuthService.getProfileId()}',
-      callback: (StompFrame message) {
-        LogService.logInfo(
-          'Received message from /topic/customer/${AuthService.getProfileId()}: ${message.body}',
-        );
-
-        HelperFunctions.showToast(
-          message.body.toString(),
-          true,
-        );
-      },
-    );
-
-    LogService.logInfo('Successfully subscribed to /topic/customer/48');
-  }
-
   Future<void> _submitOrder() async {
     setState(() {
       _isLoading = true;
@@ -123,7 +76,7 @@ class _PaymentProcessingModalState extends State<PaymentProcessingModal> {
     Map<String, dynamic> body = {
       "items": [
         {
-          "itemId": widget.postId,
+          "productId": widget.postId,
           "quantity": widget.quantity,
         }
       ],
@@ -144,6 +97,7 @@ class _PaymentProcessingModalState extends State<PaymentProcessingModal> {
         "otp": _otpController.text,
       });
     }
+    LogService.logInfo('Request Body: $body');
 
     try {
       final response = await http.post(
@@ -156,12 +110,7 @@ class _PaymentProcessingModalState extends State<PaymentProcessingModal> {
       LogService.logInfo('Response Body: ${response.body}');
 
       if (response.statusCode == 200) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Order placed successfully!'),
-          ),
-        );
-        Navigator.pop(context);
+        _showSuccessDialog(response.body);
       } else if (response.statusCode == 302 ||
           response.statusCode == 403 ||
           response.statusCode == 401) {
@@ -187,9 +136,7 @@ class _PaymentProcessingModalState extends State<PaymentProcessingModal> {
   @override
   void initState() {
     super.initState();
-    _socketConnection2();
 
-    // Adding listeners for each FocusNode to scroll the view when a specific field gains focus
     _accountNumberFocusNode
         .addListener(() => _scrollToFocusedInput(_accountNumberFocusNode));
     _merchantMobileFocusNode
@@ -201,7 +148,6 @@ class _PaymentProcessingModalState extends State<PaymentProcessingModal> {
 
   @override
   void dispose() {
-    // Dispose of controllers and focus nodes
     _accountNumberFocusNode.dispose();
     _merchantMobileFocusNode.dispose();
     _merchantNameFocusNode.dispose();
@@ -221,6 +167,84 @@ class _PaymentProcessingModalState extends State<PaymentProcessingModal> {
       });
     }
   }
+
+  void _showSuccessDialog(String responseBody) {
+  showDialog(
+    context: context,
+    builder: (BuildContext context) {
+      return AlertDialog(
+        backgroundColor: Colors.black,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(15.0),
+        ),
+        content: Stack(
+          children: [
+            // Background bubble animation
+            Positioned.fill(
+              child: Lottie.asset(
+                'assets/lotties/bubbles.json',
+                fit: BoxFit.cover,
+                repeat: true,
+              ),
+            ),
+            Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Green checkmark icon
+                const Icon(
+                  Icons.check_circle,
+                  color: Color.fromARGB(255, 13, 72, 15),
+                  size: 100,
+                ),
+                const SizedBox(height: 20),
+                const Text(
+              'Payment Successful!',
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                color: Color.fromARGB(255, 15, 106, 18),
+              ),
+            ),
+            const SizedBox(height: 10),
+            const Text(
+  'Your payment has been processed successfully. You will receive a confirmation notification shortly with the status of your order.\n\nWe appreciate your trust and look forward to serving you again!',
+  textAlign: TextAlign.center,
+  style: TextStyle(
+    fontSize: 16,
+    fontStyle: FontStyle.italic,
+  ),
+),
+const SizedBox(height: 10),
+            const Text(
+  'LAROSA EXPLORE',
+  textAlign: TextAlign.center,
+  style: TextStyle(
+    fontSize: 16,
+    fontStyle: FontStyle.italic,
+    fontWeight: FontWeight.bold
+  ),
+),
+                const SizedBox(height: 20),
+
+                buildWideGradientButton(
+                  onTap: () {
+                    Navigator.of(context).pop(); // Close the dialog
+                                    Navigator.pop(context); // Navigate back
+                  },
+                  label: 'OK',
+                  startColor: const Color.fromARGB(255, 13, 72, 15),
+                  endColor: Colors.purple,
+                ),
+
+              ],
+            ),
+          ],
+        ),
+      );
+    },
+  );
+}
+
 
   @override
   Widget build(BuildContext context) {
@@ -284,7 +308,7 @@ class _PaymentProcessingModalState extends State<PaymentProcessingModal> {
                       onTap: _submitOrder,
                       label: 'Confirm Payment',
                       startColor: LarosaColors.secondary,
-                      endColor: Colors.purple,
+                      endColor: LarosaColors.purple,
                     ),
                 ],
               ),

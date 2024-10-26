@@ -306,14 +306,15 @@ class _PostComponentState extends State<PostComponent>
                   ],
                 ),
                 // Display the Container only if accountType is 'BUSINESS'
-                if (widget.post['accountType'] == 'BUSINESS')
+                if (widget.post['accountType'] == 'BUSINESS' && widget.post['price'] != null)
                   Row(
                     children: [
                       // Price and Rating Column
                       Column(
                         children: [
+                            // 'Tsh ${widget.post['price'].toString()}',
                           Text(
-                            'Tsh ${widget.post['price'].toString()}', // Display the price
+                          'Tsh ${HelperFunctions.formatPrice(widget.post['price']).toString()}',
                             style: const TextStyle(
                               fontWeight: FontWeight.bold,
                               fontSize: 13,

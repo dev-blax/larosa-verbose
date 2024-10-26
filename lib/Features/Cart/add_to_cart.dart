@@ -274,7 +274,7 @@ class _AddToCartScreenState extends State<AddToCartScreen> {
                     ],
                   ),
 
-                const Gap(10),
+                const Gap(20),
 
 // Table for Delivery Destination
                 if (latitude != null &&
@@ -337,13 +337,51 @@ class _AddToCartScreenState extends State<AddToCartScreen> {
                     ],
                   ),
 
-                const Gap(10),
+                const Gap(15),
 
                 // Delivery Destination TextField
-                const Text(
-                  'Delivery Destination',
-                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+                Row(
+  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+  children: [
+    const Text(
+      'Delivery Destination',
+      style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+    ),
+    IconButton(
+      icon: const Icon(Icons.info_outline, color: Colors.grey),
+      onPressed: () {
+        showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(15.0),
+              ),
+              title: const Text('Location Information'),
+              content: const Text(
+                'When location permission is granted:\n\n'
+                '1. If no delivery destination is selected, your current location will be used automatically.\n'
+                '2. If both a delivery destination and your current location are available, the delivery destination will be used.\n'
+                '3. If your current location is not available, you will need to search for and select a delivery destination manually.\n\n'
+                'By allowing location permission, the app can auto-fill your location for a seamless experience.',
+                style: TextStyle(fontSize: 14),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                  },
+                  child: const Text('OK'),
                 ),
+              ],
+            );
+          },
+        );
+      },
+    ),
+  ],
+),
+
                 const Gap(10),
                 TypeAheadField<Map<String, String>>(
                   suggestionsCallback: _getPlaceSuggestions,
@@ -374,7 +412,7 @@ class _AddToCartScreenState extends State<AddToCartScreen> {
                       _typeAheadController, // Make sure to assign the controller here
                 ),
 
-                const Gap(20),
+                const Gap(25),
 
                 buildQuantityAdjustmentRow(),
 
@@ -417,7 +455,7 @@ class _AddToCartScreenState extends State<AddToCartScreen> {
                         },
                         label: 'Confirm Order',
                         startColor: LarosaColors.secondary,
-                        endColor: Colors.purple,
+                        endColor: LarosaColors.purple,
                       ),
                     ),
                     const SizedBox(
@@ -429,7 +467,7 @@ class _AddToCartScreenState extends State<AddToCartScreen> {
                         },
                         label: 'Add to Cart',
                         startColor: LarosaColors.secondary,
-                        endColor: Colors.purple,
+                        endColor: LarosaColors.purple,
                       ),
                     ),
                   ],
@@ -472,7 +510,7 @@ class _AddToCartScreenState extends State<AddToCartScreen> {
                   },
                   label: '-1',
                   startColor: LarosaColors.primary,
-                  endColor: Colors.purple,
+                  endColor: LarosaColors.purple,
                 ),
                 const Gap(6),
                 buildGradientButton(
@@ -483,7 +521,7 @@ class _AddToCartScreenState extends State<AddToCartScreen> {
                   },
                   label: '-5',
                   startColor: LarosaColors.primary,
-                  endColor: Colors.purple,
+                  endColor: LarosaColors.purple,
                 ),
                 const Gap(6),
                 buildGradientButton(
@@ -494,7 +532,7 @@ class _AddToCartScreenState extends State<AddToCartScreen> {
                   },
                   label: '-10',
                   startColor: LarosaColors.primary,
-                  endColor: Colors.purple,
+                  endColor: LarosaColors.purple,
                 ),
                 const Gap(6),
                 buildGradientButton(
@@ -505,7 +543,7 @@ class _AddToCartScreenState extends State<AddToCartScreen> {
                   },
                   label: '-20',
                   startColor: LarosaColors.primary,
-                  endColor: Colors.purple,
+                  endColor: LarosaColors.purple,
                 ),
                 const Gap(6),
                 buildGradientButton(
@@ -516,7 +554,7 @@ class _AddToCartScreenState extends State<AddToCartScreen> {
                   },
                   label: '-50',
                   startColor: LarosaColors.primary,
-                  endColor: Colors.purple,
+                  endColor: LarosaColors.purple,
                 ),
                 const Gap(6),
                 buildGradientButton(
@@ -527,7 +565,7 @@ class _AddToCartScreenState extends State<AddToCartScreen> {
                   },
                   label: '-100',
                   startColor: LarosaColors.primary,
-                  endColor: Colors.purple,
+                  endColor: LarosaColors.purple,
                 ),
               ],
             ),
@@ -544,7 +582,7 @@ class _AddToCartScreenState extends State<AddToCartScreen> {
                   },
                   label: '+1',
                   startColor: LarosaColors.primary,
-                  endColor: Colors.purple,
+                  endColor: LarosaColors.purple,
                 ),
                 const Gap(6),
                 buildGradientButton(
@@ -555,7 +593,7 @@ class _AddToCartScreenState extends State<AddToCartScreen> {
                   },
                   label: '+5',
                   startColor: LarosaColors.primary,
-                  endColor: Colors.purple,
+                  endColor: LarosaColors.purple,
                 ),
                 const Gap(6),
                 buildGradientButton(
@@ -566,7 +604,7 @@ class _AddToCartScreenState extends State<AddToCartScreen> {
                   },
                   label: '+10',
                   startColor: LarosaColors.primary,
-                  endColor: Colors.purple,
+                  endColor: LarosaColors.purple,
                 ),
                 const Gap(6),
                 buildGradientButton(
@@ -577,7 +615,7 @@ class _AddToCartScreenState extends State<AddToCartScreen> {
                   },
                   label: '+20',
                   startColor: LarosaColors.primary,
-                  endColor: Colors.purple,
+                  endColor: LarosaColors.purple,
                 ),
                 const Gap(6),
                 buildGradientButton(
@@ -588,7 +626,7 @@ class _AddToCartScreenState extends State<AddToCartScreen> {
                   },
                   label: '+50',
                   startColor: LarosaColors.primary,
-                  endColor: Colors.purple,
+                  endColor: LarosaColors.purple,
                 ),
                 const Gap(6),
                 buildGradientButton(
@@ -599,7 +637,7 @@ class _AddToCartScreenState extends State<AddToCartScreen> {
                   },
                   label: '+100',
                   startColor: LarosaColors.primary,
-                  endColor: Colors.purple,
+                  endColor: LarosaColors.purple,
                 ),
 
                 
