@@ -351,86 +351,91 @@ class _BusinessPostScreenState extends State<BusinessPostScreen>
     }
   }
 
-void _showCropper() {
-  if (_selectedImage == null) return;
-  showDialog(
-    context: context,
-    builder: (context) => AlertDialog(
-      backgroundColor: Colors.black, // Set modal background to red
-      contentPadding: EdgeInsets.zero,
-      insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10), // Adjusts dialog padding
-      content: Container(
-        height: MediaQuery.of(context).size.height * 0.9 ,
-        width: MediaQuery.of(context).size.width * 1,
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [
-              LarosaColors.primary.withOpacity(0.8),
-              LarosaColors.secondary.withOpacity(0.8),
-            ],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
+  void _showCropper() {
+    if (_selectedImage == null) return;
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: Colors.black, // Set modal background to red
+        contentPadding: EdgeInsets.zero,
+        insetPadding: const EdgeInsets.symmetric(
+            horizontal: 24, vertical: 10), // Adjusts dialog padding
+        content: Container(
+          height: MediaQuery.of(context).size.height * 0.9,
+          width: MediaQuery.of(context).size.width * 1,
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                LarosaColors.primary.withOpacity(0.8),
+                LarosaColors.secondary.withOpacity(0.8),
+              ],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.circular(12),
           ),
-          borderRadius: BorderRadius.circular(12),
+          child: Crop(
+            image: _selectedImage!,
+            controller: _cropController,
+            aspectRatio: 3 / 4,
+            onCropped: (croppedData) {
+              Navigator.pop(context);
+              _addCroppedImage(croppedData);
+            },
+          ),
         ),
-        child: Crop(
-          image: _selectedImage!,
-          controller: _cropController,
-          aspectRatio: 3 / 4,
-          onCropped: (croppedData) {
-            Navigator.pop(context);
-            _addCroppedImage(croppedData);
-          },
-        ),
+        actionsPadding:
+            const EdgeInsets.only(bottom: 8), // Reduce space below buttons
+        actions: [
+          TextButton(
+            onPressed: () => _cropController.crop(),
+            style: TextButton.styleFrom(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              backgroundColor: Colors.transparent,
+            ).copyWith(
+              overlayColor: WidgetStateProperty.all(
+                  LarosaColors.secondary.withOpacity(0.2)),
+            ),
+            child: Container(
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [LarosaColors.primary, LarosaColors.secondary],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 10),
+              child: const Text(
+                'Crop',
+                style:
+                    TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+              ),
+            ),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Container(
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [LarosaColors.secondary, LarosaColors.primary],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 10),
+              child: const Text(
+                'Cancel',
+                style:
+                    TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+              ),
+            ),
+          ),
+        ],
       ),
-      actionsPadding: const EdgeInsets.only(bottom: 8), // Reduce space below buttons
-      actions: [
-        TextButton(
-          onPressed: () => _cropController.crop(),
-          style: TextButton.styleFrom(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-            backgroundColor: Colors.transparent,
-          ).copyWith(
-            overlayColor: WidgetStateProperty.all(LarosaColors.secondary.withOpacity(0.2)),
-          ),
-          child: Container(
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [LarosaColors.primary, LarosaColors.secondary],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 10),
-            child: const Text(
-              'Crop',
-              style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-            ),
-          ),
-        ),
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          child: Container(
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [LarosaColors.secondary, LarosaColors.primary],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 10),
-            child: const Text(
-              'Cancel',
-              style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-            ),
-          ),
-        ),
-      ],
-    ),
-  );
-}
+    );
+  }
 
   void _addCroppedImage(Uint8List croppedData) {
     final String tempPath =
@@ -442,126 +447,134 @@ void _showCropper() {
   }
 
   Widget _buildTabContent(bool isBusinessPost) {
-  return Consumer<ContentController>(
-    builder: (context, contentController, child) {
-      return SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: Form(
-            key: isBusinessPost ? _businessFormKey : _personalFormKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Gap(5),
-                _buildMediaList(contentController),
-                if (isBusinessPost) ...[
-                  const Gap(20),
-                  _buildCategorySelector(),
+    return Consumer<ContentController>(
+      builder: (context, contentController, child) {
+        return SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Form(
+              key: isBusinessPost ? _businessFormKey : _personalFormKey,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
                   const Gap(5),
-                  _buildUnitSelector(),
-                  _buildPriceInputField(),
+                  _buildMediaList(contentController),
+                  if (isBusinessPost) ...[
+                    const Gap(20),
+                    _buildCategorySelector(),
+                    const Gap(5),
+                    _buildUnitSelector(),
+                    _buildPriceInputField(),
+                  ],
+                  if (!isBusinessPost)
+                    SizedBox(
+                      height: MediaQuery.of(context).size.height * .13,
+                    ),
+                  _buildConditionalGap(isBusinessPost),
+                  _buildCaptionInputField(isBusinessPost),
+                  const Gap(15),
+                  _buildGradientPostButton(contentController, isBusinessPost),
                 ],
-                if(!isBusinessPost)
-                SizedBox(height: MediaQuery.of(context).size.height * .13 ,),
-                _buildConditionalGap(isBusinessPost),
-                _buildCaptionInputField(isBusinessPost),
-                const Gap(15),
-                _buildGradientPostButton(contentController, isBusinessPost),
-              ],
+              ),
             ),
           ),
-        ),
-      );
-    },
-  );
-}
+        );
+      },
+    );
+  }
 
   Widget _buildConditionalGap(bool isBusinessPost) {
     return isBusinessPost ? const SizedBox.shrink() : const Gap(15);
   }
 
   Widget _buildCategorySelector() {
-  return Consumer<BusinessCategoryProvider>(
-    builder: (context, categoryProvider, child) {
-      return DropdownButtonFormField<int>(
-        decoration: InputDecoration(
-          labelText: "Select Business Category",
-          labelStyle: const TextStyle(color: LarosaColors.mediumGray),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(width: 3),
+    return Consumer<BusinessCategoryProvider>(
+      builder: (context, categoryProvider, child) {
+        return DropdownButtonFormField<int>(
+          decoration: InputDecoration(
+            labelText: "Select Business Category",
+            labelStyle: const TextStyle(color: LarosaColors.mediumGray),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(width: 3),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide:
+                  const BorderSide(color: LarosaColors.secondary, width: 3),
+            ),
           ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: LarosaColors.secondary, width: 3),
-          ),
-        ),
-        items: categoryProvider.businessCategories.map((category) {
-          return DropdownMenuItem<int>(
-            value: category['id'],
-            child: Text(category['name']),
-          );
-        }).toList(),
-        onChanged: (value) {
-          if (value != null) {
-            categoryProvider.selectCategory(value);
-          }
-        },
-        isExpanded: true,
-        hint: const Text("Search and Select Category"),
-        validator: (value) => value == null ? "Please select a business category" : null,
-      );
-    },
-  );
-}
+          items: categoryProvider.businessCategories.map((category) {
+            return DropdownMenuItem<int>(
+              value: category['id'],
+              child: Text(category['name']),
+            );
+          }).toList(),
+          onChanged: (value) {
+            if (value != null) {
+              categoryProvider.selectCategory(value);
+            }
+          },
+          isExpanded: true,
+          hint: const Text("Search and Select Category"),
+          validator: (value) =>
+              value == null ? "Please select a business category" : null,
+        );
+      },
+    );
+  }
 
   Widget _buildUnitSelector() {
-  return Consumer<BusinessCategoryProvider>(
-    builder: (context, categoryProvider, child) {
-      final units = categoryProvider.selectedUnits;
+    return Consumer<BusinessCategoryProvider>(
+      builder: (context, categoryProvider, child) {
+        final units = categoryProvider.selectedUnits;
 
-      if (units.isEmpty) {
-        return const SizedBox.shrink();
-      }
+        if (units.isEmpty) {
+          return const SizedBox.shrink();
+        }
 
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Gap(10),
-          DropdownButtonFormField<String>(
-            decoration: InputDecoration(
-              labelText: "Select Unit",
-              labelStyle: const TextStyle(color: LarosaColors.mediumGray),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color: Colors.grey, width: 3),
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Gap(10),
+            DropdownButtonFormField<String>(
+              decoration: InputDecoration(
+                labelText: "Select Unit",
+                labelStyle: const TextStyle(color: LarosaColors.mediumGray),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(color: Colors.grey, width: 3),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide:
+                      const BorderSide(color: LarosaColors.secondary, width: 3),
+                ),
               ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color: LarosaColors.secondary, width: 3),
-              ),
+              value: categoryProvider.selectedUnit,
+              items: units
+                  .expand((unit) => unit['items'])
+                  .map<DropdownMenuItem<String>>((item) {
+                return DropdownMenuItem<String>(
+                  value: item['name'],
+                  child: Text(item['name']),
+                );
+              }).toList(),
+              onChanged: (value) {
+                if (value != null) {
+                  categoryProvider.selectUnit(value);
+                }
+              },
+              isExpanded: true,
+              hint: const Text("Choose a Unit"),
+              validator: (value) =>
+                  value == null ? "Please select a unit" : null,
             ),
-            value: categoryProvider.selectedUnit,
-            items: units.expand((unit) => unit['items']).map<DropdownMenuItem<String>>((item) {
-              return DropdownMenuItem<String>(
-                value: item['name'],
-                child: Text(item['name']),
-              );
-            }).toList(),
-            onChanged: (value) {
-              if (value != null) {
-                categoryProvider.selectUnit(value);
-              }
-            },
-            isExpanded: true,
-            hint: const Text("Choose a Unit"),
-            validator: (value) => value == null ? "Please select a unit" : null,
-          ),
-        ],
-      );
-    },
-  );
-}
+          ],
+        );
+      },
+    );
+  }
 
   Widget _buildMediaList(ContentController contentController) {
     return Consumer<ContentController>(
@@ -645,57 +658,58 @@ void _showCropper() {
     );
   }
 
- Widget _buildPriceInputField() {
-  _priceController.addListener(() {
-    final text = _priceController.text.replaceAll(',', '');
-    if (text.isNotEmpty) {
-      final parsedPrice = double.tryParse(text);
-      if (parsedPrice != null) {
-        final formattedText = formatPrice(parsedPrice);
-        _priceController.value = _priceController.value.copyWith(
-          text: formattedText,
-          selection: TextSelection.collapsed(offset: formattedText.length),
-        );
+  Widget _buildPriceInputField() {
+    _priceController.addListener(() {
+      final text = _priceController.text.replaceAll(',', '');
+      if (text.isNotEmpty) {
+        final parsedPrice = double.tryParse(text);
+        if (parsedPrice != null) {
+          final formattedText = formatPrice(parsedPrice);
+          _priceController.value = _priceController.value.copyWith(
+            text: formattedText,
+            selection: TextSelection.collapsed(offset: formattedText.length),
+          );
+        }
       }
-    }
-  });
+    });
 
-  return Center(
-    child: Container(
-      width: 200,
-      padding: const EdgeInsets.symmetric(horizontal: 12),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            LarosaColors.primary.withOpacity(0.1),
-            LarosaColors.secondary.withOpacity(0.1)
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
+    return Center(
+      child: Container(
+        width: 200,
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              LarosaColors.primary.withOpacity(0.1),
+              LarosaColors.secondary.withOpacity(0.1)
+            ],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(12),
         ),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: TextFormField(
-        controller: _priceController,
-        textAlign: TextAlign.center, // Center-aligns the text
-        decoration: InputDecoration(
-          border: InputBorder.none,
-          hintText: 'Set Business Price',
-          hintStyle: TextStyle(color: LarosaColors.mediumGray.withOpacity(0.6)),
+        child: TextFormField(
+          controller: _priceController,
+          textAlign: TextAlign.center, // Center-aligns the text
+          decoration: InputDecoration(
+            border: InputBorder.none,
+            hintText: 'Set Business Price',
+            hintStyle:
+                TextStyle(color: LarosaColors.mediumGray.withOpacity(0.6)),
+          ),
+          keyboardType: TextInputType.number,
+          style: const TextStyle(color: LarosaColors.primary, fontSize: 16),
+          validator: (value) {
+            if (value == null || value.isEmpty) {
+              return "Please enter a price";
+            }
+            final parsedPrice = double.tryParse(value.replaceAll(',', ''));
+            return parsedPrice == null ? "Invalid price" : null;
+          },
         ),
-        keyboardType: TextInputType.number,
-        style: const TextStyle(color: LarosaColors.primary, fontSize: 16),
-        validator: (value) {
-          if (value == null || value.isEmpty) {
-            return "Please enter a price";
-          }
-          final parsedPrice = double.tryParse(value.replaceAll(',', ''));
-          return parsedPrice == null ? "Invalid price" : null;
-        },
       ),
-    ),
-  );
-}
+    );
+  }
 
   static String formatPrice(double price) {
     final formatter =
@@ -704,91 +718,93 @@ void _showCropper() {
   }
 
   Widget _buildCaptionInputField(bool isBusinessPost) {
-  return TextFormField(
-    controller: _captionController,
-    decoration: InputDecoration(
-      border: const OutlineInputBorder(
-        borderRadius: BorderRadius.all(Radius.circular(12)),
+    return TextFormField(
+      controller: _captionController,
+      decoration: InputDecoration(
+        border: const OutlineInputBorder(
+          borderRadius: BorderRadius.all(Radius.circular(12)),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: LarosaColors.secondary, width: 3),
+        ),
+        hintText: isBusinessPost
+            ? 'Write a Business Caption'
+            : 'Write a Personal Caption',
+        hintStyle: TextStyle(color: LarosaColors.mediumGray.withOpacity(0.8)),
       ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: LarosaColors.secondary, width: 3),
-      ),
-      hintText: isBusinessPost
-          ? 'Write a Business Caption'
-          : 'Write a Personal Caption',
-      hintStyle: TextStyle(color: LarosaColors.mediumGray.withOpacity(0.8)),
-    ),
-    maxLines: 5,
-    style: const TextStyle(color: LarosaColors.primary),
-    validator: (value) => value == null || value.isEmpty ? "Caption cannot be empty" : null,
-  );
-}
+      maxLines: 5,
+      style: const TextStyle(color: LarosaColors.primary),
+      validator: (value) =>
+          value == null || value.isEmpty ? "Caption cannot be empty" : null,
+    );
+  }
 
   Widget _buildGradientPostButton(
-    ContentController contentController, bool isBusinessPost) {
-  return SizedBox(
-    width: double.infinity,
-    child: GestureDetector(
-      onTap: () async {
-        final formKey = isBusinessPost ? _businessFormKey : _personalFormKey;
-        if (formKey.currentState!.validate()) {
-          if (contentController.newContentMediaStrings.isEmpty) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Please add media for your post.')),
+      ContentController contentController, bool isBusinessPost) {
+    return SizedBox(
+      width: double.infinity,
+      child: GestureDetector(
+        onTap: () async {
+          final formKey = isBusinessPost ? _businessFormKey : _personalFormKey;
+          if (formKey.currentState!.validate()) {
+            if (contentController.newContentMediaStrings.isEmpty) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                    content: Text('Please add media for your post.')),
+              );
+              return;
+            }
+
+            setState(() {
+              isCreatingPost = true;
+            });
+
+            double maxHeight = await HelperFunctions.getMaxImageHeight(
+              contentController.newContentMediaStrings,
             );
-            return;
+
+            bool success = await contentController.postBusiness(
+              _captionController.text,
+              double.tryParse(_priceController.text.replaceAll(',', '')) ?? 0,
+              maxHeight,
+            );
+
+            setState(() {
+              isCreatingPost = false;
+            });
+
+            if (success && context.mounted) {
+              context.go('/');
+            }
           }
-
-          setState(() {
-            isCreatingPost = true;
-          });
-
-          double maxHeight = await HelperFunctions.getMaxImageHeight(
-            contentController.newContentMediaStrings,
-          );
-
-          bool success = await contentController.postBusiness(
-            _captionController.text,
-            double.tryParse(_priceController.text.replaceAll(',', '')) ?? 0,
-            maxHeight,
-          );
-
-          setState(() {
-            isCreatingPost = false;
-          });
-
-          if (success && context.mounted) {
-            context.go('/');
-          }
-        }
-      },
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 12),
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            colors: [LarosaColors.secondary, LarosaColors.purple],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
+        },
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              colors: [LarosaColors.secondary, LarosaColors.purple],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.all(Radius.circular(15)),
           ),
-          borderRadius: BorderRadius.all(Radius.circular(15)),
-        ),
-        child: Center(
-          child: isCreatingPost
-              ? const SpinKitCircle(size: 20, color: Colors.white)
-              : const Text(
-                  'CONFIRM POST',
-                  style: TextStyle(
-                    color: LarosaColors.mediumGray,
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
+          child: Center(
+            child: isCreatingPost
+                ? const SpinKitCircle(size: 20, color: Colors.white)
+                : const Text(
+                    'CONFIRM POST',
+                    style: TextStyle(
+                      color: LarosaColors.mediumGray,
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
-                ),
+          ),
         ),
       ),
-    ),
-  );
-}
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -808,9 +824,9 @@ void _showCropper() {
               pinned: true,
               leading: IconButton(
                 icon: const Icon(CupertinoIcons.back),
-                color: LarosaColors.mediumGray, // Sets the color of the back button to red
+                color: LarosaColors.mediumGray,
                 onPressed: () {
-                  Navigator.of(context).pop();
+                  context.pop();
                 },
               ),
               bottom: TabBar(
@@ -819,9 +835,11 @@ void _showCropper() {
                   Tab(icon: Icon(Ionicons.briefcase_outline), text: "Business"),
                   Tab(icon: Icon(Ionicons.person_outline), text: "Personal"),
                 ],
-                labelColor: LarosaColors.primary,            // Active tab color
-            unselectedLabelColor: Colors.purple.withOpacity(0.8), // Inactive tab color
-            indicatorColor: LarosaColors.primary,         // Indicator color to match active tab color
+                labelColor: LarosaColors.primary, // Active tab color
+                unselectedLabelColor:
+                    Colors.purple.withOpacity(0.8), // Inactive tab color
+                indicatorColor: LarosaColors
+                    .primary, // Indicator color to match active tab color
               ),
             ),
             SliverFillRemaining(

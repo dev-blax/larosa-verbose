@@ -88,7 +88,7 @@ class HelperFunctions {
       type: primary ? ToastificationType.info : ToastificationType.error,
       title: Text(message),
       autoCloseDuration: const Duration(seconds: 5),
-      style: ToastificationStyle.flat,
+      style: ToastificationStyle.fillColored,
     );
 
     // Fluttertoast.showToast(
