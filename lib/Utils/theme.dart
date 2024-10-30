@@ -16,7 +16,9 @@ class LarosaAppTheme {
     filledButtonTheme: FilledButtonThemeData(
       style: FilledButton.styleFrom(
         backgroundColor: LarosaColors.primary,
-        shape: const ContinuousRectangleBorder(),
+        shape: ContinuousRectangleBorder(
+          borderRadius: BorderRadius.circular(0),
+        ),
       ),
     ),
     colorScheme: ColorScheme.fromSeed(
@@ -27,13 +29,14 @@ class LarosaAppTheme {
       //secondaryContainer: LarosaPalette.secondaryContainerLight,
       //tertiaryContainer: LarosaPalette.onPrimaryColorLight,
       background: Colors.white,
-      error: Colors.purple,
+      error: Colors.red,
     ),
     disabledColor: LarosaColors.grey,
     brightness: Brightness.light,
     scaffoldBackgroundColor: Colors.white,
     primaryColor: LarosaColors.primary,
     textTheme: LarosaTextTheme.lightTextTheme,
+    
   );
 
   static ThemeData darkTheme = ThemeData(
@@ -47,7 +50,7 @@ class LarosaAppTheme {
       brightness: Brightness.dark,
       background: Colors.black,
       // background: LarosaColors.dark,
-      error: Colors.purple,
+      error: Colors.red,
     ),
     disabledColor: LarosaColors.grey,
     brightness: Brightness.dark,

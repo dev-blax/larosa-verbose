@@ -1,4 +1,5 @@
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:flutter_typeahead/flutter_typeahead.dart';
@@ -16,7 +17,6 @@ import 'package:larosa_block/Services/log_service.dart';
 import 'package:larosa_block/Utils/helpers.dart';
 import 'package:larosa_block/Utils/links.dart';
 import 'package:larosa_block/Utils/svg_paths.dart';
-import 'package:iconsax/iconsax.dart';
 import 'package:stomp_dart_client/stomp_dart_client.dart';
 
 class NewDelivery extends StatefulWidget {
@@ -94,6 +94,16 @@ class _NewDeliveryState extends State<NewDelivery> {
 
   bool isRequestingRide = false;
   Future<void> _requestRide() async {
+    if (sourceLatitude == null ||
+        sourceLongitude == null ||
+        destinationLatitude == null ||
+        destinationLongitude == null) {
+      HelperFunctions.showToast(
+        'Please Enter Pickup and Destination location',
+        true,
+      );
+      return;
+    }
     setState(() {
       isRequestingRide = true;
     });
@@ -103,8 +113,7 @@ class _NewDeliveryState extends State<NewDelivery> {
       'Authorization': 'Bearer ${AuthService.getToken()}',
     };
 
-    String endpoint =
-        '${LarosaLinks.baseurl}/api/v1/ride/request';
+    String endpoint = '${LarosaLinks.baseurl}/api/v1/ride/request';
 
     try {
       var response = await http.post(
@@ -272,6 +281,7 @@ class _NewDeliveryState extends State<NewDelivery> {
       appBar: AppBar(
         automaticallyImplyLeading: false,
         title: const Text('Delivery'),
+        centerTitle: true,
       ),
       body: Stack(
         children: [
@@ -297,7 +307,7 @@ class _NewDeliveryState extends State<NewDelivery> {
                       focusNode: focusNode,
                       decoration: InputDecoration(
                         prefixIcon: const Icon(
-                          Iconsax.search_normal,
+                          CupertinoIcons.location,
                           color: Colors.white,
                         ),
                         suffixIcon: isLoadingSource
@@ -315,7 +325,7 @@ class _NewDeliveryState extends State<NewDelivery> {
                                 onPressed: () => _getCurrentLocation(true),
                               ),
                         border: InputBorder.none,
-                        labelText: 'Search for a source location',
+                        labelText: 'Pickup location',
                         labelStyle: const TextStyle(color: Colors.white),
                       ),
                     );
@@ -343,7 +353,7 @@ class _NewDeliveryState extends State<NewDelivery> {
                       focusNode: focusNode,
                       decoration: const InputDecoration(
                         prefixIcon: Icon(
-                          Iconsax.search_normal,
+                          CupertinoIcons.pin,
                           color: Colors.white,
                         ),
                         // suffixIcon: isLoadingDestination
@@ -358,7 +368,7 @@ class _NewDeliveryState extends State<NewDelivery> {
                         //         onPressed: () => _getCurrentLocation(false),
                         //       ),
                         border: InputBorder.none,
-                        labelText: 'Search for a destination',
+                        labelText: 'Destination',
                         labelStyle: TextStyle(color: Colors.white),
                       ),
                     );
@@ -366,17 +376,17 @@ class _NewDeliveryState extends State<NewDelivery> {
                 ),
               ),
               const Gap(10),
-              FilledButton(
-                onPressed: _requestRide,
-                child: isRequestingRide
-                    ? const SpinKitCircle(
-                        color: Colors.white,
-                        size: 20,
-                      )
-                    : const Text(
+              isRequestingRide
+                  ? const SpinKitCircle(
+                      color: Colors.white,
+                      size: 20,
+                    )
+                  : FilledButton(
+                      onPressed: _requestRide,
+                      child: const Text(
                         'Request a Ride',
                       ),
-              ),
+                    ),
               const Gap(20),
               if (selectedSourceStreetName != null &&
                   sourceLatitude != null &&
