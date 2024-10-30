@@ -499,150 +499,156 @@ class _AddToCartScreenState extends State<AddToCartScreen> {
           children: [
             const Gap(10),
             // Decrease Buttons
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                buildGradientButton(
-                  onTap: () {
-                    setState(() {
-                      itemCount = (itemCount - 1 < 1) ? 1 : itemCount - 1;
-                    });
-                  },
-                  label: '-1',
-                  startColor: LarosaColors.primary,
-                  endColor: LarosaColors.purple,
-                ),
-                const Gap(6),
-                buildGradientButton(
-                  onTap: () {
-                    setState(() {
-                      itemCount = (itemCount - 5 < 1) ? 1 : itemCount - 5;
-                    });
-                  },
-                  label: '-5',
-                  startColor: LarosaColors.primary,
-                  endColor: LarosaColors.purple,
-                ),
-                const Gap(6),
-                buildGradientButton(
-                  onTap: () {
-                    setState(() {
-                      itemCount = (itemCount - 10 < 1) ? 1 : itemCount - 10;
-                    });
-                  },
-                  label: '-10',
-                  startColor: LarosaColors.primary,
-                  endColor: LarosaColors.purple,
-                ),
-                const Gap(6),
-                buildGradientButton(
-                  onTap: () {
-                    setState(() {
-                      itemCount = (itemCount - 20 < 1) ? 1 : itemCount - 20;
-                    });
-                  },
-                  label: '-20',
-                  startColor: LarosaColors.primary,
-                  endColor: LarosaColors.purple,
-                ),
-                const Gap(6),
-                buildGradientButton(
-                  onTap: () {
-                    setState(() {
-                      itemCount = (itemCount - 50 < 1) ? 1 : itemCount - 50;
-                    });
-                  },
-                  label: '-50',
-                  startColor: LarosaColors.primary,
-                  endColor: LarosaColors.purple,
-                ),
-                const Gap(6),
-                buildGradientButton(
-                  onTap: () {
-                    setState(() {
-                      itemCount = (itemCount - 100 < 1) ? 1 : itemCount - 100;
-                    });
-                  },
-                  label: '-100',
-                  startColor: LarosaColors.primary,
-                  endColor: LarosaColors.purple,
-                ),
-              ],
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  buildGradientButton(
+                    onTap: () {
+                      setState(() {
+                        itemCount = (itemCount - 1 < 1) ? 1 : itemCount - 1;
+                      });
+                    },
+                    label: '-1',
+                    startColor: LarosaColors.primary,
+                    endColor: LarosaColors.purple,
+                  ),
+                  const Gap(6),
+                  buildGradientButton(
+                    onTap: () {
+                      setState(() {
+                        itemCount = (itemCount - 5 < 1) ? 1 : itemCount - 5;
+                      });
+                    },
+                    label: '-5',
+                    startColor: LarosaColors.primary,
+                    endColor: LarosaColors.purple,
+                  ),
+                  const Gap(6),
+                  buildGradientButton(
+                    onTap: () {
+                      setState(() {
+                        itemCount = (itemCount - 10 < 1) ? 1 : itemCount - 10;
+                      });
+                    },
+                    label: '-10',
+                    startColor: LarosaColors.primary,
+                    endColor: LarosaColors.purple,
+                  ),
+                  const Gap(6),
+                  buildGradientButton(
+                    onTap: () {
+                      setState(() {
+                        itemCount = (itemCount - 20 < 1) ? 1 : itemCount - 20;
+                      });
+                    },
+                    label: '-20',
+                    startColor: LarosaColors.primary,
+                    endColor: LarosaColors.purple,
+                  ),
+                  const Gap(6),
+                  buildGradientButton(
+                    onTap: () {
+                      setState(() {
+                        itemCount = (itemCount - 50 < 1) ? 1 : itemCount - 50;
+                      });
+                    },
+                    label: '-50',
+                    startColor: LarosaColors.primary,
+                    endColor: LarosaColors.purple,
+                  ),
+                  const Gap(6),
+                  buildGradientButton(
+                    onTap: () {
+                      setState(() {
+                        itemCount = (itemCount - 100 < 1) ? 1 : itemCount - 100;
+                      });
+                    },
+                    label: '-100',
+                    startColor: LarosaColors.primary,
+                    endColor: LarosaColors.purple,
+                  ),
+                ],
+              ),
             ),
             const Gap(5),
             // Increase Buttons
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                buildGradientButton(
-                  onTap: () {
-                    setState(() {
-                      itemCount++;
-                    });
-                  },
-                  label: '+1',
-                  startColor: LarosaColors.primary,
-                  endColor: LarosaColors.purple,
-                ),
-                const Gap(6),
-                buildGradientButton(
-                  onTap: () {
-                    setState(() {
-                      itemCount += 5;
-                    });
-                  },
-                  label: '+5',
-                  startColor: LarosaColors.primary,
-                  endColor: LarosaColors.purple,
-                ),
-                const Gap(6),
-                buildGradientButton(
-                  onTap: () {
-                    setState(() {
-                      itemCount += 10;
-                    });
-                  },
-                  label: '+10',
-                  startColor: LarosaColors.primary,
-                  endColor: LarosaColors.purple,
-                ),
-                const Gap(6),
-                buildGradientButton(
-                  onTap: () {
-                    setState(() {
-                      itemCount += 20;
-                    });
-                  },
-                  label: '+20',
-                  startColor: LarosaColors.primary,
-                  endColor: LarosaColors.purple,
-                ),
-                const Gap(6),
-                buildGradientButton(
-                  onTap: () {
-                    setState(() {
-                      itemCount += 50;
-                    });
-                  },
-                  label: '+50',
-                  startColor: LarosaColors.primary,
-                  endColor: LarosaColors.purple,
-                ),
-                const Gap(6),
-                buildGradientButton(
-                  onTap: () {
-                    setState(() {
-                      itemCount += 100;
-                    });
-                  },
-                  label: '+100',
-                  startColor: LarosaColors.primary,
-                  endColor: LarosaColors.purple,
-                ),
-
-                
-
-              ],
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  buildGradientButton(
+                    onTap: () {
+                      setState(() {
+                        itemCount++;
+                      });
+                    },
+                    label: '+1',
+                    startColor: LarosaColors.primary,
+                    endColor: LarosaColors.purple,
+                  ),
+                  const Gap(6),
+                  buildGradientButton(
+                    onTap: () {
+                      setState(() {
+                        itemCount += 5;
+                      });
+                    },
+                    label: '+5',
+                    startColor: LarosaColors.primary,
+                    endColor: LarosaColors.purple,
+                  ),
+                  const Gap(6),
+                  buildGradientButton(
+                    onTap: () {
+                      setState(() {
+                        itemCount += 10;
+                      });
+                    },
+                    label: '+10',
+                    startColor: LarosaColors.primary,
+                    endColor: LarosaColors.purple,
+                  ),
+                  const Gap(6),
+                  buildGradientButton(
+                    onTap: () {
+                      setState(() {
+                        itemCount += 20;
+                      });
+                    },
+                    label: '+20',
+                    startColor: LarosaColors.primary,
+                    endColor: LarosaColors.purple,
+                  ),
+                  const Gap(6),
+                  buildGradientButton(
+                    onTap: () {
+                      setState(() {
+                        itemCount += 50;
+                      });
+                    },
+                    label: '+50',
+                    startColor: LarosaColors.primary,
+                    endColor: LarosaColors.purple,
+                  ),
+                  const Gap(6),
+                  buildGradientButton(
+                    onTap: () {
+                      setState(() {
+                        itemCount += 100;
+                      });
+                    },
+                    label: '+100',
+                    startColor: LarosaColors.primary,
+                    endColor: LarosaColors.purple,
+                  ),
+              
+                  
+              
+                ],
+              ),
             ),
             const Gap(10),
           ],
