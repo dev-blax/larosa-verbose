@@ -22,6 +22,9 @@ import 'package:larosa_block/Features/Reels/reels.dart';
 import 'package:larosa_block/Features/Search/search.dart';
 import 'package:larosa_block/Features/Settings/settings.dart';
 import 'package:larosa_block/splash_screen.dart';
+import 'package:provider/provider.dart';
+
+import 'Features/Feeds/Controllers/business_post_controller.dart';
 
 class RouterService {
   static bool _onboarded() {
@@ -33,12 +36,12 @@ class RouterService {
   final GoRouter router = GoRouter(
     initialLocation: _onboarded() ? '/' : '/onboarding',
     routes: [
-
       // busines post
       GoRoute(
         name: 'business-post',
         path: '/business-post',
         builder: (context, state) => const BusinessPostScreen(),
+        // builder: (context, state) => const BusinessPostScreen(),
       ),
 
       // GoRoute(
@@ -87,7 +90,11 @@ class RouterService {
       GoRoute(
         name: 'main-post',
         path: '/main-post',
-        builder: (context, state) => const ImagePostScreen(),
+        builder: (context, state) => ChangeNotifierProvider(
+          create: (context) => BusinessCategoryProvider(),
+          child: const BusinessPostScreen(),
+        ),
+        // builder: (context, state) => const ImagePostScreen(),
       ),
 
       // chat routes
