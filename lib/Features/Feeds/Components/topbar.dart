@@ -10,7 +10,7 @@ class TopBar1 extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(left: 0,right: 0, top: 15),
+      padding: const EdgeInsets.only(left: 0,right: 0, top: 18, bottom: 0),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [

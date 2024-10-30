@@ -7,6 +7,8 @@ import 'package:larosa_block/Services/auth_service.dart';
 
 import 'package:larosa_block/Utils/svg_paths.dart';
 
+import '../Utils/colors.dart';
+
 enum ActivePage {
   feeds,
   search,
@@ -75,7 +77,7 @@ class BottomNavigation extends StatelessWidget {
                 icon: const Icon(
                   Iconsax.add_circle5,
                   size: 30,
-                  color: Colors.blue,
+                  color: LarosaColors.primary,
                 ),
               ),
               IconButton(

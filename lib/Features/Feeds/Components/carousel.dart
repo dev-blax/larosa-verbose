@@ -126,13 +126,36 @@ class _CenterSnapCarouselState extends State<CenterSnapCarousel> {
     }
   }
 
-  void _onSeek(int index, double value) {
-    final controller = _videoControllers[index];
-    if (controller != null) {
-      final newPosition = Duration(seconds: value.toInt());
-      controller.seekTo(newPosition);
-    }
+void _onSeekStart(int index) {
+  final controller = _videoControllers[index];
+  if (controller != null && controller.value.isPlaying) {
+    controller.pause();
   }
+}
+
+void _onSeek(int index, double value) {
+  final controller = _videoControllers[index];
+  if (controller != null) {
+    final newPosition = Duration(milliseconds: value.toInt());
+    controller.seekTo(newPosition);
+    setState(() {
+      _videoPositions[index] = newPosition;
+    });
+  }
+}
+
+void _onSeekEnd(int index, double value) {
+  final controller = _videoControllers[index];
+  if (controller != null) {
+    final newPosition = Duration(milliseconds: value.toInt());
+    controller.seekTo(newPosition);
+    controller.play();
+    setState(() {
+      _videoPositions[index] = newPosition;
+    });
+  }
+}
+
 
   void _toggleMute(int index) {
     final controller = _videoControllers[index];
@@ -226,16 +249,16 @@ class _CenterSnapCarouselState extends State<CenterSnapCarousel> {
                             child: RotatedBox(
                               quarterTurns: 3,
                               child: Slider(
-                                activeColor: Colors.white,
-                                inactiveColor: Colors.grey,
-                                value:
-                                    _videoPositions[index]?.inSeconds.toDouble() ??
-                                        0.0,
-                                min: 0.0,
-                                max: controller.value.duration.inSeconds
-                                    .toDouble(),
-                                onChanged: (value) => _onSeek(index, value),
-                              ),
+  activeColor: Colors.white,
+  inactiveColor: Colors.grey,
+  value: _videoPositions[index]?.inMilliseconds.toDouble() ?? 0.0,
+  min: 0.0,
+  max: controller.value.duration.inMilliseconds.toDouble(),
+  onChangeStart: (value) => _onSeekStart(index),
+  onChanged: (value) => _onSeek(index, value),
+  onChangeEnd: (value) => _onSeekEnd(index, value),
+),
+
                             ),
                           ),
                           GestureDetector(
