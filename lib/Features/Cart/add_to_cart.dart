@@ -10,9 +10,12 @@ import 'package:flutter_typeahead/flutter_typeahead.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:larosa_block/Features/Cart/Models/product_model.dart';
+import 'package:larosa_block/Features/Cart/controllers/cart_controller.dart';
 import 'package:larosa_block/Services/log_service.dart';
 import 'dart:ui';
 import 'package:geolocator/geolocator.dart';
+import 'package:provider/provider.dart';
 
 import '../../Components/cart_button.dart';
 import '../../Components/PaymentModals/payment_method_modal.dart';
@@ -48,50 +51,49 @@ class _AddToCartScreenState extends State<AddToCartScreen> {
   double? longitude;
 
   Future<void> _getCurrentLocation() async {
-  bool serviceEnabled;
-  LocationPermission permission;
+    bool serviceEnabled;
+    LocationPermission permission;
 
-  serviceEnabled = await Geolocator.isLocationServiceEnabled();
-  if (!serviceEnabled) {
-    return Future.error('Location services are disabled.');
-  }
+    serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) {
+      return Future.error('Location services are disabled.');
+    }
 
-  permission = await Geolocator.checkPermission();
-  if (permission == LocationPermission.denied) {
-    permission = await Geolocator.requestPermission();
+    permission = await Geolocator.checkPermission();
     if (permission == LocationPermission.denied) {
-      return Future.error('Location permissions are denied');
+      permission = await Geolocator.requestPermission();
+      if (permission == LocationPermission.denied) {
+        return Future.error('Location permissions are denied');
+      }
+    }
+
+    if (permission == LocationPermission.deniedForever) {
+      return Future.error(
+          'Location permissions are permanently denied, we cannot request permissions.');
+    }
+
+    final position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high);
+
+    setState(() {
+      _currentPosition = position;
+    });
+
+    // Fetch the street name using reverse geocoding
+    try {
+      List<Placemark> placemarks = await placemarkFromCoordinates(
+        position.latitude,
+        position.longitude,
+      );
+      if (placemarks.isNotEmpty) {
+        setState(() {
+          currentStreetName = placemarks[0].street;
+        });
+      }
+    } catch (e) {
+      print('Error: $e');
     }
   }
-
-  if (permission == LocationPermission.deniedForever) {
-    return Future.error(
-        'Location permissions are permanently denied, we cannot request permissions.');
-  }
-
-  final position = await Geolocator.getCurrentPosition(
-      desiredAccuracy: LocationAccuracy.high);
-
-  setState(() {
-    _currentPosition = position;
-  });
-
-  // Fetch the street name using reverse geocoding
-  try {
-    List<Placemark> placemarks = await placemarkFromCoordinates(
-      position.latitude,
-      position.longitude,
-    );
-    if (placemarks.isNotEmpty) {
-      setState(() {
-        currentStreetName = placemarks[0].street;
-      });
-    }
-  } catch (e) {
-    print('Error: $e');
-  }
-}
-
 
   Future<List<Map<String, String>>> _getPlaceSuggestions(String input) async {
     final String apiKey = dotenv.env['GOOGLE_MAPS_PLACES_API_KEY']!;
@@ -150,6 +152,7 @@ class _AddToCartScreenState extends State<AddToCartScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final cartNotifier = Provider.of<CartController>(context);
     List<String> imageUrls = widget.names.split(',');
     double totalPrice = widget.price * itemCount;
 
@@ -276,7 +279,6 @@ class _AddToCartScreenState extends State<AddToCartScreen> {
 
                 const Gap(20),
 
-// Table for Delivery Destination
                 if (latitude != null &&
                     longitude != null &&
                     selectedStreetName != null)
@@ -341,46 +343,47 @@ class _AddToCartScreenState extends State<AddToCartScreen> {
 
                 // Delivery Destination TextField
                 Row(
-  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-  children: [
-    const Text(
-      'Delivery Destination',
-      style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
-    ),
-    IconButton(
-      icon: const Icon(Icons.info_outline, color: Colors.grey),
-      onPressed: () {
-        showDialog(
-          context: context,
-          builder: (BuildContext context) {
-            return AlertDialog(
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(15.0),
-              ),
-              title: const Text('Location Information'),
-              content: const Text(
-                'When location permission is granted:\n\n'
-                '1. If no delivery destination is selected, your current location will be used automatically.\n'
-                '2. If both a delivery destination and your current location are available, the delivery destination will be used.\n'
-                '3. If your current location is not available, you will need to search for and select a delivery destination manually.\n\n'
-                'By allowing location permission, the app can auto-fill your location for a seamless experience.',
-                style: TextStyle(fontSize: 14),
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                  },
-                  child: const Text('OK'),
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      'Delivery Destination',
+                      style:
+                          TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.info_outline, color: Colors.grey),
+                      onPressed: () {
+                        showDialog(
+                          context: context,
+                          builder: (BuildContext context) {
+                            return AlertDialog(
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(15.0),
+                              ),
+                              title: const Text('Location Information'),
+                              content: const Text(
+                                'When location permission is granted:\n\n'
+                                '1. If no delivery destination is selected, your current location will be used automatically.\n'
+                                '2. If both a delivery destination and your current location are available, the delivery destination will be used.\n'
+                                '3. If your current location is not available, you will need to search for and select a delivery destination manually.\n\n'
+                                'By allowing location permission, the app can auto-fill your location for a seamless experience.',
+                                style: TextStyle(fontSize: 14),
+                              ),
+                              actions: [
+                                TextButton(
+                                  onPressed: () {
+                                    Navigator.of(context).pop();
+                                  },
+                                  child: const Text('OK'),
+                                ),
+                              ],
+                            );
+                          },
+                        );
+                      },
+                    ),
+                  ],
                 ),
-              ],
-            );
-          },
-        );
-      },
-    ),
-  ],
-),
 
                 const Gap(10),
                 TypeAheadField<Map<String, String>>(
@@ -432,19 +435,15 @@ class _AddToCartScreenState extends State<AddToCartScreen> {
                                 top: Radius.circular(20),
                               ),
                             ),
-                            isScrollControlled:
-                                true, // This allows the modal to take more space
+                            isScrollControlled: true,
                             builder: (BuildContext context) {
                               return FractionallySizedBox(
-                                heightFactor:
-                                    0.95, // Adjust this value to control the height (0.0 - 1.0)
+                                heightFactor: 0.95,
                                 child: PaymentMethodModal(
                                   currentPosition: _currentPosition,
                                   deliveryDestination: selectedStreetName,
-                                  deliveryLatitude:
-                                      latitude, // Pass the latitude of the delivery destination
-                                  deliveryLongitude:
-                                      longitude, // Pass the longitude of the delivery destination
+                                  deliveryLatitude: latitude,
+                                  deliveryLongitude: longitude,
                                   totalPrice: widget.price * itemCount,
                                   quantity: itemCount,
                                   postId: widget.postId,
@@ -453,7 +452,7 @@ class _AddToCartScreenState extends State<AddToCartScreen> {
                             },
                           );
                         },
-                        label: 'Confirm Order',
+                        label: 'Buy Now',
                         startColor: LarosaColors.secondary,
                         endColor: LarosaColors.purple,
                       ),
@@ -464,6 +463,19 @@ class _AddToCartScreenState extends State<AddToCartScreen> {
                       child: buildWideGradientButton(
                         onTap: () {
                           // Handle add to cart
+
+                          Product newProduct = Product(
+                            id: '2',
+                            imageUrl: '',
+                            name: 'Product Name',
+                            price: 2500,
+                            shortDescription: 'Some description',
+                            quantity: 20,
+                          );
+
+                          cartNotifier.addProduct(newProduct);
+
+                          context.push('/maincart');
                         },
                         label: 'Add to Cart',
                         startColor: LarosaColors.secondary,
@@ -644,9 +656,6 @@ class _AddToCartScreenState extends State<AddToCartScreen> {
                     startColor: LarosaColors.primary,
                     endColor: LarosaColors.purple,
                   ),
-              
-                  
-              
                 ],
               ),
             ),

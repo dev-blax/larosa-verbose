@@ -8,6 +8,7 @@ import 'package:flutter_svg/svg.dart';
 import 'package:gap/gap.dart';
 import 'package:http/http.dart' as http;
 import 'package:larosa_block/Components/bottom_navigation.dart';
+import 'package:larosa_block/Components/image_viewer.dart';
 import 'package:larosa_block/Features/Search/Components/search_delegate.dart';
 import 'package:larosa_block/Services/auth_service.dart';
 import 'package:larosa_block/Services/log_service.dart';
@@ -161,7 +162,6 @@ class _SearchScreenState extends State<SearchScreen> {
           title: const Text(
             'Discover',
           ),
-          
           actions: [
             IconButton(
               onPressed: () {
@@ -213,6 +213,7 @@ class _SearchScreenState extends State<SearchScreen> {
                       suggestions[index]['verification_status'] != 1;
                   var profilePicturePath = suggestions[index]['profilePicture'];
                   String name = suggestions[index]['name'];
+                  List<String> medias = suggestions[index]['names'].split(',');
                   String firstMedia =
                       suggestions[index]['names'].split(',').toList()[0];
 
@@ -230,7 +231,7 @@ class _SearchScreenState extends State<SearchScreen> {
                         )
                       ],
                       child: Stack(
-                        alignment: Alignment.topRight,
+                        alignment: Alignment.bottomCenter,
                         children: [
                           if (thumbnailPath != null)
                             ClipRRect(
@@ -249,17 +250,67 @@ class _SearchScreenState extends State<SearchScreen> {
                                 child: SpinKitCircle(
                               color: LarosaColors.primary,
                             )),
-                          Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: SvgPicture.asset(
-                              'assets/svg_icons/reels.svg',
-                              colorFilter: ColorFilter.mode(
-                                Theme.of(context).colorScheme.secondary,
-                                BlendMode.srcIn,
-                              ),
-                              height: 25,
+                          // Padding(
+                          //   padding: const EdgeInsets.all(8.0),
+                          //   child: SvgPicture.asset(
+                          //     'assets/svg_icons/reels.svg',
+                          //     colorFilter: ColorFilter.mode(
+                          //       Theme.of(context).colorScheme.secondary,
+                          //       BlendMode.srcIn,
+                          //     ),
+                          //     height: 25,
+                          //   ),
+                          // ),
+                          Container(
+                          height: 70,
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [
+                                Colors.black.withOpacity(.8),
+                                Colors.transparent,
+                              ],
+                              begin: Alignment.bottomCenter,
+                              end: Alignment.topCenter,
                             ),
                           ),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: Row(
+                            children: [
+                              CircleAvatar(
+                                radius: 14,
+                                backgroundImage: profilePicturePath != null
+                                    ? CachedNetworkImageProvider(
+                                        profilePicturePath,
+                                      ) as ImageProvider<Object>
+                                    : const AssetImage(
+                                        'assets/images/EXPLORE.png',
+                                      ) as ImageProvider<Object>,
+                              ),
+                              const Gap(5),
+                              Text(
+                                name,
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .labelLarge!
+                                    .copyWith(
+                                      color: Colors.white,
+                                    ),
+                              ),
+                              const Gap(5),
+                              if (isVerified)
+                                SvgPicture.asset(
+                                  SvgIconsPaths.sharpVerified,
+                                  colorFilter: const ColorFilter.mode(
+                                    Colors.blue,
+                                    BlendMode.srcIn,
+                                  ),
+                                  height: 20,
+                                )
+                            ],
+                          ),
+                        ),
                         ],
                       ),
                     );
@@ -277,14 +328,28 @@ class _SearchScreenState extends State<SearchScreen> {
                     child: Stack(
                       alignment: Alignment.bottomLeft,
                       children: [
-                        ClipRRect(
-                          borderRadius:
-                              const BorderRadius.all(Radius.circular(10)),
-                          child: CachedNetworkImage(
-                            width: double.infinity,
-                            height: double.infinity,
-                            imageUrl: firstMedia,
-                            fit: BoxFit.cover,
+                        GestureDetector(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => ImageViewScreen(
+                                  imageUrls: medias,
+                                  initialIndex: index,
+                                  displayName: name,
+                                ),
+                              ),
+                            );
+                          },
+                          child: ClipRRect(
+                            borderRadius:
+                                const BorderRadius.all(Radius.circular(10)),
+                            child: CachedNetworkImage(
+                              width: double.infinity,
+                              height: double.infinity,
+                              imageUrl: firstMedia,
+                              fit: BoxFit.cover,
+                            ),
                           ),
                         ),
                         Container(

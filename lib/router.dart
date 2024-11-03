@@ -12,7 +12,6 @@ import 'package:larosa_block/Features/Delivery/new_delivery.dart';
 import 'package:larosa_block/Features/Feeds/business_post.dart';
 import 'package:larosa_block/Features/Feeds/camera_content.dart';
 import 'package:larosa_block/Features/Feeds/home_feeds.dart';
-import 'package:larosa_block/Features/Feeds/image_post_screen.dart';
 import 'package:larosa_block/Features/Feeds/profile_posts.dart';
 import 'package:larosa_block/Features/Onboarding/onboarding_screen.dart';
 import 'package:larosa_block/Features/Profiles/profile_edit.dart';
@@ -23,7 +22,6 @@ import 'package:larosa_block/Features/Search/search.dart';
 import 'package:larosa_block/Features/Settings/settings.dart';
 import 'package:larosa_block/splash_screen.dart';
 import 'package:provider/provider.dart';
-
 import 'Features/Feeds/Controllers/business_post_controller.dart';
 
 class RouterService {
@@ -41,7 +39,6 @@ class RouterService {
         name: 'business-post',
         path: '/business-post',
         builder: (context, state) => const BusinessPostScreen(),
-        // builder: (context, state) => const BusinessPostScreen(),
       ),
 
       // GoRoute(
@@ -68,9 +65,10 @@ class RouterService {
         name: 'home',
         path: '/',
         // builder: (context, state) => const AddToCartScreen(),
-       builder: (context, state) => const NewDelivery(),
+        //builder: (context, state) => const NewDelivery(),
         // builder: (context, state) => VideoFeedsPage(),
-        // builder: (context, state) => const HomeFeedsScreen(),
+        builder: (context, state) => const HomeFeedsScreen(),
+        
       ),
       GoRoute(
         name: 'homeprofile',
@@ -138,7 +136,7 @@ class RouterService {
       GoRoute(
         name: 'maincart',
         path: '/maincart',
-        builder: (context, state) => MyCart(),
+        builder: (context, state) => const MyCart(),
       ),
 
       // reels routes

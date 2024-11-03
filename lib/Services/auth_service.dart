@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:hive/hive.dart';
 import 'package:http/http.dart' as http;
+import 'package:larosa_block/Services/log_service.dart';
 import 'package:larosa_block/Utils/links.dart';
 
 class AuthService {
@@ -33,7 +34,7 @@ class AuthService {
   }
 
   static Future<void> refreshToken() async {
-    print('hello toke refresh');
+    LogService.logInfo('hello toke refresh');
     var headers = {"Content-Type": "application/json"};
 
     var url = Uri.https(LarosaLinks.nakedBaseUrl, '/api/v1/auth/refresh');
@@ -54,7 +55,7 @@ class AuthService {
       box.put('refreshToken', data['refreshToken']);
       return;
     } else {
-      //HelperFunctions.larosaLogger('Error refreshing token: ${response.body}');
+      LogService.logError(response.body);
       return;
     }
   }

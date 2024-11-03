@@ -40,6 +40,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:larosa_block/Features/Cart/controllers/cart_controller.dart';
 import 'package:larosa_block/Features/Feeds/Controllers/content_controller.dart';
 import 'package:larosa_block/Features/Feeds/Controllers/home_feeds_controller.dart';
 import 'package:larosa_block/Features/Onboarding/onboarding_controller.dart';
@@ -121,7 +122,6 @@ class _AppState extends State<App> {
   }
 
   void _setSystemUIOverlayStyle() {
-    // Set light and dark mode overlays based on the theme
     SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
       statusBarIconBrightness: Brightness.light, // Change based on your theme
@@ -138,6 +138,7 @@ class _AppState extends State<App> {
         ChangeNotifierProvider(create: (_) => HomeFeedsController()),
         ChangeNotifierProvider(create: (_) => ContentController()),
         ChangeNotifierProvider(create: (_) => OnboardingProvider()),
+        ChangeNotifierProvider(create: (_) => CartController()),
       ],
       child: ToastificationWrapper(
         child: MaterialApp.router(

@@ -2,111 +2,17 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:gap/gap.dart';
+import 'package:larosa_block/Features/Cart/Models/product_model.dart';
+import 'package:larosa_block/Features/Cart/controllers/cart_controller.dart';
+import 'package:provider/provider.dart';
 
-class Product {
-  final String id;
-  final String imageUrl;
-  final String name;
-  final String shortDescription;
-  final double price;
-  int quantity;
-
-  Product({
-    required this.id,
-    required this.imageUrl,
-    required this.name,
-    required this.shortDescription,
-    required this.price,
-    this.quantity = 1,
-  });
-}
-
-class MyCart extends StatefulWidget {
+class MyCart extends StatelessWidget {
   const MyCart({super.key});
 
   @override
-  _MyCartState createState() => _MyCartState();
-}
-
-class _MyCartState extends State<MyCart> {
-  List<Product> cartItems = [];
-
-  @override
-  void initState() {
-    super.initState();
-    _initializeCart();
-  }
-
-  void _initializeCart() {
-    setState(() {
-      cartItems = [
-        Product(
-          id: '1',
-          imageUrl:
-              'https://images.pexels.com/photos/291528/pexels-photo-291528.jpeg?auto=compress&cs=tinysrgb&w=600',
-          name: 'Black Choco',
-          shortDescription: 'Description for product 1',
-          price: 10.0,
-        ),
-        Product(
-          id: '2',
-          imageUrl:
-              'https://images.pexels.com/photos/808941/pexels-photo-808941.jpeg?auto=compress&cs=tinysrgb&w=600',
-          name: 'Pinky Cakes',
-          shortDescription: 'Description for product 2',
-          price: 20.0,
-        ),
-        Product(
-          id: '3',
-          imageUrl:
-              'https://images.pexels.com/photos/121191/pexels-photo-121191.jpeg?auto=compress&cs=tinysrgb&w=600',
-          name: 'Dodoma Wine',
-          shortDescription: 'Description for product 3',
-          price: 30.0,
-        ),
-      ];
-    });
-  }
-
-  void addProduct(Product product) {
-    setState(() {
-      var existingProduct = cartItems.firstWhere(
-        (item) => item.id == product.id,
-        orElse: () => Product(id: '', imageUrl: '', name: '', shortDescription: '', price: 0),
-      );
-      if (existingProduct.id.isNotEmpty) {
-        existingProduct.quantity++;
-      } else {
-        cartItems.add(product);
-      }
-    });
-  }
-
-  void removeProduct(Product product) {
-    setState(() {
-      if (product.quantity > 1) {
-        product.quantity--;
-      } else {
-        cartItems.remove(product);
-      }
-    });
-  }
-
-  void deleteProduct(Product product) {
-    setState(() {
-      cartItems.remove(product);
-    });
-  }
-
-  double get totalPrice {
-    return cartItems.fold(
-      0,
-      (sum, item) => sum + (item.price * item.quantity),
-    );
-  }
-
-  @override
   Widget build(BuildContext context) {
+    final cartNotifier = Provider.of<CartController>(context);
+
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.tertiaryContainer,
       appBar: AppBar(
@@ -118,7 +24,7 @@ class _MyCartState extends State<MyCart> {
         ),
         title: const Text("Your Cart"),
       ),
-      body: cartItems.isEmpty
+      body: cartNotifier.cartItems.isEmpty
           ? const Center(
               child: Text(
                 'No products in Cart',
@@ -128,26 +34,14 @@ class _MyCartState extends State<MyCart> {
               children: [
                 Expanded(
                   child: ListView.builder(
-                    itemCount: cartItems.length,
+                    itemCount: cartNotifier.cartItems.length,
                     itemBuilder: (context, index) {
-                      var product = cartItems[index];
-                      return Animate(
-                        effects: [
-                          SlideEffect(
-                            curve: Curves.elasticOut,
-                            begin: index % 2 == 0
-                                ? const Offset(-0.5, 0)
-                                : const Offset(0.5, 0),
-                            end: Offset.zero,
-                            duration: const Duration(seconds: 3),
-                          ),
-                        ],
-                        child: CartItemWidget(
-                          product: product,
-                          onAdd: addProduct,
-                          onRemove: removeProduct,
-                          onDelete: deleteProduct,
-                        ),
+                      var product = cartNotifier.cartItems[index];
+                      return CartItemWidget(
+                        product: product,
+                        onAdd: (product) => cartNotifier.addProduct(product),
+                        onRemove: (product) => cartNotifier.removeProduct(product),
+                        onDelete: (product) => cartNotifier.deleteProduct(product),
                       );
                     },
                   ),
@@ -155,7 +49,7 @@ class _MyCartState extends State<MyCart> {
                 Padding(
                   padding: const EdgeInsets.all(16.0),
                   child: Text(
-                    'Total: \$${totalPrice.toStringAsFixed(2)}',
+                    'Total: \$${cartNotifier.totalPrice.toStringAsFixed(2)}',
                     style: const TextStyle(
                         fontSize: 20, fontWeight: FontWeight.bold),
                   ),
@@ -190,7 +84,7 @@ class CartItemWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
-      shape: ContinuousRectangleBorder(borderRadius: BorderRadius.circular(40)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12.0),

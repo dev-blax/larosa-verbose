@@ -1,4 +1,3 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
@@ -6,7 +5,6 @@ import 'package:flutter_typeahead/flutter_typeahead.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:ionicons/ionicons.dart';
-import 'package:flutter_svg/svg.dart';
 import 'package:gap/gap.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -16,7 +14,6 @@ import 'package:larosa_block/Services/auth_service.dart';
 import 'package:larosa_block/Services/log_service.dart';
 import 'package:larosa_block/Utils/helpers.dart';
 import 'package:larosa_block/Utils/links.dart';
-import 'package:larosa_block/Utils/svg_paths.dart';
 import 'package:stomp_dart_client/stomp_dart_client.dart';
 
 class NewDelivery extends StatefulWidget {
@@ -44,21 +41,20 @@ class _NewDeliveryState extends State<NewDelivery> {
   final String socketChannel =
       '${LarosaLinks.baseurl}/ws/topic/customer/${AuthService.getProfileId()}';
 
-  Future<void> _socketConnection2() async {
+Future<void> _socketConnection2() async {
     const String wsUrl = 'https://exploretest.uc.r.appspot.com/ws';
     stompClient = StompClient(
       config: StompConfig.sockJS(
         url: wsUrl,
         onConnect: onConnect,
-        onWebSocketError: (dynamic error) =>
+        onWebSocketError: (dynamic error) => 
             LogService.logError('WebSocket error: $error'),
-        onStompError: (StompFrame frame) =>
+        onStompError: (StompFrame frame) => 
             LogService.logWarning('Stomp error: ${frame.body}'),
-        onDisconnect: (StompFrame frame) =>
+        onDisconnect: (StompFrame frame) => 
             LogService.logFatal('Disconnected from WebSocket'),
       ),
     );
-
     stompClient.activate();
   }
 
@@ -307,7 +303,7 @@ class _NewDeliveryState extends State<NewDelivery> {
                       focusNode: focusNode,
                       decoration: InputDecoration(
                         prefixIcon: const Icon(
-                          CupertinoIcons.location,
+                          CupertinoIcons.pin,
                           color: Colors.white,
                         ),
                         suffixIcon: isLoadingSource
@@ -353,7 +349,7 @@ class _NewDeliveryState extends State<NewDelivery> {
                       focusNode: focusNode,
                       decoration: const InputDecoration(
                         prefixIcon: Icon(
-                          CupertinoIcons.pin,
+                          CupertinoIcons.location_circle,
                           color: Colors.white,
                         ),
                         // suffixIcon: isLoadingDestination
@@ -377,9 +373,9 @@ class _NewDeliveryState extends State<NewDelivery> {
               ),
               const Gap(10),
               isRequestingRide
-                  ? const SpinKitCircle(
-                      color: Colors.white,
-                      size: 20,
+                  ?  SpinKitCircle(
+                      color: Theme.of(context).colorScheme.primary ,
+                      size: 40,
                     )
                   : FilledButton(
                       onPressed: _requestRide,
@@ -419,112 +415,7 @@ class _NewDeliveryState extends State<NewDelivery> {
                   ),
                 ),
               const Gap(20),
-              const Text('Your Orders'),
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(10.0),
-                  child: Row(
-                    children: [
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(10),
-                        child: CachedNetworkImage(
-                          imageUrl:
-                              'https://images.pexels.com/photos/28975090/pexels-photo-28975090/free-photo-of-tranquil-boat-ride-on-yamuna-river-at-dusk.jpeg?auto=compress&cs=tinysrgb&w=600&lazy=load',
-                          height: 100,
-                          width: 100,
-                          fit: BoxFit.cover,
-                        ),
-                      ),
-                      const Gap(10),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          const Text('MENS GRENET TITANIUM WATCH'),
-                          const Gap(5),
-                          Row(
-                            children: [
-                              Text(
-                                'Mitra Collections',
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .bodyMedium!
-                                    .copyWith(color: Colors.white),
-                              ),
-                              const Gap(5),
-                              SvgPicture.asset(
-                                SvgIconsPaths.sharpVerified,
-                                colorFilter: const ColorFilter.mode(
-                                  Colors.blue,
-                                  BlendMode.srcIn,
-                                ),
-                                height: 18,
-                              )
-                            ],
-                          ),
-                          IconButton(
-                            onPressed: () {},
-                            icon: const Icon(Icons.location_searching),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(10.0),
-                  child: Row(
-                    children: [
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(10),
-                        child: CachedNetworkImage(
-                          imageUrl:
-                              'https://images.pexels.com/photos/28975090/pexels-photo-28975090/free-photo-of-tranquil-boat-ride-on-yamuna-river-at-dusk.jpeg?auto=compress&cs=tinysrgb&w=600&lazy=load',
-                          height: 100,
-                          width: 100,
-                          fit: BoxFit.cover,
-                        ),
-                      ),
-                      const Gap(10),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          const Text('MENS GRENET TITANIUM WATCH'),
-                          const Gap(5),
-                          Row(
-                            children: [
-                              Text(
-                                'Mitra Collections',
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .bodyMedium!
-                                    .copyWith(color: Colors.white),
-                              ),
-                              const Gap(5),
-                              SvgPicture.asset(
-                                SvgIconsPaths.sharpVerified,
-                                colorFilter: const ColorFilter.mode(
-                                  Colors.blue,
-                                  BlendMode.srcIn,
-                                ),
-                                height: 18,
-                              )
-                            ],
-                          ),
-                          IconButton(
-                            onPressed: () {},
-                            icon: const Icon(Icons.location_searching),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              const Gap(100),
+              
             ],
           ),
           const Positioned(

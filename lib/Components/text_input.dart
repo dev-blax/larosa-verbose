@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:iconsax/iconsax.dart';
 import 'package:intl/intl.dart';
@@ -82,7 +83,7 @@ class _TextInputComponentState extends State<TextInputComponent> {
                   });
                 },
                 icon: Icon(
-                  hideText ? Iconsax.eye_slash : Iconsax.eye,
+                  hideText ? CupertinoIcons.eye_slash_fill : CupertinoIcons.eye_fill,
                 ))
             : null,
         prefixIcon: Icon(
