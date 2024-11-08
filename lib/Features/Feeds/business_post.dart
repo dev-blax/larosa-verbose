@@ -1,296 +1,3 @@
-// import 'dart:io';
-// import 'dart:typed_data';
-// import 'package:crop_your_image/crop_your_image.dart';
-// import 'package:flutter/material.dart';
-// import 'package:flutter_spinkit/flutter_spinkit.dart';
-// import 'package:gap/gap.dart';
-// import 'package:go_router/go_router.dart';
-// import 'package:iconsax/iconsax.dart';
-// import 'package:ionicons/ionicons.dart';
-// import 'package:larosa_block/Features/Feeds/Controllers/content_controller.dart';
-// import 'package:larosa_block/Utils/colors.dart';
-// import 'package:larosa_block/Utils/helpers.dart';
-// import 'package:provider/provider.dart';
-// import 'package:image_picker/image_picker.dart';
-
-// class BusinessPostScreen extends StatefulWidget {
-//   const BusinessPostScreen({super.key});
-
-//   @override
-//   State<BusinessPostScreen> createState() => _BusinessPostScreenState();
-// }
-
-// class _BusinessPostScreenState extends State<BusinessPostScreen> {
-//   final TextEditingController _captionController = TextEditingController();
-//   final TextEditingController _priceController = TextEditingController();
-//   final _formKey = GlobalKey<FormState>();
-//   final CropController _cropController = CropController();
-//   final ImagePicker _picker = ImagePicker();
-//   bool isCreatingPost = false;
-//   Uint8List? _selectedImage;
-
-//   Future<void> _pickImage() async {
-//     final XFile? pickedFile = await _picker.pickImage(
-//       source: ImageSource.gallery,
-//     );
-
-//     if (pickedFile != null) {
-//       final imageData = await pickedFile.readAsBytes();
-//       setState(() {
-//         _selectedImage = imageData;
-//       });
-//       _showCropper();
-//     }
-//   }
-
-//   void _showCropper() {
-//     if (_selectedImage == null) return;
-
-//     showDialog(
-//       context: context,
-//       builder: (context) {
-//         return AlertDialog(
-//           contentPadding: EdgeInsets.zero,
-//           content: SizedBox(
-//             height: 400,
-//             width: 300,
-//             child: Crop(
-//               image: _selectedImage!,
-//               controller: _cropController,
-//               aspectRatio: 3 / 4,
-//               onCropped: (croppedData) {
-//                 Navigator.pop(context);
-//                 _addCroppedImage(croppedData);
-//               },
-//             ),
-//           ),
-//           actions: [
-//             TextButton(
-//               onPressed: () {
-//                 // Call crop method here
-//                 _cropController.crop();
-//               },
-//               child: const Text('Crop'),
-//             ),
-//             TextButton(
-//               onPressed: () {
-//                 Navigator.pop(context);
-//               },
-//               child: const Text('Cancel'),
-//             ),
-//           ],
-//         );
-//       },
-//     );
-//   }
-
-//   void _addCroppedImage(Uint8List croppedData) {
-//     final String tempPath =
-//         '${Directory.systemTemp.path}/${DateTime.now().millisecondsSinceEpoch}.png';
-//     final File imageFile = File(tempPath)..writeAsBytesSync(croppedData);
-
-//     Provider.of<ContentController>(context, listen: false)
-//         .addToNewContentMediaStrings(imageFile.path);
-//   }
-
-//   @override
-//   Widget build(BuildContext context) {
-//     final contentController = Provider.of<ContentController>(context);
-//     return Scaffold(
-//       appBar: AppBar(
-//         leading: IconButton(
-//           onPressed: () => context.pop(),
-//           icon: const Icon(Iconsax.arrow_left_2),
-//         ),
-//         title: const Text("Business Post"),
-//         centerTitle: true,
-//         actions: [
-//           FilledButton.icon(
-//             icon: const Icon(Ionicons.sunny, size: 20,),
-//           onPressed: () => context.push('/main-post'),
-//           label: const Text('Personal Post'),)
-//            ,
-//         ],
-//       ),
-//       body: ListView(
-//         children: [
-//           Consumer<ContentController>(
-//             builder: (context, controller, child) {
-//               return SingleChildScrollView(
-//                 scrollDirection: Axis.horizontal,
-//                 child: Row(
-//                   children: [
-//                     ...controller.newContentMediaStrings.map((mediaPath) {
-//                       return Padding(
-//                         padding: const EdgeInsets.symmetric(
-//                             horizontal: 16.0, vertical: 10),
-//                         child: Stack(
-//                           children: [
-//                             Image.file(
-//                               File(mediaPath),
-//                               width: MediaQuery.of(context).size.width * .8,
-//                               fit: BoxFit.cover,
-//                             ),
-//                             Positioned(
-//                               top: 10,
-//                               right: 10,
-//                               child: InkWell(
-//                                 onTap: () {
-//                                   controller.removeFromNewContentMediaStrings(
-//                                       mediaPath);
-//                                 },
-//                                 child: Container(
-//                                   padding: const EdgeInsets.all(8),
-//                                   decoration: BoxDecoration(
-//                                     borderRadius: BorderRadius.circular(20),
-//                                     color: Colors.black.withOpacity(.5),
-//                                   ),
-//                                   child: const Icon(Icons.delete),
-//                                 ),
-//                               ),
-//                             )
-//                           ],
-//                         ),
-//                       );
-//                     }),
-//                     InkWell(
-//                       onTap: _pickImage,
-//                       child: Container(
-//                         padding: const EdgeInsets.symmetric(
-//                             horizontal: 16, vertical: 10),
-//                         height: MediaQuery.of(context).size.width * .8,
-//                         width: MediaQuery.of(context).size.width * .8,
-//                         decoration: BoxDecoration(
-//                           color: Colors.grey.withOpacity(.7),
-//                           borderRadius: BorderRadius.circular(20),
-//                         ),
-//                         child: const Column(
-//                           mainAxisSize: MainAxisSize.min,
-//                           crossAxisAlignment: CrossAxisAlignment.center,
-//                           mainAxisAlignment: MainAxisAlignment.center,
-//                           children: [
-//                             Icon(Iconsax.gallery_add),
-//                             Gap(10),
-//                             Text('Add Media')
-//                           ],
-//                         ),
-//                       ),
-//                     ),
-//                   ],
-//                 ),
-//               );
-//             },
-//           ),
-//           Padding(
-//             padding: const EdgeInsets.all(8.0),
-//             child: Form(
-//               key: _formKey,
-//               child: Column(
-//                 children: [
-//                   const Gap(20),
-//                   TextFormField(
-//                     minLines: 1,
-//                     maxLines: 10,
-//                     controller: _priceController,
-//                     decoration: const InputDecoration(
-//                       prefix: Row(
-//                         mainAxisSize: MainAxisSize.min,
-//                         children: [
-//                           Text(
-//                             'Tsh',
-//                             style: TextStyle(color: LarosaColors.mediumGray),
-//                           ),
-//                           Gap(10),
-//                         ],
-//                       ),
-//                       fillColor: Colors.green,
-//                       border: OutlineInputBorder(
-//                         borderRadius: BorderRadius.all(Radius.circular(20)),
-//                       ),
-//                       hintText: 'Price',
-//                     ),
-//                     keyboardType: TextInputType.number,
-//                   ),
-//                   const Gap(20),
-//                   TextFormField(
-//                     minLines: 3,
-//                     maxLines: 10,
-//                     controller: _captionController,
-//                     decoration: const InputDecoration(
-//                       fillColor: Colors.green,
-//                       border: OutlineInputBorder(
-//                         borderRadius: BorderRadius.all(Radius.circular(20)),
-//                       ),
-//                       hintText: 'Caption',
-//                     ),
-//                   ),
-//                   const Gap(20),
-//                   SizedBox(
-//                     width: double.infinity,
-//                     child: ElevatedButton.icon(
-//                       style: ElevatedButton.styleFrom(
-//                         backgroundColor: LarosaColors.primary,
-//                         shape: const ContinuousRectangleBorder(
-//                           borderRadius: BorderRadius.all(Radius.circular(40)),
-//                         ),
-//                       ),
-//                       onPressed: () async {
-//                         if (contentController.newContentMediaStrings.isEmpty) {
-//                           ScaffoldMessenger.of(context).showSnackBar(
-//                             const SnackBar(
-//                                 content: Text('Cannot post empty images')),
-//                           );
-//                           return;
-//                         }
-
-//                         if (_formKey.currentState!.validate()) {
-//                           setState(() {
-//                             isCreatingPost = true;
-//                           });
-
-//                           // Get the maximum height of the images
-//                           double maxHeight = await HelperFunctions.getMaxImageHeight(
-//                             contentController.newContentMediaStrings,
-//                           );
-
-//                           bool success = await contentController.postBusiness(
-//                             _captionController.text,
-//                             double.parse(_priceController.text),
-//                             maxHeight,
-//                           );
-
-//                           setState(() {
-//                             isCreatingPost = false;
-//                           });
-
-//                           if (success && context.mounted){
-//                             context.go('/');
-//                           }
-//                         }
-//                       },
-//                       icon: isCreatingPost
-//                           ? const SpinKitCircle(size: 24, color: Colors.white)
-//                           : const Icon(Iconsax.document_upload,
-//                               color: Colors.white),
-//                       label: Padding(
-//                         padding: const EdgeInsets.symmetric(vertical: 16.0),
-//                         child: Text(
-//                           isCreatingPost ? '' : 'CREATE BUSINESS POST',
-//                           style: const TextStyle(color: Colors.white),
-//                         ),
-//                       ),
-//                     ),
-//                   ),
-//                 ],
-//               ),
-//             ),
-//           ),
-//         ],
-//       ),
-//     );
-//   }
-// }
-
 import 'dart:io';
 import 'dart:typed_data';
 import 'package:crop_your_image/crop_your_image.dart';
@@ -304,11 +11,11 @@ import 'package:intl/intl.dart';
 import 'package:ionicons/ionicons.dart';
 import 'package:larosa_block/Features/Feeds/Controllers/content_controller.dart';
 import 'package:larosa_block/Utils/colors.dart';
-import 'package:multi_select_flutter/multi_select_flutter.dart';
 import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:video_player/video_player.dart';
 
+import '../../Services/auth_service.dart';
 import '../../Utils/helpers.dart';
 import 'Controllers/business_post_controller.dart';
 
@@ -334,38 +41,57 @@ class _BusinessPostScreenState extends State<BusinessPostScreen>
   Uint8List? _selectedImage;
   late TabController _tabController;
 
+  bool _isBusinessAccount = false;
+
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
+
+    // Check if the account is a business account
+    _isBusinessAccount = AuthService.isBusinessAccount();
+
+    // Set TabController length based on account type
+    _tabController = TabController(
+      length: _isBusinessAccount ? 2 : 1,
+      vsync: this,
+    );
   }
 
-  // Future<void> _pickImage() async {
-  //   final XFile? pickedFile =
-  //       await _picker.pickImage(source: ImageSource.gallery);
-  //   if (pickedFile != null) {
-  //     final imageData = await pickedFile.readAsBytes();
-  //     setState(() {
-  //       _selectedImage = imageData;
-  //     });
-  //     _showCropper();
-  //   }
-  // }
+  final List<Map<String, dynamic>> _mediaControllers =
+      []; // List to store media info and controllers
 
-List<Map<String, dynamic>> _mediaControllers = []; // List to store media info and controllers
+  Future<void> _pickMedia() async {
+  bool hasImage = _mediaControllers.any((media) =>
+      media['filePath'].endsWith(".png") ||
+      media['filePath'].endsWith(".jpg") ||
+      media['filePath'].endsWith(".jpeg"));
 
-// Declare the VideoPlayerController
-VideoPlayerController? _videoController;
-
-Future<void> _pickMedia() async {
   showModalBottomSheet(
-    context: context,
-    builder: (context) => Column(
+  context: context,
+  builder: (context) => Container(
+    decoration: BoxDecoration(
+      gradient: LinearGradient(
+        colors: [
+          LarosaColors.purple.withOpacity(0.8),
+          LarosaColors.secondary.withOpacity(0.8),
+        ],
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+      ),
+      borderRadius: const BorderRadius.only(
+        topLeft: Radius.circular(20),
+        topRight: Radius.circular(20),
+      ),
+    ),
+    child: Column(
       mainAxisSize: MainAxisSize.min,
       children: [
         ListTile(
-          leading: const Icon(Icons.image),
-          title: const Text('Pick Image'),
+          leading: const Icon(Icons.image, color: Colors.white),
+          title: const Text(
+            'Pick Image',
+            style: TextStyle(color: Colors.white),
+          ),
           onTap: () async {
             Navigator.pop(context); // Close the bottom sheet
             final XFile? pickedFile = await _picker.pickImage(
@@ -375,53 +101,88 @@ Future<void> _pickMedia() async {
               final imageData = await pickedFile.readAsBytes();
               setState(() {
                 _selectedImage = imageData;
-                _videoController?.dispose(); // Dispose any existing video controller
-                _videoController = null; // Reset the video controller
               });
               _showCropper();
             }
           },
         ),
-        ListTile(
-          leading: const Icon(Icons.videocam),
-          title: const Text('Pick Video'),
-          onTap: () async {
-            Navigator.pop(context); // Close the bottom sheet
-            final XFile? pickedFile = await _picker.pickVideo(
-              source: ImageSource.gallery,
-            );
-            if (pickedFile != null) {
-              _addVideo(pickedFile.path);
-            }
-          },
-        ),
+        if (!hasImage) // Only show "Pick Video" if no image is selected
+          ListTile(
+            leading: const Icon(Icons.videocam, color: Colors.white),
+            title: const Text(
+              'Pick Video',
+              style: TextStyle(color: Colors.white),
+            ),
+            onTap: () async {
+              Navigator.pop(context); // Close the bottom sheet
+              final XFile? pickedFile = await _picker.pickVideo(
+                source: ImageSource.gallery,
+              );
+              if (pickedFile != null) {
+                _addVideo(pickedFile.path);
+              }
+            },
+          ),
       ],
     ),
-  );
+  ),
+);
+
 }
+
 
 // Method to handle video addition to the post with preview setup
-void _addVideo(String filePath) {
-  // Initialize the video controller for preview and playback
-  _videoController = VideoPlayerController.file(File(filePath))
-    ..initialize().then((_) {
+  void _addVideo(String filePath) {
+    // Declare and initialize the video controller without using cascade notation initially
+    final videoController = VideoPlayerController.file(File(filePath));
+
+    // Initialize the controller and set up looping and autoplay once initialized
+    videoController.initialize().then((_) {
       setState(() {}); // Refresh the UI after the video is loaded
-      _videoController!.setLooping(true);
-      _videoController!.play();
+      videoController.setLooping(true);
+      videoController.play();
     });
 
-  // Add the video file path to the content controller
-  Provider.of<ContentController>(context, listen: false)
-      .addToNewContentMediaStrings(filePath);
-}
+    // Add the controller and file path to the media list
+    setState(() {
+      _mediaControllers.add({
+        'filePath': filePath,
+        'controller': videoController,
+      });
+    });
 
-@override
-void dispose() {
-  _videoController?.dispose(); // Dispose video controller when not needed
-  super.dispose();
-}
+    // Add media path to ContentController
+    Provider.of<ContentController>(context, listen: false)
+        .addToNewContentMediaStrings(filePath);
+  }
 
+  @override
+  void dispose() {
+    // Dispose each video controller when the screen is closed
+    for (var media in _mediaControllers) {
+      media['controller']?.dispose();
+    }
+    super.dispose();
+  }
 
+  void _removeMedia(String mediaPath) {
+    // Find the media in the list
+    final mediaIndex =
+        _mediaControllers.indexWhere((media) => media['filePath'] == mediaPath);
+    if (mediaIndex != -1) {
+      // Dispose the associated video controller if it exists
+      _mediaControllers[mediaIndex]['controller']?.dispose();
+
+      // Remove the media from the list
+      setState(() {
+        _mediaControllers.removeAt(mediaIndex);
+      });
+
+      // Update the ContentController
+      Provider.of<ContentController>(context, listen: false)
+          .removeFromNewContentMediaStrings(mediaPath);
+    }
+  }
 
   void _showCropper() {
     if (_selectedImage == null) return;
@@ -509,14 +270,23 @@ void dispose() {
     );
   }
 
-  void _addCroppedImage(Uint8List croppedData) {
-    final String tempPath =
-        '${Directory.systemTemp.path}/${DateTime.now().millisecondsSinceEpoch}.png';
-    final File imageFile = File(tempPath)..writeAsBytesSync(croppedData);
+ void _addCroppedImage(Uint8List croppedData) {
+  final String tempPath =
+      '${Directory.systemTemp.path}/${DateTime.now().millisecondsSinceEpoch}.png';
+  final File imageFile = File(tempPath)..writeAsBytesSync(croppedData);
 
-    Provider.of<ContentController>(context, listen: false)
-        .addToNewContentMediaStrings(imageFile.path);
-  }
+  setState(() {
+    _mediaControllers.add({
+      'filePath': imageFile.path,
+      'isVideo': false,
+    });
+  });
+
+  // Add to ContentController for persistence or other usage
+  Provider.of<ContentController>(context, listen: false)
+      .addToNewContentMediaStrings(imageFile.path);
+}
+
 
   Widget _buildTabContent(bool isBusinessPost) {
     return Consumer<ContentController>(
@@ -531,7 +301,7 @@ void dispose() {
                 children: [
                   const Gap(5),
                   _buildMediaList(contentController),
-                  if (isBusinessPost) ...[
+                  if (isBusinessPost && _isBusinessAccount) ...[
                     const Gap(20),
                     _buildCategorySelector(),
                     const Gap(5),
@@ -648,94 +418,106 @@ void dispose() {
     );
   }
 
-Widget _buildMediaList(ContentController contentController) {
-  return Consumer<ContentController>(
-    builder: (context, controller, child) {
-      return SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        child: Row(
-          children: [
-            ...controller.newContentMediaStrings.map((mediaPath) {
-              final isVideo = mediaPath.endsWith(".mp4") ||
-                              mediaPath.endsWith(".mov") ||
-                              mediaPath.endsWith(".avi");
+  Widget _buildMediaList(ContentController contentController) {
+  bool hasVideo = _mediaControllers.any((media) =>
+      media['filePath'].endsWith(".mp4") ||
+      media['filePath'].endsWith(".mov") ||
+      media['filePath'].endsWith(".avi"));
 
-              return Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 8),
-                child: Stack(
-                  children: [
-                    isVideo && _videoController != null
-                        ? Container(
-                            width: MediaQuery.of(context).size.width * .7,
-                            height: MediaQuery.of(context).size.width * .7,
-                            child: VideoPlayer(_videoController!),
-                          )
-                        : Image.file(
-                            File(mediaPath),
-                            width: MediaQuery.of(context).size.width * .7,
-                            fit: BoxFit.cover,
-                          ),
-                    Positioned(
-                      top: 8,
-                      right: 8,
-                      child: InkWell(
-                        onTap: () => controller.removeFromNewContentMediaStrings(mediaPath),
-                        child: Container(
-                          padding: const EdgeInsets.all(6),
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(15),
-                            color: Colors.black.withOpacity(.5),
-                          ),
-                          child: const Icon(Icons.delete, size: 16),
-                        ),
+  return SingleChildScrollView(
+    scrollDirection: Axis.horizontal,
+    child: Row(
+      children: [
+        ..._mediaControllers.map((media) {
+          final isVideo = media['filePath'].endsWith(".mp4") ||
+              media['filePath'].endsWith(".mov") ||
+              media['filePath'].endsWith(".avi");
+          return Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 0),
+            child: Stack(
+              children: [
+                isVideo
+                    ? FutureBuilder(
+                        future: media['controller']?.initialize(),
+                        builder: (context, snapshot) {
+                          if (snapshot.connectionState == ConnectionState.done) {
+                            final aspectRatio = media['controller'].value.aspectRatio;
+                            return SizedBox(
+                              width: MediaQuery.of(context).size.width,
+                              height: MediaQuery.of(context).size.width / aspectRatio,
+                              child: VideoPlayer(media['controller']),
+                            );
+                          } else {
+                            return const Center(child: CircularProgressIndicator());
+                          }
+                        },
+                      )
+                    : Image.file(
+                        File(media['filePath']),
+                        width: MediaQuery.of(context).size.width * 0.7,
+                        fit: BoxFit.cover,
                       ),
+                Positioned(
+                  top: 8,
+                  right: hasVideo ? 25 : 8,
+                  child: InkWell(
+                    onTap: () => _removeMedia(media['filePath']),
+                    child: Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(15),
+                        color: Colors.black.withOpacity(.5),
+                      ),
+                      child: const Icon(Icons.delete, size: 16),
                     ),
-                  ],
-                ),
-              );
-            }),
-            InkWell(
-              onTap: _pickMedia,
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                height: MediaQuery.of(context).size.width * .7,
-                width: MediaQuery.of(context).size.width * .7,
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      LarosaColors.purple.withOpacity(0.8),
-                      LarosaColors.secondary.withOpacity(0.5)
-                    ],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
                   ),
-                  borderRadius: BorderRadius.circular(15),
                 ),
-                child: const Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Iconsax.gallery_add,
-                      size: 28,
-                      color: LarosaColors.mediumGray,
-                    ),
-                    Gap(5),
-                    Text(
-                      'Add Media',
-                      style: TextStyle(color: LarosaColors.mediumGray),
-                    ),
+              ],
+            ),
+          );
+        }),
+        if (!hasVideo) // Hide "Add Media" button if a video is selected
+          InkWell(
+            onTap: _pickMedia,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+              height: MediaQuery.of(context).size.width * .7,
+              width: MediaQuery.of(context).size.width * .9,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    LarosaColors.purple.withOpacity(0.8),
+                    LarosaColors.secondary.withOpacity(0.5)
                   ],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
                 ),
+                borderRadius: BorderRadius.circular(15),
+              ),
+              child: const Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Iconsax.gallery_add,
+                    size: 28,
+                    color: LarosaColors.mediumGray,
+                  ),
+                  Gap(5),
+                  Text(
+                    'Add Media',
+                    style: TextStyle(color: LarosaColors.mediumGray),
+                  ),
+                ],
               ),
             ),
-          ],
-        ),
-      );
-    },
+          ),
+      ],
+    ),
   );
 }
+
 
   Widget _buildPriceInputField() {
     _priceController.addListener(() {
@@ -854,6 +636,7 @@ Widget _buildMediaList(ContentController contentController) {
             });
 
             if (success && context.mounted) {
+              // ignore: use_build_context_synchronously
               context.go('/');
             }
           }
@@ -888,7 +671,7 @@ Widget _buildMediaList(ContentController contentController) {
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
-      length: 2,
+      length: _isBusinessAccount ? 2 : 1,
       child: Scaffold(
         body: CustomScrollView(
           slivers: [
@@ -910,24 +693,30 @@ Widget _buildMediaList(ContentController contentController) {
               ),
               bottom: TabBar(
                 controller: _tabController,
-                tabs: const [
-                  Tab(icon: Icon(Ionicons.briefcase_outline), text: "Business"),
-                  Tab(icon: Icon(Ionicons.person_outline), text: "Personal"),
-                ],
-                labelColor: LarosaColors.primary, // Active tab color
-                unselectedLabelColor:
-                    Colors.purple.withOpacity(0.8), // Inactive tab color
-                indicatorColor: LarosaColors
-                    .primary, // Indicator color to match active tab color
+                tabs: _isBusinessAccount
+                    ? const [
+                        Tab(icon: Icon(Ionicons.briefcase_outline), text: "Business"),
+                        Tab(icon: Icon(Ionicons.person_outline), text: "Personal"),
+                      ]
+                    : const [
+                        Tab(icon: Icon(Ionicons.person_outline), text: "Personal"),
+                      ],
+                labelColor: LarosaColors.primary,
+                unselectedLabelColor: Colors.purple.withOpacity(0.8),
+                indicatorColor: LarosaColors.primary,
               ),
             ),
             SliverFillRemaining(
               child: TabBarView(
                 controller: _tabController,
-                children: [
-                  _buildTabContent(true),
-                  _buildTabContent(false),
-                ],
+                children: _isBusinessAccount
+                    ? [
+                        _buildTabContent(true), // Business Tab
+                        _buildTabContent(false), // Personal Tab
+                      ]
+                    : [
+                        _buildTabContent(false), // Personal Tab only
+                      ],
               ),
             ),
           ],
