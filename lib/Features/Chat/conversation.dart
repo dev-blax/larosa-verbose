@@ -1,5 +1,9 @@
 import 'dart:convert';
+import 'dart:io';
+import 'dart:typed_data';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:file_picker/file_picker.dart';
+import 'package:flutter_sound/flutter_sound.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:gap/gap.dart';
 import 'package:hive/hive.dart';
@@ -14,9 +18,12 @@ import 'package:larosa_block/Services/log_service.dart';
 import 'package:larosa_block/Utils/colors.dart';
 import 'package:larosa_block/Utils/helpers.dart';
 import 'package:larosa_block/Utils/links.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:stomp_dart_client/stomp_dart_client.dart';
 import 'package:timeago/timeago.dart' as timeago;
 import 'package:go_router/go_router.dart';
+import 'package:video_player/video_player.dart';
 
 class TimeBubble extends StatelessWidget {
   final String duration;
@@ -296,7 +303,7 @@ class _LarosaConversationState extends State<LarosaConversation> {
     _stompController();
     _fetchUserDetails();
     _fetchChatMessages();
-    
+
     messageController.addListener(_onMessageChanged);
   }
 
@@ -358,87 +365,366 @@ class _LarosaConversationState extends State<LarosaConversation> {
     }
   }
 
+  // Widget _chatInputs() {
+  //   return Container(
+  //     decoration: BoxDecoration(
+  //       gradient: LarosaColors.blueGradient,
+  //       borderRadius: BorderRadius.circular(10),
+  //     ),
+  //     padding: const EdgeInsets.all(5),
+  //     child: Row(
+  //       children: [
+  //         Expanded(
+  //           child: SizedBox(
+  //             height: 40,
+  //             child: TextField(
+  //               controller: messageController,
+  //               decoration: InputDecoration(
+  //                 prefixIcon: IconButton(
+  //                   onPressed: () {},
+  //                   icon: const Icon(
+  //                     Iconsax.microphone,
+  //                     color: Colors.white,
+  //                   ),
+  //                 ),
+  //                 enabledBorder: const OutlineInputBorder(
+  //                   borderSide: BorderSide.none,
+  //                 ),
+  //                 focusedBorder: const OutlineInputBorder(
+  //                   borderSide: BorderSide.none,
+  //                 ),
+  //                 filled: false,
+  //                 fillColor: Colors.grey.withOpacity(.2),
+  //                 border: OutlineInputBorder(
+  //                   borderRadius: BorderRadius.circular(10),
+  //                   borderSide: BorderSide.none,
+  //                 ),
+  //                 contentPadding: const EdgeInsets.all(8),
+  //                 hintText: 'Write your message!',
+  //                 suffixIcon: IconButton(
+  //                   onPressed: () {},
+  //                   icon: const Icon(
+  //                     Iconsax.camera,
+  //                     color: Colors.white,
+  //                   ),
+  //                 ),
+  //               ),
+  //             ),
+  //           ),
+  //         ),
+  //         const Gap(8),
+  //         GestureDetector(
+  //           onTap: () async {
+  //             if (messageController.text.isNotEmpty) {
+  //               //messageController.clear();
+  //               await _sendMessage();
+  //             }
+  //           },
+  //           child: Container(
+  //             padding: const EdgeInsets.all(10),
+  //             decoration: BoxDecoration(
+  //               gradient: LarosaColors.blueGradient,
+  //               borderRadius: BorderRadius.circular(10),
+  //             ),
+  //             child: const Row(
+  //               children: [
+  //                 Text(
+  //                   'Send',
+  //                   style: TextStyle(
+  //                       color: Colors.white, fontWeight: FontWeight.bold),
+  //                 ),
+  //                 Gap(5),
+  //                 Icon(
+  //                   Iconsax.send_14,
+  //                   color: Colors.white,
+  //                 )
+  //               ],
+  //             ),
+  //           ),
+  //         ),
+  //       ],
+  //     ),
+  //   );
+  // }
+
+// Initialize FlutterSoundRecorder and FlutterSoundPlayer for recording and playback
+  final FlutterSoundRecorder _recorder = FlutterSoundRecorder();
+  final FlutterSoundPlayer _player = FlutterSoundPlayer();
+  bool isRecording = false;
+  bool isPlaying = false;
+  Uint8List? audioData; // Use Uint8List for audioData
+
+  File? pickedFile; // Holds the selected image or video file
+  VideoPlayerController? _videoController;
+
+  Future<void> startRecording() async {
+    // Check and request microphone permission
+    var status = await Permission.microphone.request();
+    if (status != PermissionStatus.granted) {
+      print("Microphone permission not granted");
+      return;
+    }
+
+    if (pickedFile != null) {
+    setState(() {
+      pickedFile = null;
+      _videoController?.dispose();
+      _videoController = null;
+    });
+  }
+
+    try {
+      await _recorder.openRecorder();
+      final Directory tempDir = await getTemporaryDirectory();
+      final String path = '${tempDir.path}/temp.aac';
+
+      await _recorder.startRecorder(
+        toFile: path,
+      );
+
+      setState(() => isRecording = true);
+    } catch (e) {
+      print("Error starting recording: $e");
+    }
+  }
+
+  Future<void> stopRecording() async {
+    try {
+      final String? path = await _recorder.stopRecorder();
+      if (path != null) {
+        File audioFile = File(path);
+        audioData = await audioFile.readAsBytes(); // Convert audio to Uint8List
+      }
+
+      await _recorder.closeRecorder(); // Close the recorder
+
+      setState(() {
+        isRecording = false;
+      });
+    } catch (e) {
+      print("Error stopping recording: $e");
+    }
+  }
+
+  Future<void> playAudio() async {
+    if (audioData != null && !isPlaying) {
+      await _player.openPlayer();
+      await _player.startPlayer(
+        fromDataBuffer: audioData,
+        whenFinished: () {
+          setState(() => isPlaying = false);
+          _player.closePlayer();
+        },
+      );
+      setState(() => isPlaying = true);
+    } else if (isPlaying) {
+      await _player.stopPlayer();
+      setState(() => isPlaying = false);
+    }
+  }
+
+  Future<void> pickFile() async {
+  FilePickerResult? result = await FilePicker.platform.pickFiles(
+    type: FileType.media,
+    allowMultiple: false,
+  );
+
+  if (result != null && result.files.single.path != null) {
+    File file = File(result.files.single.path!);
+
+    setState(() {
+      pickedFile = file;
+      audioData = null; // Remove audio if a file is picked
+
+      if (file.path.endsWith('.mp4')) {
+        _videoController = VideoPlayerController.file(file)
+          ..initialize().then((_) {
+            setState(() {}); // Refresh to show video preview
+            _videoController?.setLooping(true);
+            _videoController?.play();
+          });
+      } else {
+        _videoController?.dispose(); // Dispose of any existing video controller
+        _videoController = null;
+      }
+    });
+  }
+}
+
   Widget _chatInputs() {
-    return Container(
-      decoration: BoxDecoration(
-        gradient: LarosaColors.blueGradient,
-        borderRadius: BorderRadius.circular(10),
-      ),
-      padding: const EdgeInsets.all(5),
-      child: Row(
-        children: [
-          Expanded(
-            child: SizedBox(
-              height: 40,
-              child: TextField(
-                controller: messageController,
-                decoration: InputDecoration(
-                  prefixIcon: IconButton(
-                    onPressed: () {},
-                    icon: const Icon(
-                      Iconsax.microphone,
-                      color: Colors.white,
+  return Column(
+    children: [
+      if (audioData != null)
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+          decoration: BoxDecoration(
+            gradient: LarosaColors.blueGradient,
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Row(
+            children: [
+              const Icon(Iconsax.music, color: Colors.white),
+              const Gap(8),
+              const Expanded(
+                child: Text(
+                  'Voice Note',
+                  style: TextStyle(color: Colors.white),
+                ),
+              ),
+              IconButton(
+                icon: Icon(
+                  isPlaying ? Iconsax.pause : Iconsax.play,
+                  color: Colors.white,
+                ),
+                onPressed: () {
+                  playAudio();
+                },
+              ),
+              IconButton(
+                icon: const Icon(Icons.delete, color: Colors.white),
+                onPressed: () {
+                  setState(() {
+                    audioData = null;
+                  });
+                },
+              ),
+            ],
+          ),
+        )
+      else if (pickedFile != null)
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+          decoration: BoxDecoration(
+            gradient: LarosaColors.blueGradient,
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Row(
+            children: [
+              _previewMedia(),
+              IconButton(
+                icon: const Icon(Icons.delete, color: Colors.white),
+                onPressed: () {
+                  setState(() {
+                    pickedFile = null;
+                    _videoController?.dispose();
+                    _videoController = null;
+                  });
+                },
+              ),
+            ],
+          ),
+        ),
+
+        const SizedBox(height: 10,),
+      Container(
+        decoration: BoxDecoration(
+          gradient: LarosaColors.blueGradient,
+          borderRadius: BorderRadius.circular(10),
+        ),
+        padding: const EdgeInsets.all(5),
+        child: Row(
+          children: [
+            Expanded(
+              child: SizedBox(
+                height: 40,
+                child: TextField(
+                  controller: messageController,
+                  decoration: InputDecoration(
+                    prefixIcon: IconButton(
+                      onPressed: () async {
+                        if (!isRecording) {
+                          await startRecording();
+                        } else {
+                          await stopRecording();
+                        }
+                      },
+                      icon: Icon(
+                        isRecording ? Iconsax.stop : Iconsax.microphone,
+                        color: Colors.white,
+                      ),
                     ),
-                  ),
-                  enabledBorder: const OutlineInputBorder(
-                    borderSide: BorderSide.none,
-                  ),
-                  focusedBorder: const OutlineInputBorder(
-                    borderSide: BorderSide.none,
-                  ),
-                  filled: false,
-                  fillColor: Colors.grey.withOpacity(.2),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                    borderSide: BorderSide.none,
-                  ),
-                  contentPadding: const EdgeInsets.all(8),
-                  hintText: 'Write your message!',
-                  suffixIcon: IconButton(
-                    onPressed: () {},
-                    icon: const Icon(
-                      Iconsax.camera,
-                      color: Colors.white,
+                    suffixIcon: IconButton(
+                      onPressed: pickFile, // Open file picker when clicked
+                      icon: const Icon(
+                        Iconsax.camera,
+                        color: Colors.white,
+                      ),
                     ),
+                    enabledBorder: const OutlineInputBorder(
+                      borderSide: BorderSide.none,
+                    ),
+                    focusedBorder: const OutlineInputBorder(
+                      borderSide: BorderSide.none,
+                    ),
+                    filled: false,
+                    fillColor: Colors.grey.withOpacity(.2),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide: BorderSide.none,
+                    ),
+                    contentPadding: const EdgeInsets.all(8),
+                    hintText: 'Write your message!',
                   ),
                 ),
               ),
             ),
-          ),
-          const Gap(8),
-          GestureDetector(
-            onTap: () async {
-              if (messageController.text.isNotEmpty) {
-                //messageController.clear();
-                await _sendMessage();
-              }
-            },
-            child: Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                gradient: LarosaColors.blueGradient,
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: const Row(
-                children: [
-                  Text(
-                    'Send',
-                    style: TextStyle(
-                        color: Colors.white, fontWeight: FontWeight.bold),
-                  ),
-                  Gap(5),
-                  Icon(
-                    Iconsax.send_14,
-                    color: Colors.white,
-                  )
-                ],
+            const Gap(8),
+            GestureDetector(
+              onTap: () async {
+                if (messageController.text.isNotEmpty) {
+                  await _sendMessage();
+                  messageController.clear();
+                }
+              },
+              child: Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  gradient: LarosaColors.blueGradient,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Row(
+                  children: [
+                    Text(
+                      'Send',
+                      style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                    ),
+                    Gap(5),
+                    Icon(
+                      Iconsax.send_14,
+                      color: Colors.white,
+                    ),
+                  ],
+                ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
+      ),
+    ],
+  );
+}
+
+Widget _previewMedia() {
+  if (pickedFile == null) return Container();
+
+  // Display video if picked file is a video
+  if (_videoController != null && pickedFile!.path.endsWith('.mp4')) {
+    return Expanded(
+      child: AspectRatio(
+        aspectRatio: _videoController!.value.aspectRatio,
+        child: VideoPlayer(_videoController!),
       ),
     );
   }
+
+  // Display image if picked file is an image
+  return Expanded(
+    child: Image.file(
+      pickedFile!,
+      fit: BoxFit.cover,
+    ),
+  );
+}
 
   @override
   Widget build(BuildContext context) {

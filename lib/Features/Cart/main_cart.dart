@@ -1,7 +1,9 @@
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:gap/gap.dart';
+import 'package:go_router/go_router.dart';
 import 'package:larosa_block/Features/Cart/Models/product_model.dart';
 import 'package:larosa_block/Features/Cart/controllers/cart_controller.dart';
 import 'package:provider/provider.dart';
@@ -14,20 +16,42 @@ class MyCart extends StatelessWidget {
     final cartNotifier = Provider.of<CartController>(context);
 
     return Scaffold(
-      backgroundColor: Theme.of(context).colorScheme.tertiaryContainer,
       appBar: AppBar(
         leading: IconButton(
           onPressed: () => Navigator.pop(context),
           icon: const Icon(
-            Icons.arrow_left,
+            CupertinoIcons.back,
           ),
         ),
         title: const Text("Your Cart"),
+        centerTitle: true,
       ),
       body: cartNotifier.cartItems.isEmpty
-          ? const Center(
-              child: Text(
-                'No products in Cart',
+          ? Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.max,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(CupertinoIcons.zzz),
+                  const Gap(10),
+                  const Text(
+                    'You have no Products in your Cart',
+                  ),
+                  const Gap(10),
+                  FilledButton(
+                    style: FilledButton.styleFrom(
+                      shape: const RoundedRectangleBorder(
+                        borderRadius: BorderRadius.all(Radius.circular(10)),
+                        side: BorderSide(color: Colors.blue),
+                      ),
+                    ),
+                    onPressed: () => context.push('/maindelivery'),
+                    child: const Text(
+                      'Look for Nearby Services and Products',
+                    ),
+                  ),
+                ],
               ),
             )
           : Column(
@@ -40,8 +64,10 @@ class MyCart extends StatelessWidget {
                       return CartItemWidget(
                         product: product,
                         onAdd: (product) => cartNotifier.addProduct(product),
-                        onRemove: (product) => cartNotifier.removeProduct(product),
-                        onDelete: (product) => cartNotifier.deleteProduct(product),
+                        onRemove: (product) =>
+                            cartNotifier.removeProduct(product),
+                        onDelete: (product) =>
+                            cartNotifier.deleteProduct(product),
                       );
                     },
                   ),

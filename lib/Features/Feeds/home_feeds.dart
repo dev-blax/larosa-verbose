@@ -77,73 +77,73 @@ class _HomeFeedsScreenState extends State<HomeFeedsScreen> {
                     ),
                   ),
                 ),
-                // SliverToBoxAdapter(
-                //   child: Transform.translate(
-                //     offset: const Offset(0, -23),
-                //     child: ValueListenableBuilder<bool>(
-                //       valueListenable: controller.isLoading,
-                //       builder: (context, isLoading, child) {
-                //         if (isLoading && controller.posts.isEmpty) {
-                //           return _buildShimmerLoading();
-                //         } else if (controller.posts.isEmpty) {
-                //           return const Center(
-                //             child: Padding(
-                //               padding: EdgeInsets.only(top: 50.0),
-                //               child: Text('Fetching posts'),
-                //             ),
-                //           );
-                //         } else {
-                //           return Padding(
-                //             padding:
-                //                 const EdgeInsets.only(bottom: 100.0, top: 0),
-                //             child: ListView.builder(
-                //               itemCount: controller.posts.length +
-                //                   (controller.isFetchingMore ? 1 : 0),
-                //               shrinkWrap: true,
-                //               physics: const NeverScrollableScrollPhysics(),
-                //               itemBuilder: (context, index) {
-                //                 if (index < controller.posts.length) {
-                //                   final post = controller.posts[index];
+                SliverToBoxAdapter(
+                  child: Transform.translate(
+                    offset: const Offset(0, -23),
+                    child: ValueListenableBuilder<bool>(
+                      valueListenable: controller.isLoading,
+                      builder: (context, isLoading, child) {
+                        if (isLoading && controller.posts.isEmpty) {
+                          return _buildShimmerLoading();
+                        } else if (controller.posts.isEmpty) {
+                          return const Center(
+                            child: Padding(
+                              padding: EdgeInsets.only(top: 50.0),
+                              child: Text('Fetching posts'),
+                            ),
+                          );
+                        } else {
+                          return Padding(
+                            padding:
+                                const EdgeInsets.only(bottom: 100.0, top: 0),
+                            child: ListView.builder(
+                              itemCount: controller.posts.length +
+                                  (controller.isFetchingMore ? 1 : 0),
+                              shrinkWrap: true,
+                              physics: const NeverScrollableScrollPhysics(),
+                              itemBuilder: (context, index) {
+                                if (index < controller.posts.length) {
+                                  final post = controller.posts[index];
 
-                //                   if (_postPlayStates[post['id']] == null) {
-                //                     _postPlayStates[post['id']] =
-                //                         ValueNotifier(false);
-                //                   }
+                                  if (_postPlayStates[post['id']] == null) {
+                                    _postPlayStates[post['id']] =
+                                        ValueNotifier(false);
+                                  }
 
-                //                   return VisibilityDetector(
-                //                     key: Key('post-${post['id']}-$index'),
-                //                     onVisibilityChanged: (info) {
-                //                       bool isPlaying =
-                //                           info.visibleFraction > 0.5;
-                //                       _updatePostState(post['id'], isPlaying);
-                //                     },
-                //                     child: ValueListenableBuilder<bool>(
-                //                       valueListenable:
-                //                           _postPlayStates[post['id']]!,
-                //                       builder: (context, isPlaying, child) {
-                //                         return PostComponent(
-                //                           post: post,
-                //                           isPlaying: isPlaying,
-                //                         );
-                //                       },
-                //                     ),
-                //                   );
-                //                 } else {
-                //                   return const Padding(
-                //                     padding: EdgeInsets.only(bottom: 100.0),
-                //                     child: Center(
-                //                       child: CircularProgressIndicator(),
-                //                     ),
-                //                   );
-                //                 }
-                //               },
-                //             ),
-                //           );
-                //         }
-                //       },
-                //     ),
-                //   ),
-                // ),
+                                  return VisibilityDetector(
+                                    key: Key('post-${post['id']}-$index'),
+                                    onVisibilityChanged: (info) {
+                                      bool isPlaying =
+                                          info.visibleFraction > 0.5;
+                                      _updatePostState(post['id'], isPlaying);
+                                    },
+                                    child: ValueListenableBuilder<bool>(
+                                      valueListenable:
+                                          _postPlayStates[post['id']]!,
+                                      builder: (context, isPlaying, child) {
+                                        return PostComponent(
+                                          post: post,
+                                          isPlaying: isPlaying,
+                                        );
+                                      },
+                                    ),
+                                  );
+                                } else {
+                                  return const Padding(
+                                    padding: EdgeInsets.only(bottom: 100.0),
+                                    child: Center(
+                                      child: CircularProgressIndicator(),
+                                    ),
+                                  );
+                                }
+                              },
+                            ),
+                          );
+                        }
+                      },
+                    ),
+                  ),
+                ),
               ],
             ),
             const Positioned(
