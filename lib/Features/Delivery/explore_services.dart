@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:larosa_block/Utils/colors.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import 'map_service.dart';
 
