@@ -307,6 +307,7 @@ import 'package:larosa_block/Utils/colors.dart';
 import 'package:multi_select_flutter/multi_select_flutter.dart';
 import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:video_player/video_player.dart';
 
 import '../../Utils/helpers.dart';
 import 'Controllers/business_post_controller.dart';
@@ -339,17 +340,88 @@ class _BusinessPostScreenState extends State<BusinessPostScreen>
     _tabController = TabController(length: 2, vsync: this);
   }
 
-  Future<void> _pickImage() async {
-    final XFile? pickedFile =
-        await _picker.pickImage(source: ImageSource.gallery);
-    if (pickedFile != null) {
-      final imageData = await pickedFile.readAsBytes();
-      setState(() {
-        _selectedImage = imageData;
-      });
-      _showCropper();
-    }
-  }
+  // Future<void> _pickImage() async {
+  //   final XFile? pickedFile =
+  //       await _picker.pickImage(source: ImageSource.gallery);
+  //   if (pickedFile != null) {
+  //     final imageData = await pickedFile.readAsBytes();
+  //     setState(() {
+  //       _selectedImage = imageData;
+  //     });
+  //     _showCropper();
+  //   }
+  // }
+
+List<Map<String, dynamic>> _mediaControllers = []; // List to store media info and controllers
+
+// Declare the VideoPlayerController
+VideoPlayerController? _videoController;
+
+Future<void> _pickMedia() async {
+  showModalBottomSheet(
+    context: context,
+    builder: (context) => Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        ListTile(
+          leading: const Icon(Icons.image),
+          title: const Text('Pick Image'),
+          onTap: () async {
+            Navigator.pop(context); // Close the bottom sheet
+            final XFile? pickedFile = await _picker.pickImage(
+              source: ImageSource.gallery,
+            );
+            if (pickedFile != null) {
+              final imageData = await pickedFile.readAsBytes();
+              setState(() {
+                _selectedImage = imageData;
+                _videoController?.dispose(); // Dispose any existing video controller
+                _videoController = null; // Reset the video controller
+              });
+              _showCropper();
+            }
+          },
+        ),
+        ListTile(
+          leading: const Icon(Icons.videocam),
+          title: const Text('Pick Video'),
+          onTap: () async {
+            Navigator.pop(context); // Close the bottom sheet
+            final XFile? pickedFile = await _picker.pickVideo(
+              source: ImageSource.gallery,
+            );
+            if (pickedFile != null) {
+              _addVideo(pickedFile.path);
+            }
+          },
+        ),
+      ],
+    ),
+  );
+}
+
+// Method to handle video addition to the post with preview setup
+void _addVideo(String filePath) {
+  // Initialize the video controller for preview and playback
+  _videoController = VideoPlayerController.file(File(filePath))
+    ..initialize().then((_) {
+      setState(() {}); // Refresh the UI after the video is loaded
+      _videoController!.setLooping(true);
+      _videoController!.play();
+    });
+
+  // Add the video file path to the content controller
+  Provider.of<ContentController>(context, listen: false)
+      .addToNewContentMediaStrings(filePath);
+}
+
+@override
+void dispose() {
+  _videoController?.dispose(); // Dispose video controller when not needed
+  super.dispose();
+}
+
+
 
   void _showCropper() {
     if (_selectedImage == null) return;
@@ -576,87 +648,94 @@ class _BusinessPostScreenState extends State<BusinessPostScreen>
     );
   }
 
-  Widget _buildMediaList(ContentController contentController) {
-    return Consumer<ContentController>(
-      builder: (context, controller, child) {
-        return SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: Row(
-            children: [
-              ...controller.newContentMediaStrings.map((mediaPath) {
-                return Padding(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8.0, vertical: 8),
-                  child: Stack(
-                    children: [
-                      Image.file(
-                        File(mediaPath),
-                        width: MediaQuery.of(context).size.width * .7,
-                        fit: BoxFit.cover,
-                      ),
-                      Positioned(
-                        top: 8,
-                        right: 8,
-                        child: InkWell(
-                          onTap: () => controller
-                              .removeFromNewContentMediaStrings(mediaPath),
-                          child: Container(
-                            padding: const EdgeInsets.all(6),
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(15),
-                              color: Colors.black.withOpacity(.5),
-                            ),
-                            child: const Icon(Icons.delete, size: 16),
+Widget _buildMediaList(ContentController contentController) {
+  return Consumer<ContentController>(
+    builder: (context, controller, child) {
+      return SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(
+          children: [
+            ...controller.newContentMediaStrings.map((mediaPath) {
+              final isVideo = mediaPath.endsWith(".mp4") ||
+                              mediaPath.endsWith(".mov") ||
+                              mediaPath.endsWith(".avi");
+
+              return Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 8),
+                child: Stack(
+                  children: [
+                    isVideo && _videoController != null
+                        ? Container(
+                            width: MediaQuery.of(context).size.width * .7,
+                            height: MediaQuery.of(context).size.width * .7,
+                            child: VideoPlayer(_videoController!),
+                          )
+                        : Image.file(
+                            File(mediaPath),
+                            width: MediaQuery.of(context).size.width * .7,
+                            fit: BoxFit.cover,
                           ),
+                    Positioned(
+                      top: 8,
+                      right: 8,
+                      child: InkWell(
+                        onTap: () => controller.removeFromNewContentMediaStrings(mediaPath),
+                        child: Container(
+                          padding: const EdgeInsets.all(6),
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(15),
+                            color: Colors.black.withOpacity(.5),
+                          ),
+                          child: const Icon(Icons.delete, size: 16),
                         ),
                       ),
-                    ],
-                  ),
-                );
-              }),
-              InkWell(
-                onTap: _pickImage,
-                child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                  height: MediaQuery.of(context).size.width * .7,
-                  width: MediaQuery.of(context).size.width * .7,
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [
-                        LarosaColors.purple.withOpacity(0.8),
-                        LarosaColors.secondary.withOpacity(0.5)
-                      ],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
                     ),
-                    borderRadius: BorderRadius.circular(15),
-                  ),
-                  child: const Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        Iconsax.gallery_add,
-                        size: 28,
-                        color: LarosaColors.mediumGray,
-                      ),
-                      Gap(5),
-                      Text(
-                        'Add Media',
-                        style: TextStyle(color: LarosaColors.mediumGray),
-                      ),
+                  ],
+                ),
+              );
+            }),
+            InkWell(
+              onTap: _pickMedia,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                height: MediaQuery.of(context).size.width * .7,
+                width: MediaQuery.of(context).size.width * .7,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      LarosaColors.purple.withOpacity(0.8),
+                      LarosaColors.secondary.withOpacity(0.5)
                     ],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
                   ),
+                  borderRadius: BorderRadius.circular(15),
+                ),
+                child: const Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Iconsax.gallery_add,
+                      size: 28,
+                      color: LarosaColors.mediumGray,
+                    ),
+                    Gap(5),
+                    Text(
+                      'Add Media',
+                      style: TextStyle(color: LarosaColors.mediumGray),
+                    ),
+                  ],
                 ),
               ),
-            ],
-          ),
-        );
-      },
-    );
-  }
+            ),
+          ],
+        ),
+      );
+    },
+  );
+}
 
   Widget _buildPriceInputField() {
     _priceController.addListener(() {

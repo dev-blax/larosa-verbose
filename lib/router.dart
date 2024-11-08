@@ -65,9 +65,13 @@ class RouterService {
       GoRoute(
         name: 'home',
         path: '/',
+        builder: (context, state) => ChangeNotifierProvider(
+          create: (context) => BusinessCategoryProvider(),
+          child: const BusinessPostScreen(),
+        ),
         // builder: (context, state) => const AddToCartScreen(),
         // builder: (context, state) => const ChatsLand(),
-        builder: (context, state) => const NewDelivery(),
+        // builder: (context, state) => const NewDelivery(),
         // builder: (context, state) => VideoFeedsPage(),
         // builder: (context, state) => const HomeFeedsScreen(),
         
