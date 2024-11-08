@@ -36,6 +36,7 @@ class CustomSearchDelegate extends SearchDelegate {
       await AuthService.refreshToken();
       return await fetchSearchResults(query);
     } else {
+      LogService.logError('Failed: response = ${response.statusCode}');
       throw Exception('Failed to load search results');
     }
   }

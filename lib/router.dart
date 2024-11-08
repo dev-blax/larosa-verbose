@@ -3,6 +3,7 @@ import 'package:hive/hive.dart';
 import 'package:larosa_block/Features/Auth/account_type.dart';
 import 'package:larosa_block/Features/Auth/business_register.dart';
 import 'package:larosa_block/Features/Auth/business_verification.dart';
+import 'package:larosa_block/Features/Auth/forgot_password.dart';
 import 'package:larosa_block/Features/Auth/personal_register.dart';
 import 'package:larosa_block/Features/Auth/signin.dart';
 import 'package:larosa_block/Features/Cart/main_cart.dart';
@@ -100,6 +101,11 @@ class RouterService {
         name: 'chatsland',
         path: '/chatsland',
         builder: (context, state) => const ChatsLand(),
+      ),
+      GoRoute(
+        name: 'forgot-password',
+        path: '/forgot-password',
+        builder: (context, state) => const ForgotPasswordScreen(),
       ),
       GoRoute(
         path: '/conversation/:profileId',

@@ -18,7 +18,6 @@ class HomeFeedsScreen extends StatefulWidget {
 class _HomeFeedsScreenState extends State<HomeFeedsScreen> {
   final Map<int, ValueNotifier<bool>> _postPlayStates = {};
 
-
   void _updatePostState(int postId, bool isPlaying) {
     if (_postPlayStates[postId] == null) {
       _postPlayStates[postId] = ValueNotifier(isPlaying);
@@ -95,27 +94,32 @@ class _HomeFeedsScreenState extends State<HomeFeedsScreen> {
                 //           );
                 //         } else {
                 //           return Padding(
-                //             padding: const EdgeInsets.only(bottom: 100.0, top: 0),
+                //             padding:
+                //                 const EdgeInsets.only(bottom: 100.0, top: 0),
                 //             child: ListView.builder(
-                //               itemCount: controller.posts.length + (controller.isFetchingMore ? 1 : 0),
+                //               itemCount: controller.posts.length +
+                //                   (controller.isFetchingMore ? 1 : 0),
                 //               shrinkWrap: true,
                 //               physics: const NeverScrollableScrollPhysics(),
                 //               itemBuilder: (context, index) {
                 //                 if (index < controller.posts.length) {
                 //                   final post = controller.posts[index];
-                            
+
                 //                   if (_postPlayStates[post['id']] == null) {
-                //                     _postPlayStates[post['id']] = ValueNotifier(false);
+                //                     _postPlayStates[post['id']] =
+                //                         ValueNotifier(false);
                 //                   }
-                            
+
                 //                   return VisibilityDetector(
-                //                     key: Key('post-${post['id']}-${index}'), // Unique key for each post
+                //                     key: Key('post-${post['id']}-$index'),
                 //                     onVisibilityChanged: (info) {
-                //                       bool isPlaying = info.visibleFraction > 0.5;
+                //                       bool isPlaying =
+                //                           info.visibleFraction > 0.5;
                 //                       _updatePostState(post['id'], isPlaying);
                 //                     },
                 //                     child: ValueListenableBuilder<bool>(
-                //                       valueListenable: _postPlayStates[post['id']]!,
+                //                       valueListenable:
+                //                           _postPlayStates[post['id']]!,
                 //                       builder: (context, isPlaying, child) {
                 //                         return PostComponent(
                 //                           post: post,
@@ -126,7 +130,7 @@ class _HomeFeedsScreenState extends State<HomeFeedsScreen> {
                 //                   );
                 //                 } else {
                 //                   return const Padding(
-                //                     padding: EdgeInsets.only(bottom:100.0),
+                //                     padding: EdgeInsets.only(bottom: 100.0),
                 //                     child: Center(
                 //                       child: CircularProgressIndicator(),
                 //                     ),
@@ -155,7 +159,6 @@ class _HomeFeedsScreenState extends State<HomeFeedsScreen> {
       ),
     );
   }
-
 
 // Shimmer loading widget definition
   Widget _buildShimmerLoading() {

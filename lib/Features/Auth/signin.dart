@@ -213,7 +213,7 @@ class _SigninScreenState extends State<SigninScreen> {
                           ),
 
                           TextButton(
-                            onPressed: () {},
+                            onPressed: () => context.push('/forgot-password'),
                             child: const Text(
                               'Forgot Password',
                               style: TextStyle(color: Colors.white),
