@@ -42,8 +42,8 @@ class PersonaDetailsComponent extends StatelessWidget {
                     color: LarosaColors.primary,
                   ),
                 )
-              : const Text(
-                  'Everything i do i like it',
+              : Text(
+                  profile!['bio'].toString() ?? 'Everything i do i like it',
                 )
         ],
       ),

@@ -4,12 +4,12 @@ class LarosaLinks {
   // static const String baseurl =
   //     'http://explorelarosa2-env.eba-7tvkaxyw.af-south-1.elasticbeanstalk.com';
 
-  static const String baseurl = 'https://exploretest.uc.r.appspot.com';
-  static const String socketUrl = 'wss://exploretest.uc.r.appspot.com';
+  static const String baseurl = 'https://burnished-core-439210-f6.uc.r.appspot.com';
+  static const String socketUrl = 'wss://burnished-core-439210-f6.uc.r.appspot.com';
   // static const String nakedBaseUrl =
   //     'explorelarosa2-env.eba-7tvkaxyw.af-south-1.elasticbeanstalk.com';
 
-  static const String nakedBaseUrl = 'exploretest.uc.r.appspot.com';
+  static const String nakedBaseUrl = 'burnished-core-439210-f6.uc.r.appspot.com';
   static const String countriesEndpoint = '/countries/all';
   static const String registrationEndpoint = '/api/v1/auth/register';
   static const String loginEndpoint = '/api/v1/auth/login';

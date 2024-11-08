@@ -72,7 +72,7 @@ class _AppState extends State<App> {
       '${LarosaLinks.baseurl}/ws/topic/customer/${AuthService.getProfileId()}';
 
   Future<void> _socketConnection2() async {
-    const String wsUrl = 'https://exploretest.uc.r.appspot.com/ws';
+    const String wsUrl = '${LarosaLinks.baseurl}/ws';
     stompClient = StompClient(
       config: StompConfig.sockJS(
         url: wsUrl,

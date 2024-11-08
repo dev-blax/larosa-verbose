@@ -99,7 +99,7 @@ class HomeFeedsController extends ChangeNotifier {
       List<dynamic> data = json.decode(response.body);
       if (isPaginated) {
         posts.addAll(data);
-        currentPage++; // Increment page number after fetching
+        currentPage++;
       } else {
         posts = data;
       }

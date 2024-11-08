@@ -56,6 +56,11 @@ class HelperFunctions {
     );
   }
 
+    static bool isValidEmail(String email) {
+    final emailRegex = RegExp(r'^[\w-]+(\.[\w-]+)*@([\w-]+\.)+[a-zA-Z]{2,7}$');
+    return emailRegex.hasMatch(email);
+  }
+
   static String formatLastMessageTime(DateTime messageTime) {
     final DateTime now = DateTime.now();
     final Duration difference = now.difference(messageTime);

@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:flutter_typeahead/flutter_typeahead.dart';
 import 'package:geocoding/geocoding.dart';
@@ -12,6 +13,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:larosa_block/Components/bottom_navigation.dart';
 import 'package:larosa_block/Services/auth_service.dart';
 import 'package:larosa_block/Services/log_service.dart';
+import 'package:larosa_block/Utils/colors.dart';
 import 'package:larosa_block/Utils/helpers.dart';
 import 'package:larosa_block/Utils/links.dart';
 import 'package:stomp_dart_client/stomp_dart_client.dart';
@@ -41,24 +43,59 @@ class _NewDeliveryState extends State<NewDelivery> {
   String paymentMethod = 'CASH';
   String vehicleType = 'MOTORCYCLE';
   late StompClient stompClient;
+  List<dynamic> orders = [];
   final String socketChannel =
       '${LarosaLinks.baseurl}/ws/topic/customer/${AuthService.getProfileId()}';
 
-Future<void> _socketConnection2() async {
-    const String wsUrl = 'https://exploretest.uc.r.appspot.com/ws';
+  Future<void> _socketConnection2() async {
+    const String wsUrl = '${LarosaLinks.baseurl}/ws';
     stompClient = StompClient(
       config: StompConfig.sockJS(
         url: wsUrl,
         onConnect: onConnect,
-        onWebSocketError: (dynamic error) => 
+        onWebSocketError: (dynamic error) =>
             LogService.logError('WebSocket error: $error'),
-        onStompError: (StompFrame frame) => 
+        onStompError: (StompFrame frame) =>
             LogService.logWarning('Stomp error: ${frame.body}'),
-        onDisconnect: (StompFrame frame) => 
+        onDisconnect: (StompFrame frame) =>
             LogService.logFatal('Disconnected from WebSocket'),
       ),
     );
     stompClient.activate();
+  }
+
+  Future<void> _loadOrders() async {
+    String token = AuthService.getToken();
+    LogService.logDebug('token $token');
+    Map<String, String> headers = {
+      "Content-Type": "application/json",
+      "Access-Control-Allow-Origin": "*",
+      'Authorization': 'Bearer $token',
+    };
+
+    var url = Uri.parse('${LarosaLinks.baseurl}/api/v1/orders/history');
+    // Map<String, dynamic> body = {
+    //   'page': 0,
+    // };
+
+    try {
+      final response = await http.get(
+        url,
+        headers: headers,
+      );
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        LogService.logFatal('success');
+        LogService.logInfo(response.body);
+        setState(() {
+          orders = jsonDecode(response.body);
+        });
+        return;
+      }
+
+      LogService.logError('error: ${response.statusCode}');
+    } catch (e) {
+      LogService.logError('failed $e');
+    }
   }
 
   // Callback for handling successful connection
@@ -83,6 +120,11 @@ Future<void> _socketConnection2() async {
     );
 
     LogService.logInfo('Successfully subscribed to /topic/customer/48');
+  }
+
+  Future<void> _initAsync() async {
+    await _loadOrders();
+    await _socketConnection2();
   }
 
   @override
@@ -431,8 +473,8 @@ Future<void> _socketConnection2() async {
               ),
               const Gap(5),
               isRequestingRide
-                  ?  SpinKitCircle(
-                      color: Theme.of(context).colorScheme.primary ,
+                  ? SpinKitCircle(
+                      color: Theme.of(context).colorScheme.primary,
                       size: 40,
                     )
                   : Container(
