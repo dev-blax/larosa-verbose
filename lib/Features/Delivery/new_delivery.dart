@@ -16,6 +16,9 @@ import 'package:larosa_block/Utils/helpers.dart';
 import 'package:larosa_block/Utils/links.dart';
 import 'package:stomp_dart_client/stomp_dart_client.dart';
 
+import '../../Utils/colors.dart';
+import 'explore_services.dart';
+
 class NewDelivery extends StatefulWidget {
   const NewDelivery({super.key});
 
@@ -85,7 +88,7 @@ Future<void> _socketConnection2() async {
   @override
   void initState() {
     super.initState();
-    _socketConnection2();
+    // _socketConnection2();
   }
 
   bool isRequestingRide = false;
@@ -270,6 +273,17 @@ Future<void> _socketConnection2() async {
     }
   }
 
+  // Dummy order data for demonstration (Replace this with actual order data as needed)
+  final List<Map<String, String>> orders = List.generate(
+    10,
+    (index) => {
+      'orderId': 'ORD-${index + 1}',
+      'pickup': 'Location $index - Pickup',
+      'destination': 'Location $index - Destination',
+      'status': index % 2 == 0 ? 'Completed' : 'Pending',
+    },
+  );
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -320,7 +334,28 @@ Future<void> _socketConnection2() async {
                                 icon: const Icon(Ionicons.locate),
                                 onPressed: () => _getCurrentLocation(true),
                               ),
-                        border: InputBorder.none,
+                        // border: InputBorder.none,
+                        border: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(8.0), // Rounded border
+      borderSide: const BorderSide(
+        color: LarosaColors.primary, // Border color
+        width: 1.0, // Border width
+      ),
+    ),
+    enabledBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(8.0),
+      borderSide: const BorderSide(
+        color: LarosaColors.primary, // Border color when enabled
+        width: 1.0,
+      ),
+    ),
+    focusedBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(8.0),
+      borderSide: const BorderSide(
+        color: LarosaColors.primary, // Border color when focused
+        width: 2.0,
+      ),
+    ),
                         labelText: 'Pickup location',
                         labelStyle: const TextStyle(color: Colors.white),
                       ),
@@ -328,7 +363,7 @@ Future<void> _socketConnection2() async {
                   },
                 ),
               ),
-              const Gap(10),
+              const Gap(5),
               Padding(
                 padding: const EdgeInsets.all(8.0),
                 child: TypeAheadField<Map<String, String>>(
@@ -347,8 +382,8 @@ Future<void> _socketConnection2() async {
                     return TextField(
                       controller: controller,
                       focusNode: focusNode,
-                      decoration: const InputDecoration(
-                        prefixIcon: Icon(
+                      decoration: InputDecoration(
+                        prefixIcon: const Icon(
                           CupertinoIcons.location_circle,
                           color: Colors.white,
                         ),
@@ -363,27 +398,71 @@ Future<void> _socketConnection2() async {
                         //         icon: const Icon(Ionicons.locate),
                         //         onPressed: () => _getCurrentLocation(false),
                         //       ),
-                        border: InputBorder.none,
+                        // border: InputBorder.none,
+
+                        border: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(8.0), // Rounded border
+      borderSide: const BorderSide(
+        color: LarosaColors.primary, // Border color
+        width: 1.0, // Border width
+      ),
+    ),
+    enabledBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(8.0),
+      borderSide: const BorderSide(
+        color: LarosaColors.primary, // Border color when enabled
+        width: 1.0,
+      ),
+    ),
+    focusedBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(8.0),
+      borderSide: const BorderSide(
+        color: LarosaColors.primary, // Border color when focused
+        width: 2.0,
+      ),
+    ),
+
                         labelText: 'Destination',
-                        labelStyle: TextStyle(color: Colors.white),
+                        labelStyle: const TextStyle(color: Colors.white),
                       ),
                     );
                   },
                 ),
               ),
-              const Gap(10),
+              const Gap(5),
               isRequestingRide
                   ?  SpinKitCircle(
                       color: Theme.of(context).colorScheme.primary ,
                       size: 40,
                     )
-                  : FilledButton(
-                      onPressed: _requestRide,
-                      child: const Text(
-                        'Request a Ride',
-                      ),
-                    ),
-              const Gap(20),
+                  : Container(
+  padding: const EdgeInsets.symmetric(horizontal: 10), // Adjust horizontal padding
+  decoration: BoxDecoration(
+    gradient: const LinearGradient(
+      colors: [LarosaColors.secondary, LarosaColors.purple],
+      begin: Alignment.topLeft,
+      end: Alignment.bottomRight,
+    ),
+    borderRadius: BorderRadius.circular(30), // Rounded corners
+  ),
+  child: FilledButton(
+    style: ButtonStyle(
+      backgroundColor: WidgetStateProperty.all(Colors.transparent),
+      padding: WidgetStateProperty.all(const EdgeInsets.symmetric(vertical: 12, horizontal: 24)),
+      shape: WidgetStateProperty.all(
+        RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(30), // Ensures button shape matches container
+        ),
+      ),
+    ),
+    onPressed: _requestRide,
+    child: const Text(
+      'Request a Ride',
+      style: TextStyle(color: Colors.white, fontSize: 14), // Ensures text is readable
+    ),
+  ),
+),
+              const Gap(10),
               if (selectedSourceStreetName != null &&
                   sourceLatitude != null &&
                   sourceLongitude != null)
@@ -414,10 +493,84 @@ Future<void> _socketConnection2() async {
                     ],
                   ),
                 ),
-              const Gap(20),
+              const Gap(5),
+
+              // List of Order Tiles
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Your Orders',
+                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    ),
+                    const Gap(5),
+                    ListView.builder(
+                      shrinkWrap: true, // Ensures ListView takes only required space
+                      physics: const NeverScrollableScrollPhysics(), // Disable scrolling
+                      itemCount: orders.length,
+                      itemBuilder: (context, index) {
+                        final order = orders[index];
+                        return Padding(
+  padding: const EdgeInsets.symmetric(horizontal: 1.0), // Adjust the padding as needed
+  child: Card(
+    elevation: 2,
+    margin: const EdgeInsets.symmetric(vertical: 5),
+    child: ListTile(
+      contentPadding: const EdgeInsets.symmetric(horizontal: 5.0), // Adjust inner padding
+      title: Text('Order ID: ${order['orderId']}'),
+      subtitle: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Pickup: ${order['pickup']}'),
+          Text('Destination: ${order['destination']}'),
+          Text('Status: ${order['status']}'),
+        ],
+      ),
+      trailing: Icon(
+        order['status'] == 'Completed'
+            ? CupertinoIcons.check_mark_circled_solid
+            : CupertinoIcons.clock,
+        color: order['status'] == 'Completed' ? Colors.green : Colors.orange,
+      ),
+    ),
+  ),
+);
+
+                      },
+                    ),
+                  ],
+                ),
+              ),
               
             ],
           ),
+
+          // Positioned Floating Action Button in the middle right of the screen
+          Positioned(
+  right: 20, // Adjust the right padding as needed
+  top: MediaQuery.of(context).size.height / 2 - 28, // Center vertically
+  child: Container(
+    decoration: const BoxDecoration(
+      gradient: LinearGradient(
+        colors: [LarosaColors.secondary, LarosaColors.purple],
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+      ),
+      shape: BoxShape.circle,
+    ),
+    child: FloatingActionButton(
+      onPressed: () {
+        // When clicked, open the explore modal
+        Navigator.of(context).push(_createRoute());
+      }, // Explore icon instead of add icon
+      backgroundColor: Colors.transparent, // Make FAB background transparent
+      elevation: 0,
+      child: const Icon(Icons.explore), // Optional: removes shadow to make the gradient stand out
+    ),
+  ),),
+          
           const Positioned(
             bottom: 10,
             left: 10,
@@ -430,4 +583,24 @@ Future<void> _socketConnection2() async {
       ),
     );
   }
+
+// Route for the animated modal
+Route _createRoute() {
+  return PageRouteBuilder(
+    pageBuilder: (context, animation, secondaryAnimation) => ExploreModal(),
+    transitionsBuilder: (context, animation, secondaryAnimation, child) {
+      const begin = Offset(0.0, 1.0);
+      const end = Offset.zero;
+      const curve = Curves.easeInOut;
+
+      var tween = Tween(begin: begin, end: end).chain(CurveTween(curve: curve));
+      var offsetAnimation = animation.drive(tween);
+
+      return SlideTransition(
+        position: offsetAnimation,
+        child: child,
+      );
+    },
+  );
+}
 }

@@ -1,4 +1,5 @@
 import 'dart:ui';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:go_router/go_router.dart';
@@ -66,20 +67,46 @@ class BottomNavigation extends StatelessWidget {
                   height: 28,
                 ),
               ),
-              IconButton(
-                onPressed: () {
-                  if (AuthService.getToken().isEmpty) {
-                    context.pushNamed('login');
-                    return;
-                  }
-                  context.pushNamed('main-post');
-                },
-                icon: const Icon(
-                  Iconsax.add_circle5,
-                  size: 30,
-                  color: LarosaColors.primary,
-                ),
-              ),
+              // IconButton(
+              //   onPressed: () {
+              //     if (AuthService.getToken().isEmpty) {
+              //       context.pushNamed('login');
+              //       return;
+              //     }
+              //     context.pushNamed('main-post');
+              //   },
+              //   icon: const Icon(
+              //     Iconsax.add_circle5,
+              //     size: 30,
+              //     color: LarosaColors.primary,
+              //   ),
+              // ),
+
+              Container(
+  decoration: const BoxDecoration(
+    gradient: LinearGradient(
+      colors: [LarosaColors.secondary, LarosaColors.purple],
+      begin: Alignment.topLeft,
+      end: Alignment.bottomRight,
+    ),
+    shape: BoxShape.circle,
+  ),
+  child: IconButton(
+    onPressed: () {
+      if (AuthService.getToken().isEmpty) {
+        context.pushNamed('login');
+        return;
+      }
+      context.pushNamed('main-post');
+    },
+    icon: const Icon(
+      CupertinoIcons.add,
+      size: 25,
+      color: Colors.white, // Make the icon white to contrast with the gradient
+    ),
+    iconSize: 30,
+  ),
+),
               IconButton(
                 onPressed: () {
                   if (AuthService.getToken().isEmpty) {

@@ -117,7 +117,7 @@ class _AppState extends State<App> {
   @override
   void initState() {
     super.initState();
-    _socketConnection2();
+    // _socketConnection2();
     _setSystemUIOverlayStyle();
   }
 
