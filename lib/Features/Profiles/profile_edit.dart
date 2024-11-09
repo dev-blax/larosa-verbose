@@ -16,7 +16,6 @@ import 'package:larosa_block/Services/log_service.dart';
 import 'package:larosa_block/Utils/colors.dart';
 import 'package:larosa_block/Utils/helpers.dart';
 import 'package:larosa_block/Utils/links.dart';
-import 'package:go_router/go_router.dart';
 import 'package:dio/dio.dart' as dio;
 
 class EditProfileScreen extends StatefulWidget {
@@ -52,8 +51,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       "Access-Control-Allow-Origin": "*",
       'Authorization': 'Bearer $token',
     };
-
-    var url = Uri.parse('${LarosaLinks.baseurl}/profile/update');
 
     dio.FormData formData = dio.FormData.fromMap({
       'profileId': AuthService.getProfileId(),
@@ -128,9 +125,11 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       'Authorization': token.isNotEmpty ? 'Bearer $token' : '',
     };
 
+    bool isBusinessAccount = AuthService.isBusinessAccount();
+
     var url = Uri.https(
       LarosaLinks.nakedBaseUrl,
-      '/personal/myProfile',
+      isBusinessAccount ? '/brand/myProfile' : '/personal/myProfile',
     );
 
     try {

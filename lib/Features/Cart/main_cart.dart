@@ -1,11 +1,10 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import 'package:gap/gap.dart';
-import 'package:go_router/go_router.dart';
 import 'package:larosa_block/Features/Cart/Models/product_model.dart';
 import 'package:larosa_block/Features/Cart/controllers/cart_controller.dart';
+import 'package:larosa_block/Features/Delivery/explore_services.dart';
 import 'package:provider/provider.dart';
 
 class MyCart extends StatelessWidget {
@@ -46,7 +45,7 @@ class MyCart extends StatelessWidget {
                         side: BorderSide(color: Colors.blue),
                       ),
                     ),
-                    onPressed: () => context.push('/maindelivery'),
+                    onPressed: () => Navigator.of(context).push(_createRoute()),
                     child: const Text(
                       'Look for Nearby Services and Products',
                     ),
@@ -89,6 +88,28 @@ class MyCart extends StatelessWidget {
                 ),
               ],
             ),
+    );
+  }
+
+
+    Route _createRoute() {
+    return PageRouteBuilder(
+      pageBuilder: (context, animation, secondaryAnimation) =>
+          const ExploreModal(),
+      transitionsBuilder: (context, animation, secondaryAnimation, child) {
+        const begin = Offset(0.0, 1.0);
+        const end = Offset.zero;
+        const curve = Curves.easeInOut;
+
+        var tween =
+            Tween(begin: begin, end: end).chain(CurveTween(curve: curve));
+        var offsetAnimation = animation.drive(tween);
+
+        return SlideTransition(
+          position: offsetAnimation,
+          child: child,
+        );
+      },
     );
   }
 }
