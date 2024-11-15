@@ -3,8 +3,6 @@
 //REDUCE THE WIDTH OF THE SLIDER
 //SMOOTHLY SLIDING OF SLIDER ON TOUCH
 
-
-
 import 'dart:async';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -16,11 +14,13 @@ import 'package:shimmer/shimmer.dart';
 class CenterSnapCarousel extends StatefulWidget {
   final List<String> mediaUrls;
   final bool isPlayingState;
+  final double? postHeight; // Height for the entire post
 
   const CenterSnapCarousel({
     super.key,
     required this.mediaUrls,
     required this.isPlayingState,
+    this.postHeight, // Single height for all media items
   });
 
   @override
@@ -31,14 +31,16 @@ class _CenterSnapCarouselState extends State<CenterSnapCarousel> {
   final ScrollController _scrollController = ScrollController();
   final Map<int, CachedVideoPlayerPlusController> _videoControllers = {};
   final Map<int, double> _heights = {};
-  final Map<int, bool> _manualControlStates = {}; // Track manual play/pause states
-  final Map<int, Duration> _videoPositions = {}; // Track video positions for sliders
+  final Map<int, bool> _manualControlStates =
+      {}; // Track manual play/pause states
+  final Map<int, Duration> _videoPositions =
+      {}; // Track video positions for sliders
   final Map<int, bool> _muteStates = {}; // Track mute state for each video
 
   @override
   void initState() {
     super.initState();
-    _calculateMediaHeights();
+    // _calculateMediaHeights();
   }
 
   @override
@@ -59,46 +61,90 @@ class _CenterSnapCarouselState extends State<CenterSnapCarousel> {
     return mimeType != null && mimeType.startsWith('video/');
   }
 
-  Future<void> _calculateMediaHeights() async {
-    for (int i = 0; i < widget.mediaUrls.length; i++) {
-      String url = widget.mediaUrls[i];
-      if (!_isVideo(url)) {
-        final image = Image.network(url);
-        final completer = Completer<void>();
-        image.image.resolve(const ImageConfiguration()).addListener(
-          ImageStreamListener((info, _) {
-            final double aspectRatio = info.image.width / info.image.height;
-            final double calculatedHeight =
-                MediaQuery.of(context).size.width / aspectRatio;
-            setState(() {
-              _heights[i] = calculatedHeight;
-            });
-            completer.complete();
-          }),
-        );
-        await completer.future;
-      } else {
-        _videoControllers[i] =
-            CachedVideoPlayerPlusController.networkUrl(Uri.parse(url))
-              ..initialize().then((_) {
-                final double aspectRatio =
-                    _videoControllers[i]!.value.aspectRatio;
-                final double calculatedHeight =
-                    MediaQuery.of(context).size.width / aspectRatio;
-                setState(() {
-                  _heights[i] = calculatedHeight;
-                });
-                _videoControllers[i]!.setLooping(true);
-                _addVideoListener(i);
-                if (widget.isPlayingState == false) {
-                  _videoControllers[i]!.pause();
-                }
-              }).catchError((error) {
-                print('Error initializing video at index $i: $error');
-              });
-      }
-    }
-  }
+  // Future<void> _calculateMediaHeights() async {
+  //   final predefinedHeight = widget.postHeight;
+
+  //   for (int i = 0; i < widget.mediaUrls.length; i++) {
+  //     String url = widget.mediaUrls[i];
+
+  //     // Use predefined post height for all media items in the post
+  //     if (predefinedHeight != null) {
+  //       _heights[i] = predefinedHeight;
+  //     } else {
+  //       // Calculate height only if no predefined height is given
+  //       if (!_isVideo(url)) {
+  //         final image = Image.network(url);
+  //         final completer = Completer<void>();
+  //         image.image.resolve(const ImageConfiguration()).addListener(
+  //           ImageStreamListener((info, _) {
+  //             final double aspectRatio = info.image.width / info.image.height;
+  //             final double calculatedHeight =
+  //                 MediaQuery.of(context).size.width / aspectRatio;
+  //             setState(() {
+  //               _heights[i] = calculatedHeight;
+  //             });
+  //             completer.complete();
+  //           }),
+  //         );
+  //         await completer.future;
+  //       } else {
+  //         _videoControllers[i] =
+  //             CachedVideoPlayerPlusController.networkUrl(Uri.parse(url))
+  //               ..initialize().then((_) {
+  //                 final double aspectRatio =
+  //                     _videoControllers[i]!.value.aspectRatio;
+  //                 final double calculatedHeight =
+  //                     MediaQuery.of(context).size.width / aspectRatio;
+  //                 setState(() {
+  //                   _heights[i] = calculatedHeight;
+  //                 });
+  //                 _videoControllers[i]!.setLooping(true);
+  //               });
+  //       }
+  //     }
+  //   }
+  // }
+
+  // Future<void> _calculateMediaHeights() async {
+  //   for (int i = 0; i < widget.mediaUrls.length; i++) {
+  //     String url = widget.mediaUrls[i];
+  //     if (!_isVideo(url)) {
+  //       final image = Image.network(url);
+  //       final completer = Completer<void>();
+  //       image.image.resolve(const ImageConfiguration()).addListener(
+  //         ImageStreamListener((info, _) {
+  //           final double aspectRatio = info.image.width / info.image.height;
+  //           final double calculatedHeight =
+  //               MediaQuery.of(context).size.width / aspectRatio;
+  //           setState(() {
+  //             _heights[i] = calculatedHeight;
+  //           });
+  //           completer.complete();
+  //         }),
+  //       );
+  //       await completer.future;
+  //     } else {
+  //       _videoControllers[i] =
+  //           CachedVideoPlayerPlusController.networkUrl(Uri.parse(url))
+  //             ..initialize().then((_) {
+  //               final double aspectRatio =
+  //                   _videoControllers[i]!.value.aspectRatio;
+  //               final double calculatedHeight =
+  //                   MediaQuery.of(context).size.width / aspectRatio;
+  //               setState(() {
+  //                 _heights[i] = calculatedHeight;
+  //               });
+  //               _videoControllers[i]!.setLooping(true);
+  //               _addVideoListener(i);
+  //               if (widget.isPlayingState == false) {
+  //                 _videoControllers[i]!.pause();
+  //               }
+  //             }).catchError((error) {
+  //               print('Error initializing video at index $i: $error');
+  //             });
+  //     }
+  //   }
+  // }
 
   void _addVideoListener(int index) {
     final controller = _videoControllers[index];
@@ -126,36 +172,35 @@ class _CenterSnapCarouselState extends State<CenterSnapCarousel> {
     }
   }
 
-void _onSeekStart(int index) {
-  final controller = _videoControllers[index];
-  if (controller != null && controller.value.isPlaying) {
-    controller.pause();
+  void _onSeekStart(int index) {
+    final controller = _videoControllers[index];
+    if (controller != null && controller.value.isPlaying) {
+      controller.pause();
+    }
   }
-}
 
-void _onSeek(int index, double value) {
-  final controller = _videoControllers[index];
-  if (controller != null) {
-    final newPosition = Duration(milliseconds: value.toInt());
-    controller.seekTo(newPosition);
-    setState(() {
-      _videoPositions[index] = newPosition;
-    });
+  void _onSeek(int index, double value) {
+    final controller = _videoControllers[index];
+    if (controller != null) {
+      final newPosition = Duration(milliseconds: value.toInt());
+      controller.seekTo(newPosition);
+      setState(() {
+        _videoPositions[index] = newPosition;
+      });
+    }
   }
-}
 
-void _onSeekEnd(int index, double value) {
-  final controller = _videoControllers[index];
-  if (controller != null) {
-    final newPosition = Duration(milliseconds: value.toInt());
-    controller.seekTo(newPosition);
-    controller.play();
-    setState(() {
-      _videoPositions[index] = newPosition;
-    });
+  void _onSeekEnd(int index, double value) {
+    final controller = _videoControllers[index];
+    if (controller != null) {
+      final newPosition = Duration(milliseconds: value.toInt());
+      controller.seekTo(newPosition);
+      controller.play();
+      setState(() {
+        _videoPositions[index] = newPosition;
+      });
+    }
   }
-}
-
 
   void _toggleMute(int index) {
     final controller = _videoControllers[index];
@@ -221,77 +266,104 @@ void _onSeekEnd(int index, double value) {
                           : 16 / 9,
                       child: controller.value.isInitialized
                           ? CachedVideoPlayerPlus(controller)
-                          : _buildShimmerLoader(
-                              MediaQuery.of(context).size.width,
-                              calculatedHeight),
+                          : _buildShimmerLoader(),
                     ),
                   ),
                   if (controller.value.isInitialized)
                     Positioned(
-                      right: 10,
-                      top: 0,
-                      bottom: 0,
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          GestureDetector(
-                            onTap: () => _toggleMute(index),
-                            child: Icon(
-                              _muteStates[index] == true
-                                  ? CupertinoIcons.volume_off
-                                  : CupertinoIcons.volume_up,
-                              size: 25.0,
-                              color: Colors.white.withOpacity(0.7),
-                            ),
-                          ),
-                          SizedBox(
-                            height: MediaQuery.of(context).size.height * .4,
-                            child: RotatedBox(
-                              quarterTurns: 3,
-                              child: Slider(
-  activeColor: Colors.white,
-  inactiveColor: Colors.grey,
-  value: _videoPositions[index]?.inMilliseconds.toDouble() ?? 0.0,
-  min: 0.0,
-  max: controller.value.duration.inMilliseconds.toDouble(),
-  onChangeStart: (value) => _onSeekStart(index),
-  onChanged: (value) => _onSeek(index, value),
-  onChangeEnd: (value) => _onSeekEnd(index, value),
+  right: 10, // Align to the right
+  bottom: 100, // Adjust to be near the bottom of the video
+  child: Container(
+    padding: const EdgeInsets.all(8.0), // Add padding for inner content
+    decoration: BoxDecoration(
+      color: Colors.black.withOpacity(0.5), // Light black background
+      borderRadius: BorderRadius.circular(10.0), // Rounded corners
+    ),
+    child: Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        GestureDetector(
+          onTap: () => _toggleMute(index),
+          child: Icon(
+            _muteStates[index] == true
+                ? CupertinoIcons.volume_off
+                : CupertinoIcons.volume_up,
+            size: 25.0,
+            color: Colors.white.withOpacity(0.7),
+          ),
+        ),
+        const SizedBox(height: 20), // Spacing between mute and play/pause
+        GestureDetector(
+          onTap: () => _togglePlayPause(index),
+          child: Icon(
+            _manualControlStates[index] == true ||
+                    (controller.value.isPlaying &&
+                        _manualControlStates[index] == null)
+                ? CupertinoIcons.pause
+                : CupertinoIcons.play,
+            size: 30.0,
+            color: Colors.white.withOpacity(0.7),
+          ),
+        ),
+      ],
+    ),
+  ),
 ),
 
-                            ),
-                          ),
-                          GestureDetector(
-                            onTap: () => _togglePlayPause(index),
-                            child: Icon(
-                              _manualControlStates[index] == true ||
-                                      (controller.value.isPlaying &&
-                                          _manualControlStates[index] == null)
-                                  ? CupertinoIcons.pause
-                                  : CupertinoIcons.play,
-                              size: 30.0,
-                              color: Colors.white.withOpacity(0.7),
-                            ),
-                          ),
-                          
-                        ],
-                      ),
-                    ),
+
+
+
+                   Positioned(
+  bottom: -5, // Maintain the position as provided
+  left: MediaQuery.of(context).size.width * 0.00, // Add horizontal padding
+  right: MediaQuery.of(context).size.width * 0.00, // Add padding on the right
+  child: Container(
+    color: Theme.of(context).brightness == Brightness.dark
+        ? Colors.black.withOpacity(0.9) // Dark background for dark theme
+        : Colors.white.withOpacity(0.9), // Light background for light theme
+    child: SliderTheme(
+      data: SliderTheme.of(context).copyWith(
+        trackHeight: 1.0, // Set the thickness of the slider
+        thumbShape: const RoundSliderThumbShape(
+          enabledThumbRadius: 4.0, // Reduce the thumb size
+        ),
+        overlayShape: const RoundSliderOverlayShape(
+          overlayRadius: 10.0, // Reduce the size of the overlay around the thumb
+        ),
+      ),
+      child: Slider(
+        activeColor: Theme.of(context).brightness == Brightness.dark
+            ? Colors.white.withOpacity(0.6) // Light color for dark theme
+            : Colors.black.withOpacity(0.5), // Dark color for light theme
+        inactiveColor: Theme.of(context).brightness == Brightness.dark
+            ? Colors.grey[700] // Slightly lighter gray for dark theme
+            : Colors.grey[400], // Slightly darker gray for light theme
+        value: _videoPositions[index]?.inMilliseconds.toDouble() ?? 0.0,
+        min: 0.0,
+        max: controller.value.duration.inMilliseconds.toDouble(),
+        onChangeStart: (value) => _onSeekStart(index),
+        onChanged: (value) => _onSeek(index, value),
+        onChangeEnd: (value) => _onSeekEnd(index, value),
+      ),
+    ),
+  ),
+),
+
+
+
                 ],
               );
             } else {
               return ConstrainedBox(
                 constraints: BoxConstraints(
-                  maxHeight: calculatedHeight,
+                  maxHeight: widget.postHeight ??
+                      calculatedHeight, // Use postHeight if available, otherwise calculatedHeight
                 ),
                 child: CachedNetworkImage(
                   width: MediaQuery.of(context).size.width,
                   imageUrl: url,
                   fit: BoxFit.cover,
-                  placeholder: (context, url) => _buildShimmerLoader(
-                    MediaQuery.of(context).size.width,
-                    calculatedHeight,
-                  ),
+                  placeholder: (context, url) => _buildShimmerLoader(),
                   errorWidget: (context, url, error) => const Icon(Icons.error),
                 ),
               );
@@ -302,14 +374,15 @@ void _onSeekEnd(int index, double value) {
     );
   }
 
-  Widget _buildShimmerLoader(double width, double height) {
+  Widget _buildShimmerLoader() {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     return Shimmer.fromColors(
-      baseColor: Colors.grey[900]!,
-      highlightColor: Colors.grey[700]!,
+      baseColor: isDarkMode ? Colors.grey[900]! : Colors.grey[400]!,
+      highlightColor: isDarkMode ? Colors.grey[700]! : Colors.grey[100]!,
       child: Container(
-        width: width,
-        height: height,
-        color: Colors.grey[300],
+        width: MediaQuery.of(context).size.width,
+        height: 300,
+        color: Colors.grey[100],
       ),
     );
   }

@@ -158,7 +158,6 @@ class _AddToCartScreenState extends State<AddToCartScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.black,
         leading: IconButton(
           onPressed: () => context.pop(),
           icon: const Icon(

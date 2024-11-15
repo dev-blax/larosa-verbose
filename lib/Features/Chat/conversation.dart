@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
+import 'package:avatar_glow/avatar_glow.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter_sound/flutter_sound.dart';
@@ -9,6 +10,7 @@ import 'package:gap/gap.dart';
 import 'package:hive/hive.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:http_parser/http_parser.dart';
 import 'package:iconsax/iconsax.dart';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
@@ -70,6 +72,11 @@ class _LarosaConversationState extends State<LarosaConversation> {
   bool isLoadingProfile = true;
   List<Widget> messageWidgets = [];
   List<String> timeBubbleTexts = [];
+
+  // Generate a unique ID for each message
+  String generateMessageId() {
+    return DateTime.now().millisecondsSinceEpoch.toString();
+  }
 
   String formatTime(int duration) {
     final now = DateTime.now();
@@ -136,86 +143,31 @@ class _LarosaConversationState extends State<LarosaConversation> {
     String localStorageKey = 'chat_$chatId';
 
     List<dynamic>? localMessages = box.get(localStorageKey);
+    List<Widget> bubbles = [];
+    List<String> timeBubbleTexts = [];
+
     if (localMessages != null) {
-      LogService.logInfo('we have local messages');
-      List<Widget> bubbles = [];
       for (var chat in localMessages) {
         bool isSentByMe = chat['senderId'] == AuthService.getProfileId();
 
-        if (chat['content'].isNotEmpty) {
-          String timeBubbleText = formatTime(chat['duration']);
-
-          if (!timeBubbleTexts.contains(timeBubbleText)) {
-            timeBubbleTexts.add(timeBubbleText);
-            bubbles.add(
-              TimeBubble(
-                duration: timeBubbleText,
-              ),
-            );
+        // Determine the message type based on mediaUrl or mediaType
+        MessageType messageType;
+        if (chat['mediaUrl'] != null && chat['mediaUrl'] != '') {
+          if (chat['mediaUrl'].endsWith('.mp4')) {
+            messageType = MessageType.image;
+          } else if (chat['mediaUrl'].endsWith('.webp') ||
+              chat['mediaUrl'].endsWith('.jpg') ||
+              chat['mediaUrl'].endsWith('.png')) {
+            messageType = MessageType.image;
+          } else {
+            messageType = MessageType.audio;
           }
-
-          bubbles.add(
-            Animate(
-              effects: const [
-                SlideEffect(),
-              ],
-              child: ChatBubbleComponent(
-                message: chat['content'],
-                isSentByMe: isSentByMe,
-                messageType: MessageType.text,
-                comment: chat,
-              ),
-            ),
-          );
+        } else {
+          messageType = MessageType.text;
         }
-      }
 
-      bubbles = bubbles.reversed.toList();
-
-      setState(() {
-        messageWidgets = bubbles;
-      });
-    }
-
-    String token = AuthService.getToken();
-    Map<String, String> headers = {
-      "Content-Type": "application/json",
-      "Access-Control-Allow-Origin": "*",
-      'Authorization': 'Bearer $token',
-    };
-
-    var url = Uri.https(
-      LarosaLinks.nakedBaseUrl,
-      '/messages/${AuthService.getProfileId()}/$chatId',
-    );
-
-    try {
-      LogService.logInfo('requesting chats');
-      final response = await http.get(
-        url,
-        headers: headers,
-      );
-
-      if (response.statusCode != 200) {
-        LogService.logError(' Non 200');
-        return;
-      }
-
-      LogService.logInfo('got chats');
-
-      List<dynamic> data = json.decode(response.body);
-
-      List<Widget> bubbles = [];
-
-      timeBubbleTexts.clear();
-
-      for (var chat in data) {
-        bool isSentByMe = chat['senderId'] == AuthService.getProfileId();
-
-        LogService.logInfo(chat.toString());
-
+        // Format and group messages by time
         String timeBubbleText = formatTime(chat['duration']);
-
         if (!timeBubbleTexts.contains(timeBubbleText)) {
           timeBubbleTexts.add(timeBubbleText);
           bubbles.add(
@@ -226,31 +178,214 @@ class _LarosaConversationState extends State<LarosaConversation> {
         }
 
         bubbles.add(
-          Animate(
-            effects: const [
-              SlideEffect(),
-            ],
-            child: ChatBubbleComponent(
-              message: chat['content'],
-              isSentByMe: isSentByMe,
-              messageType: MessageType.text,
-              comment: chat,
-            ),
+          ChatBubbleComponent(
+            message: chat['mediaUrl'] ?? chat['content'],
+            isSentByMe: isSentByMe,
+            messageType: messageType,
+            comment: chat,
           ),
         );
       }
 
-      bubbles = bubbles.reversed.toList();
+      setState(() {
+        messageWidgets =
+            bubbles.reversed.toList(); // Reverse messages for latest-first view
+      });
+    }
+
+    // Fetch messages from API and apply the same grouping logic
+    try {
+      LogService.logInfo('Requesting chats...');
+      final response = await http.get(
+        Uri.https(LarosaLinks.nakedBaseUrl,
+            '/messages/${AuthService.getProfileId()}/$chatId'),
+        headers: {
+          'Authorization': 'Bearer ${AuthService.getToken()}',
+          "Content-Type": "application/json",
+        },
+      );
+
+      if (response.statusCode != 200) {
+        LogService.logError('Error: ${response.body}');
+        return;
+      }
+
+      List<dynamic> data = json.decode(response.body);
+      bubbles = [];
+      timeBubbleTexts.clear();
+
+      for (var chat in data) {
+        bool isSentByMe = chat['senderId'] == AuthService.getProfileId();
+
+        // Determine message type based on mediaUrl or mediaType
+        MessageType messageType;
+        if (chat['mediaUrl'] != null && chat['mediaUrl'] != '') {
+          if (chat['mediaUrl'].endsWith('.mp4')) {
+            messageType = MessageType.image;
+          } else if (chat['mediaUrl'].endsWith('.webp') ||
+              chat['mediaUrl'].endsWith('.jpg') ||
+              chat['mediaUrl'].endsWith('.png')) {
+            messageType = MessageType.image;
+          } else {
+            messageType = MessageType.audio;
+          }
+        } else {
+          messageType = MessageType.text;
+        }
+
+        // Format and group messages by time
+        String timeBubbleText = formatTime(chat['duration']);
+        if (!timeBubbleTexts.contains(timeBubbleText)) {
+          timeBubbleTexts.add(timeBubbleText);
+          bubbles.add(
+            TimeBubble(
+              duration: timeBubbleText,
+            ),
+          );
+        }
+
+        bubbles.add(
+          ChatBubbleComponent(
+            message: chat['mediaUrl'] ?? chat['content'],
+            isSentByMe: isSentByMe,
+            messageType: messageType,
+            comment: chat,
+          ),
+        );
+      }
 
       setState(() {
-        messageWidgets = bubbles;
+        messageWidgets =
+            bubbles.reversed.toList(); // Reverse messages for latest-first view
       });
 
-      box.put(localStorageKey, data);
+      box.put(localStorageKey, data); // Cache the latest messages
     } catch (e) {
-      LogService.logError('error: $e');
+      LogService.logError('Error fetching messages: $e');
     }
   }
+
+  // Future<void> _fetchChatMessages() async {
+  //   var box = Hive.box('userBox');
+  //   String chatId = widget.profileId.toString();
+  //   String localStorageKey = 'chat_$chatId';
+
+  //   List<dynamic>? localMessages = box.get(localStorageKey);
+  //   if (localMessages != null) {
+  //     LogService.logInfo('we have local messages');
+  //     List<Widget> bubbles = [];
+  //     for (var chat in localMessages) {
+  //       bool isSentByMe = chat['senderId'] == AuthService.getProfileId();
+
+  //       if (chat['content'].isNotEmpty) {
+  //         String timeBubbleText = formatTime(chat['duration']);
+
+  //         if (!timeBubbleTexts.contains(timeBubbleText)) {
+  //           timeBubbleTexts.add(timeBubbleText);
+  //           bubbles.add(
+  //             TimeBubble(
+  //               duration: timeBubbleText,
+  //             ),
+  //           );
+  //         }
+
+  //         bubbles.add(
+  //           Animate(
+  //             effects: const [
+  //               SlideEffect(),
+  //             ],
+  //             child: ChatBubbleComponent(
+  //               message: chat['content'],
+  //               isSentByMe: isSentByMe,
+  //               messageType: MessageType.text,
+  //               comment: chat,
+  //             ),
+  //           ),
+  //         );
+  //       }
+  //     }
+
+  //     bubbles = bubbles.reversed.toList();
+
+  //     setState(() {
+  //       messageWidgets = bubbles;
+  //     });
+  //   }
+
+  //   String token = AuthService.getToken();
+  //   Map<String, String> headers = {
+  //     "Content-Type": "application/json",
+  //     "Access-Control-Allow-Origin": "*",
+  //     'Authorization': 'Bearer $token',
+  //   };
+
+  //   var url = Uri.https(
+  //     LarosaLinks.nakedBaseUrl,
+  //     '/messages/${AuthService.getProfileId()}/$chatId',
+  //   );
+
+  //   try {
+  //     LogService.logInfo('requesting chats');
+  //     final response = await http.get(
+  //       url,
+  //       headers: headers,
+  //     );
+
+  //     if (response.statusCode != 200) {
+  //       LogService.logError(' Non 200');
+  //       return;
+  //     }
+
+  //     LogService.logInfo('got chats');
+
+  //     List<dynamic> data = json.decode(response.body);
+
+  //     List<Widget> bubbles = [];
+
+  //     timeBubbleTexts.clear();
+
+  //     for (var chat in data) {
+  //       bool isSentByMe = chat['senderId'] == AuthService.getProfileId();
+
+  //       LogService.logInfo(chat.toString());
+
+  //       String timeBubbleText = formatTime(chat['duration']);
+
+  //       if (!timeBubbleTexts.contains(timeBubbleText)) {
+  //         timeBubbleTexts.add(timeBubbleText);
+  //         bubbles.add(
+  //           TimeBubble(
+  //             duration: timeBubbleText,
+  //           ),
+  //         );
+  //       }
+
+  //       bubbles.add(
+  //         Animate(
+  //           effects: const [
+  //             SlideEffect(),
+  //           ],
+  //           child: ChatBubbleComponent(
+  //             message: chat['content'],
+  //             isSentByMe: isSentByMe,
+  //             messageType: MessageType.text,
+  //             comment: chat,
+  //           ),
+  //         ),
+  //       );
+  //     }
+
+  //     bubbles = bubbles.reversed.toList();
+
+  //     setState(() {
+  //       messageWidgets = bubbles;
+  //     });
+
+  //     box.put(localStorageKey, data);
+  //   } catch (e) {
+  //     LogService.logError('error: $e');
+  //   }
+  // }
 
   Future<void> _connectToStomp(
     String url,
@@ -319,132 +454,200 @@ class _LarosaConversationState extends State<LarosaConversation> {
     setState(() {});
   }
 
-  Future<void> _sendMessage() async {
-    String token = AuthService.getToken();
-    Map<String, String> headers = {
-      "Content-Type": "application/json",
-      "Access-Control-Allow-Origin": "*",
-      'Authorization': 'Bearer $token',
-    };
+  // Define sendingMessages with dynamic value types to store both bool and String
+  Map<String, Map<String, dynamic>> sendingMessages = {};
 
-    var url = Uri.https(
-      LarosaLinks.nakedBaseUrl,
-      '/message/send',
-    );
+// Your sendMessage function
+  Future<void> _sendMessage(
+      {String? retryMessageId, String? messageContent}) async {
+    String token = AuthService.getToken();
+    String messageId =
+        retryMessageId ?? generateMessageId(); // Use retry ID if retrying
+    String message = messageContent ??
+        messageController.text; // Use passed content if retrying
+
+    // Determine the message type
+    MessageType messageType;
+    if (pickedFile != null) {
+      messageType = MessageType.image;
+    } else if (audioData != null) {
+      messageType = MessageType.audio;
+    } else {
+      messageType = MessageType.text;
+    }
+
+    setState(() {
+      // Track message with both isSending and hasFailed flags
+      sendingMessages[messageId] = {
+        'isSending': true,
+        'hasFailed': false,
+        'content': message, // Store message content for retries
+      };
+      messageWidgets.insert(
+        0,
+        ChatBubbleComponent(
+          message: message,
+          isSentByMe: true,
+          messageType: messageType,
+          comment: {'duration': 0},
+          isSending: sendingMessages[messageId]?['isSending'] ?? false,
+          hasFailed: sendingMessages[messageId]?['hasFailed'] ?? false,
+          onRetry: () => _retryMessage(messageId), // Ensure onRetry is passed
+        ),
+      );
+    });
 
     try {
-      String message = messageController.text;
       messageController.clear();
-      final response = await http.post(
-        url,
-        body: jsonEncode({
-          'senderId': AuthService.getProfileId(),
-          'recipientId': widget.profileId,
-          'content': message,
-          "tempMessageId": 1000000000,
-        }),
-        headers: headers,
-      );
 
-      if (response.statusCode == 403 || response.statusCode == 302) {
-        await AuthService.refreshToken();
-        await _sendMessage();
-        return;
+      var request = http.MultipartRequest(
+        'POST',
+        Uri.https(LarosaLinks.nakedBaseUrl, '/message/send'),
+      )
+        ..headers.addAll({
+          'Authorization': 'Bearer $token',
+          "Access-Control-Allow-Origin": "*",
+        })
+        ..fields['recipientId'] = widget.profileId.toString()
+        ..fields['content'] = message;
+
+      if (audioData != null) {
+        request.files.add(http.MultipartFile.fromBytes(
+          'mediaFile',
+          audioData!,
+          filename: 'recording.aac',
+          contentType: MediaType('audio', 'aac'),
+        ));
       }
 
-      if (response.statusCode != 200) {
-        // Get.snackbar('Explore Larosa', response.body);
-        return;
+      if (pickedFile != null) {
+        request.files.add(await http.MultipartFile.fromPath(
+          'mediaFile',
+          pickedFile!.path,
+        ));
       }
 
-      HelperFunctions.larosaLogger('response: ${response.statusCode} ');
+      final response = await request.send();
 
-      await _fetchChatMessages();
+      if (response.statusCode == 200) {
+        // Update message status to sent successfully
+        setState(() {
+          sendingMessages[messageId] = {'isSending': false, 'hasFailed': false};
+          _fetchChatMessages(); // Reload chat to fetch the new message state
+        });
+      } else {
+        throw Exception('Failed to send message');
+      }
     } catch (e) {
-      HelperFunctions.larosaLogger('error: $e');
+      LogService.logError('Error sending message: $e');
+      setState(() {
+        // Set hasFailed to true in case of failure
+        sendingMessages[messageId] = {
+          'isSending': false,
+          'hasFailed': true,
+          'content': message, // Keep content for retries
+        };
+        // Re-render the message with failed state
+        messageWidgets[0] = ChatBubbleComponent(
+          message: message,
+          isSentByMe: true,
+          messageType: messageType,
+          comment: {'duration': 0},
+          isSending: sendingMessages[messageId]?['isSending'] ?? false,
+          hasFailed: sendingMessages[messageId]?['hasFailed'] ?? true,
+          onRetry: () => _retryMessage(messageId), // Retry callback
+        );
+      });
     }
   }
 
-  // Widget _chatInputs() {
-  //   return Container(
-  //     decoration: BoxDecoration(
-  //       gradient: LarosaColors.blueGradient,
-  //       borderRadius: BorderRadius.circular(10),
-  //     ),
-  //     padding: const EdgeInsets.all(5),
-  //     child: Row(
-  //       children: [
-  //         Expanded(
-  //           child: SizedBox(
-  //             height: 40,
-  //             child: TextField(
-  //               controller: messageController,
-  //               decoration: InputDecoration(
-  //                 prefixIcon: IconButton(
-  //                   onPressed: () {},
-  //                   icon: const Icon(
-  //                     Iconsax.microphone,
-  //                     color: Colors.white,
-  //                   ),
-  //                 ),
-  //                 enabledBorder: const OutlineInputBorder(
-  //                   borderSide: BorderSide.none,
-  //                 ),
-  //                 focusedBorder: const OutlineInputBorder(
-  //                   borderSide: BorderSide.none,
-  //                 ),
-  //                 filled: false,
-  //                 fillColor: Colors.grey.withOpacity(.2),
-  //                 border: OutlineInputBorder(
-  //                   borderRadius: BorderRadius.circular(10),
-  //                   borderSide: BorderSide.none,
-  //                 ),
-  //                 contentPadding: const EdgeInsets.all(8),
-  //                 hintText: 'Write your message!',
-  //                 suffixIcon: IconButton(
-  //                   onPressed: () {},
-  //                   icon: const Icon(
-  //                     Iconsax.camera,
-  //                     color: Colors.white,
-  //                   ),
-  //                 ),
-  //               ),
-  //             ),
-  //           ),
-  //         ),
-  //         const Gap(8),
-  //         GestureDetector(
-  //           onTap: () async {
-  //             if (messageController.text.isNotEmpty) {
-  //               //messageController.clear();
-  //               await _sendMessage();
-  //             }
-  //           },
-  //           child: Container(
-  //             padding: const EdgeInsets.all(10),
-  //             decoration: BoxDecoration(
-  //               gradient: LarosaColors.blueGradient,
-  //               borderRadius: BorderRadius.circular(10),
-  //             ),
-  //             child: const Row(
-  //               children: [
-  //                 Text(
-  //                   'Send',
-  //                   style: TextStyle(
-  //                       color: Colors.white, fontWeight: FontWeight.bold),
-  //                 ),
-  //                 Gap(5),
-  //                 Icon(
-  //                   Iconsax.send_14,
-  //                   color: Colors.white,
-  //                 )
-  //               ],
-  //             ),
-  //           ),
-  //         ),
-  //       ],
-  //     ),
-  //   );
+// Retry function with message content retrieval
+  void _retryMessage(String messageId) {
+    print('Retrying message...');
+    String? originalMessageContent = sendingMessages[messageId]
+        ?['content']; // Get the original message content
+
+    setState(() {
+      sendingMessages[messageId] = {
+        'isSending': true,
+        'hasFailed': false,
+        'content': originalMessageContent
+      };
+      _sendMessage(
+          retryMessageId: messageId,
+          messageContent:
+              originalMessageContent); // Retry with original content
+    });
+  }
+
+  // Future<void> _sendMessage() async {
+  //   String token = AuthService.getToken();
+  //   HelperFunctions.larosaLogger('Token fetched: $token');
+
+  //   var url = Uri.https(LarosaLinks.nakedBaseUrl, '/message/send');
+  //   HelperFunctions.larosaLogger('URL set: $url');
+
+  //   try {
+  //     String message = messageController.text;
+  //     messageController.clear();
+  //     HelperFunctions.larosaLogger('Message to send: "$message"');
+
+  //     var request = http.MultipartRequest('POST', url)
+  //       ..headers.addAll({
+  //         'Authorization': 'Bearer $token',
+  //         "Access-Control-Allow-Origin": "*",
+  //       })
+  //       ..fields['recipientId'] = widget.profileId.toString()
+  //       ..fields['content'] = message;
+
+  //     // Add the selected file if it exists
+  //     if (pickedFile != null) {
+  //       HelperFunctions.larosaLogger('Adding picked file: ${pickedFile!.path}');
+  //       request.files.add(await http.MultipartFile.fromPath(
+  //         'mediaFile',
+  //         pickedFile!.path,
+  //       ));
+  //     }
+
+  //     HelperFunctions.larosaLogger('Request fields: ${request.fields}');
+
+  //     final response = await request.send();
+
+  //     HelperFunctions.larosaLogger(
+  //         'Response received. Status code: ${response.statusCode}');
+
+  //     if (response.statusCode == 403 || response.statusCode == 302) {
+  //       HelperFunctions.larosaLogger(
+  //           'Token possibly expired, status code: ${response.statusCode}');
+  //       await AuthService.refreshToken();
+  //       await _sendMessage();
+  //       return;
+  //     }
+
+  //     if (response.statusCode != 200) {
+  //       String responseBody = await response.stream.bytesToString();
+  //       HelperFunctions.larosaLogger(
+  //           'Unexpected response status code: ${response.statusCode}');
+  //       HelperFunctions.larosaLogger('Response body: $responseBody');
+  //       return;
+  //     }
+
+  //     // Confirm that the message was sent successfully
+  //     HelperFunctions.larosaLogger(
+  //         'Message sent successfully. Response code: ${response.statusCode}');
+  //     await _fetchChatMessages();
+  //     HelperFunctions.larosaLogger('Chat messages refreshed.');
+
+  //     // Clear picked file after successful send and update UI
+  //     setState(() {
+  //       pickedFile = null;
+  //       _videoController?.dispose();
+  //       _videoController = null;
+  //       HelperFunctions.larosaLogger('Cleared picked file from view.');
+  //     });
+  //   } catch (e) {
+  //     HelperFunctions.larosaLogger('Error occurred: $e');
+  //   }
   // }
 
 // Initialize FlutterSoundRecorder and FlutterSoundPlayer for recording and playback
@@ -466,12 +669,12 @@ class _LarosaConversationState extends State<LarosaConversation> {
     }
 
     if (pickedFile != null) {
-    setState(() {
-      pickedFile = null;
-      _videoController?.dispose();
-      _videoController = null;
-    });
-  }
+      setState(() {
+        pickedFile = null;
+        _videoController?.dispose();
+        _videoController = null;
+      });
+    }
 
     try {
       await _recorder.openRecorder();
@@ -524,222 +727,281 @@ class _LarosaConversationState extends State<LarosaConversation> {
   }
 
   Future<void> pickFile() async {
-  FilePickerResult? result = await FilePicker.platform.pickFiles(
-    type: FileType.media,
-    allowMultiple: false,
-  );
+    FilePickerResult? result = await FilePicker.platform.pickFiles(
+      type: FileType.media,
+      allowMultiple: false,
+    );
 
-  if (result != null && result.files.single.path != null) {
-    File file = File(result.files.single.path!);
+    if (result != null && result.files.single.path != null) {
+      File file = File(result.files.single.path!);
 
-    setState(() {
-      pickedFile = file;
-      audioData = null; // Remove audio if a file is picked
+      setState(() {
+        pickedFile = file;
+        audioData = null; // Remove audio if a file is picked
 
-      if (file.path.endsWith('.mp4')) {
-        _videoController = VideoPlayerController.file(file)
-          ..initialize().then((_) {
-            setState(() {}); // Refresh to show video preview
-            _videoController?.setLooping(true);
-            _videoController?.play();
-          });
-      } else {
-        _videoController?.dispose(); // Dispose of any existing video controller
-        _videoController = null;
-      }
-    });
+        if (file.path.endsWith('.mp4')) {
+          _videoController = VideoPlayerController.file(file)
+            ..initialize().then((_) {
+              setState(() {}); // Refresh to show video preview
+              _videoController?.setLooping(true);
+              _videoController?.play();
+            });
+        } else {
+          _videoController
+              ?.dispose(); // Dispose of any existing video controller
+          _videoController = null;
+        }
+      });
+    }
   }
-}
 
   Widget _chatInputs() {
-  return Column(
-    children: [
-      if (audioData != null)
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-          decoration: BoxDecoration(
-            gradient: LarosaColors.blueGradient,
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: Row(
-            children: [
-              const Icon(Iconsax.music, color: Colors.white),
-              const Gap(8),
-              const Expanded(
-                child: Text(
-                  'Voice Note',
-                  style: TextStyle(color: Colors.white),
-                ),
-              ),
-              IconButton(
-                icon: Icon(
-                  isPlaying ? Iconsax.pause : Iconsax.play,
+    return Column(
+      children: [
+        if (audioData != null)
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            decoration: BoxDecoration(
+              gradient: LarosaColors.blueGradient,
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Row(
+              children: [
+                const Icon(
+                  Iconsax.music,
                   color: Colors.white,
                 ),
-                onPressed: () {
-                  playAudio();
-                },
-              ),
-              IconButton(
-                icon: const Icon(Icons.delete, color: Colors.white),
-                onPressed: () {
-                  setState(() {
-                    audioData = null;
-                  });
-                },
-              ),
-            ],
+                const Gap(8),
+                const Expanded(
+                  child: Text(
+                    'Voice Note',
+                    style: TextStyle(color: Colors.white),
+                  ),
+                ),
+                IconButton(
+                  icon: Icon(
+                    isPlaying ? Iconsax.pause : Iconsax.play,
+                    color: Colors.white,
+                  ),
+                  onPressed: () {
+                    playAudio();
+                  },
+                ),
+                IconButton(
+                  icon: const Icon(
+                    Icons.delete,
+                    color: Colors.white,
+                  ),
+                  onPressed: () {
+                    setState(() {
+                      audioData = null;
+                    });
+                  },
+                ),
+              ],
+            ),
+          )
+        else if (pickedFile != null)
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            decoration: BoxDecoration(
+              gradient: LarosaColors.blueGradient,
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Row(
+              children: [
+                _previewMedia(),
+                IconButton(
+                  icon: const Icon(
+                    Icons.delete,
+                    color: Colors.white,
+                  ),
+                  onPressed: () {
+                    setState(() {
+                      pickedFile = null;
+                      _videoController?.dispose();
+                      _videoController = null;
+                    });
+                  },
+                ),
+              ],
+            ),
           ),
-        )
-      else if (pickedFile != null)
+        const SizedBox(
+          height: 10,
+        ),
         Container(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
           decoration: BoxDecoration(
             gradient: LarosaColors.blueGradient,
             borderRadius: BorderRadius.circular(10),
           ),
+          padding: const EdgeInsets.all(5),
           child: Row(
             children: [
-              _previewMedia(),
-              IconButton(
-                icon: const Icon(Icons.delete, color: Colors.white),
-                onPressed: () {
-                  setState(() {
-                    pickedFile = null;
-                    _videoController?.dispose();
-                    _videoController = null;
-                  });
-                },
-              ),
-            ],
-          ),
-        ),
-
-        const SizedBox(height: 10,),
-      Container(
-        decoration: BoxDecoration(
-          gradient: LarosaColors.blueGradient,
-          borderRadius: BorderRadius.circular(10),
-        ),
-        padding: const EdgeInsets.all(5),
-        child: Row(
-          children: [
-            Expanded(
-              child: SizedBox(
-                height: 40,
-                child: TextField(
-                  controller: messageController,
-                  decoration: InputDecoration(
-                    prefixIcon: IconButton(
-                      onPressed: () async {
-                        if (!isRecording) {
-                          await startRecording();
-                        } else {
-                          await stopRecording();
-                        }
-                      },
-                      icon: Icon(
-                        isRecording ? Iconsax.stop : Iconsax.microphone,
+              Expanded(
+                child: SizedBox(
+                  height: 40,
+                  child: TextField(
+                    controller: messageController,
+                    decoration: InputDecoration(
+                      prefixIcon: isRecording
+                          ? AvatarGlow(
+                              glowRadiusFactor:
+                                  1.0, // Adjust for desired glow effect
+                              glowColor: Colors.white,
+                              child: IconButton(
+                                onPressed: () async {
+                                  if (!isRecording) {
+                                    await startRecording();
+                                  } else {
+                                    await stopRecording();
+                                  }
+                                },
+                                icon: const Icon(
+                                  Iconsax.stop,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            )
+                          : IconButton(
+                              onPressed: () async {
+                                if (!isRecording) {
+                                  await startRecording();
+                                } else {
+                                  await stopRecording();
+                                }
+                              },
+                              icon: const Icon(
+                                Iconsax.microphone,
+                                color: Colors.white,
+                              ),
+                            ),
+                      suffixIcon: IconButton(
+                        onPressed: pickFile, // Open file picker when clicked
+                        icon: const Icon(
+                          Iconsax.camera,
+                          color: Colors.white,
+                        ),
+                      ),
+                      enabledBorder: const OutlineInputBorder(
+                        borderSide: BorderSide.none,
+                      ),
+                      focusedBorder: const OutlineInputBorder(
+                        borderSide: BorderSide.none,
+                      ),
+                      filled: false,
+                      fillColor: Colors.grey.withOpacity(.2),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide: BorderSide.none,
+                      ),
+                      contentPadding: const EdgeInsets.all(8),
+                      hintText: 'Write your message!',
+                      hintStyle: const TextStyle(
                         color: Colors.white,
+                        fontStyle: FontStyle.italic,
+                        fontSize: 16,
                       ),
                     ),
-                    suffixIcon: IconButton(
-                      onPressed: pickFile, // Open file picker when clicked
-                      icon: const Icon(
-                        Iconsax.camera,
-                        color: Colors.white,
-                      ),
-                    ),
-                    enabledBorder: const OutlineInputBorder(
-                      borderSide: BorderSide.none,
-                    ),
-                    focusedBorder: const OutlineInputBorder(
-                      borderSide: BorderSide.none,
-                    ),
-                    filled: false,
-                    fillColor: Colors.grey.withOpacity(.2),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                      borderSide: BorderSide.none,
-                    ),
-                    contentPadding: const EdgeInsets.all(8),
-                    hintText: 'Write your message!',
                   ),
                 ),
               ),
-            ),
-            const Gap(8),
-            GestureDetector(
-              onTap: () async {
-                if (messageController.text.isNotEmpty) {
-                  await _sendMessage();
-                  messageController.clear();
-                }
-              },
-              child: Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  gradient: LarosaColors.blueGradient,
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: const Row(
-                  children: [
-                    Text(
-                      'Send',
-                      style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-                    ),
-                    Gap(5),
-                    Icon(
-                      Iconsax.send_14,
-                      color: Colors.white,
-                    ),
-                  ],
+              const Gap(8),
+              GestureDetector(
+                // onTap: () async {
+                //   if (messageController.text.isNotEmpty) {
+                //     await _sendMessage();
+                //     messageController.clear();
+                //   }
+                // },
+                onTap: () async {
+                  // Unfocus the TextField to ensure the button tap registers
+                  FocusScope.of(context).unfocus();
+
+                  HelperFunctions.larosaLogger('Send button pressed');
+
+                  if (messageController.text.isNotEmpty ||
+                      pickedFile != null ||
+                      audioData != null) {
+                    HelperFunctions.larosaLogger(
+                        'Message content: "${messageController.text}"');
+
+                    // Send the message asynchronously
+                    await _sendMessage();
+
+                    // Clear the input field after appending the message
+                    messageController.clear();
+
+                    HelperFunctions.larosaLogger(
+                        'Message, media file, or audio data sent');
+                  } else {
+                    HelperFunctions.larosaLogger(
+                        'Nothing to send: message, media file, and audio data are all empty');
+                  }
+                },
+
+                child: Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    gradient: LarosaColors.blueGradient,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Row(
+                    children: [
+                      Text(
+                        'Send',
+                        style: TextStyle(
+                            color: Colors.white, fontWeight: FontWeight.bold),
+                      ),
+                      Gap(5),
+                      Icon(
+                        Iconsax.send_14,
+                        color: Colors.white,
+                      ),
+                    ],
+                  ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
-      ),
-    ],
-  );
-}
-
-Widget _previewMedia() {
-  if (pickedFile == null) return Container();
-
-  // Display video if picked file is a video
-  if (_videoController != null && pickedFile!.path.endsWith('.mp4')) {
-    return Expanded(
-      child: AspectRatio(
-        aspectRatio: _videoController!.value.aspectRatio,
-        child: VideoPlayer(_videoController!),
-      ),
+      ],
     );
   }
 
-  // Display image if picked file is an image
-  return Expanded(
-    child: Image.file(
-      pickedFile!,
-      fit: BoxFit.cover,
-    ),
-  );
-}
+  Widget _previewMedia() {
+    if (pickedFile == null) return Container();
+
+    // Display video if picked file is a video
+    if (_videoController != null && pickedFile!.path.endsWith('.mp4')) {
+      return Expanded(
+        child: AspectRatio(
+          aspectRatio: _videoController!.value.aspectRatio,
+          child: VideoPlayer(_videoController!),
+        ),
+      );
+    }
+
+    // Display image if picked file is an image
+    return Expanded(
+      child: Image.file(
+        pickedFile!,
+        fit: BoxFit.cover,
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     return RefreshIndicator(
       onRefresh: _fetchChatMessages,
       child: Scaffold(
-        backgroundColor: Colors.black,
         appBar: AppBar(
           leading: IconButton(
             onPressed: () {
               context.pop();
             },
-            icon: const Icon(
-              Iconsax.arrow_left_2,
-            ),
+            icon: const Icon(Iconsax.arrow_left_2),
           ),
           title: Animate(
             effects: const [
@@ -785,7 +1047,8 @@ Widget _previewMedia() {
                       child: Row(
                         children: [
                           Text(
-                            widget.username,
+                            widget.username.toUpperCase(),
+                            style: const TextStyle(fontSize: 16),
                           ),
                           const Gap(3),
                           if (isVerified)
@@ -800,11 +1063,6 @@ Widget _previewMedia() {
                         ],
                       ),
                     ),
-                    const Gap(3),
-                    // Text(
-                    //   'online',
-                    //   style: Theme.of(context).textTheme.bodySmall,
-                    // ),
                   ],
                 ),
               ],
@@ -816,9 +1074,12 @@ Widget _previewMedia() {
             Expanded(
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                child: ListView(
+                child: ListView.builder(
                   reverse: true,
-                  children: messageWidgets,
+                  itemCount: messageWidgets.length,
+                  itemBuilder: (context, index) {
+                    return messageWidgets[index];
+                  },
                 ),
               ),
             ),

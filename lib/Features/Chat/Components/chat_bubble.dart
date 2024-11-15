@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
-import 'package:flutter_svg/svg.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:gap/gap.dart';
 import 'package:intl/intl.dart';
-import 'package:just_audio/just_audio.dart';
-import 'package:larosa_block/Utils/colors.dart';
-import 'package:larosa_block/Utils/svg_paths.dart';
+import 'package:just_audio/just_audio.dart' as just_audio;
+import 'package:video_player/video_player.dart';
+
+import '../../../Utils/colors.dart';
+import '../../../Utils/svg_paths.dart';
+import 'full_screen_media_viewer.dart';
 
 enum MessageType {
   text,
@@ -18,6 +21,9 @@ class ChatBubbleComponent extends HookWidget {
   final bool isSentByMe;
   final MessageType messageType;
   final dynamic comment;
+  final bool isSending; // Add this parameter for sending status
+  final bool hasFailed; // New parameter to track failed status
+  final VoidCallback? onRetry; // Callback for retry
 
   const ChatBubbleComponent({
     super.key,
@@ -25,49 +31,43 @@ class ChatBubbleComponent extends HookWidget {
     required this.isSentByMe,
     required this.messageType,
     required this.comment,
+    this.isSending = false, // Default to false if not provided
+    this.hasFailed = false, // Default to false
+    this.onRetry, // Retry callback
   });
 
   @override
   Widget build(BuildContext context) {
-    final audioPlayer = useMemoized(() => AudioPlayer());
+    final audioPlayer = useMemoized(() => just_audio.AudioPlayer());
     final isPlaying = useState(false);
     final duration = useState<Duration>(Duration.zero);
     final position = useState<Duration>(Duration.zero);
 
-    DateTime messageTime = DateTime.now().subtract(
-      Duration(
-        seconds: comment['duration'],
-      ),
+    // Initialize video controller if the message type is image and it's a video file
+    final videoController = useMemoized(
+      () => messageType == MessageType.image && message.endsWith('.mp4')
+          ? VideoPlayerController.network(message)
+          : null,
+      [message],
     );
 
-    // useEffect(() {
-    //   audioPlayer.setFilePath(message).then((value) {
-    //     duration.value = audioPlayer.duration ?? Duration.zero;
-    //   });
+    useEffect(() {
+      if (videoController != null) {
+        videoController.initialize().then((_) {
+          videoController.setLooping(false);
+          videoController.addListener(() {
+            position.value = videoController.value.position;
+            duration.value = videoController.value.duration;
+            isPlaying.value = videoController.value.isPlaying;
+          });
+        });
+      }
+      return videoController?.dispose;
+    }, [videoController]);
 
-    //   final positionSubscription = audioPlayer.positionStream.listen((pos) {
-    //     position.value = pos;
-    //   });
-
-    //   final playerStateSubscription =
-    //       audioPlayer.playerStateStream.listen((state) {
-    //     if (state.playing != isPlaying.value) {
-    //       isPlaying.value = state.playing;
-    //     }
-
-    //     if (state.processingState == ProcessingState.completed) {
-    //       isPlaying.value = false;
-    //       position.value = Duration.zero;
-    //       audioPlayer.seek(Duration.zero);
-    //     }
-    //   });
-
-    //   return () {
-    //     positionSubscription.cancel();
-    //     playerStateSubscription.cancel();
-    //     audioPlayer.dispose();
-    //   };
-    // }, []);
+    DateTime messageTime = DateTime.now().subtract(
+      Duration(seconds: comment['duration']),
+    );
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0),
@@ -81,13 +81,9 @@ class ChatBubbleComponent extends HookWidget {
               _buildTextBubble(context)
             else if (messageType == MessageType.audio)
               _buildAudioBubble(
-                audioPlayer,
-                isPlaying,
-                duration,
-                position,
-              )
+                  context, audioPlayer, isPlaying, duration, position)
             else if (messageType == MessageType.image)
-              _buildImageBubble(context),
+              _buildMediaBubble(context, videoController),
             Row(
               mainAxisAlignment:
                   isSentByMe ? MainAxisAlignment.end : MainAxisAlignment.start,
@@ -98,32 +94,14 @@ class ChatBubbleComponent extends HookWidget {
                 ),
                 if (isSentByMe) ...[
                   const Gap(5),
-                  Stack(
-                    alignment: Alignment.centerLeft,
-                    children: [
-                      SvgPicture.asset(
-                        SvgIconsPaths.checkOutlines,
-                        colorFilter: const ColorFilter.mode(
-                          Colors.grey,
-                          BlendMode.srcIn,
-                        ),
-                        height: 16,
-                      ),
-                      // Row(
-                      //   children: [
-                      //     const Gap(5),
-                      //     SvgPicture.asset(
-                      //       SvgIconsPaths.checkCircle,
-                      //       colorFilter: const ColorFilter.mode(
-                      //         Colors.blue,
-                      //         BlendMode.srcIn,
-                      //       ),
-                      //       height: 16,
-                      //     ),
-                      //   ],
-                      // ),
-                    ],
-                  )
+                  SvgPicture.asset(
+                    SvgIconsPaths.checkOutlines,
+                    colorFilter: const ColorFilter.mode(
+                      Colors.grey,
+                      BlendMode.srcIn,
+                    ),
+                    height: 16,
+                  ),
                 ],
               ],
             ),
@@ -133,148 +111,392 @@ class ChatBubbleComponent extends HookWidget {
     );
   }
 
+  // Widget _buildTextBubble(BuildContext context) {
+  //   return Container(
+  //     constraints: BoxConstraints(
+  //       maxWidth: MediaQuery.of(context).size.width * .7,
+  //     ),
+  //     padding: const EdgeInsets.all(10),
+  //     decoration: BoxDecoration(
+  //       gradient: LinearGradient(
+  //         colors: [
+  //           isSentByMe ? const Color(0xffb91d73) : LarosaColors.secondary,
+  //           LarosaColors.primary,
+  //         ],
+  //         begin: Alignment.topLeft,
+  //         end: Alignment.centerRight,
+  //       ),
+  //       borderRadius: BorderRadius.circular(10),
+  //     ),
+  //     child: Text(
+  //       message,
+  //       style: TextStyle(
+  //         color: isSentByMe ? Colors.white : LarosaColors.light,
+  //       ),
+  //     ),
+  //   );
+  // }
+
   Widget _buildTextBubble(BuildContext context) {
-    return Container(
-      constraints: BoxConstraints(
-        maxWidth: MediaQuery.of(context).size.width * .7,
-      ),
-      padding: const EdgeInsets.all(10),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            isSentByMe ? const Color(0xffb91d73) : LarosaColors.secondary,
-            LarosaColors.primary,
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.centerRight,
+  return Row(
+    mainAxisSize: MainAxisSize.min,
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      // Retry icon positioned outside the left of the bubble if it failed to send
+      if (hasFailed)
+        IconButton(
+          icon: const Icon(
+            Icons.refresh,
+            color: Colors.red,
+            size: 16,
+          ),
+          onPressed: () {
+            print('Retry button pressed'); // Log message for confirmation
+            if (onRetry != null) {
+              onRetry!(); // Trigger the retry callback
+            }
+          },
         ),
-        borderRadius: BorderRadius.circular(10),
+      // Message bubble with optional loading indicator
+      Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            constraints: BoxConstraints(
+              maxWidth: MediaQuery.of(context).size.width * .7,
+            ),
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  isSentByMe ? const Color(0xffb91d73) : LarosaColors.secondary,
+                  LarosaColors.primary,
+                ],
+                begin: Alignment.topLeft,
+                end: Alignment.centerRight,
+              ),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Text(
+              message,
+              style: TextStyle(
+                color: isSentByMe ? Colors.white : LarosaColors.light,
+              ),
+            ),
+          ),
+          // Loading indicator positioned below the bubble if message is sending
+          if (isSending)
+            const Padding(
+              padding: EdgeInsets.only(left: 4, top: 4),
+              child: SizedBox(
+                width: 12,
+                height: 12,
+                child: CircularProgressIndicator(strokeWidth: 1.5),
+              ),
+            ),
+        ],
       ),
-      child: Text(
-        message,
-        style: TextStyle(
-          color: isSentByMe ? Colors.white : LarosaColors.light,
-        ),
-      ),
-    );
-  }
+    ],
+  );
+}
+
+
 
   Widget _buildAudioBubble(
-      AudioPlayer audioPlayer,
+      context,
+      just_audio.AudioPlayer audioPlayer,
       ValueNotifier<bool> isPlaying,
       ValueNotifier<Duration> duration,
       ValueNotifier<Duration> position) {
-    return Container(
-      constraints: const BoxConstraints(
-        maxWidth: 200,
-      ),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            isSentByMe ? const Color(0xffb91d73) : LarosaColors.secondary,
-            LarosaColors.primary,
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.centerRight,
-        ),
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(8.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.end,
-          children: [
-            Row(
-              mainAxisSize: MainAxisSize.min,
+    useEffect(() {
+      // Only set the source if it's an audio file
+      if (message.endsWith('.mp3') ||
+          message.endsWith('.wav') ||
+          message.endsWith('.aac')) {
+        audioPlayer.setUrl(message).then((_) {
+          duration.value = audioPlayer.duration ?? Duration.zero;
+        });
+      }
+
+      final positionSubscription = audioPlayer.positionStream.listen((pos) {
+        position.value = pos;
+      });
+
+      final playerStateSubscription =
+          audioPlayer.playerStateStream.listen((state) {
+        isPlaying.value = state.playing;
+
+        if (state.processingState == just_audio.ProcessingState.completed) {
+          isPlaying.value = false;
+          position.value = Duration.zero;
+          audioPlayer.seek(Duration.zero);
+        }
+      });
+
+      return () {
+        positionSubscription.cancel();
+        playerStateSubscription.cancel();
+        audioPlayer.dispose();
+      };
+    }, []);
+
+    return Stack(
+      children: [
+        Container(
+          width: MediaQuery.of(context).size.width * .7,
+          decoration: BoxDecoration(
+            gradient: LarosaColors.blueGradient,
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.only(bottom: 3, right: 5),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                IconButton(
-                  onPressed: () async {
-                    if (isPlaying.value) {
-                      await audioPlayer.pause();
-                    } else {
-                      await audioPlayer.play();
-                    }
-                  },
-                  icon: Icon(
-                    isPlaying.value
-                        ? Icons.pause_circle_rounded
-                        : Icons.play_circle_rounded,
-                  ),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Expanded(
+                      child: SliderTheme(
+                        data: SliderTheme.of(context).copyWith(
+                          activeTrackColor: isSentByMe
+                              ? LarosaColors.secondary
+                              : LarosaColors.secondary, // Active track color
+                          inactiveTrackColor:
+                              Colors.grey[300], // Inactive track color
+                          thumbColor: Colors.white,
+                          overlayColor: Colors.white.withOpacity(0.2),
+                          trackHeight: 4.0,
+                        ),
+                        child: Slider(
+                          min: 0,
+                          max: duration.value.inMilliseconds.toDouble(),
+                          value: position.value.inMilliseconds
+                              .clamp(
+                                  0, duration.value.inMilliseconds.toDouble())
+                              .toDouble(),
+                          onChanged: (value) {
+                            final newPosition =
+                                Duration(milliseconds: value.toInt());
+                            audioPlayer.seek(newPosition);
+                          },
+                        ),
+                      ),
+                    ),
+                    IconButton(
+                      onPressed: () async {
+                        if (isPlaying.value) {
+                          await audioPlayer.pause();
+                        } else {
+                          await audioPlayer.play();
+                        }
+                      },
+                      icon: Icon(
+                        isPlaying.value ? Icons.pause : Icons.play_arrow,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ],
                 ),
-                Expanded(
-                  child: Slider(
-                    min: 0,
-                    max: duration.value.inMilliseconds.toDouble(),
-                    value: position.value.inMilliseconds
-                        .clamp(0, duration.value.inMilliseconds.toDouble())
-                        .toDouble(),
-                    onChanged: (value) {
-                      final newPosition = Duration(milliseconds: value.toInt());
-                      audioPlayer.seek(newPosition);
-                    },
+                Text(
+                  "${position.value.inMinutes}:${(position.value.inSeconds % 60).toString().padLeft(2, '0')} / ${duration.value.inMinutes}:${(duration.value.inSeconds % 60).toString().padLeft(2, '0')}",
+                  style: const TextStyle(
+                    color: Colors.white,
                   ),
                 ),
               ],
             ),
-            Text(
-              "${position.value.inMinutes}:${(position.value.inSeconds % 60).toString().padLeft(2, '0')} / ${duration.value.inMinutes}:${(duration.value.inSeconds % 60).toString().padLeft(2, '0')}",
-              style: const TextStyle(
-                color: Colors.white,
-              ),
-            ),
-          ],
+          ),
         ),
-      ),
+        if (isSending) // Show sending indicator if still sending
+          const Positioned(
+            bottom: 4,
+            right: 4,
+            child: SizedBox(
+              width: 12,
+              height: 12,
+              child: CircularProgressIndicator(strokeWidth: 1.5),
+            ),
+          ),
+      ],
     );
   }
 
-  Widget _buildImageBubble(BuildContext context) {
-    return ClipRRect(
-      borderRadius: BorderRadius.only(
-        topLeft:
-            isSentByMe ? const Radius.circular(10) : const Radius.circular(0),
-        topRight:
-            isSentByMe ? const Radius.circular(0) : const Radius.circular(10),
-        bottomLeft: const Radius.circular(10),
-        bottomRight: const Radius.circular(10),
-      ),
-      child: Container(
-        constraints: BoxConstraints(
-          maxWidth: MediaQuery.of(context).size.width * .7,
-        ),
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [
-              isSentByMe
-                  ? const Color.fromARGB(255, 20, 117, 191)
-                  : LarosaColors.secondary,
-              LarosaColors.primary,
-            ],
-            begin: Alignment.topLeft,
-            end: Alignment.centerRight,
+  Widget _buildMediaBubble(
+      BuildContext context, VideoPlayerController? videoController) {
+    if (videoController != null && message.endsWith('.mp4')) {
+      // Display video with controls
+      return GestureDetector(
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => FullScreenMediaViewer(mediaUrl: message),
+            ),
+          );
+        },
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(10),
+          child: Container(
+            decoration: BoxDecoration(
+              gradient: LarosaColors.blueGradient,
+              borderRadius: BorderRadius.circular(10),
+            ),
+            constraints: BoxConstraints(
+              maxWidth: MediaQuery.of(context).size.width * .7,
+            ),
+            child: Column(
+              children: [
+                AspectRatio(
+                  aspectRatio: videoController.value.aspectRatio,
+                  child: VideoPlayer(videoController),
+                ),
+                Column(
+                  children: [
+                    // Timeline slider at the top
+                    SliderTheme(
+                      data: SliderTheme.of(context).copyWith(
+                        activeTrackColor: isSentByMe
+                            ? LarosaColors.secondary
+                            : LarosaColors.secondary,
+                        inactiveTrackColor: Colors.grey[300],
+                        thumbColor: Colors.white,
+                        overlayColor: Colors.white.withOpacity(0.2),
+                        trackHeight: 4.0,
+                      ),
+                      child: Slider(
+                        min: 0,
+                        max: videoController.value.duration.inMilliseconds
+                            .toDouble(),
+                        value: videoController.value.position.inMilliseconds
+                            .toDouble(),
+                        onChanged: (value) {
+                          videoController.seekTo(
+                            Duration(milliseconds: value.toInt()),
+                          );
+                        },
+                      ),
+                    ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Container(
+                          margin: const EdgeInsets.only(bottom: 8.0, left: 5),
+                          padding: const EdgeInsets.all(0.0),
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            border: Border.all(color: Colors.white, width: 2.0),
+                          ),
+                          child: IconButton(
+                            icon: Icon(
+                              videoController.value.volume > 0
+                                  ? Icons.volume_up
+                                  : Icons.volume_off,
+                              color: Colors.white,
+                            ),
+                            onPressed: () {
+                              videoController.setVolume(
+                                  videoController.value.volume > 0 ? 0 : 1);
+                            },
+                          ),
+                        ),
+                        Container(
+                          margin: const EdgeInsets.only(bottom: 8.0, right: 5),
+                          padding: const EdgeInsets.all(0.0),
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            border: Border.all(color: Colors.white, width: 2.0),
+                          ),
+                          child: IconButton(
+                            icon: Icon(
+                              videoController.value.isPlaying
+                                  ? Icons.pause
+                                  : Icons.play_arrow,
+                              color: Colors.white,
+                            ),
+                            onPressed: () {
+                              videoController.value.isPlaying
+                                  ? videoController.pause()
+                                  : videoController.play();
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+                if (isSending)
+                  const Positioned(
+                    bottom: 4,
+                    right: 4,
+                    child: SizedBox(
+                      width: 12,
+                      height: 12,
+                      child: CircularProgressIndicator(strokeWidth: 1.5),
+                    ),
+                  ),
+              ],
+            ),
           ),
         ),
-        child: Column(
-          crossAxisAlignment:
-              isSentByMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
-          children: [
-            Image.asset(
-              message,
-              fit: BoxFit.cover,
-            ),
-            if (message.isNotEmpty)
-              Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: Text(
-                  'Sharing a moment with my friend',
-                  style: TextStyle(
-                    color: isSentByMe ? Colors.white : Colors.black,
-                  ),
+      );
+    } else if (message.endsWith('.jpg') ||
+        message.endsWith('.jpeg') ||
+        message.endsWith('.png') ||
+        message.endsWith('.webp')) {
+      // Display image with error handling, loading, and sending indicator
+      return Stack(
+        children: [
+          GestureDetector(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => FullScreenMediaViewer(mediaUrl: message),
+                ),
+              );
+            },
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(10),
+              child: Container(
+                constraints: BoxConstraints(
+                  maxWidth: MediaQuery.of(context).size.width * .7,
+                ),
+                child: Image.network(
+                  message,
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) {
+                    debugPrint("Error loading image: $error, URL: $message");
+                    return const Column(
+                      children: [
+                        Icon(Icons.error, color: Colors.red),
+                        Text("Image failed to load")
+                      ],
+                    );
+                  },
+                  loadingBuilder: (context, child, loadingProgress) {
+                    if (loadingProgress == null) return child;
+                    return const Center(child: CircularProgressIndicator());
+                  },
                 ),
               ),
-          ],
-        ),
-      ),
-    );
+            ),
+          ),
+          if (isSending) // Show sending indicator if still sending
+            const Positioned(
+              bottom: 4,
+              right: 4,
+              child: SizedBox(
+                width: 12,
+                height: 12,
+                child: CircularProgressIndicator(strokeWidth: 1.5),
+              ),
+            ),
+        ],
+      );
+    }
+
+    // Fallback in case no conditions match
+    return Container();
   }
 }

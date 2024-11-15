@@ -47,6 +47,22 @@ class VideoController extends GetxController {
     }
   }
 
+  /// New togglePlayPause function
+  void togglePlayPause(int index) {
+    print('VideoController: Toggling play/pause for video at index $index');
+
+    final controller = videoControllers[index];
+    if (controller != null) {
+      if (controller.value.isPlaying) {
+        pauseVideo(index);
+      } else {
+        playVideo(index);
+      }
+    } else {
+      print('VideoController: No controller found for video at index $index');
+    }
+  }
+
   void disposeAll() {
     print('VideoController: Disposing all video controllers');
     videoControllers.forEach((key, controller) {

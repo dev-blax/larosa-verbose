@@ -573,6 +573,7 @@ class _ProfileVisitScreenState extends State<ProfileVisitScreen> {
   }
 
   Widget profileShimmer(BuildContext context) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
       backgroundColor: Colors.black,
       body: SingleChildScrollView(
@@ -583,8 +584,8 @@ class _ProfileVisitScreenState extends State<ProfileVisitScreen> {
             Stack(
               children: [
                 Shimmer.fromColors(
-                  baseColor: Colors.grey[900]!,
-                  highlightColor: Colors.grey[700]!,
+                  baseColor: isDarkMode ? Colors.grey[900]! : Colors.grey[400]!,
+            highlightColor: isDarkMode ? Colors.grey[700]! : Colors.grey[100]!,
                   child: Container(
                     height: 180, // Adjust height to match your cover image
                     width: double.infinity,
@@ -596,8 +597,8 @@ class _ProfileVisitScreenState extends State<ProfileVisitScreen> {
                   bottom: 10,
                   right: 16,
                   child: Shimmer.fromColors(
-                    baseColor: Colors.grey[900]!,
-                    highlightColor: Colors.grey[700]!,
+                    baseColor: isDarkMode ? Colors.grey[900]! : Colors.grey[400]!,
+            highlightColor: isDarkMode ? Colors.grey[700]! : Colors.grey[100]!,
                     child: Container(
                       width: 80,
                       height: 80,
@@ -623,8 +624,8 @@ class _ProfileVisitScreenState extends State<ProfileVisitScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Shimmer.fromColors(
-                        baseColor: Colors.grey[900]!,
-                        highlightColor: Colors.grey[700]!,
+                        baseColor: isDarkMode ? Colors.grey[900]! : Colors.grey[400]!,
+            highlightColor: isDarkMode ? Colors.grey[700]! : Colors.grey[100]!,
                         child: Container(
                           width: 150,
                           height: 15,
@@ -633,8 +634,8 @@ class _ProfileVisitScreenState extends State<ProfileVisitScreen> {
                       ),
                       const SizedBox(height: 5),
                       Shimmer.fromColors(
-                        baseColor: Colors.grey[900]!,
-                        highlightColor: Colors.grey[700]!,
+                        baseColor: isDarkMode ? Colors.grey[900]! : Colors.grey[400]!,
+            highlightColor: isDarkMode ? Colors.grey[700]! : Colors.grey[100]!,
                         child: Container(
                           width: 100,
                           height: 10,
@@ -643,8 +644,8 @@ class _ProfileVisitScreenState extends State<ProfileVisitScreen> {
                       ),
                       const SizedBox(height: 5),
                       Shimmer.fromColors(
-                        baseColor: Colors.grey[900]!,
-                        highlightColor: Colors.grey[700]!,
+                        baseColor: isDarkMode ? Colors.grey[900]! : Colors.grey[400]!,
+            highlightColor: isDarkMode ? Colors.grey[700]! : Colors.grey[100]!,
                         child: Container(
                           width: 200,
                           height: 10,
@@ -666,8 +667,8 @@ class _ProfileVisitScreenState extends State<ProfileVisitScreen> {
                   return Column(
                     children: [
                       Shimmer.fromColors(
-                        baseColor: Colors.grey[900]!,
-                        highlightColor: Colors.grey[700]!,
+                        baseColor: isDarkMode ? Colors.grey[900]! : Colors.grey[400]!,
+            highlightColor: isDarkMode ? Colors.grey[700]! : Colors.grey[100]!,
                         child: Container(
                           width: 60,
                           height: 10,
@@ -676,8 +677,8 @@ class _ProfileVisitScreenState extends State<ProfileVisitScreen> {
                       ),
                       const SizedBox(height: 5),
                       Shimmer.fromColors(
-                        baseColor: Colors.grey[900]!,
-                        highlightColor: Colors.grey[700]!,
+                        baseColor: isDarkMode ? Colors.grey[900]! : Colors.grey[400]!,
+            highlightColor: isDarkMode ? Colors.grey[700]! : Colors.grey[100]!,
                         child: Container(
                           width: 40,
                           height: 10,
@@ -697,8 +698,8 @@ class _ProfileVisitScreenState extends State<ProfileVisitScreen> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Shimmer.fromColors(
-                    baseColor: Colors.grey[900]!,
-                    highlightColor: Colors.grey[700]!,
+                    baseColor: isDarkMode ? Colors.grey[900]! : Colors.grey[400]!,
+            highlightColor: isDarkMode ? Colors.grey[700]! : Colors.grey[100]!,
                     child: Container(
                       width: 100,
                       height: 35,
@@ -709,8 +710,8 @@ class _ProfileVisitScreenState extends State<ProfileVisitScreen> {
                     ),
                   ),
                   Shimmer.fromColors(
-                    baseColor: Colors.grey[900]!,
-                    highlightColor: Colors.grey[700]!,
+                    baseColor: isDarkMode ? Colors.grey[900]! : Colors.grey[400]!,
+            highlightColor: isDarkMode ? Colors.grey[700]! : Colors.grey[100]!,
                     child: Container(
                       width: 100,
                       height: 35,
@@ -721,8 +722,8 @@ class _ProfileVisitScreenState extends State<ProfileVisitScreen> {
                     ),
                   ),
                   Shimmer.fromColors(
-                    baseColor: Colors.grey[900]!,
-                    highlightColor: Colors.grey[700]!,
+                    baseColor: isDarkMode ? Colors.grey[900]! : Colors.grey[400]!,
+            highlightColor: isDarkMode ? Colors.grey[700]! : Colors.grey[100]!,
                     child: Container(
                       width: 100,
                       height: 35,
@@ -743,8 +744,8 @@ class _ProfileVisitScreenState extends State<ProfileVisitScreen> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: List.generate(4, (index) {
                   return Shimmer.fromColors(
-                    baseColor: Colors.grey[900]!,
-                    highlightColor: Colors.grey[700]!,
+                    baseColor: isDarkMode ? Colors.grey[900]! : Colors.grey[400]!,
+            highlightColor: isDarkMode ? Colors.grey[700]! : Colors.grey[100]!,
                     child: Container(
                       width: 40,
                       height: 40,
@@ -774,8 +775,8 @@ class _ProfileVisitScreenState extends State<ProfileVisitScreen> {
                 itemCount: 4, // Placeholder count for grid items
                 itemBuilder: (context, index) {
                   return Shimmer.fromColors(
-                    baseColor: Colors.grey[900]!,
-                    highlightColor: Colors.grey[700]!,
+                    baseColor: isDarkMode ? Colors.grey[900]! : Colors.grey[400]!,
+            highlightColor: isDarkMode ? Colors.grey[700]! : Colors.grey[100]!,
                     child: Container(
                       decoration: BoxDecoration(
                         color: Colors.grey[300],

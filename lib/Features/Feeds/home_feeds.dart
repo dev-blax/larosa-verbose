@@ -1,7 +1,9 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:larosa_block/Components/bottom_navigation.dart';
 import 'package:larosa_block/Features/Feeds/Components/post_component.dart';
 import 'package:larosa_block/Features/Feeds/Controllers/home_feeds_controller.dart';
+import 'package:larosa_block/Utils/colors.dart';
 import 'package:provider/provider.dart';
 import 'package:larosa_block/Features/Feeds/Components/topbar.dart';
 import 'package:larosa_block/Features/Feeds/Components/topbar_two.dart';
@@ -47,6 +49,7 @@ class _HomeFeedsScreenState extends State<HomeFeedsScreen> {
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: RefreshIndicator(
+        color: LarosaColors.secondary,
         onRefresh: () async {
           await controller.fetchPosts(true);
         },
@@ -77,73 +80,91 @@ class _HomeFeedsScreenState extends State<HomeFeedsScreen> {
                     ),
                   ),
                 ),
-                // SliverToBoxAdapter(
-                //   child: Transform.translate(
-                //     offset: const Offset(0, -23),
-                //     child: ValueListenableBuilder<bool>(
-                //       valueListenable: controller.isLoading,
-                //       builder: (context, isLoading, child) {
-                //         if (isLoading && controller.posts.isEmpty) {
-                //           return _buildShimmerLoading();
-                //         } else if (controller.posts.isEmpty) {
-                //           return const Center(
-                //             child: Padding(
-                //               padding: EdgeInsets.only(top: 50.0),
-                //               child: Text('Fetching posts'),
-                //             ),
-                //           );
-                //         } else {
-                //           return Padding(
-                //             padding:
-                //                 const EdgeInsets.only(bottom: 100.0, top: 0),
-                //             child: ListView.builder(
-                //               itemCount: controller.posts.length +
-                //                   (controller.isFetchingMore ? 1 : 0),
-                //               shrinkWrap: true,
-                //               physics: const NeverScrollableScrollPhysics(),
-                //               itemBuilder: (context, index) {
-                //                 if (index < controller.posts.length) {
-                //                   final post = controller.posts[index];
+                SliverToBoxAdapter(
+                  child: Transform.translate(
+                    offset: const Offset(0, -23),
+                    child: ValueListenableBuilder<bool>(
+                      valueListenable: controller.isLoading,
+                      builder: (context, isLoading, child) {
+                        if (isLoading && controller.posts.isEmpty) {
+                          return _buildShimmerLoading();
+                        } else if (controller.posts.isEmpty) {
+                          return const Center(
+                            child: Padding(
+                              padding: EdgeInsets.only(top: 50.0),
+                              child: Text('Fetching posts'),
+                            ),
+                          );
+                        } else {
+                          return Padding(
+                            padding:
+                                const EdgeInsets.only(bottom: 100.0, top: 0),
+                            child: ListView.builder(
+                              itemCount: controller.posts.length +
+                                  (controller.isFetchingMore ? 1 : 0) +
+                                  1, // +1 for "Hello world"
+                              shrinkWrap: true,
+                              physics: const NeverScrollableScrollPhysics(),
+                              itemBuilder: (context, index) {
+                                // Check if we are at the last item for "Hello world"
+                                if (index == controller.posts.length) {
+                                  return const Padding(
+                                    padding:
+                                        EdgeInsets.only(bottom: 0.0, top: 20),
+                                    child: Center(
+                                      child: CupertinoActivityIndicator(
+                                        radius:
+                                            15.0, // Adjust the size as needed
+                                      ),
+                                    ),
+                                  );
+                                }
+                                // Check if it's loading more data
+                                else if (index == controller.posts.length + 1 &&
+                                    controller.isFetchingMore) {
+                                  return const Padding(
+                                    padding: EdgeInsets.only(bottom: 70.0),
+                                    child: CupertinoActivityIndicator(
+                                      radius: 15.0, // Adjust the size as needed
+                                    ),
+                                  );
+                                }
+                                // Regular post item
+                                else {
+                                  final post = controller.posts[index];
 
-                //                   if (_postPlayStates[post['id']] == null) {
-                //                     _postPlayStates[post['id']] =
-                //                         ValueNotifier(false);
-                //                   }
+                                  if (_postPlayStates[post['id']] == null) {
+                                    _postPlayStates[post['id']] =
+                                        ValueNotifier(false);
+                                  }
 
-                //                   return VisibilityDetector(
-                //                     key: Key('post-${post['id']}-$index'),
-                //                     onVisibilityChanged: (info) {
-                //                       bool isPlaying =
-                //                           info.visibleFraction > 0.5;
-                //                       _updatePostState(post['id'], isPlaying);
-                //                     },
-                //                     child: ValueListenableBuilder<bool>(
-                //                       valueListenable:
-                //                           _postPlayStates[post['id']]!,
-                //                       builder: (context, isPlaying, child) {
-                //                         return PostComponent(
-                //                           post: post,
-                //                           isPlaying: isPlaying,
-                //                         );
-                //                       },
-                //                     ),
-                //                   );
-                //                 } else {
-                //                   return const Padding(
-                //                     padding: EdgeInsets.only(bottom: 100.0),
-                //                     child: Center(
-                //                       child: CircularProgressIndicator(),
-                //                     ),
-                //                   );
-                //                 }
-                //               },
-                //             ),
-                //           );
-                //         }
-                //       },
-                //     ),
-                //   ),
-                // ),
+                                  return VisibilityDetector(
+                                    key: Key('post-${post['id']}-$index'),
+                                    onVisibilityChanged: (info) {
+                                      bool isPlaying =
+                                          info.visibleFraction > 0.5;
+                                      _updatePostState(post['id'], isPlaying);
+                                    },
+                                    child: ValueListenableBuilder<bool>(
+                                      valueListenable:
+                                          _postPlayStates[post['id']]!,
+                                      builder: (context, isPlaying, child) {
+                                        return PostComponent(
+                                          post: post,
+                                          isPlaying: isPlaying,
+                                        );
+                                      },
+                                    ),
+                                  );
+                                }
+                              },
+                            ),
+                          );
+                        }
+                      },
+                    ),
+                  ),
+                ),
               ],
             ),
             const Positioned(
@@ -162,13 +183,18 @@ class _HomeFeedsScreenState extends State<HomeFeedsScreen> {
 
 // Shimmer loading widget definition
   Widget _buildShimmerLoading() {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
     return SingleChildScrollView(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          const SizedBox(
+            height: 10,
+          ),
           Shimmer.fromColors(
-            baseColor: Colors.grey[900]!,
-            highlightColor: Colors.grey[700]!,
+            baseColor: isDarkMode ? Colors.grey[900]! : Colors.grey[400]!,
+            highlightColor: isDarkMode ? Colors.grey[700]! : Colors.grey[100]!,
             child: Padding(
               padding: const EdgeInsets.all(16.0),
               child: Row(
@@ -204,8 +230,8 @@ class _HomeFeedsScreenState extends State<HomeFeedsScreen> {
           ),
           const SizedBox(height: 10),
           Shimmer.fromColors(
-            baseColor: Colors.grey[900]!,
-            highlightColor: Colors.grey[700]!,
+            baseColor: isDarkMode ? Colors.grey[900]! : Colors.grey[400]!,
+            highlightColor: isDarkMode ? Colors.grey[700]! : Colors.grey[100]!,
             child: Container(
               height: 300,
               margin: const EdgeInsets.symmetric(horizontal: 16.0),
@@ -217,8 +243,8 @@ class _HomeFeedsScreenState extends State<HomeFeedsScreen> {
           ),
           const SizedBox(height: 10),
           Shimmer.fromColors(
-            baseColor: Colors.grey[900]!,
-            highlightColor: Colors.grey[700]!,
+            baseColor: isDarkMode ? Colors.grey[900]! : Colors.grey[400]!,
+            highlightColor: isDarkMode ? Colors.grey[700]! : Colors.grey[100]!,
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16.0),
               child: Column(
@@ -247,8 +273,8 @@ class _HomeFeedsScreenState extends State<HomeFeedsScreen> {
           ),
           const SizedBox(height: 20),
           Shimmer.fromColors(
-            baseColor: Colors.grey[900]!,
-            highlightColor: Colors.grey[700]!,
+            baseColor: isDarkMode ? Colors.grey[900]! : Colors.grey[400]!,
+            highlightColor: isDarkMode ? Colors.grey[700]! : Colors.grey[100]!,
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16.0),
               child: Row(
@@ -268,8 +294,8 @@ class _HomeFeedsScreenState extends State<HomeFeedsScreen> {
           ),
           const SizedBox(height: 20),
           Shimmer.fromColors(
-            baseColor: Colors.grey[900]!,
-            highlightColor: Colors.grey[700]!,
+            baseColor: isDarkMode ? Colors.grey[900]! : Colors.grey[400]!,
+            highlightColor: isDarkMode ? Colors.grey[700]! : Colors.grey[100]!,
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16.0),
               child: Row(
@@ -300,8 +326,39 @@ class _HomeFeedsScreenState extends State<HomeFeedsScreen> {
           ),
           const SizedBox(height: 20),
           Shimmer.fromColors(
-            baseColor: Colors.grey[900]!,
-            highlightColor: Colors.grey[700]!,
+            baseColor: isDarkMode ? Colors.grey[900]! : Colors.grey[400]!,
+            highlightColor: isDarkMode ? Colors.grey[700]! : Colors.grey[100]!,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    height: 10,
+                    width: double.infinity,
+                    color: Colors.grey[300],
+                  ),
+                  const SizedBox(height: 5),
+                  Container(
+                    height: 10,
+                    width: double.infinity,
+                    color: Colors.grey[300],
+                  ),
+                  const SizedBox(height: 5),
+                  Container(
+                    height: 10,
+                    width: 150,
+                    color: Colors.grey[300],
+                  ),
+                ],
+              ),
+            ),
+          ),
+
+          const SizedBox(height: 20),
+          Shimmer.fromColors(
+            baseColor: isDarkMode ? Colors.grey[900]! : Colors.grey[400]!,
+            highlightColor: isDarkMode ? Colors.grey[700]! : Colors.grey[100]!,
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16.0),
               child: Column(

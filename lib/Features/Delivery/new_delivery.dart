@@ -17,6 +17,7 @@ import 'package:larosa_block/Utils/links.dart';
 import 'package:stomp_dart_client/stomp_dart_client.dart';
 
 import '../../Utils/colors.dart';
+import '../../Utils/wavy_border_painter.dart';
 import 'explore_services.dart';
 
 class NewDelivery extends StatefulWidget {
@@ -44,17 +45,17 @@ class _NewDeliveryState extends State<NewDelivery> {
   final String socketChannel =
       '${LarosaLinks.baseurl}/ws/topic/customer/${AuthService.getProfileId()}';
 
-Future<void> _socketConnection2() async {
+  Future<void> _socketConnection2() async {
     const String wsUrl = 'https://exploretest.uc.r.appspot.com/ws';
     stompClient = StompClient(
       config: StompConfig.sockJS(
         url: wsUrl,
         onConnect: onConnect,
-        onWebSocketError: (dynamic error) => 
+        onWebSocketError: (dynamic error) =>
             LogService.logError('WebSocket error: $error'),
-        onStompError: (StompFrame frame) => 
+        onStompError: (StompFrame frame) =>
             LogService.logWarning('Stomp error: ${frame.body}'),
-        onDisconnect: (StompFrame frame) => 
+        onDisconnect: (StompFrame frame) =>
             LogService.logFatal('Disconnected from WebSocket'),
       ),
     );
@@ -318,7 +319,7 @@ Future<void> _socketConnection2() async {
                       decoration: InputDecoration(
                         prefixIcon: const Icon(
                           CupertinoIcons.pin,
-                          color: Colors.white,
+                          // color: Colors.white,
                         ),
                         suffixIcon: isLoadingSource
                             ? const Padding(
@@ -336,28 +337,31 @@ Future<void> _socketConnection2() async {
                               ),
                         // border: InputBorder.none,
                         border: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(8.0), // Rounded border
-      borderSide: const BorderSide(
-        color: LarosaColors.primary, // Border color
-        width: 1.0, // Border width
-      ),
-    ),
-    enabledBorder: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(8.0),
-      borderSide: const BorderSide(
-        color: LarosaColors.primary, // Border color when enabled
-        width: 1.0,
-      ),
-    ),
-    focusedBorder: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(8.0),
-      borderSide: const BorderSide(
-        color: LarosaColors.primary, // Border color when focused
-        width: 2.0,
-      ),
-    ),
+                          borderRadius:
+                              BorderRadius.circular(8.0), // Rounded border
+                          borderSide: const BorderSide(
+                            color: LarosaColors.primary, // Border color
+                            width: 1.0, // Border width
+                          ),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8.0),
+                          borderSide: const BorderSide(
+                            color: LarosaColors
+                                .primary, // Border color when enabled
+                            width: 1.0,
+                          ),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8.0),
+                          borderSide: const BorderSide(
+                            color: LarosaColors
+                                .primary, // Border color when focused
+                            width: 2.0,
+                          ),
+                        ),
                         labelText: 'Pickup location',
-                        labelStyle: const TextStyle(color: Colors.white),
+                        // labelStyle: const TextStyle(color: Colors.white),
                       ),
                     );
                   },
@@ -385,8 +389,22 @@ Future<void> _socketConnection2() async {
                       decoration: InputDecoration(
                         prefixIcon: const Icon(
                           CupertinoIcons.location_circle,
-                          color: Colors.white,
+                          // color: Colors.white,
                         ),
+                        suffixIcon: isLoadingSource
+                            ? const Padding(
+                                padding: EdgeInsets.all(8.0),
+                                child: SizedBox(
+                                  height: 1,
+                                  width: 1,
+                                  child:
+                                      CircularProgressIndicator(strokeWidth: 2),
+                                ),
+                              )
+                            : IconButton(
+                                icon: const Icon(Ionicons.locate),
+                                onPressed: () => _getCurrentLocation(true),
+                              ),
                         // suffixIcon: isLoadingDestination
                         //     ? const Padding(
                         //         padding: EdgeInsets.all(8.0),
@@ -401,29 +419,32 @@ Future<void> _socketConnection2() async {
                         // border: InputBorder.none,
 
                         border: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(8.0), // Rounded border
-      borderSide: const BorderSide(
-        color: LarosaColors.primary, // Border color
-        width: 1.0, // Border width
-      ),
-    ),
-    enabledBorder: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(8.0),
-      borderSide: const BorderSide(
-        color: LarosaColors.primary, // Border color when enabled
-        width: 1.0,
-      ),
-    ),
-    focusedBorder: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(8.0),
-      borderSide: const BorderSide(
-        color: LarosaColors.primary, // Border color when focused
-        width: 2.0,
-      ),
-    ),
+                          borderRadius:
+                              BorderRadius.circular(8.0), // Rounded border
+                          borderSide: const BorderSide(
+                            color: LarosaColors.primary, // Border color
+                            width: 1.0, // Border width
+                          ),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8.0),
+                          borderSide: const BorderSide(
+                            color: LarosaColors
+                                .primary, // Border color when enabled
+                            width: 1.0,
+                          ),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8.0),
+                          borderSide: const BorderSide(
+                            color: LarosaColors
+                                .primary, // Border color when focused
+                            width: 2.0,
+                          ),
+                        ),
 
                         labelText: 'Destination',
-                        labelStyle: const TextStyle(color: Colors.white),
+                        // labelStyle: const TextStyle(color: Colors.white),
                       ),
                     );
                   },
@@ -431,37 +452,45 @@ Future<void> _socketConnection2() async {
               ),
               const Gap(5),
               isRequestingRide
-                  ?  SpinKitCircle(
-                      color: Theme.of(context).colorScheme.primary ,
+                  ? SpinKitCircle(
+                      color: Theme.of(context).colorScheme.primary,
                       size: 40,
                     )
                   : Container(
-  padding: const EdgeInsets.symmetric(horizontal: 10), // Adjust horizontal padding
-  decoration: BoxDecoration(
-    gradient: const LinearGradient(
-      colors: [LarosaColors.secondary, LarosaColors.purple],
-      begin: Alignment.topLeft,
-      end: Alignment.bottomRight,
-    ),
-    borderRadius: BorderRadius.circular(30), // Rounded corners
-  ),
-  child: FilledButton(
-    style: ButtonStyle(
-      backgroundColor: WidgetStateProperty.all(Colors.transparent),
-      padding: WidgetStateProperty.all(const EdgeInsets.symmetric(vertical: 12, horizontal: 24)),
-      shape: WidgetStateProperty.all(
-        RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(30), // Ensures button shape matches container
-        ),
-      ),
-    ),
-    onPressed: _requestRide,
-    child: const Text(
-      'Request a Ride',
-      style: TextStyle(color: Colors.white, fontSize: 14), // Ensures text is readable
-    ),
-  ),
-),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 10), // Adjust horizontal padding
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [LarosaColors.secondary, LarosaColors.purple],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                        borderRadius:
+                            BorderRadius.circular(30), // Rounded corners
+                      ),
+                      child: FilledButton(
+                        style: ButtonStyle(
+                          backgroundColor:
+                              WidgetStateProperty.all(Colors.transparent),
+                          padding: WidgetStateProperty.all(
+                              const EdgeInsets.symmetric(
+                                  vertical: 12, horizontal: 24)),
+                          shape: WidgetStateProperty.all(
+                            RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(
+                                  30), // Ensures button shape matches container
+                            ),
+                          ),
+                        ),
+                        onPressed: _requestRide,
+                        child: const Text(
+                          'Request a Ride',
+                          style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 14), // Ensures text is readable
+                        ),
+                      ),
+                    ),
               const Gap(10),
               if (selectedSourceStreetName != null &&
                   sourceLatitude != null &&
@@ -503,74 +532,115 @@ Future<void> _socketConnection2() async {
                   children: [
                     const Text(
                       'Your Orders',
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                      style:
+                          TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                     ),
                     const Gap(5),
                     ListView.builder(
-                      shrinkWrap: true, // Ensures ListView takes only required space
-                      physics: const NeverScrollableScrollPhysics(), // Disable scrolling
+                      shrinkWrap:
+                          true, // Ensures ListView takes only required space
+                      physics:
+                          const NeverScrollableScrollPhysics(), // Disable scrolling
                       itemCount: orders.length,
                       itemBuilder: (context, index) {
                         final order = orders[index];
                         return Padding(
-  padding: const EdgeInsets.symmetric(horizontal: 1.0), // Adjust the padding as needed
-  child: Card(
-    elevation: 2,
-    margin: const EdgeInsets.symmetric(vertical: 5),
-    child: ListTile(
-      contentPadding: const EdgeInsets.symmetric(horizontal: 5.0), // Adjust inner padding
-      title: Text('Order ID: ${order['orderId']}'),
-      subtitle: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text('Pickup: ${order['pickup']}'),
-          Text('Destination: ${order['destination']}'),
-          Text('Status: ${order['status']}'),
-        ],
-      ),
-      trailing: Icon(
-        order['status'] == 'Completed'
-            ? CupertinoIcons.check_mark_circled_solid
-            : CupertinoIcons.clock,
-        color: order['status'] == 'Completed' ? Colors.green : Colors.orange,
-      ),
-    ),
-  ),
-);
-
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 0.0, vertical: 3.0),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(
+                                15), // Rounded corners for container
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                              decoration: BoxDecoration(
+                                // color: Colors.white,
+                                borderRadius: BorderRadius.circular(15),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withOpacity(0.1),
+                                    spreadRadius: 3,
+                                    blurRadius: 6,
+                                    offset: const Offset(2,
+                                        2), // Offset for subtle shadow effect
+                                  ),
+                                ],
+                              ),
+                              child: Column(
+                                crossAxisAlignment:
+                                    CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Order ID: ${order['orderId']}',
+                                    style: const TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.black87),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text('Pickup: ${order['pickup']}'),
+                                  Text(
+                                      'Destination: ${order['destination']}'),
+                                  Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Text('Status: ${order['status']}'),
+                                      Icon(
+                                        order['status'] == 'Completed'
+                                            ? CupertinoIcons
+                                                .check_mark_circled_solid
+                                            : CupertinoIcons.clock,
+                                        color:
+                                            order['status'] == 'Completed'
+                                                ? Colors.green
+                                                : Colors.orange,
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        );
                       },
                     ),
+
+                    const SizedBox(height: 70,)
                   ],
                 ),
               ),
-              
             ],
           ),
 
           // Positioned Floating Action Button in the middle right of the screen
           Positioned(
-  right: 20, // Adjust the right padding as needed
-  top: MediaQuery.of(context).size.height / 2 - 28, // Center vertically
-  child: Container(
-    decoration: const BoxDecoration(
-      gradient: LinearGradient(
-        colors: [LarosaColors.secondary, LarosaColors.purple],
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
-      ),
-      shape: BoxShape.circle,
-    ),
-    child: FloatingActionButton(
-      onPressed: () {
-        // When clicked, open the explore modal
-        Navigator.of(context).push(_createRoute());
-      }, // Explore icon instead of add icon
-      backgroundColor: Colors.transparent, // Make FAB background transparent
-      elevation: 0,
-      child: const Icon(Icons.explore), // Optional: removes shadow to make the gradient stand out
-    ),
-  ),),
-          
+            right: 20, // Adjust the right padding as needed
+            top: MediaQuery.of(context).size.height / 2 -
+                28, // Center vertically
+            child: Container(
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [LarosaColors.secondary, LarosaColors.purple],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                shape: BoxShape.circle,
+              ),
+              child: FloatingActionButton(
+                onPressed: () {
+                  // When clicked, open the explore modal
+                  Navigator.of(context).push(_createRoute());
+                }, // Explore icon instead of add icon
+                backgroundColor:
+                    Colors.transparent, // Make FAB background transparent
+                elevation: 0,
+                child: const Icon(
+                  Icons.explore,
+                  color: Colors.white,
+                ), // Optional: removes shadow to make the gradient stand out
+              ),
+            ),
+          ),
+
           const Positioned(
             bottom: 10,
             left: 10,
@@ -585,22 +655,23 @@ Future<void> _socketConnection2() async {
   }
 
 // Route for the animated modal
-Route _createRoute() {
-  return PageRouteBuilder(
-    pageBuilder: (context, animation, secondaryAnimation) => ExploreModal(),
-    transitionsBuilder: (context, animation, secondaryAnimation, child) {
-      const begin = Offset(0.0, 1.0);
-      const end = Offset.zero;
-      const curve = Curves.easeInOut;
+  Route _createRoute() {
+    return PageRouteBuilder(
+      pageBuilder: (context, animation, secondaryAnimation) => ExploreModal(),
+      transitionsBuilder: (context, animation, secondaryAnimation, child) {
+        const begin = Offset(0.0, 1.0);
+        const end = Offset.zero;
+        const curve = Curves.easeInOut;
 
-      var tween = Tween(begin: begin, end: end).chain(CurveTween(curve: curve));
-      var offsetAnimation = animation.drive(tween);
+        var tween =
+            Tween(begin: begin, end: end).chain(CurveTween(curve: curve));
+        var offsetAnimation = animation.drive(tween);
 
-      return SlideTransition(
-        position: offsetAnimation,
-        child: child,
-      );
-    },
-  );
-}
+        return SlideTransition(
+          position: offsetAnimation,
+          child: child,
+        );
+      },
+    );
+  }
 }
