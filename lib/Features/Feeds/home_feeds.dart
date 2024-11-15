@@ -137,6 +137,10 @@ class _HomeFeedsScreenState extends State<HomeFeedsScreen> {
                                     _postPlayStates[post['id']] =
                                         ValueNotifier(false);
                                   }
+                                  if (_postPlayStates[post['id']] == null) {
+                                    _postPlayStates[post['id']] =
+                                        ValueNotifier(false);
+                                  }
 
                                   return VisibilityDetector(
                                     key: Key('post-${post['id']}-$index'),

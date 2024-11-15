@@ -179,7 +179,7 @@ class _HomeProfileScreenState extends State<HomeProfileScreen> {
           bottom: -70,
           child: ClipRRect(
             borderRadius: BorderRadius.circular(70),
-            child: profile!['profilePicture'] == null
+            child: profile!['profilePicture'] != null
                 ? CachedNetworkImage(
                     imageUrl: profile!['profilePicture'] ??
                         'https://images.pexels.com/photos/4202392/pexels-photo-4202392.jpeg?auto=compress&cs=tinysrgb&w=600',
@@ -251,7 +251,7 @@ class _HomeProfileScreenState extends State<HomeProfileScreen> {
 
   Widget _actionButtons(bool isLoading) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 10),
+      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 10),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [

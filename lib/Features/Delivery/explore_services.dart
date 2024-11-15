@@ -5,6 +5,8 @@ import 'package:larosa_block/Utils/colors.dart';
 import 'map_service.dart';
 
 class ExploreModal extends StatelessWidget {
+  const ExploreModal({super.key});
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -632,7 +634,7 @@ class NearbyList extends StatelessWidget {
   final String category;
   final List<Map<String, String>> items;
 
-  const NearbyList({required this.category, required this.items});
+  const NearbyList({super.key, required this.category, required this.items});
 
   @override
   Widget build(BuildContext context) {
@@ -745,3 +747,4 @@ class NearbyList extends StatelessWidget {
     );
   }
 }
+

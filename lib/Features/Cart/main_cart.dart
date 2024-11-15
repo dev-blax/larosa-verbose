@@ -1,9 +1,10 @@
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import 'package:gap/gap.dart';
 import 'package:larosa_block/Features/Cart/Models/product_model.dart';
 import 'package:larosa_block/Features/Cart/controllers/cart_controller.dart';
+import 'package:larosa_block/Features/Delivery/explore_services.dart';
 import 'package:provider/provider.dart';
 
 class MyCart extends StatelessWidget {
@@ -14,20 +15,42 @@ class MyCart extends StatelessWidget {
     final cartNotifier = Provider.of<CartController>(context);
 
     return Scaffold(
-      backgroundColor: Theme.of(context).colorScheme.tertiaryContainer,
       appBar: AppBar(
         leading: IconButton(
           onPressed: () => Navigator.pop(context),
           icon: const Icon(
-            Icons.arrow_left,
+            CupertinoIcons.back,
           ),
         ),
         title: const Text("Your Cart"),
+        centerTitle: true,
       ),
       body: cartNotifier.cartItems.isEmpty
-          ? const Center(
-              child: Text(
-                'No products in Cart',
+          ? Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.max,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(CupertinoIcons.zzz),
+                  const Gap(10),
+                  const Text(
+                    'You have no Products in your Cart',
+                  ),
+                  const Gap(10),
+                  FilledButton(
+                    style: FilledButton.styleFrom(
+                      shape: const RoundedRectangleBorder(
+                        borderRadius: BorderRadius.all(Radius.circular(10)),
+                        side: BorderSide(color: Colors.blue),
+                      ),
+                    ),
+                    onPressed: () => Navigator.of(context).push(_createRoute()),
+                    child: const Text(
+                      'Look for Nearby Services and Products',
+                    ),
+                  ),
+                ],
               ),
             )
           : Column(
@@ -40,8 +63,10 @@ class MyCart extends StatelessWidget {
                       return CartItemWidget(
                         product: product,
                         onAdd: (product) => cartNotifier.addProduct(product),
-                        onRemove: (product) => cartNotifier.removeProduct(product),
-                        onDelete: (product) => cartNotifier.deleteProduct(product),
+                        onRemove: (product) =>
+                            cartNotifier.removeProduct(product),
+                        onDelete: (product) =>
+                            cartNotifier.deleteProduct(product),
                       );
                     },
                   ),
@@ -63,6 +88,28 @@ class MyCart extends StatelessWidget {
                 ),
               ],
             ),
+    );
+  }
+
+
+    Route _createRoute() {
+    return PageRouteBuilder(
+      pageBuilder: (context, animation, secondaryAnimation) =>
+          const ExploreModal(),
+      transitionsBuilder: (context, animation, secondaryAnimation, child) {
+        const begin = Offset(0.0, 1.0);
+        const end = Offset.zero;
+        const curve = Curves.easeInOut;
+
+        var tween =
+            Tween(begin: begin, end: end).chain(CurveTween(curve: curve));
+        var offsetAnimation = animation.drive(tween);
+
+        return SlideTransition(
+          position: offsetAnimation,
+          child: child,
+        );
+      },
     );
   }
 }

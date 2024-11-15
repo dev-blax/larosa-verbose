@@ -41,6 +41,7 @@ class _NewDeliveryState extends State<NewDelivery> {
   bool connectedToSocket = false;
   String paymentMethod = 'CASH';
   String vehicleType = 'MOTORCYCLE';
+  List<dynamic> orders = [];
   late StompClient stompClient;
   final String socketChannel =
       '${LarosaLinks.baseurl}/ws/topic/customer/${AuthService.getProfileId()}';
@@ -52,9 +53,12 @@ class _NewDeliveryState extends State<NewDelivery> {
         url: wsUrl,
         onConnect: onConnect,
         onWebSocketError: (dynamic error) =>
+        onWebSocketError: (dynamic error) =>
             LogService.logError('WebSocket error: $error'),
         onStompError: (StompFrame frame) =>
+        onStompError: (StompFrame frame) =>
             LogService.logWarning('Stomp error: ${frame.body}'),
+        onDisconnect: (StompFrame frame) =>
         onDisconnect: (StompFrame frame) =>
             LogService.logFatal('Disconnected from WebSocket'),
       ),
@@ -86,10 +90,15 @@ class _NewDeliveryState extends State<NewDelivery> {
     LogService.logInfo('Successfully subscribed to /topic/customer/48');
   }
 
+  Future<void> _asyncInit() async {
+    await _socketConnection2();
+    _loadOrders();
+  }
+
   @override
   void initState() {
     super.initState();
-    // _socketConnection2();
+    _asyncInit();
   }
 
   bool isRequestingRide = false;
@@ -219,6 +228,37 @@ class _NewDeliveryState extends State<NewDelivery> {
     }
   }
 
+  Future<void> _loadOrders() async {
+    String token = AuthService.getToken();
+    LogService.logDebug('token $token');
+    Map<String, String> headers = {
+      "Content-Type": "application/json",
+      "Access-Control-Allow-Origin": "*",
+      'Authorization': 'Bearer $token',
+    };
+
+    var url = Uri.parse('${LarosaLinks.baseurl}/api/v1/orders/history');
+
+    try {
+      final response = await http.get(
+        url,
+        headers: headers,
+      );
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        LogService.logFatal('success');
+        LogService.logInfo(response.body);
+        setState(() {
+          orders = jsonDecode(response.body);
+        });
+        return;
+      }
+
+      LogService.logError('error: ${response.statusCode}');
+    } catch (e) {
+      LogService.logError('failed $e');
+    }
+  }
+
   Future<void> _getCurrentLocation(bool isSource) async {
     setState(() {
       if (isSource) {
@@ -274,21 +314,9 @@ class _NewDeliveryState extends State<NewDelivery> {
     }
   }
 
-  // Dummy order data for demonstration (Replace this with actual order data as needed)
-  final List<Map<String, String>> orders = List.generate(
-    10,
-    (index) => {
-      'orderId': 'ORD-${index + 1}',
-      'pickup': 'Location $index - Pickup',
-      'destination': 'Location $index - Destination',
-      'status': index % 2 == 0 ? 'Completed' : 'Pending',
-    },
-  );
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         automaticallyImplyLeading: false,
         title: const Text('Delivery'),
@@ -337,6 +365,29 @@ class _NewDeliveryState extends State<NewDelivery> {
                               ),
                         // border: InputBorder.none,
                         border: OutlineInputBorder(
+                          borderRadius:
+                              BorderRadius.circular(8.0), // Rounded border
+                          borderSide: const BorderSide(
+                            color: LarosaColors.primary, // Border color
+                            width: 1.0, // Border width
+                          ),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8.0),
+                          borderSide: const BorderSide(
+                            color: LarosaColors
+                                .primary, // Border color when enabled
+                            width: 1.0,
+                          ),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8.0),
+                          borderSide: const BorderSide(
+                            color: LarosaColors
+                                .primary, // Border color when focused
+                            width: 2.0,
+                          ),
+                        ),
                           borderRadius:
                               BorderRadius.circular(8.0), // Rounded border
                           borderSide: const BorderSide(
@@ -442,6 +493,29 @@ class _NewDeliveryState extends State<NewDelivery> {
                             width: 2.0,
                           ),
                         ),
+                          borderRadius:
+                              BorderRadius.circular(8.0), // Rounded border
+                          borderSide: const BorderSide(
+                            color: LarosaColors.primary, // Border color
+                            width: 1.0, // Border width
+                          ),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8.0),
+                          borderSide: const BorderSide(
+                            color: LarosaColors
+                                .primary, // Border color when enabled
+                            width: 1.0,
+                          ),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8.0),
+                          borderSide: const BorderSide(
+                            color: LarosaColors
+                                .primary, // Border color when focused
+                            width: 2.0,
+                          ),
+                        ),
 
                         labelText: 'Destination',
                         // labelStyle: const TextStyle(color: Colors.white),
@@ -452,6 +526,8 @@ class _NewDeliveryState extends State<NewDelivery> {
               ),
               const Gap(5),
               isRequestingRide
+                  ? SpinKitCircle(
+                      color: Theme.of(context).colorScheme.primary,
                   ? SpinKitCircle(
                       color: Theme.of(context).colorScheme.primary,
                       size: 40,
@@ -534,6 +610,8 @@ class _NewDeliveryState extends State<NewDelivery> {
                       'Your Orders',
                       style:
                           TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                      style:
+                          TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                     ),
                     const Gap(5),
                     ListView.builder(
@@ -544,6 +622,7 @@ class _NewDeliveryState extends State<NewDelivery> {
                       itemCount: orders.length,
                       itemBuilder: (context, index) {
                         final order = orders[index];
+                        String status = order['status'];
                         return Padding(
                           padding: const EdgeInsets.symmetric(
                               horizontal: 0.0, vertical: 3.0),
@@ -666,7 +745,17 @@ class _NewDeliveryState extends State<NewDelivery> {
         var tween =
             Tween(begin: begin, end: end).chain(CurveTween(curve: curve));
         var offsetAnimation = animation.drive(tween);
+        var tween =
+            Tween(begin: begin, end: end).chain(CurveTween(curve: curve));
+        var offsetAnimation = animation.drive(tween);
 
+        return SlideTransition(
+          position: offsetAnimation,
+          child: child,
+        );
+      },
+    );
+  }
         return SlideTransition(
           position: offsetAnimation,
           child: child,
