@@ -38,7 +38,7 @@ class PaymentMethodModal extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: Colors.black,
+      color: Theme.of(context).brightness == Brightness.dark ?Colors.black : Colors.white,
       padding: const EdgeInsets.all(8.0),
       constraints: BoxConstraints(
         maxHeight: MediaQuery.of(context).size.height * 0.75,
@@ -175,9 +175,10 @@ class PaymentMethodModal extends StatelessWidget {
                 ),
                 const SizedBox(height: 8),
                 SizedBox(
-                  height: deliveryDestination?.isNotEmpty == true
-                      ? MediaQuery.of(context).size.height * .25
-                      : MediaQuery.of(context).size.height * .40,
+                  // height: deliveryDestination?.isNotEmpty == true
+                  //     ? MediaQuery.of(context).size.height * .25
+                  //     : MediaQuery.of(context).size.height * .40,
+                  height: MediaQuery.of(context).size.height * .4,
                   child: GridView.builder(
                     shrinkWrap: true,
                     gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
@@ -279,25 +280,25 @@ class PaymentMethodModal extends StatelessWidget {
 
   List<TableRow> getTableRows() {
     return [
-      if (currentPosition?.latitude != null &&
-          currentPosition?.longitude != null)
-        TableRow(
-          children: [
-            const Padding(
-              padding: EdgeInsets.all(8.0),
-              child: Text(
-                'Current Location',
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Text(
-                '${currentPosition!.latitude}, ${currentPosition!.longitude}',
-              ),
-            ),
-          ],
-        ),
+      // if (currentPosition?.latitude != null &&
+      //     currentPosition?.longitude != null)
+      //   TableRow(
+      //     children: [
+      //       const Padding(
+      //         padding: EdgeInsets.all(8.0),
+      //         child: Text(
+      //           'Current Location',
+      //           style: TextStyle(fontWeight: FontWeight.bold),
+      //         ),
+      //       ),
+      //       Padding(
+      //         padding: const EdgeInsets.all(8.0),
+      //         child: Text(
+      //           '${currentPosition!.latitude}, ${currentPosition!.longitude}',
+      //         ),
+      //       ),
+      //     ],
+      //   ),
       if (deliveryDestination != null && deliveryDestination!.isNotEmpty)
         TableRow(
           children: [
@@ -314,38 +315,38 @@ class PaymentMethodModal extends StatelessWidget {
             ),
           ],
         ),
-      if (deliveryLatitude != null)
-        TableRow(
-          children: [
-            const Padding(
-              padding: EdgeInsets.all(8.0),
-              child: Text(
-                'Delivery Latitude',
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Text('$deliveryLatitude'),
-            ),
-          ],
-        ),
-      if (deliveryLongitude != null)
-        TableRow(
-          children: [
-            const Padding(
-              padding: EdgeInsets.all(8.0),
-              child: Text(
-                'Delivery Longitude',
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Text('$deliveryLongitude'),
-            ),
-          ],
-        ),
+      // if (deliveryLatitude != null)
+      //   TableRow(
+      //     children: [
+      //       const Padding(
+      //         padding: EdgeInsets.all(8.0),
+      //         child: Text(
+      //           'Delivery Latitude',
+      //           style: TextStyle(fontWeight: FontWeight.bold),
+      //         ),
+      //       ),
+      //       Padding(
+      //         padding: const EdgeInsets.all(8.0),
+      //         child: Text('$deliveryLatitude'),
+      //       ),
+      //     ],
+      //   ),
+      // if (deliveryLongitude != null)
+      //   TableRow(
+      //     children: [
+      //       const Padding(
+      //         padding: EdgeInsets.all(8.0),
+      //         child: Text(
+      //           'Delivery Longitude',
+      //           style: TextStyle(fontWeight: FontWeight.bold),
+      //         ),
+      //       ),
+      //       Padding(
+      //         padding: const EdgeInsets.all(8.0),
+      //         child: Text('$deliveryLongitude'),
+      //       ),
+      //     ],
+      //   ),
       TableRow(
         children: [
           const Padding(
@@ -375,21 +376,21 @@ class PaymentMethodModal extends StatelessWidget {
           ),
         ],
       ),
-      TableRow(
-        children: [
-          const Padding(
-            padding: EdgeInsets.all(8.0),
-            child: Text(
-              'Post ID',
-              style: TextStyle(fontWeight: FontWeight.bold),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Text('$postId'),
-          ),
-        ],
-      ),
+      // TableRow(
+      //   children: [
+      //     const Padding(
+      //       padding: EdgeInsets.all(8.0),
+      //       child: Text(
+      //         'Post ID',
+      //         style: TextStyle(fontWeight: FontWeight.bold),
+      //       ),
+      //     ),
+      //     Padding(
+      //       padding: const EdgeInsets.all(8.0),
+      //       child: Text('$postId'),
+      //     ),
+      //   ],
+      // ),
     ];
   }
 }

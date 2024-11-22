@@ -257,7 +257,7 @@ class _CenterSnapCarouselState extends State<CenterSnapCarousel> {
                 alignment: Alignment.center,
                 children: [
                   Container(
-                    color: Colors.red,
+                    // color: Colors.red,
                     alignment: Alignment.center,
                     width: MediaQuery.of(context).size.width,
                     child: AspectRatio(
@@ -271,12 +271,12 @@ class _CenterSnapCarouselState extends State<CenterSnapCarousel> {
                   ),
                   if (controller.value.isInitialized)
                     Positioned(
-  right: 10, // Align to the right
+  right: 5, // Align to the right
   bottom: 100, // Adjust to be near the bottom of the video
   child: Container(
     padding: const EdgeInsets.all(8.0), // Add padding for inner content
     decoration: BoxDecoration(
-      color: Colors.black.withOpacity(0.5), // Light black background
+      color: Colors.black.withOpacity(0.3), // Light black background
       borderRadius: BorderRadius.circular(10.0), // Rounded corners
     ),
     child: Column(
@@ -333,11 +333,11 @@ class _CenterSnapCarouselState extends State<CenterSnapCarousel> {
       ),
       child: Slider(
         activeColor: Theme.of(context).brightness == Brightness.dark
-            ? Colors.white.withOpacity(0.6) // Light color for dark theme
-            : Colors.black.withOpacity(0.5), // Dark color for light theme
+            ? Colors.white.withOpacity(0.2) // Light color for dark theme
+            : Colors.black.withOpacity(0.3), // Dark color for light theme
         inactiveColor: Theme.of(context).brightness == Brightness.dark
-            ? Colors.grey[700] // Slightly lighter gray for dark theme
-            : Colors.grey[400], // Slightly darker gray for light theme
+            ? Colors.grey[900] // Slightly lighter gray for dark theme
+            : Colors.grey[300], // Slightly darker gray for light theme
         value: _videoPositions[index]?.inMilliseconds.toDouble() ?? 0.0,
         min: 0.0,
         max: controller.value.duration.inMilliseconds.toDouble(),

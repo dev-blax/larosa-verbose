@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hive/hive.dart';
 import 'package:intl/intl.dart';
@@ -15,6 +16,9 @@ enum RequestType {
   delete,
 }
 
+final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
+    FlutterLocalNotificationsPlugin();
+
 class HelperFunctions {
   static displaySnackbar(String message, BuildContext context, bool success) {
     // Get.snackbar(
@@ -27,12 +31,13 @@ class HelperFunctions {
     );
   }
 
-  static   Future<double> getMaxImageHeight(List<String> imagePaths) async {
+  static Future<double> getMaxImageHeight(List<String> imagePaths) async {
     double maxHeight = 0;
 
     for (var path in imagePaths) {
       final File imageFile = File(path);
-      final decodedImage = await decodeImageFromList(imageFile.readAsBytesSync());
+      final decodedImage =
+          await decodeImageFromList(imageFile.readAsBytesSync());
 
       if (decodedImage.height > maxHeight) {
         maxHeight = decodedImage.height.toDouble();
@@ -56,7 +61,7 @@ class HelperFunctions {
     );
   }
 
-    static bool isValidEmail(String email) {
+  static bool isValidEmail(String email) {
     final emailRegex = RegExp(r'^[\w-]+(\.[\w-]+)*@([\w-]+\.)+[a-zA-Z]{2,7}$');
     return emailRegex.hasMatch(email);
   }
@@ -121,9 +126,36 @@ class HelperFunctions {
   }
 
   // Place this outside any class in your helpers file
-static String formatPrice(double price) {
+  static String formatPrice(double price) {
     String priceStr = price.toStringAsFixed(0);
     RegExp regExp = RegExp(r'\B(?=(\d{3})+(?!\d))');
     return priceStr.replaceAllMapped(regExp, (match) => ',');
+  }
+
+  static Future<void> showNotification({
+    required String title,
+    required String body,
+    bool isError = false,
+  }) async {
+    const AndroidNotificationDetails androidDetails =
+        AndroidNotificationDetails(
+      'ride_channel', // Channel ID
+      'Ride Notifications', // Channel name
+      channelDescription: 'Notifications for ride requests and updates',
+      importance: Importance.max,
+      priority: Priority.high,
+      color: Colors.blue,
+      enableVibration: true,
+    );
+
+    const NotificationDetails notificationDetails =
+        NotificationDetails(android: androidDetails);
+
+    await flutterLocalNotificationsPlugin.show(
+      isError ? 1 : 0, // Unique notification ID
+      title,
+      body,
+      notificationDetails,
+    );
   }
 }

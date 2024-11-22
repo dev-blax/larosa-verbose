@@ -23,7 +23,7 @@ class BottomNavigation extends StatelessWidget {
   const BottomNavigation({
     super.key,
     required this.activePage,
-  });
+  }); 
 
   @override
   Widget build(BuildContext context) {
@@ -31,12 +31,14 @@ class BottomNavigation extends StatelessWidget {
       borderRadius: BorderRadius.circular(20),
       child: BackdropFilter(
         filter: ImageFilter.blur(
-          sigmaX: 10,
-          sigmaY: 10,
+          // sigmaX: 10,
+          // sigmaY: 10,
+          sigmaX: 0,
+          sigmaY: 0,
         ),
         child: Container(
           padding: const EdgeInsets.all(8),
-          color: Theme.of(context).colorScheme.background.withOpacity(.2),
+          color: Theme.of(context).colorScheme.surface.withOpacity(.2),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
@@ -64,7 +66,7 @@ class BottomNavigation extends StatelessWidget {
                     Theme.of(context).colorScheme.secondary,
                     BlendMode.srcIn,
                   ),
-                  height: 28,
+                  height: 25,
                 ),
               ),
               // IconButton(

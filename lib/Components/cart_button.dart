@@ -45,7 +45,7 @@ Widget buildWideGradientButton({
   double borderRadius = 10.0,
   required Color startColor,
   required Color endColor,
-  TextStyle? textStyle,
+  TextStyle? textStyle, Center? child,
 }) {
   return GestureDetector(
     onTap: onTap,

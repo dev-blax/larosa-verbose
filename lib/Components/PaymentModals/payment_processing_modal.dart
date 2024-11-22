@@ -1,4 +1,6 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:gap/gap.dart';
 import 'package:http/http.dart' as http;
 import 'package:iconsax/iconsax.dart';
 import 'package:larosa_block/Utils/helpers.dart';
@@ -109,12 +111,10 @@ class _PaymentProcessingModalState extends State<PaymentProcessingModal> {
       LogService.logInfo('Status Code: ${response.statusCode}');
       LogService.logInfo('Response Body: ${response.body}');
 
-_showSuccessDialog(r'esponse.body');
+      _showSuccessDialog(r'esponse.body');
 
       if (response.statusCode == 200) {
-
         // _showSuccessDialog(response.body);
-
       } else if (response.statusCode == 302 ||
           response.statusCode == 403 ||
           response.statusCode == 401) {
@@ -173,99 +173,246 @@ _showSuccessDialog(r'esponse.body');
   }
 
   void _showSuccessDialog(String responseBody) {
-  showDialog(
-    context: context,
-    builder: (BuildContext context) {
-      return AlertDialog(
-        backgroundColor: Colors.black,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(15.0),
-        ),
-        content: Stack(
-          children: [
-            // Background bubble animation
-            Positioned.fill(
-              child: Lottie.asset(
-                'assets/lotties/bubbles.json',
-                fit: BoxFit.cover,
-                repeat: true,
-              ),
-            ),
-            Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // Green checkmark icon
-                const Icon(
-                  Icons.check_circle,
-                  color: Color.fromARGB(255, 13, 72, 15),
-                  size: 100,
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: Colors.black,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(15.0),
+          ),
+          content: Stack(
+            children: [
+              // Background bubble animation
+              Positioned.fill(
+                child: Lottie.asset(
+                  'assets/lotties/bubbles.json',
+                  fit: BoxFit.cover,
+                  repeat: true,
                 ),
-                const SizedBox(height: 20),
-                const Text(
-              'Payment Successful!',
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-                color: Color.fromARGB(255, 15, 106, 18),
               ),
-            ),
-            const SizedBox(height: 10),
-            const Text(
-  'Your payment has been processed successfully. You will receive a confirmation notification shortly with the status of your order.\n\nWe appreciate your trust and look forward to serving you again!',
-  textAlign: TextAlign.center,
-  style: TextStyle(
-    fontSize: 16,
-    fontStyle: FontStyle.italic,
-  ),
-),
-const SizedBox(height: 10),
-            const Text(
-  'LAROSA EXPLORE',
-  textAlign: TextAlign.center,
-  style: TextStyle(
-    fontSize: 16,
-    fontStyle: FontStyle.italic,
-    fontWeight: FontWeight.bold
-  ),
-),
-                const SizedBox(height: 20),
+              Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Green checkmark icon
+                  const Icon(
+                    Icons.check_circle,
+                    color: Color.fromARGB(255, 13, 72, 15),
+                    size: 100,
+                  ),
+                  const SizedBox(height: 20),
+                  const Text(
+                    'Payment Successful!',
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      color: Color.fromARGB(255, 15, 106, 18),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  const Text(
+                    'Your payment has been processed successfully. You will receive a confirmation notification shortly with the status of your order.\n\nWe appreciate your trust and look forward to serving you again!',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontStyle: FontStyle.italic,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  const Text(
+                    'LAROSA EXPLORE',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                        fontSize: 16,
+                        fontStyle: FontStyle.italic,
+                        fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 20),
 
-                buildWideGradientButton(
-                  onTap: () {
-                    Navigator.of(context).pop(); // Close the dialog
-                                    Navigator.pop(context); // Navigate back
-                  },
-                  label: 'OK',
-                  startColor: const Color.fromARGB(255, 13, 72, 15),
-                  endColor: Colors.purple,
-                ),
+                  buildWideGradientButton(
+                    onTap: () {
+                      Navigator.of(context).pop(); // Close the dialog
+                      Navigator.pop(context); // Navigate back
+                    },
+                    label: 'OK',
+                    startColor: const Color.fromARGB(255, 13, 72, 15),
+                    endColor: Colors.purple,
+                  ),
+                ],
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
 
-              ],
-            ),
-          ],
-        ),
-      );
-    },
-  );
-}
+  // @override
+  // Widget build(BuildContext context) {
+  //   return Padding(
+  //     padding: EdgeInsets.only(
+  //         bottom: MediaQuery.of(context).viewInsets.bottom,
+  //         left: 15,
+  //         right: 15),
+  //     child: SingleChildScrollView(
+  //       controller: _scrollController,
+  //       child: ConstrainedBox(
+  //         constraints: BoxConstraints(
+  //           maxHeight: MediaQuery.of(context).size.height * 0.75,
+  //         ),
+  //         child: IntrinsicHeight(
+  //           child: Column(
+  //             crossAxisAlignment: CrossAxisAlignment.start,
+  //             children: [
+  //               Center(
+  //                 child: Icon(
+  //                   widget.paymentType == 'Bank'
+  //                       ? Iconsax.bank
+  //                       : Iconsax.mobile,
+  //                   size: MediaQuery.of(context).size.height * 0.2,
+  //                   color: Colors.grey,
+  //                 ),
+  //               ),
+  //               const SizedBox(height: 10),
+  //               Center(
+  //                 child: Text(
+  //                   widget.paymentMethod,
+  //                   style: const TextStyle(
+  //                     fontSize: 20,
+  //                     fontWeight: FontWeight.bold,
+  //                   ),
+  //                 ),
+  //               ),
+  //               const SizedBox(height: 5),
+  //               const Center(
+  //                 child: Text(
+  //                   'Payment Processing',
+  //                   style: TextStyle(
+  //                     fontSize: 20,
+  //                     fontWeight: FontWeight.bold,
+  //                   ),
+  //                 ),
+  //               ),
+  //               const SizedBox(height: 15),
+  //               Expanded(
+  //                 child: _buildPaymentForm(),
+  //               ),
+  //               const SizedBox(height: 20),
+  //               if (_isLoading)
+  //                 const Center(
+  //                   child: CircularProgressIndicator(),
+  //                 )
+  //               else
+  //                 buildWideGradientButton(
+  //                   onTap: _submitOrder,
+  //                   label: 'Confirm Payment',
+  //                   startColor: LarosaColors.secondary,
+  //                   endColor: LarosaColors.purple,
+  //                 ),
+  //             ],
+  //           ),
+  //         ),
+  //       ),
+  //     ),
+  //   );
+  // }
 
+//   @override
+// Widget build(BuildContext context) {
+//   final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
+//   return Padding(
+//     padding: EdgeInsets.only(
+//       bottom: MediaQuery.of(context).viewInsets.bottom,
+//       left: 15,
+//       right: 15,
+//     ),
+//     child: SingleChildScrollView(
+//       controller: _scrollController,
+//       child: ConstrainedBox(
+//         constraints: BoxConstraints(
+//           maxHeight: MediaQuery.of(context).size.height * 0.75,
+//         ),
+//         child: IntrinsicHeight(
+//           child: Container(
+//             color: isDarkMode ? Colors.black : Colors.white, // Dynamic background color
+//             child: Column(
+//               crossAxisAlignment: CrossAxisAlignment.start,
+//               children: [
+//                 Center(
+//                   child: Icon(
+//                     widget.paymentType == 'Bank'
+//                         ? Iconsax.bank
+//                         : Iconsax.mobile,
+//                     size: MediaQuery.of(context).size.height * 0.2,
+//                     color: Colors.grey,
+//                   ),
+//                 ),
+//                 const SizedBox(height: 10),
+//                 Center(
+//                   child: Text(
+//                     widget.paymentMethod,
+//                     style: const TextStyle(
+//                       fontSize: 20,
+//                       fontWeight: FontWeight.bold,
+//                     ),
+//                   ),
+//                 ),
+//                 const SizedBox(height: 5),
+//                 const Center(
+//                   child: Text(
+//                     'Payment Processing',
+//                     style: TextStyle(
+//                       fontSize: 20,
+//                       fontWeight: FontWeight.bold,
+//                     ),
+//                   ),
+//                 ),
+//                 const SizedBox(height: 15),
+//                 Expanded(
+//                   child: _buildPaymentForm(),
+//                 ),
+//                 const SizedBox(height: 20),
+//                 if (_isLoading)
+//                   const Center(
+//                     child: CircularProgressIndicator(),
+//                   )
+//                 else
+//                   buildWideGradientButton(
+//                     onTap: _submitOrder,
+//                     label: 'Confirm Payment',
+//                     startColor: LarosaColors.secondary,
+//                     endColor: LarosaColors.purple,
+//                   ),
+//               ],
+//             ),
+//           ),
+//         ),
+//       ),
+//     ),
+//   );
+// }
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      color: Colors.black,
-      child: Padding(
-        padding: EdgeInsets.only(
-            bottom: MediaQuery.of(context).viewInsets.bottom,
-            left: 15,
-            right: 15),
-        child: SingleChildScrollView(
-          controller: _scrollController,
-          child: ConstrainedBox(
-            constraints: BoxConstraints(
-              maxHeight: MediaQuery.of(context).size.height * 0.75,
-            ),
-            child: IntrinsicHeight(
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
+    return Padding(
+      padding: EdgeInsets.only(
+        bottom: MediaQuery.of(context).viewInsets.bottom,
+        // left: 15,
+        // right: 15,
+      ),
+      child: SingleChildScrollView(
+        controller: _scrollController,
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            maxHeight:
+                MediaQuery.of(context).size.height * 0.9, // Increased height
+          ),
+          child: IntrinsicHeight(
+            child: Container(
+              color: isDarkMode ? Colors.black : Colors.white,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -305,15 +452,30 @@ const SizedBox(height: 10),
                   const SizedBox(height: 20),
                   if (_isLoading)
                     const Center(
-                      child: CircularProgressIndicator(),
-                    )
-                  else
+                              child: CupertinoActivityIndicator(
+                                radius: 10.0, // Adjust the size as needed
+                              ),)
+                  else if (_validateMobilePaymentFields())
                     buildWideGradientButton(
                       onTap: _submitOrder,
                       label: 'Confirm Payment',
                       startColor: LarosaColors.secondary,
                       endColor: LarosaColors.purple,
                     ),
+                  if (!_validateMobilePaymentFields())
+                    Center(
+                      child: Text(
+                        'Please ensure all mobile payment fields are valid.',
+                        style: TextStyle(
+                          color: isDarkMode
+                              ? Colors.grey[300]
+                              : Colors.grey[700], // Adjust based on theme
+                          fontSize: 14,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                const SizedBox(height: 10,),
                 ],
               ),
             ),
@@ -323,44 +485,57 @@ const SizedBox(height: 10),
     );
   }
 
+  bool _validateMobilePaymentFields() {
+    if (widget.paymentType == 'Mobile') {
+      return _accountNumberController.text.isNotEmpty &&
+          validateMobileNumber(
+                  _accountNumberController.text, widget.paymentMethod) ==
+              null;
+    }
+    return true; // For non-mobile payment types, always return true
+  }
+
   Widget _buildPaymentForm() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _buildTextField(
-          controller: _accountNumberController,
-          label:
-              widget.paymentType == 'Bank' ? 'Account Number' : 'Mobile Number',
-          hintText: widget.paymentType == 'Bank'
-              ? 'Enter your account number'
-              : 'Enter your mobile number',
-          focusNode: _accountNumberFocusNode,
-        ),
-        const SizedBox(height: 10),
-        if (widget.paymentType == 'Bank') ...[
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
           _buildTextField(
-            controller: _merchantMobileNumberController,
-            label: 'Merchant Mobile Number',
-            hintText: 'Enter merchant mobile number',
-            focusNode: _merchantMobileFocusNode,
+            controller: _accountNumberController,
+            label:
+                widget.paymentType == 'Bank' ? 'Account Number' : 'Mobile Number',
+            hintText: widget.paymentType == 'Bank'
+                ? 'Enter your account number'
+                : 'Enter your mobile number',
+            focusNode: _accountNumberFocusNode,
           ),
           const SizedBox(height: 10),
-          _buildTextField(
-            controller: _merchantNameController,
-            label: 'Merchant Name',
-            hintText: 'Enter merchant name',
-            focusNode: _merchantNameFocusNode,
-          ),
-          const SizedBox(height: 10),
-          _buildTextField(
-            controller: _otpController,
-            label: 'OTP',
-            hintText: 'Enter OTP (if required)',
-            focusNode: _otpFocusNode,
-          ),
-          const SizedBox(height: 10),
+          if (widget.paymentType == 'Bank') ...[
+            _buildTextField(
+              controller: _merchantMobileNumberController,
+              label: 'Merchant Mobile Number',
+              hintText: 'Enter merchant mobile number',
+              focusNode: _merchantMobileFocusNode,
+            ),
+            const SizedBox(height: 10),
+            _buildTextField(
+              controller: _merchantNameController,
+              label: 'Merchant Name',
+              hintText: 'Enter merchant name',
+              focusNode: _merchantNameFocusNode,
+            ),
+            const SizedBox(height: 10),
+            _buildTextField(
+              controller: _otpController,
+              label: 'OTP',
+              hintText: 'Enter OTP (if required)',
+              focusNode: _otpFocusNode,
+            ),
+            const SizedBox(height: 10),
+          ],
         ],
-      ],
+      ),
     );
   }
 
@@ -375,13 +550,78 @@ const SizedBox(height: 10),
       controller: controller,
       focusNode: focusNode,
       keyboardType: keyboardType,
+      onChanged: (value) {
+        setState(() {}); // Trigger rebuild for validation
+      },
       decoration: InputDecoration(
         labelText: label,
         hintText: hintText,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10.0),
         ),
+        errorText: validateMobileNumber(
+          _accountNumberController.text,
+          widget.paymentMethod, // Pass the selected payment method
+        ),
+        errorStyle: const TextStyle(
+          color: Color.fromARGB(
+              255, 174, 25, 14), // Change to your preferred color
+          fontSize: 12.0, // Optionally adjust font size
+          fontWeight: FontWeight.bold, // Optionally adjust font weight
+        ),
+        // Custom error border when not focused
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10.0),
+          borderSide: const BorderSide(
+            color: Color.fromARGB(255, 174, 25, 14), // Error border color
+            width: 2.0, // Border width
+          ),
+        ),
+        // Custom error border when focused
+        focusedErrorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10.0),
+          borderSide: const BorderSide(
+            color:
+                Color.fromARGB(255, 174, 25, 14), // Focused error border color
+            width: 2.0, // Border width
+          ),
+        ),
       ),
     );
   }
+
+  String? validateMobileNumber(String number, String paymentMethod) {
+  // Define valid prefixes for each payment method
+  const providerPrefixes = {
+    'Airtel': ['068', '078', '069'],
+    'Tigo': ['065', '067', '071'],
+    'Halopesa': ['077'],
+    'Azampesa': ['076'],
+    'Mpesa': ['075', '074', '073'],
+  };
+
+  // Check if the payment method is among the defined providers
+  if (providerPrefixes.containsKey(paymentMethod) && number.isNotEmpty) {
+    final prefixes = providerPrefixes[paymentMethod]!;
+
+    // Validate prefix for the specific payment method
+    if (!prefixes.any((prefix) => number.startsWith(prefix))) {
+      return 'Invalid $paymentMethod number. Must start with ${prefixes.join(", ")} (e.g., ${prefixes[0]}1234567).';
+    }
+
+    // Validate length for mobile numbers
+    if (number.length != 10) {
+      return '$paymentMethod number must be exactly 10 digits long (e.g., ${prefixes[0]}1234567).';
+    }
+  } else if (number.isEmpty) {
+    // Check if the field is empty
+    return 'Please enter your $paymentMethod number.';
+  } else {
+    // For unsupported payment methods or fallback
+    return 'Invalid payment method selected.';
+  }
+
+  return null; // Return null if validation passes
+}
+
 }

@@ -5,7 +5,8 @@ class LarosaLinks {
   //     'http://explorelarosa2-env.eba-7tvkaxyw.af-south-1.elasticbeanstalk.com';
 
   static const String baseurl = 'https://burnished-core-439210-f6.uc.r.appspot.com';
-  static const String socketUrl = 'wss://burnished-core-439210-f6.uc.r.appspot.com';
+  static const String socketUrl = 'https://burnished-core-439210-f6.uc.r.appspot.com/ws';
+  static const String baseWsUrl = 'wss://burnished-core-439210-f6.uc.r.appspot.com/ws/websocket';
   // static const String nakedBaseUrl =
   //     'explorelarosa2-env.eba-7tvkaxyw.af-south-1.elasticbeanstalk.com';
 
