@@ -27,6 +27,8 @@ import 'package:timeago/timeago.dart' as timeago;
 import 'package:go_router/go_router.dart';
 import 'package:video_player/video_player.dart';
 
+import '../../Utils/svg_paths.dart';
+
 class TimeBubble extends StatelessWidget {
   final String duration;
   const TimeBubble({super.key, required this.duration});
@@ -430,6 +432,7 @@ class _LarosaConversationState extends State<LarosaConversation> {
 
   void _onMessageReceived(StompFrame frame) {
     //Get.snackbar('Message Received', frame.body!);
+    _fetchChatMessages();
   }
 
   @override
@@ -1035,7 +1038,7 @@ class _LarosaConversationState extends State<LarosaConversation> {
                         ),
                 ),
                 const Gap(10),
-                Column(
+                Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     GestureDetector(
@@ -1047,7 +1050,7 @@ class _LarosaConversationState extends State<LarosaConversation> {
                       child: Row(
                         children: [
                           Text(
-                            widget.username.toUpperCase(),
+                            widget.username,
                             style: const TextStyle(fontSize: 16),
                           ),
                           const Gap(3),
@@ -1063,6 +1066,17 @@ class _LarosaConversationState extends State<LarosaConversation> {
                         ],
                       ),
                     ),
+
+                    const SizedBox(width: 3,),
+                    if (!widget.isBusiness)
+                          SvgPicture.asset(
+                            SvgIconsPaths.sharpVerified,
+                            height: 20,
+                            colorFilter: const ColorFilter.mode(
+                              Colors.blue,
+                              BlendMode.srcIn,
+                            ),
+                          ),
                   ],
                 ),
               ],

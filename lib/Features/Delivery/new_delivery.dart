@@ -5,6 +5,7 @@ import 'package:flutter_typeahead/flutter_typeahead.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:intl/intl.dart';
 import 'package:ionicons/ionicons.dart';
 import 'package:gap/gap.dart';
 import 'package:http/http.dart' as http;
@@ -21,6 +22,7 @@ import 'package:stomp_dart_client/stomp_dart_client.dart';
 import '../../Utils/colors.dart';
 import '../../Utils/wavy_border_painter.dart';
 import 'explore_services.dart';
+import 'time_estimations_modal_content.dart';
 
 class NewDelivery extends StatefulWidget {
   const NewDelivery({super.key});
@@ -49,68 +51,6 @@ class _NewDeliveryState extends State<NewDelivery> {
       '${LarosaLinks.baseurl}/ws/topic/customer/${AuthService.getProfileId()}';
 
   bool isFetchingTimeEstimations = false;
-
-  String? _city; // Holds the current region (city)
-
-  // Fetch current location and city (filtered for administrative region)
-  Future<void> _updateCurrentCityFromLocation() async {
-    try {
-      // Request location permission if necessary
-      LocationPermission permission = await Geolocator.requestPermission();
-      if (permission == LocationPermission.denied ||
-          permission == LocationPermission.deniedForever) {
-        throw Exception('Location permissions are denied.');
-      }
-
-      // Get the current position
-      Position position = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.high,
-      );
-
-      // Perform reverse geocoding to get the administrative region
-      List<Placemark> placemarks = await placemarkFromCoordinates(
-        position.latitude,
-        position.longitude,
-      );
-
-      if (placemarks.isNotEmpty) {
-        Placemark place = placemarks[0];
-        String? administrativeRegion = place.administrativeArea;
-
-        if (administrativeRegion != null) {
-          // Remove unwanted terms from the administrative region name
-          const List<String> unwantedTerms = ['Mkoa wa', 'Region'];
-          for (String term in unwantedTerms) {
-            administrativeRegion =
-                administrativeRegion?.replaceAll(term, '').trim();
-          }
-
-          // Capitalize the region name properly
-          administrativeRegion = administrativeRegion
-              ?.split(' ')
-              .map((word) => word.isNotEmpty
-                  ? '${word[0].toUpperCase()}${word.substring(1).toLowerCase()}'
-                  : '')
-              .join(' ');
-
-          setState(() {
-            _city = administrativeRegion
-                ?.toLowerCase(); // Set the cleaned administrative region as the city
-            LogService.logInfo('Current administrative region set to: $_city');
-          });
-
-          // Reconnect WebSocket to subscribe to the new city
-          // _socketConnection2();
-          
-        } else {
-          LogService.logWarning('Administrative region is null.');
-        }
-      }
-    } catch (e) {
-      LogService.logError(
-          'Error fetching administrative region from location: $e');
-    }
-  }
 
   // Future<void> _socketConnection2() async {
   //   // const String wsUrl = 'https://exploretest.uc.r.appspot.com/ws';
@@ -169,90 +109,10 @@ class _NewDeliveryState extends State<NewDelivery> {
   //   print('Successfully subscribed to /topic/$_city');
   // }
 
-  StompClient? _stompClient;
-  void _connectToStomp() {
-    _stompClient = StompClient(
-      config: StompConfig(
-        url: LarosaLinks.baseWsUrl,
-        onConnect: _onStompConnect,
-        onWebSocketError: (dynamic error) {
-          print('WebSocket error occurred: $error');
-          setState(() {
-            // isLoading = false; // Stop shimmer on WebSocket failure
-          });
-        },
-        reconnectDelay: const Duration(seconds: 5),
-      ),
-    );
-
-    _stompClient!.activate();
-  }
-
-  void _onStompConnect(StompFrame frame) {
-    print('Connected to WebSocket server: ${frame.headers}');
-
-    // Subscribe to the driver-specific topic
-    // _stompClient!.subscribe(
-    //   destination: '/topic/driver/$driverId', // Use driverId from Hive
-    //   callback: (StompFrame message) {
-    //     final messageBody = message.body;
-    //     if (messageBody != null) {
-    //       print('Update for driver ($driverId): $messageBody');
-    //     }
-    //   },
-    // );
-
-    // Subscribe to the city topic for location updates
-    // _stompClient!.subscribe(
-    //   destination: '/topic/$_city',
-    //   callback: (StompFrame message) {
-    //     final messageBody = message.body;
-    //     if (messageBody != null) {
-    //       print('Location update for city ($_city): $messageBody');
-    //       final locationUpdate = _parseLocationUpdate(messageBody);
-    //       if (locationUpdate != null) {
-    //         print(
-    //             'Latitude: ${locationUpdate['latitude']}, Longitude: ${locationUpdate['longitude']}');
-    //       }
-    //     }
-    //   },
-    // );
-
-    _stompClient!.subscribe(
-      destination: '/topic/$_city}',
-      callback: (StompFrame message) {
-        final messageBody = message.body;
-        if (messageBody != null) {
-          final data = jsonDecode(messageBody);
-          print(
-              'Received raw message: $messageBody'); // Print the raw message body
-          print('Decoded data: $data'); // Print the decoded data
-
-          // Example: Debug log or further processing
-          print('Received ride data: $data');
-
-          // If you uncomment the code for extracting and using latitude/longitude:
-          // final pickup = LatLng(data['pickupLatitude'], data['pickupLongitude']);
-          // final destination = LatLng(data['dropoffLatitude'], data['dropoffLongitude']);
-          // fetchRideAddresses(pickup, destination);
-        } else {
-          print('Message body is null.');
-        }
-      },
-    );
-
-    print('Successfully subscribed to /topic/dodoma');
-
-    // Send the initial driver location update
-    // if (_latitude != null && _longitude != null) {
-    //   _sendDriverLocationUpdate(_latitude!, _longitude!);
-    // }
-  }
-
   Future<void> _asyncInit() async {
     // await _socketConnection2();
-    await _updateCurrentCityFromLocation();
-    _connectToStomp();
+    // await _updateCurrentCityFromLocation();
+    // _connectToStomp();
     _loadOrders();
   }
 
@@ -260,6 +120,61 @@ class _NewDeliveryState extends State<NewDelivery> {
   void initState() {
     super.initState();
     _asyncInit();
+
+    _loadRideHistory();
+
+    // Initialize destination marker if known
+    if (destinationLatitude != null && destinationLongitude != null) {
+      _updateDestinationMarker(destinationLatitude!, destinationLongitude!);
+    }
+
+    // Subscribe to updates from the WebSocket
+    // if (_stompClient != null) {
+    // _stompClient!.subscribe(
+    //   destination: '/topic/$_city',
+    //   callback: (StompFrame message) {
+    //     final messageBody = message.body;
+    //     if (messageBody != null) {
+    //       final data = jsonDecode(messageBody);
+    //       print('Update for driver larosa $messageBody');
+
+    //       if (data.containsKey('latitude') && data.containsKey('longitude')) {
+    //         final driverLatitude = data['latitude'];
+    //         final driverLongitude = data['longitude'];
+
+    //         // Update the driver marker
+    //         _updateDriverMarker(driverLatitude, driverLongitude);
+    //       }
+    //     }
+    //   },
+    // );
+
+    // _stompClient!.subscribe(
+    //   destination: '/topic/your_channel', // Replace with your topic/channel
+    //   callback: (StompFrame message) {
+    //     if (message.body != null) {
+    //       final data = jsonDecode(message.body!);
+    //       final double latitude = data['latitude'];
+    //       final double longitude = data['longitude'];
+    //       _updateMarker(latitude, longitude);
+    //     }
+    //   },
+    // );
+    // }
+  }
+
+  void _updateMarker(double latitude, double longitude) {
+    setState(() {
+      _markers
+          .removeWhere((marker) => marker.markerId.value == 'dynamic_marker');
+      _markers.add(
+        Marker(
+          markerId: const MarkerId('dynamic_marker'),
+          position: LatLng(latitude, longitude),
+          infoWindow: const InfoWindow(title: 'Driver Location'),
+        ),
+      );
+    });
   }
 
   bool isRequestingRide = false;
@@ -361,10 +276,10 @@ class _NewDeliveryState extends State<NewDelivery> {
   //       //   'Your ride request has been submitted successfully!',
   //       //   true,
   //       // );
-  //       HelperFunctions.showNotification(
-  //         title: 'Success',
-  //         body: 'Your ride request has been submitted successfully!',
-  //       );
+  // HelperFunctions.showNotification(
+  //   title: 'Success',
+  //   body: 'Your ride request has been submitted successfully!',
+  // );
 
   //       setState(() {
   //         isRequestingRide = false;
@@ -398,164 +313,169 @@ class _NewDeliveryState extends State<NewDelivery> {
   //   }
   // }
 
-  Future<void> _requestRide({required String selectedVehicleType}) async {
-    if (sourceLatitude == null ||
-        sourceLongitude == null ||
-        destinationLatitude == null ||
-        destinationLongitude == null) {
-      HelperFunctions.showToast(
-        'Please Enter Pickup and Destination location',
-        true,
-      );
-      LogService.logError("Source or Destination coordinates are missing.");
-      return;
-    }
+  // Future<void> _requestRide({required String selectedVehicleType}) async {
+  //   if (sourceLatitude == null ||
+  //       sourceLongitude == null ||
+  //       destinationLatitude == null ||
+  //       destinationLongitude == null) {
+  //     HelperFunctions.showToast(
+  //       'Please Enter Pickup and Destination location',
+  //       true,
+  //     );
+  //     LogService.logError("Source or Destination coordinates are missing.");
+  //     return;
+  //   }
 
-    setState(() {
-      isRequestingRide = true;
-    });
+  //   setState(() {
+  //     isRequestingRide = true;
+  //   });
 
-    Map<String, String> headers = {
-      "Content-Type": "application/json",
-      "Access-Control-Allow-Origin": "*",
-      'Authorization': 'Bearer ${AuthService.getToken()}',
-    };
+  //   Map<String, String> headers = {
+  //     "Content-Type": "application/json",
+  //     "Access-Control-Allow-Origin": "*",
+  //     'Authorization': 'Bearer ${AuthService.getToken()}',
+  //   };
 
-    String endpoint = '${LarosaLinks.baseurl}/api/v1/ride/request';
+  //   String endpoint = '${LarosaLinks.baseurl}/api/v1/ride/request';
 
-    try {
-      LogService.logDebug(
-          "Fetching country and city for source and destination...");
+  //   try {
+  //     LogService.logDebug(
+  //         "Fetching country and city for source and destination...");
 
-      // Get country and city for source
-      final sourceLocation =
-          await getCountryAndCity(sourceLatitude!, sourceLongitude!);
-      final destinationLocation =
-          await getCountryAndCity(destinationLatitude!, destinationLongitude!);
+  //     // Get country and city for source
+  //     final sourceLocation =
+  //         await getCountryAndCity(sourceLatitude!, sourceLongitude!);
+  //     final destinationLocation =
+  //         await getCountryAndCity(destinationLatitude!, destinationLongitude!);
 
-      LogService.logDebug("Source Location: $sourceLocation");
-      LogService.logDebug("Destination Location: $destinationLocation");
+  //     LogService.logDebug("Source Location: $sourceLocation");
+  //     LogService.logDebug("Destination Location: $destinationLocation");
 
-      String sourceCity = (() {
-        String cityName = sourceLocation['city'] ?? 'Unknown';
-        if (cityName == 'Unknown' || cityName.isEmpty) {
-          LogService.logWarning(
-              'Source city is invalid. Falling back to default.');
-          return 'Dodoma';
-        }
-        const unwantedWords = ['Region', 'Mkoa wa'];
-        for (String word in unwantedWords) {
-          cityName = cityName.replaceAll(word, '').trim();
-        }
-        return cityName
-            .split(' ')
-            .map((word) =>
-                word[0].toUpperCase() + word.substring(1).toLowerCase())
-            .join(' ');
-      })();
+  //     String sourceCity = (() {
+  //       String cityName = sourceLocation['city'] ?? 'Unknown';
+  //       if (cityName == 'Unknown' || cityName.isEmpty) {
+  //         LogService.logWarning(
+  //             'Source city is invalid. Falling back to default.');
+  //         return 'Dodoma';
+  //       }
+  //       const unwantedWords = ['Region', 'Mkoa wa'];
+  //       for (String word in unwantedWords) {
+  //         cityName = cityName.replaceAll(word, '').trim();
+  //       }
+  //       return cityName
+  //           .split(' ')
+  //           .map((word) =>
+  //               word[0].toUpperCase() + word.substring(1).toLowerCase())
+  //           .join(' ');
+  //     })();
 
-      final requestBody = {
-        "startLat": sourceLatitude,
-        "startLng": sourceLongitude,
-        "endLat": destinationLatitude,
-        "endLng": destinationLongitude,
-        "vehicleType": selectedVehicleType,
-        "paymentMethod": paymentMethod,
-        "country": sourceLocation['country'],
-        "city": sourceCity,
-      };
+  //     final requestBody = {
+  //       "startLat": sourceLatitude,
+  //       "startLng": sourceLongitude,
+  //       "endLat": destinationLatitude,
+  //       "endLng": destinationLongitude,
+  //       "vehicleType": selectedVehicleType,
+  //       "paymentMethod": paymentMethod,
+  //       "country": sourceLocation['country'],
+  //       "city": sourceCity,
+  //     };
 
-      LogService.logDebug("Request Body: ${jsonEncode(requestBody)}");
-      LogService.logDebug("Making POST request to $endpoint");
+  //     LogService.logDebug("Request Body: ${jsonEncode(requestBody)}");
+  //     LogService.logDebug("Making POST request to $endpoint");
 
-      var response = await http.post(
-        Uri.parse(endpoint),
-        headers: headers,
-        body: jsonEncode(requestBody),
-      );
+  //     var response = await http.post(
+  //       Uri.parse(endpoint),
+  //       headers: headers,
+  //       body: jsonEncode(requestBody),
+  //     );
 
-      LogService.logDebug("Response Status Code: ${response.statusCode}");
-      LogService.logDebug("Response Body: ${response.body}");
+  //     LogService.logDebug("Response Status Code: ${response.statusCode}");
+  //     LogService.logDebug("Response Body: ${response.body}");
 
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        LogService.logInfo('Ride request successful');
+  //     if (response.statusCode == 200 || response.statusCode == 201) {
+  //       LogService.logInfo('Ride request successful');
 
-        // Trigger success modal
-        showSuccessModal(context, "Your ride request was successful!");
+  //       // Trigger success modal
+  //       // showSuccessModal(context, "Your ride request was successful!");
 
-        setState(() {
-          isRequestingRide = false;
-        });
-      } else if (response.statusCode == 400) {
-        LogService.logError(
-            'Bad Request: ${response.body}. Possible issues with data.');
-        HelperFunctions.showToast(
-          'Failed to submit the ride request. Please check your input.',
-          true,
-        );
-      } else if (response.statusCode == 401) {
-        LogService.logError('Unauthorized: Refreshing token and retrying...');
-        await AuthService.refreshToken();
-        await _requestRide(selectedVehicleType: selectedVehicleType);
-      } else {
-        LogService.logError('Ride request failed: ${response.statusCode}');
-        HelperFunctions.showToast(
-          'Something went wrong. Please try again later.',
-          true,
-        );
-      }
-    } catch (e, stackTrace) {
-      LogService.logError('Error making ride request: $e');
-      LogService.logDebug('Stack Trace: $stackTrace');
-      HelperFunctions.showToast('An unexpected error occurred.', true);
-    } finally {
-      setState(() {
-        isRequestingRide = false;
-      });
-    }
-  }
+  //       HelperFunctions.showNotification(
+  //         title: 'Success',
+  //         body: 'Your ride request has been submitted successfully!',
+  //       );
 
-  void showSuccessModal(BuildContext context, String message) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      builder: (BuildContext context) {
-        return Container(
-          padding: const EdgeInsets.all(20),
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(
-                Icons.check_circle,
-                color: Colors.green,
-                size: 60,
-              ),
-              const SizedBox(height: 20),
-              Text(
-                message,
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: () {
-                  Navigator.pop(context); // Close the modal
-                },
-                child: const Text('Okay'),
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
+  //       setState(() {
+  //         isRequestingRide = true;
+  //       });
+  //     } else if (response.statusCode == 400) {
+  //       LogService.logError(
+  //           'Bad Request: ${response.body}. Possible issues with data.');
+  //       HelperFunctions.showToast(
+  //         'Failed to submit the ride request. Please check your input.',
+  //         true,
+  //       );
+  //     } else if (response.statusCode == 401) {
+  //       LogService.logError('Unauthorized: Refreshing token and retrying...');
+  //       await AuthService.refreshToken();
+  //       await _requestRide(selectedVehicleType: selectedVehicleType);
+  //     } else {
+  //       LogService.logError('Ride request failed: ${response.statusCode}');
+  //       HelperFunctions.showToast(
+  //         'Something went wrong. Please try again later.',
+  //         true,
+  //       );
+  //     }
+  //   } catch (e, stackTrace) {
+  //     LogService.logError('Error making ride request: $e');
+  //     LogService.logDebug('Stack Trace: $stackTrace');
+  //     HelperFunctions.showToast('An unexpected error occurred.', true);
+  //   } finally {
+  //     setState(() {
+  //       isRequestingRide = false;
+  //     });
+  //   }
+  // }
+
+  // void showSuccessModal(BuildContext context, String message) {
+  //   showModalBottomSheet(
+  //     context: context,
+  //     isScrollControlled: true,
+  //     builder: (BuildContext context) {
+  //       return Container(
+  //         padding: const EdgeInsets.all(20),
+  //         decoration: const BoxDecoration(
+  //           color: Colors.white,
+  //           borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+  //         ),
+  //         child: Column(
+  //           mainAxisSize: MainAxisSize.min,
+  //           children: [
+  //             const Icon(
+  //               Icons.check_circle,
+  //               color: Colors.green,
+  //               size: 60,
+  //             ),
+  //             const SizedBox(height: 20),
+  //             Text(
+  //               message,
+  //               textAlign: TextAlign.center,
+  //               style: const TextStyle(
+  //                 fontSize: 18,
+  //                 fontWeight: FontWeight.bold,
+  //               ),
+  //             ),
+  //             const SizedBox(height: 20),
+  //             ElevatedButton(
+  //               onPressed: () {
+  //                 Navigator.pop(context); // Close the modal
+  //               },
+  //               child: const Text('Okay'),
+  //             ),
+  //           ],
+  //         ),
+  //       );
+  //     },
+  //   );
+  // }
 
   // String _sanitizeCityName(String cityName) {
   //   // Remove "Mkoa wa" if it exists in the city name
@@ -620,179 +540,702 @@ class _NewDeliveryState extends State<NewDelivery> {
     }
   }
 
+  final Set<Marker> _markers = {}; // Holds the map markers
+
+  void _updateDriverMarker(double latitude, double longitude) {
+    setState(() {
+      _markers.removeWhere((marker) =>
+          marker.markerId.value == 'driver'); // Remove existing driver marker
+      _markers.add(
+        Marker(
+          markerId: const MarkerId('driver'),
+          position: LatLng(latitude, longitude),
+          infoWindow: const InfoWindow(title: 'Driver Location'),
+        ),
+      );
+    });
+  }
+
+  void _updateDestinationMarker(double latitude, double longitude) {
+    setState(() {
+      _markers.removeWhere((marker) =>
+          marker.markerId.value ==
+          'destination'); // Remove existing destination marker
+      _markers.add(
+        Marker(
+          markerId: const MarkerId('destination'),
+          position: LatLng(latitude, longitude),
+          infoWindow: const InfoWindow(title: 'Destination'),
+        ),
+      );
+    });
+  }
+
+  // void showTimeEstimationsModal(
+  //     BuildContext context, Map<String, dynamic> estimations) {
+  //   showModalBottomSheet(
+  //     context: context,
+  //     isScrollControlled: true,
+  //     builder: (BuildContext context) {
+  //       return Container(
+  //         padding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 12.0),
+  //         decoration: BoxDecoration(
+  //           borderRadius: const BorderRadius.vertical(top: Radius.circular(15)),
+  //           boxShadow: [
+  //             BoxShadow(
+  //               color: Colors.black.withOpacity(0.1),
+  //               blurRadius: 10,
+  //               spreadRadius: 5,
+  //             ),
+  //           ],
+  //         ),
+  //         child: SingleChildScrollView(
+  //           child: Column(
+  //             mainAxisSize: MainAxisSize.min,
+  //             crossAxisAlignment: CrossAxisAlignment.start,
+  //             children: [
+  //               Center(
+  //                 child: Container(
+  //                   width: 40,
+  //                   height: 4,
+  //                   margin: const EdgeInsets.only(bottom: 10),
+  //                   decoration: BoxDecoration(
+  //                     color: Colors.grey[300],
+  //                     borderRadius: BorderRadius.circular(10),
+  //                   ),
+  //                 ),
+  //               ),
+  //               const Center(
+  //                 child: Text(
+  //                   "Driver Availability and Travel Time Estimates",
+  //                   style: TextStyle(
+  //                     fontSize: 16,
+  //                     fontWeight: FontWeight.bold,
+  //                   ),
+  //                 ),
+  //               ),
+  //               const SizedBox(height: 8),
+  //               ...estimations.entries.map((entry) {
+  //                 final vehicleType = entry.key;
+  //                 final data = entry.value;
+
+  //                 // Check if there's a message about unavailable drivers
+  //                 if (data.containsKey('message')) {
+  //                   return Column(
+  //                     crossAxisAlignment: CrossAxisAlignment.start,
+  //                     children: [
+  //                       Text(
+  //                         vehicleType,
+  //                         style: const TextStyle(
+  //                           fontWeight: FontWeight.w600,
+  //                           fontSize: 14,
+  //                         ),
+  //                       ),
+  //                       Padding(
+  //                         padding: const EdgeInsets.only(left: 8.0),
+  //                         child: Text(
+  //                           data['message'],
+  //                           style: const TextStyle(
+  //                             fontSize: 12,
+  //                             color: Colors.red,
+  //                             fontStyle: FontStyle.italic,
+  //                           ),
+  //                         ),
+  //                       ),
+  //                       const Divider(color: Colors.grey, thickness: 0.5),
+  //                     ],
+  //                   );
+  //                 }
+
+  //                 // Display travel time details and request button
+  //                 return Column(
+  //                   crossAxisAlignment: CrossAxisAlignment.start,
+  //                   children: [
+  //                     Text(
+  //                       vehicleType,
+  //                       style: const TextStyle(
+  //                         fontWeight: FontWeight.w600,
+  //                         fontSize: 14,
+  //                       ),
+  //                     ),
+  //                     Padding(
+  //                       padding: const EdgeInsets.only(left: 8.0),
+  //                       child: Column(
+  //                         children: [
+  //                           Row(
+  //                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
+  //                             children: [
+  //                               const Text("Closest Driver:"),
+  //                               Text(data['closestDriver']),
+  //                             ],
+  //                           ),
+  //                           Row(
+  //                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
+  //                             children: [
+  //                               const Text("Time to Customer:"),
+  //                               Text(formatTime(data['timeToCustomer'])),
+  //                             ],
+  //                           ),
+  //                           Row(
+  //                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
+  //                             children: [
+  //                               const Text("Travel Time:"),
+  //                               Text(formatTime(
+  //                                   data['timeFromCustomerToDestination'])),
+  //                             ],
+  //                           ),
+  //                         ],
+  //                       ),
+  //                     ),
+  //                     const SizedBox(height: 8),
+  //                     Container(
+  //                       width: double.infinity, // Take full screen width
+  //                       decoration: BoxDecoration(
+  //                         gradient: const LinearGradient(
+  //                           colors: [
+  //                             LarosaColors.secondary,
+  //                             LarosaColors.purple
+  //                           ],
+  //                           begin: Alignment.topLeft,
+  //                           end: Alignment.bottomRight,
+  //                         ),
+  //                         borderRadius:
+  //                             BorderRadius.circular(30), // Rounded corners
+  //                       ),
+  //                       child: FilledButton(
+  //                         style: ButtonStyle(
+  //                           backgroundColor: WidgetStateProperty.all(
+  //                               Colors.transparent), // Transparent background
+  //                           padding: WidgetStateProperty.all(
+  //                             const EdgeInsets.symmetric(
+  //                                 vertical: 16), // Vertical padding for height
+  //                           ),
+  //                           shape: WidgetStateProperty.all(
+  //                             RoundedRectangleBorder(
+  //                               borderRadius: BorderRadius.circular(
+  //                                   30), // Ensures button shape matches container
+  //                             ),
+  //                           ),
+  //                         ),
+  //                         onPressed: isRequestingRide
+  //                             ? null // Disable button while loading
+  //                             : () => _requestRide(
+  //                                 selectedVehicleType: vehicleType),
+  //                         child: isRequestingRide
+  //                             ? const CupertinoActivityIndicator(
+  //                                 color: Colors.white,
+  //                                 radius: 10.0, // Adjust the size as needed
+  //                               )
+  //                             : const Text(
+  //                                 'Confirm Ride Request',
+  //                                 style: TextStyle(
+  //                                   color: Colors.white,
+  //                                   fontWeight: FontWeight
+  //                                       .w600, // Semi-bold for emphasis
+  //                                   letterSpacing:
+  //                                       1.0, // Add slight spacing for a clean look
+  //                                 ),
+  //                               ),
+  //                       ),
+  //                     ),
+  //                     const Divider(color: Colors.grey, thickness: 0.5),
+  //                   ],
+  //                 );
+  //               }),
+  //             ],
+  //           ),
+  //         ),
+  //       );
+  //     },
+  //   );
+  // }
+
+  // void showTimeEstimationsModal(
+  //     BuildContext context, Map<String, dynamic> estimations) {
+  //   showModalBottomSheet(
+  //     context: context,
+  //     isScrollControlled: true,
+  //     builder: (BuildContext context) {
+  //       return Container(
+  //         height: MediaQuery.of(context).size.height *
+  //             0.9, // Occupy 80% of screen height
+  //         padding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 12.0),
+  //         decoration: BoxDecoration(
+  //           borderRadius: const BorderRadius.vertical(top: Radius.circular(15)),
+  //           boxShadow: [
+  //             BoxShadow(
+  //               color: Colors.black.withOpacity(0.1),
+  //               blurRadius: 10,
+  //               spreadRadius: 5,
+  //             ),
+  //           ],
+  //         ),
+  //         child: Column(
+  //           children: [
+  //             // Modal handle
+  //             Center(
+  //               child: Container(
+  //                 width: 40,
+  //                 height: 4,
+  //                 margin: const EdgeInsets.only(bottom: 10),
+  //                 decoration: BoxDecoration(
+  //                   // color: Colors.grey[300],
+  //                   borderRadius: BorderRadius.circular(10),
+  //                 ),
+  //               ),
+  //             ),
+
+  //             // Google Map Section (Default View)
+  //             Expanded(
+  //               child: ClipRRect(
+  //                 borderRadius: BorderRadius.circular(15),
+  //                 child: GoogleMap(
+  //                   initialCameraPosition: CameraPosition(
+  //                     target: LatLng(
+  //                         estimations['latitude'] ?? 0.0,
+  //                         estimations['longitude'] ??
+  //                             0.0), // Default coordinates
+  //                     zoom: 14.0,
+  //                   ),
+  //                   markers: {
+  //                     Marker(
+  //                       markerId: const MarkerId('destination'),
+  //                       position: LatLng(estimations['latitude'] ?? 0.0,
+  //                           estimations['longitude'] ?? 0.0),
+  //                       infoWindow: const InfoWindow(title: 'Destination'),
+  //                     ),
+  //                   },
+  //                 ),
+  //               ),
+  //             ),
+
+  //             const SizedBox(height: 8),
+
+  //             // Expandable Driver Availability Section
+  //             ExpansionTile(
+  //               title: const Column(
+  //                 crossAxisAlignment: CrossAxisAlignment
+  //                     .stretch, // Stretch to fit the available width
+  //                 children: [
+  //                   Row(
+  //                     mainAxisAlignment: MainAxisAlignment
+  //                         .center, // Center the content horizontally
+  //                     children: [
+  //                       Icon(
+  //                         Icons.directions_car, // Icon representing drivers
+  //                         // color: Colors.blueAccent,
+  //                         size: 20,
+  //                       ),
+  //                       SizedBox(width: 8),
+  //                       Flexible(
+  //                         child: Text(
+  //                           "Driver Availability and Travel Time Estimates",
+  //                           style: TextStyle(
+  //                             fontSize: 16,
+  //                             fontWeight: FontWeight.bold,
+  //                             // color: Colors.grey[800],
+  //                           ),
+  //                           textAlign: TextAlign.center, // Center-align text
+  //                           overflow:
+  //                               TextOverflow.ellipsis, // Avoid overflow issues
+  //                           maxLines: 1, // Ensure a single line of text
+  //                         ),
+  //                       ),
+  //                     ],
+  //                   ),
+  //                   SizedBox(height: 4),
+  //                   Divider(
+  //                     thickness: 1,
+  //                     // color: Colors.grey[300],
+  //                   ),
+  //                 ],
+  //               ),
+  //               children: [
+  //                 ...estimations.entries.map((entry) {
+  //                   final vehicleType = entry.key;
+  //                   final data = entry.value;
+
+  //                   // Check if there's a message about unavailable drivers
+  //                   if (data.containsKey('message')) {
+  //                     return Column(
+  //                       crossAxisAlignment: CrossAxisAlignment.start,
+  //                       children: [
+  //                         Text(
+  //                           vehicleType,
+  //                           style: const TextStyle(
+  //                             fontWeight: FontWeight.w600,
+  //                             fontSize: 14,
+  //                           ),
+  //                         ),
+  //                         Padding(
+  //                           padding: const EdgeInsets.only(left: 8.0),
+  //                           child: Text(
+  //                             data['message'],
+  //                             style: const TextStyle(
+  //                               fontSize: 12,
+  //                               color: Colors.red,
+  //                               fontStyle: FontStyle.italic,
+  //                             ),
+  //                           ),
+  //                         ),
+  //                         const Divider(thickness: 0.5),
+  //                       ],
+  //                     );
+  //                   }
+
+  //                   // Display travel time details and request button
+  //                   return Column(
+  //                     crossAxisAlignment: CrossAxisAlignment.start,
+  //                     children: [
+  //                       Text(
+  //                         vehicleType,
+  //                         style: const TextStyle(
+  //                           fontWeight: FontWeight.w600,
+  //                           fontSize: 14,
+  //                         ),
+  //                       ),
+  //                       Padding(
+  //                         padding: const EdgeInsets.only(left: 8.0),
+  //                         child: Column(
+  //                           children: [
+  //                             Row(
+  //                               mainAxisAlignment:
+  //                                   MainAxisAlignment.spaceBetween,
+  //                               children: [
+  //                                 const Text("Closest Driver:"),
+  //                                 Text(data['closestDriver']),
+  //                               ],
+  //                             ),
+  //                             Row(
+  //                               mainAxisAlignment:
+  //                                   MainAxisAlignment.spaceBetween,
+  //                               children: [
+  //                                 const Text("Time to Customer:"),
+  //                                 Text(formatTime(data['timeToCustomer'])),
+  //                               ],
+  //                             ),
+  //                             Row(
+  //                               mainAxisAlignment:
+  //                                   MainAxisAlignment.spaceBetween,
+  //                               children: [
+  //                                 const Text("Travel Time:"),
+  //                                 Text(formatTime(
+  //                                     data['timeFromCustomerToDestination'])),
+  //                               ],
+  //                             ),
+  //                           ],
+  //                         ),
+  //                       ),
+  //                       const SizedBox(height: 8),
+  //                       Container(
+  //                         width: double.infinity, // Take full screen width
+  //                         decoration: BoxDecoration(
+  //                           gradient: const LinearGradient(
+  //                             colors: [
+  //                               LarosaColors.secondary,
+  //                               LarosaColors.purple
+  //                             ],
+  //                             begin: Alignment.topLeft,
+  //                             end: Alignment.bottomRight,
+  //                           ),
+  //                           borderRadius:
+  //                               BorderRadius.circular(30), // Rounded corners
+  //                         ),
+  //                         child: FilledButton(
+  //                           style: ButtonStyle(
+  //                             backgroundColor: WidgetStateProperty.all(
+  //                                 Colors.transparent), // Transparent background
+  //                             padding: WidgetStateProperty.all(
+  //                               const EdgeInsets.symmetric(
+  //                                   vertical:
+  //                                       16), // Vertical padding for height
+  //                             ),
+  //                             shape: WidgetStateProperty.all(
+  //                               RoundedRectangleBorder(
+  //                                 borderRadius: BorderRadius.circular(
+  //                                     30), // Ensures button shape matches container
+  //                               ),
+  //                             ),
+  //                           ),
+  //                           onPressed: isRequestingRide
+  //                               ? null // Disable button while loading
+  //                               : () => _requestRide(
+  //                                   selectedVehicleType: vehicleType),
+  //                           child: isRequestingRide
+  //                               ? const CupertinoActivityIndicator(
+  //                                   color: Colors.white,
+  //                                   radius: 10.0, // Adjust the size as needed
+  //                                 )
+  //                               : const Text(
+  //                                   'Confirm Ride Request',
+  //                                   style: TextStyle(
+  //                                     color: Colors.white,
+  //                                     fontWeight: FontWeight.w600,
+  //                                     letterSpacing: 1.0,
+  //                                   ),
+  //                                 ),
+  //                         ),
+  //                       ),
+
+  //                       const Gap(6),
+  //                       // const Divider(color: Colors.grey, thickness: 0.5),
+  //                     ],
+  //                   );
+  //                 }),
+  //               ],
+  //             ),
+  //           ],
+  //         ),
+  //       );
+  //     },
+  //   );
+  // }
+
+  // void showTimeEstimationsModal(
+  //     BuildContext context, Map<String, dynamic> estimations) {
+  //   showModalBottomSheet(
+  //     context: context,
+  //     isScrollControlled: true,
+  //     builder: (BuildContext context) {
+  //       return Container(
+  //         height: MediaQuery.of(context).size.height *
+  //             0.9, // Occupy 90% of screen height
+  //         padding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 12.0),
+  //         decoration: BoxDecoration(
+  //           borderRadius: const BorderRadius.vertical(top: Radius.circular(15)),
+  //           boxShadow: [
+  //             BoxShadow(
+  //               color: Colors.black.withOpacity(0.1),
+  //               blurRadius: 10,
+  //               spreadRadius: 5,
+  //             ),
+  //           ],
+  //         ),
+  //         child: Column(
+  //           children: [
+  //             // Modal handle
+  //             Center(
+  //               child: Container(
+  //                 width: 40,
+  //                 height: 4,
+  //                 margin: const EdgeInsets.only(bottom: 10),
+  //                 decoration: BoxDecoration(
+  //                   color: Colors.grey[300],
+  //                   borderRadius: BorderRadius.circular(10),
+  //                 ),
+  //               ),
+  //             ),
+
+  //             // Google Map Section (Scrollable and Interactive)
+  //             Expanded(
+  //               child: ClipRRect(
+  //                 borderRadius: BorderRadius.circular(15),
+  //                 child: GestureDetector(
+  //                   onVerticalDragUpdate: (_) {}, // Prevent parent gestures
+  //                   child:
+  //                       GoogleMap(
+  //                     initialCameraPosition: const CameraPosition(
+  //                       target: LatLng(0.0, 0.0), // Default position
+  //                       zoom: 16.0,
+  //                     ),
+  //                     markers: _markers,
+  //                     zoomControlsEnabled: true,
+  //                     zoomGesturesEnabled: true,
+  //                     scrollGesturesEnabled: true,
+  //                     tiltGesturesEnabled: true,
+  //                     rotateGesturesEnabled: true,
+  //                     myLocationEnabled: true,
+  //                     mapToolbarEnabled: true,
+  //                     indoorViewEnabled: true,
+  //                     buildingsEnabled: true,
+  //                     onMapCreated: (GoogleMapController controller) {
+  //                       // Additional setup if needed
+  //                     },
+  //                   ),
+  //                 ),
+  //               ),
+  //             ),
+
+  //             const SizedBox(height: 8),
+
+  //             // Expandable Driver Availability Section
+  //             ExpansionTile(
+  //               initiallyExpanded: true,
+  //               title: const Column(
+  //                 crossAxisAlignment: CrossAxisAlignment.stretch,
+  //                 children: [
+  //                   Row(
+  //                     mainAxisAlignment: MainAxisAlignment.center,
+  //                     children: [
+  //                       Icon(
+  //                         Icons.directions_car,
+  //                         color: Colors.blueAccent,
+  //                         size: 20,
+  //                       ),
+  //                       SizedBox(width: 8),
+  //                       Flexible(
+  //                         child: Text(
+  //                           "Driver Availability and Travel Time Estimates",
+  //                           style: TextStyle(
+  //                             fontSize: 16,
+  //                             fontWeight: FontWeight.bold,
+  //                           ),
+  //                           textAlign: TextAlign.center,
+  //                           overflow: TextOverflow.ellipsis,
+  //                           maxLines: 1,
+  //                         ),
+  //                       ),
+  //                     ],
+  //                   ),
+  //                   SizedBox(height: 4),
+  //                   Divider(thickness: 1, color: Colors.grey),
+  //                 ],
+  //               ),
+  //               children: [
+  //                 ...estimations.entries.map((entry) {
+  //                   final vehicleType = entry.key;
+  //                   final data = entry.value;
+
+  //                   if (data.containsKey('message')) {
+  //                     return Column(
+  //                       crossAxisAlignment: CrossAxisAlignment.start,
+  //                       children: [
+  //                         Text(
+  //                           vehicleType,
+  //                           style: const TextStyle(
+  //                             fontWeight: FontWeight.w600,
+  //                             fontSize: 14,
+  //                           ),
+  //                         ),
+  //                         Padding(
+  //                           padding: const EdgeInsets.only(left: 8.0),
+  //                           child: Text(
+  //                             data['message'],
+  //                             style: const TextStyle(
+  //                               fontSize: 12,
+  //                               color: Colors.red,
+  //                               fontStyle: FontStyle.italic,
+  //                             ),
+  //                           ),
+  //                         ),
+  //                         const Divider(thickness: 0.5),
+  //                       ],
+  //                     );
+  //                   }
+
+  //                   return Column(
+  //                     crossAxisAlignment: CrossAxisAlignment.start,
+  //                     children: [
+  //                       Text(
+  //                         vehicleType,
+  //                         style: const TextStyle(
+  //                           fontWeight: FontWeight.w600,
+  //                           fontSize: 14,
+  //                         ),
+  //                       ),
+  //                       Padding(
+  //                         padding: const EdgeInsets.only(left: 8.0),
+  //                         child: Column(
+  //                           children: [
+  //                             Row(
+  //                               mainAxisAlignment:
+  //                                   MainAxisAlignment.spaceBetween,
+  //                               children: [
+  //                                 const Text("Closest Driver:"),
+  //                                 Text(data['closestDriver']),
+  //                               ],
+  //                             ),
+  //                             Row(
+  //                               mainAxisAlignment:
+  //                                   MainAxisAlignment.spaceBetween,
+  //                               children: [
+  //                                 const Text("Time to Customer:"),
+  //                                 Text(formatTime(data['timeToCustomer'])),
+  //                               ],
+  //                             ),
+  //                             Row(
+  //                               mainAxisAlignment:
+  //                                   MainAxisAlignment.spaceBetween,
+  //                               children: [
+  //                                 const Text("Travel Time:"),
+  //                                 Text(formatTime(
+  //                                     data['timeFromCustomerToDestination'])),
+  //                               ],
+  //                             ),
+  //                           ],
+  //                         ),
+  //                       ),
+  //                       const SizedBox(height: 8),
+  //                       Container(
+  //                         width: double.infinity,
+  //                         decoration: BoxDecoration(
+  //                           gradient: const LinearGradient(
+  //                             colors: [
+  //                               LarosaColors.secondary,
+  //                               LarosaColors.purple
+  //                             ],
+  //                             begin: Alignment.topLeft,
+  //                             end: Alignment.bottomRight,
+  //                           ),
+  //                           borderRadius: BorderRadius.circular(30),
+  //                         ),
+  //                         child: FilledButton(
+  //                           style: ButtonStyle(
+  //                             backgroundColor:
+  //                                 WidgetStateProperty.all(Colors.transparent),
+  //                             padding: WidgetStateProperty.all(
+  //                               const EdgeInsets.symmetric(vertical: 10),
+  //                             ),
+  //                             shape: WidgetStateProperty.all(
+  //                               RoundedRectangleBorder(
+  //                                 borderRadius: BorderRadius.circular(30),
+  //                               ),
+  //                             ),
+  //                           ),
+  //                           onPressed: isRequestingRide
+  //                               ? null
+  //                               : () => _requestRide(
+  //                                   selectedVehicleType: vehicleType),
+  //                           child: isRequestingRide
+  //                               ? const CupertinoActivityIndicator(
+  //                                   color: Colors.white,
+  //                                   radius: 10.0,
+  //                                 )
+  //                               : const Text(
+  //                                   'Confirm Ride Request',
+  //                                   style: TextStyle(
+  //                                     color: Colors.white,
+  //                                     fontWeight: FontWeight.w600,
+  //                                     letterSpacing: 1.0,
+  //                                   ),
+  //                                 ),
+  //                         ),
+  //                       ),
+  //                       const SizedBox(height: 6),
+  //                     ],
+  //                   );
+  //                 }),
+  //               ],
+  //             ),
+  //           ],
+  //         ),
+  //       );
+  //     },
+  //   );
+  // }
+
   void showTimeEstimationsModal(
       BuildContext context, Map<String, dynamic> estimations) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       builder: (BuildContext context) {
-        return Container(
-          padding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 12.0),
-          decoration: BoxDecoration(
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(15)),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.1),
-                blurRadius: 10,
-                spreadRadius: 5,
-              ),
-            ],
-          ),
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Center(
-                  child: Container(
-                    width: 40,
-                    height: 4,
-                    margin: const EdgeInsets.only(bottom: 10),
-                    decoration: BoxDecoration(
-                      color: Colors.grey[300],
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                  ),
-                ),
-                const Center(
-                  child: Text(
-                    "Driver Availability and Travel Time Estimates",
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 8),
-                ...estimations.entries.map((entry) {
-                  final vehicleType = entry.key;
-                  final data = entry.value;
-
-                  // Check if there's a message about unavailable drivers
-                  if (data.containsKey('message')) {
-                    return Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          vehicleType,
-                          style: const TextStyle(
-                            fontWeight: FontWeight.w600,
-                            fontSize: 14,
-                          ),
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.only(left: 8.0),
-                          child: Text(
-                            data['message'],
-                            style: const TextStyle(
-                              fontSize: 12,
-                              color: Colors.red,
-                              fontStyle: FontStyle.italic,
-                            ),
-                          ),
-                        ),
-                        const Divider(color: Colors.grey, thickness: 0.5),
-                      ],
-                    );
-                  }
-
-                  // Display travel time details and request button
-                  return Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        vehicleType,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w600,
-                          fontSize: 14,
-                        ),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.only(left: 8.0),
-                        child: Column(
-                          children: [
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                const Text("Closest Driver:"),
-                                Text(data['closestDriver']),
-                              ],
-                            ),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                const Text("Time to Customer:"),
-                                Text(formatTime(data['timeToCustomer'])),
-                              ],
-                            ),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                const Text("Travel Time:"),
-                                Text(formatTime(
-                                    data['timeFromCustomerToDestination'])),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Container(
-                        width: double.infinity, // Take full screen width
-                        decoration: BoxDecoration(
-                          gradient: const LinearGradient(
-                            colors: [
-                              LarosaColors.secondary,
-                              LarosaColors.purple
-                            ],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                          ),
-                          borderRadius:
-                              BorderRadius.circular(30), // Rounded corners
-                        ),
-                        child: FilledButton(
-                          style: ButtonStyle(
-                            backgroundColor: WidgetStateProperty.all(
-                                Colors.transparent), // Transparent background
-                            padding: WidgetStateProperty.all(
-                              const EdgeInsets.symmetric(
-                                  vertical: 16), // Vertical padding for height
-                            ),
-                            shape: WidgetStateProperty.all(
-                              RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(
-                                  30, // Ensures button shape matches container
-                                ),
-                              ),
-                            ),
-                          ),
-                          onPressed: () =>
-                              _requestRide(selectedVehicleType: vehicleType),
-                          child: isRequestingRide
-                              ? const CupertinoActivityIndicator(
-                                  color: Colors.white,
-                                  radius: 10.0, // Adjust the size as needed
-                                )
-                              : const Text(
-                                  'Confirm Ride Request',
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight
-                                        .w600, // Semi-bold for emphasis
-                                    letterSpacing:
-                                        1.0, // Add slight spacing for a clean look
-                                  ),
-                                ),
-                        ),
-                      ),
-                      const Divider(color: Colors.grey, thickness: 0.5),
-                    ],
-                  );
-                }),
-              ],
-            ),
-          ),
+        return TimeEstimationsModalContent(
+          estimations: estimations,
+          sourceLatitude: sourceLatitude!,
+          sourceLongitude: sourceLongitude!,
+          destinationLatitude: destinationLatitude!,
+          destinationLongitude: destinationLongitude!,
         );
       },
     );
@@ -987,6 +1430,42 @@ class _NewDeliveryState extends State<NewDelivery> {
     }
   }
 
+  List<dynamic> rideHistory = [];
+
+  Future<void> _loadRideHistory() async {
+    String token = AuthService.getToken();
+    LogService.logDebug('token $token');
+    Map<String, String> headers = {
+      "Content-Type": "application/json",
+      "Access-Control-Allow-Origin": "*",
+      'Authorization': 'Bearer $token',
+    };
+
+    var url = Uri.parse('${LarosaLinks.baseurl}/api/v1/ride-customer/rides');
+
+    try {
+      final response = await http.get(
+        url,
+        headers: headers,
+      );
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        LogService.logFatal('Ride history fetch successful');
+        LogService.logInfo(response.body);
+
+        setState(() {
+          rideHistory = jsonDecode(response.body);
+        });
+
+        return;
+      }
+
+      LogService.logError(
+          'Error fetching ride history: ${response.statusCode}');
+    } catch (e) {
+      LogService.logError('Failed to fetch ride history: $e');
+    }
+  }
+
   Future<void> _getCurrentLocation(bool isSource) async {
     setState(() {
       if (isSource) {
@@ -1048,7 +1527,9 @@ class _NewDeliveryState extends State<NewDelivery> {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
 
     return Card(
-      margin: const EdgeInsets.symmetric(vertical: 5, horizontal: 10),
+      margin: const EdgeInsets.symmetric(
+        vertical: 5,
+      ),
       child: Padding(
         padding: const EdgeInsets.all(12.0),
         child: Column(
@@ -1444,14 +1925,52 @@ class _NewDeliveryState extends State<NewDelivery> {
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 12.0),
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                  // crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Center(
-                      child: Text(
-                        'Your Orders',
-                        style: TextStyle(
-                            fontSize: 16, fontWeight: FontWeight.bold),
-                      ),
+                    // const Center(
+                    //   child: Text(
+                    //     'Your Orders',
+                    //     style: TextStyle(
+                    //         fontSize: 16, fontWeight: FontWeight.bold),
+                    //   ),
+                    // ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          'Your Orders',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        TextButton(
+  onPressed: () {
+    // Show modal to display ride history
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (BuildContext context) {
+        return RideHistoryModal(rideHistory: rideHistory);
+      },
+    );
+  },
+  child: Text(
+    'Ride History',
+    style: TextStyle(
+      fontSize: 16,
+      fontWeight: FontWeight.bold,
+      color: Theme.of(context).brightness == Brightness.dark
+          ? Colors.white
+          : Colors.black,
+    ),
+  ),
+),
+
+                      ],
                     ),
                     const Gap(5),
                     orders.isEmpty
@@ -1652,16 +2171,22 @@ class _NewDeliveryState extends State<NewDelivery> {
                                                         Colors.transparent,
                                                     builder:
                                                         (BuildContext context) {
-                                                      return MapModal(
-                                                        latitude:
-                                                            deliveryLocation[
-                                                                    'latitude'] ??
-                                                                0.0,
-                                                        longitude:
-                                                            deliveryLocation[
-                                                                    'longitude'] ??
-                                                                0.0,
-                                                      );
+                                                      return StatefulBuilder(
+                                                          builder: (BuildContext
+                                                                  context,
+                                                              StateSetter
+                                                                  setState) {
+                                                        return MapModal(
+                                                          latitude:
+                                                              deliveryLocation[
+                                                                      'latitude'] ??
+                                                                  0.0,
+                                                          longitude:
+                                                              deliveryLocation[
+                                                                      'longitude'] ??
+                                                                  0.0,
+                                                        );
+                                                      });
                                                     },
                                                   );
                                                 }
@@ -1671,14 +2196,14 @@ class _NewDeliveryState extends State<NewDelivery> {
                                         ),
                                       if (driver == null ||
                                           driver['name'] == null)
-                                        Column(
+                                        const Column(
                                           children: [
                                             Row(
                                               mainAxisAlignment:
                                                   MainAxisAlignment
                                                       .spaceBetween,
                                               children: [
-                                                const Column(
+                                                Column(
                                                   crossAxisAlignment:
                                                       CrossAxisAlignment.start,
                                                   children: [
@@ -1691,100 +2216,100 @@ class _NewDeliveryState extends State<NewDelivery> {
                                                     Text('Not assigned'),
                                                   ],
                                                 ),
-                                                IconButton(
-                                                  icon: const Icon(
-                                                    Icons.location_on,
-                                                    // color: LarosaColors.primary
-                                                  ),
-                                                  onPressed: () {
-                                                    if (deliveryLocation !=
-                                                        null) {
-                                                      // Open the Map Modal
-                                                      showModalBottomSheet(
-                                                        context: context,
-                                                        isScrollControlled:
-                                                            true,
-                                                        backgroundColor:
-                                                            Colors.transparent,
-                                                        builder: (BuildContext
-                                                            context) {
-                                                          return MapModal(
-                                                            latitude:
-                                                                deliveryLocation[
-                                                                        'latitude'] ??
-                                                                    0.0,
-                                                            longitude:
-                                                                deliveryLocation[
-                                                                        'longitude'] ??
-                                                                    0.0,
-                                                          );
-                                                        },
-                                                      );
-                                                    }
-                                                  },
-                                                ),
+                                                // IconButton(
+                                                //   icon: const Icon(
+                                                //     Icons.location_on,
+                                                //     // color: LarosaColors.primary
+                                                //   ),
+                                                //   onPressed: () {
+                                                //     if (deliveryLocation !=
+                                                //         null) {
+                                                //       // Open the Map Modal
+                                                //       showModalBottomSheet(
+                                                //         context: context,
+                                                //         isScrollControlled:
+                                                //             true,
+                                                //         backgroundColor:
+                                                //             Colors.transparent,
+                                                //         builder: (BuildContext
+                                                //             context) {
+                                                //           return MapModal(
+                                                //             latitude:
+                                                //                 deliveryLocation[
+                                                //                         'latitude'] ??
+                                                //                     0.0,
+                                                //             longitude:
+                                                //                 deliveryLocation[
+                                                //                         'longitude'] ??
+                                                //                     0.0,
+                                                //           );
+                                                //         },
+                                                //       );
+                                                //     }
+                                                //   },
+                                                // ),
                                               ],
                                             ),
-                                            const Gap(5),
-                                            const Divider(),
-                                            const Gap(5),
-                                            Container(
-                                              width: double.infinity,
-                                              padding: const EdgeInsets
-                                                  .symmetric(
-                                                  horizontal:
-                                                      10), // Adjust horizontal padding
-                                              decoration: BoxDecoration(
-                                                gradient: const LinearGradient(
-                                                  colors: [
-                                                    LarosaColors.secondary,
-                                                    LarosaColors.purple
-                                                  ],
-                                                  begin: Alignment.topLeft,
-                                                  end: Alignment.bottomRight,
-                                                ),
-                                                borderRadius:
-                                                    BorderRadius.circular(
-                                                        30), // Rounded corners
-                                              ),
-                                              child: FilledButton(
-                                                style: ButtonStyle(
-                                                  backgroundColor:
-                                                      WidgetStateProperty.all(
-                                                          Colors.transparent),
-                                                  padding:
-                                                      WidgetStateProperty.all(
-                                                    const EdgeInsets.symmetric(
-                                                        vertical: 12,
-                                                        horizontal: 24),
-                                                  ),
-                                                  shape:
-                                                      WidgetStateProperty.all(
-                                                    RoundedRectangleBorder(
-                                                      borderRadius:
-                                                          BorderRadius.circular(
-                                                              30), // Ensures button shape matches container
-                                                    ),
-                                                  ),
-                                                ),
-                                                onPressed: () {
-                                                  // Assign driver logic here
-                                                },
-                                                child: const Text(
-                                                  'Assign Driver to Delivery',
-                                                  style: TextStyle(
-                                                    color: Colors.white,
-                                                    // fontSize: 16, // Slightly larger font for emphasis
-                                                    fontWeight: FontWeight
-                                                        .w600, // Semi-bold for a balanced professional look
-                                                    letterSpacing:
-                                                        0.8, // Slight spacing for readability
-                                                    height:
-                                                        1.3, // Line height for clean vertical spacing
-                                                  ),
-                                                ),
-                                              ),
-                                            ),
+                                            Gap(5),
+                                            Divider(),
+                                            // const Gap(5),
+                                            // Container(
+                                            //   width: double.infinity,
+                                            //   padding: const EdgeInsets
+                                            //       .symmetric(
+                                            //       horizontal:
+                                            //           10), // Adjust horizontal padding
+                                            //   decoration: BoxDecoration(
+                                            //     gradient: const LinearGradient(
+                                            //       colors: [
+                                            //         LarosaColors.secondary,
+                                            //         LarosaColors.purple
+                                            //       ],
+                                            //       begin: Alignment.topLeft,
+                                            //       end: Alignment.bottomRight,
+                                            //     ),
+                                            //     borderRadius:
+                                            //         BorderRadius.circular(
+                                            //             30), // Rounded corners
+                                            //   ),
+                                            //   child: FilledButton(
+                                            //     style: ButtonStyle(
+                                            //       backgroundColor:
+                                            //           WidgetStateProperty.all(
+                                            //               Colors.transparent),
+                                            //       padding:
+                                            //           WidgetStateProperty.all(
+                                            //         const EdgeInsets.symmetric(
+                                            //             vertical: 12,
+                                            //             horizontal: 24),
+                                            //       ),
+                                            //       shape:
+                                            //           WidgetStateProperty.all(
+                                            //         RoundedRectangleBorder(
+                                            //           borderRadius:
+                                            //               BorderRadius.circular(
+                                            //                   30), // Ensures button shape matches container
+                                            //         ),
+                                            //       ),
+                                            //     ),
+                                            //     onPressed: () {
+                                            //       // Assign driver logic here
+                                            //     },
+                                            //     child: const Text(
+                                            //       'Assign Driver to Delivery',
+                                            //       style: TextStyle(
+                                            //         color: Colors.white,
+                                            //         // fontSize: 16, // Slightly larger font for emphasis
+                                            //         fontWeight: FontWeight
+                                            //             .w600, // Semi-bold for a balanced professional look
+                                            //         letterSpacing:
+                                            //             0.8, // Slight spacing for readability
+                                            //         height:
+                                            //             1.3, // Line height for clean vertical spacing
+                                            //       ),
+                                            //     ),
+                                            //   ),
+                                            // ),
                                           ],
                                         ),
                                     ],
@@ -1913,6 +2438,207 @@ class MapModal extends StatelessWidget {
                 ),
               },
             ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+
+class RideHistoryModal extends StatelessWidget {
+  final List<dynamic> rideHistory;
+
+  const RideHistoryModal({Key? key, required this.rideHistory}) : super(key: key);
+
+  String formatDateTime(String? dateTime) {
+    if (dateTime == null) return '';
+    try {
+      final parsedDate = DateTime.parse(dateTime);
+      return DateFormat('yyyy-MM-dd hh:mm a').format(parsedDate);
+    } catch (e) {
+      return dateTime; // Fallback to original if parsing fails
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.only(top: 18, left: 8, right: 8),
+      child: Column(
+        children: [
+          // Close button at the top
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              // const Text(
+              //   "Ride History",
+              //   style: TextStyle(
+              //     fontSize: 18,
+              //     fontWeight: FontWeight.bold,
+              //   ),
+              // ),
+              const Text(''),
+              IconButton(
+                icon: const Icon(Icons.close),
+                onPressed: () {
+                  Navigator.of(context).pop(); // Closes the modal
+                },
+              ),
+            ],
+          ),
+          const Divider(), // Separates the header from the list
+          Expanded(
+            child: rideHistory.isEmpty
+                ? const Center(
+                    child: Text(
+                      "No ride history available",
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+                    ),
+                  )
+                : ListView.builder(
+                    itemCount: rideHistory.length,
+                    itemBuilder: (context, index) {
+                      final ride = rideHistory[index];
+                      return Card(
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        elevation: 2,
+                        margin: const EdgeInsets.symmetric(vertical: 4),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    "Ride ID: ${ride['rideId']}",
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 16,
+                                    ),
+                                  ),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 8, vertical: 4),
+                                    decoration: BoxDecoration(
+                                      color: ride['rideStatus'] == 'COMPLETED'
+                                          ? Colors.green
+                                          : Colors.orange,
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    child: Text(
+                                      ride['rideStatus'],
+                                      style: TextStyle(
+                                        color: ride['rideStatus'] == 'COMPLETED'
+                                            ? Colors.white
+                                            : Colors.white,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 12),
+                              Row(
+                                children: [
+                                  const Icon(Icons.person, size: 20, color: Colors.grey),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    "${ride['driverFirstName']} ${ride['driverLastName']}",
+                                    style: const TextStyle(fontSize: 14),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 8),
+                              Row(
+                                children: [
+                                  const Icon(Icons.directions_car,
+                                      size: 20, color: Colors.grey),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    "${ride['vehicleType']} (${ride['licensePlate']})",
+                                    style: const TextStyle(fontSize: 14),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 8),
+                              Row(
+                                children: [
+                                  const Icon(Icons.attach_money,
+                                      size: 20, color: Colors.grey),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    "Total Fare: \$${ride['totalFare']}",
+                                    style: const TextStyle(fontSize: 14),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 12),
+                              const Divider(),
+                              // Row(
+                              //   children: [
+                              //     const Icon(Icons.location_on,
+                              //         size: 20, color: Colors.grey),
+                              //     const SizedBox(width: 8),
+                              //     Expanded(
+                              //       child: Column(
+                              //         crossAxisAlignment: CrossAxisAlignment.start,
+                              //         children: [
+                              //           Text(
+                              //             "Pickup: ${ride['pickupLatitude']}, ${ride['pickupLongitude']}",
+                              //             style: const TextStyle(fontSize: 13),
+                              //           ),
+                              //           const SizedBox(height: 4),
+                              //           Text(
+                              //             "Dropoff: ${ride['dropoffLatitude']}, ${ride['dropoffLongitude']}",
+                              //             style: const TextStyle(fontSize: 13),
+                              //           ),
+                              //         ],
+                              //       ),
+                              //     ),
+                              //   ],
+                              // ),
+                              if (ride['startTime'] != null || ride['endTime'] != null)
+                                Column(
+                                  children: [
+                                    const SizedBox(height: 12),
+                                    const Divider(),
+                                    Row(
+                                      children: [
+                                        const Icon(Icons.access_time,
+                                            size: 20, color: Colors.grey),
+                                        const SizedBox(width: 8),
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            children: [
+                                              if (ride['startTime'] != null)
+                                                Text(
+                                                  "Start Time: ${formatDateTime(ride['startTime'])}",
+                                                  style: const TextStyle(fontSize: 13),
+                                                ),
+                                              if (ride['endTime'] != null)
+                                                Text(
+                                                  "End Time: ${formatDateTime(ride['endTime'])}",
+                                                  style: const TextStyle(fontSize: 13),
+                                                ),
+                                            ],
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                  ),
           ),
         ],
       ),

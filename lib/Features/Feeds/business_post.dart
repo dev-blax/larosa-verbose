@@ -625,11 +625,28 @@ class _BusinessPostScreenState extends State<BusinessPostScreen>
               contentController.newContentMediaStrings,
             );
 
-            bool success = await contentController.postBusiness(
+            // bool success = await contentController.postBusiness(
+            //   _captionController.text,
+            //   double.tryParse(_priceController.text.replaceAll(',', '')) ?? 0,
+            //   maxHeight,
+            // );
+            
+            bool success;
+
+            if (isBusinessPost) {
+            // Use postBusiness for business accounts
+            success = await contentController.postBusiness(
               _captionController.text,
               double.tryParse(_priceController.text.replaceAll(',', '')) ?? 0,
               maxHeight,
             );
+          } else {
+            // Use uploadPost for personal accounts
+            success = await contentController.uploadPost(
+              _captionController.text,
+              double.tryParse(_priceController.text.replaceAll(',', '')) ?? 0,
+            );
+          }
 
             setState(() {
               isCreatingPost = false;

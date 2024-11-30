@@ -27,7 +27,7 @@ class HelperFunctions {
       type: success ? ToastificationType.info : ToastificationType.error,
       title: Text(message),
       context: context,
-      backgroundColor: success ? Colors.blue : Colors.red,
+      // backgroundColor: success ? Colors.blue : Colors.red,
     );
   }
 
