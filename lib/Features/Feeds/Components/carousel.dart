@@ -7,6 +7,7 @@ import 'dart:async';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:larosa_block/Utils/helpers.dart';
 import 'package:mime/mime.dart';
 import 'package:cached_video_player_plus/cached_video_player_plus.dart';
 import 'package:shimmer/shimmer.dart';
@@ -214,6 +215,7 @@ class _CenterSnapCarouselState extends State<CenterSnapCarousel> {
 
   @override
   Widget build(BuildContext context) {
+    // HelperFunctions.larosaLogger('Post height : ${widget.postHeight}');
     return GestureDetector(
       onPanEnd: (_) {},
       child: SingleChildScrollView(
@@ -271,86 +273,99 @@ class _CenterSnapCarouselState extends State<CenterSnapCarousel> {
                   ),
                   if (controller.value.isInitialized)
                     Positioned(
-  right: 5, // Align to the right
-  bottom: 100, // Adjust to be near the bottom of the video
-  child: Container(
-    padding: const EdgeInsets.all(8.0), // Add padding for inner content
-    decoration: BoxDecoration(
-      color: Colors.black.withOpacity(0.3), // Light black background
-      borderRadius: BorderRadius.circular(10.0), // Rounded corners
-    ),
-    child: Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        GestureDetector(
-          onTap: () => _toggleMute(index),
-          child: Icon(
-            _muteStates[index] == true
-                ? CupertinoIcons.volume_off
-                : CupertinoIcons.volume_up,
-            size: 25.0,
-            color: Colors.white.withOpacity(0.7),
-          ),
-        ),
-        const SizedBox(height: 20), // Spacing between mute and play/pause
-        GestureDetector(
-          onTap: () => _togglePlayPause(index),
-          child: Icon(
-            _manualControlStates[index] == true ||
-                    (controller.value.isPlaying &&
-                        _manualControlStates[index] == null)
-                ? CupertinoIcons.pause
-                : CupertinoIcons.play,
-            size: 30.0,
-            color: Colors.white.withOpacity(0.7),
-          ),
-        ),
-      ],
-    ),
-  ),
-),
-
-
-
-
-                   Positioned(
-  bottom: -5, // Maintain the position as provided
-  left: MediaQuery.of(context).size.width * 0.00, // Add horizontal padding
-  right: MediaQuery.of(context).size.width * 0.00, // Add padding on the right
-  child: Container(
-    color: Theme.of(context).brightness == Brightness.dark
-        ? Colors.black.withOpacity(0.9) // Dark background for dark theme
-        : Colors.white.withOpacity(0.9), // Light background for light theme
-    child: SliderTheme(
-      data: SliderTheme.of(context).copyWith(
-        trackHeight: 1.0, // Set the thickness of the slider
-        thumbShape: const RoundSliderThumbShape(
-          enabledThumbRadius: 4.0, // Reduce the thumb size
-        ),
-        overlayShape: const RoundSliderOverlayShape(
-          overlayRadius: 10.0, // Reduce the size of the overlay around the thumb
-        ),
-      ),
-      child: Slider(
-        activeColor: Theme.of(context).brightness == Brightness.dark
-            ? Colors.white.withOpacity(0.2) // Light color for dark theme
-            : Colors.black.withOpacity(0.3), // Dark color for light theme
-        inactiveColor: Theme.of(context).brightness == Brightness.dark
-            ? Colors.grey[900] // Slightly lighter gray for dark theme
-            : Colors.grey[300], // Slightly darker gray for light theme
-        value: _videoPositions[index]?.inMilliseconds.toDouble() ?? 0.0,
-        min: 0.0,
-        max: controller.value.duration.inMilliseconds.toDouble(),
-        onChangeStart: (value) => _onSeekStart(index),
-        onChanged: (value) => _onSeek(index, value),
-        onChangeEnd: (value) => _onSeekEnd(index, value),
-      ),
-    ),
-  ),
-),
-
-
-
+                      right: 5, // Align to the right
+                      bottom: 100, // Adjust to be near the bottom of the video
+                      child: Container(
+                        padding: const EdgeInsets.all(
+                            8.0), // Add padding for inner content
+                        decoration: BoxDecoration(
+                          color: Colors.black
+                              .withOpacity(0.3), // Light black background
+                          borderRadius:
+                              BorderRadius.circular(10.0), // Rounded corners
+                        ),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            GestureDetector(
+                              onTap: () => _toggleMute(index),
+                              child: Icon(
+                                _muteStates[index] == true
+                                    ? CupertinoIcons.volume_off
+                                    : CupertinoIcons.volume_up,
+                                size: 25.0,
+                                color: Colors.white.withOpacity(0.7),
+                              ),
+                            ),
+                            const SizedBox(
+                                height:
+                                    20), // Spacing between mute and play/pause
+                            GestureDetector(
+                              onTap: () => _togglePlayPause(index),
+                              child: Icon(
+                                _manualControlStates[index] == true ||
+                                        (controller.value.isPlaying &&
+                                            _manualControlStates[index] == null)
+                                    ? CupertinoIcons.pause
+                                    : CupertinoIcons.play,
+                                size: 30.0,
+                                color: Colors.white.withOpacity(0.7),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  Positioned(
+                    bottom: -5, // Maintain the position as provided
+                    left: MediaQuery.of(context).size.width *
+                        0.00, // Add horizontal padding
+                    right: MediaQuery.of(context).size.width *
+                        0.00, // Add padding on the right
+                    child: Container(
+                      color: Theme.of(context).brightness == Brightness.dark
+                          ? Colors.black.withOpacity(
+                              0.9) // Dark background for dark theme
+                          : Colors.white.withOpacity(
+                              0.9), // Light background for light theme
+                      child: SliderTheme(
+                        data: SliderTheme.of(context).copyWith(
+                          trackHeight: 1.0, // Set the thickness of the slider
+                          thumbShape: const RoundSliderThumbShape(
+                            enabledThumbRadius: 4.0, // Reduce the thumb size
+                          ),
+                          overlayShape: const RoundSliderOverlayShape(
+                            overlayRadius:
+                                10.0, // Reduce the size of the overlay around the thumb
+                          ),
+                        ),
+                        child: Slider(
+                          activeColor:
+                              Theme.of(context).brightness == Brightness.dark
+                                  ? Colors.white.withOpacity(
+                                      0.2) // Light color for dark theme
+                                  : Colors.black.withOpacity(
+                                      0.3), // Dark color for light theme
+                          inactiveColor: Theme.of(context).brightness ==
+                                  Brightness.dark
+                              ? Colors.grey[
+                                  900] // Slightly lighter gray for dark theme
+                              : Colors.grey[
+                                  300], // Slightly darker gray for light theme
+                          value: _videoPositions[index]
+                                  ?.inMilliseconds
+                                  .toDouble() ??
+                              0.0,
+                          min: 0.0,
+                          max: controller.value.duration.inMilliseconds
+                              .toDouble(),
+                          onChangeStart: (value) => _onSeekStart(index),
+                          onChanged: (value) => _onSeek(index, value),
+                          onChangeEnd: (value) => _onSeekEnd(index, value),
+                        ),
+                      ),
+                    ),
+                  ),
                 ],
               );
             } else {
@@ -363,6 +378,7 @@ class _CenterSnapCarouselState extends State<CenterSnapCarousel> {
                   width: MediaQuery.of(context).size.width,
                   imageUrl: url,
                   fit: BoxFit.cover,
+                  // placeholder: (context, url) => _buildShimmerLoader(height: widget.postHeight),
                   placeholder: (context, url) => _buildShimmerLoader(),
                   errorWidget: (context, url, error) => const Icon(Icons.error),
                 ),
@@ -373,6 +389,19 @@ class _CenterSnapCarouselState extends State<CenterSnapCarousel> {
       ),
     );
   }
+
+  // Widget _buildShimmerLoader({double? height}) {
+  //   final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+  //   return Shimmer.fromColors(
+  //     baseColor: isDarkMode ? Colors.grey[900]! : Colors.grey[400]!,
+  //     highlightColor: isDarkMode ? Colors.grey[700]! : Colors.grey[100]!,
+  //     child: Container(
+  //       width: MediaQuery.of(context).size.width,
+  //       height: height ?? 300,
+  //       color: Colors.grey[100],
+  //     ),
+  //   );
+  // }
 
   Widget _buildShimmerLoader() {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;

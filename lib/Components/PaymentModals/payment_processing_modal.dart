@@ -25,6 +25,11 @@ class PaymentProcessingModal extends StatefulWidget {
   final double? currentLatitude;
   final double? currentLongitude;
 
+  final int adults; // New parameter
+  final int children; // New parameter
+  final String fullName; // New parameter
+  final bool isReservation; // New parameter
+
   const PaymentProcessingModal({
     super.key,
     required this.paymentMethod,
@@ -37,6 +42,10 @@ class PaymentProcessingModal extends StatefulWidget {
     this.deliveryDestination,
     this.currentLatitude,
     this.currentLongitude,
+    required this.adults, // Initialize in constructor
+    required this.children, // Initialize in constructor
+    required this.fullName, // Initialize in constructor
+    required this.isReservation, // Initialize in constructor
   });
 
   @override
@@ -92,6 +101,16 @@ class _PaymentProcessingModalState extends State<PaymentProcessingModal> {
       "country": "Tanzania",
     };
 
+    // Add reservation-specific data if isReservation is true
+    if (widget.isReservation) {
+      body.addAll({
+        "adults": widget.adults,
+        "children": widget.children,
+        "fullName": widget.fullName,
+        "isReservation": widget.isReservation,
+      });
+    }
+
     if (widget.paymentType == 'Bank') {
       body.addAll({
         "merchantMobileNumber": _merchantMobileNumberController.text,
@@ -99,6 +118,7 @@ class _PaymentProcessingModalState extends State<PaymentProcessingModal> {
         "otp": _otpController.text,
       });
     }
+
     LogService.logInfo('Request Body: $body');
 
     try {
@@ -452,9 +472,10 @@ class _PaymentProcessingModalState extends State<PaymentProcessingModal> {
                   const SizedBox(height: 20),
                   if (_isLoading)
                     const Center(
-                              child: CupertinoActivityIndicator(
-                                radius: 10.0, // Adjust the size as needed
-                              ),)
+                      child: CupertinoActivityIndicator(
+                        radius: 10.0, // Adjust the size as needed
+                      ),
+                    )
                   else if (_validateMobilePaymentFields())
                     buildWideGradientButton(
                       onTap: _submitOrder,
@@ -475,7 +496,9 @@ class _PaymentProcessingModalState extends State<PaymentProcessingModal> {
                         textAlign: TextAlign.center,
                       ),
                     ),
-                const SizedBox(height: 10,),
+                  const SizedBox(
+                    height: 10,
+                  ),
                 ],
               ),
             ),
@@ -503,8 +526,9 @@ class _PaymentProcessingModalState extends State<PaymentProcessingModal> {
         children: [
           _buildTextField(
             controller: _accountNumberController,
-            label:
-                widget.paymentType == 'Bank' ? 'Account Number' : 'Mobile Number',
+            label: widget.paymentType == 'Bank'
+                ? 'Account Number'
+                : 'Mobile Number',
             hintText: widget.paymentType == 'Bank'
                 ? 'Enter your account number'
                 : 'Enter your mobile number',
@@ -591,37 +615,36 @@ class _PaymentProcessingModalState extends State<PaymentProcessingModal> {
   }
 
   String? validateMobileNumber(String number, String paymentMethod) {
-  // Define valid prefixes for each payment method
-  const providerPrefixes = {
-    'Airtel': ['068', '078', '069'],
-    'Tigo': ['065', '067', '071'],
-    'Halopesa': ['077'],
-    'Azampesa': ['076'],
-    'Mpesa': ['075', '074', '073'],
-  };
+    // Define valid prefixes for each payment method
+    const providerPrefixes = {
+      'Airtel': ['068', '078', '069'],
+      'Tigo': ['065', '067', '071'],
+      'Halopesa': ['077'],
+      'Azampesa': ['076'],
+      'Mpesa': ['075', '074', '073'],
+    };
 
-  // Check if the payment method is among the defined providers
-  if (providerPrefixes.containsKey(paymentMethod) && number.isNotEmpty) {
-    final prefixes = providerPrefixes[paymentMethod]!;
+    // Check if the payment method is among the defined providers
+    if (providerPrefixes.containsKey(paymentMethod) && number.isNotEmpty) {
+      final prefixes = providerPrefixes[paymentMethod]!;
 
-    // Validate prefix for the specific payment method
-    if (!prefixes.any((prefix) => number.startsWith(prefix))) {
-      return 'Invalid $paymentMethod number. Must start with ${prefixes.join(", ")} (e.g., ${prefixes[0]}1234567).';
+      // Validate prefix for the specific payment method
+      if (!prefixes.any((prefix) => number.startsWith(prefix))) {
+        return 'Invalid $paymentMethod number. Must start with ${prefixes.join(", ")} (e.g., ${prefixes[0]}1234567).';
+      }
+
+      // Validate length for mobile numbers
+      if (number.length != 10) {
+        return '$paymentMethod number must be exactly 10 digits long (e.g., ${prefixes[0]}1234567).';
+      }
+    } else if (number.isEmpty) {
+      // Check if the field is empty
+      return 'Please enter your $paymentMethod number.';
+    } else {
+      // For unsupported payment methods or fallback
+      return 'Invalid payment method selected.';
     }
 
-    // Validate length for mobile numbers
-    if (number.length != 10) {
-      return '$paymentMethod number must be exactly 10 digits long (e.g., ${prefixes[0]}1234567).';
-    }
-  } else if (number.isEmpty) {
-    // Check if the field is empty
-    return 'Please enter your $paymentMethod number.';
-  } else {
-    // For unsupported payment methods or fallback
-    return 'Invalid payment method selected.';
+    return null; // Return null if validation passes
   }
-
-  return null; // Return null if validation passes
-}
-
 }

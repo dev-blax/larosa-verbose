@@ -680,6 +680,9 @@ class _PostComponentState extends State<PostComponent>
                                 double.parse(widget.post['price'].toString());
                             String names = widget.post['names'];
                             int postId = widget.post['id'];
+                            String? reservationType = widget.post['reservation_type'];
+  int? adults = widget.post['adults'];
+  bool? breakfastIncluded = widget.post['breakfast_included'];
 
                             Navigator.push(
                               context,
@@ -688,7 +691,9 @@ class _PostComponentState extends State<PostComponent>
                                     username: username,
                                     price: price,
                                     names: names,
-                                    postId: postId),
+                                    postId: postId, reservationType: reservationType,
+        adults: adults,
+        breakfastIncluded: breakfastIncluded,),
                               ),
                             );
                           },

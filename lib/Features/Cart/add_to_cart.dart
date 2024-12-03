@@ -759,6 +759,7 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:gap/gap.dart';
 import 'package:geocoding/geocoding.dart';
@@ -790,12 +791,19 @@ class AddToCartScreen extends StatefulWidget {
   final String names;
   final int postId;
 
+  final String? reservationType; // Nullable because it may be null
+  final int? adults; // Nullable
+  final bool? breakfastIncluded; // Nullable
+
   const AddToCartScreen({
     super.key,
     required this.username,
     required this.price,
     required this.names,
     required this.postId,
+    this.reservationType,
+    this.adults,
+    this.breakfastIncluded,
   });
 
   @override
@@ -823,6 +831,17 @@ class _AddToCartScreenState extends State<AddToCartScreen> {
 
   double? _exchangeRate;
   String _deliveryCostTSh = 'Calculating...';
+
+  int adults = 1; // Default value for adults
+  int children = 0; // Default value for children
+
+  DateTime? checkInDate; // Nullable variable for the check-in date
+  DateTime? checkOutDate; // Nullable variable for the check-out date
+
+  bool get isReservation =>
+      widget.reservationType == null;
+      // bool get isReservation =>
+      // widget.reservationType != null && widget.reservationType!.isNotEmpty;
 
   // Future<void> _getCurrentLocation() async {
   //   bool serviceEnabled;
@@ -1206,12 +1225,114 @@ class _AddToCartScreenState extends State<AddToCartScreen> {
 //   }
 // }
 
+  final TextEditingController _fullNameController = TextEditingController();
+  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+  String? _errorMessage;
+
+  void _validateAndSetFullName(String value) {
+    if (value.trim().split(' ').length < 2) {
+      setState(() {
+        _errorMessage = "Please enter both first and last name.";
+      });
+    } else {
+      setState(() {
+        _errorMessage = null;
+      });
+    }
+  }
+
   @override
   void initState() {
     super.initState();
     // _getCurrentLocation();
     _fetchExchangeRate();
     _getCurrentLocation().then((_) => fetchTransportCost());
+
+    // Optionally, set default values
+    checkInDate = DateTime.now();
+    checkOutDate = DateTime.now().add(const Duration(days: 1));
+  }
+
+  Future<void> _pickCheckInDate(BuildContext context) async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: checkInDate ?? DateTime.now(),
+      firstDate: DateTime.now(),
+      lastDate: DateTime(2100),
+    );
+
+    if (picked != null) {
+      setState(() {
+        checkInDate = picked;
+
+        // Adjust check-out date if it lags behind the new check-in date
+        if (checkOutDate == null || checkOutDate!.isBefore(checkInDate!)) {
+          checkOutDate = checkInDate!.add(const Duration(days: 1));
+
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                'Check-Out Date adjusted to ${getFormattedDate(checkOutDate)} to ensure it follows Check-In Date.',
+                style: const TextStyle(color: Colors.white),
+              ),
+              backgroundColor: Colors.orange,
+              duration: const Duration(seconds: 9),
+            ),
+          );
+        }
+      });
+    }
+  }
+
+// Future<void> _pickCheckOutDate(BuildContext context) async {
+//   final DateTime? picked = await showDatePicker(
+//     context: context,
+//     initialDate: checkOutDate ?? DateTime.now().add(const Duration(days: 1)),
+//     firstDate: checkInDate ?? DateTime.now(),
+//     lastDate: DateTime(2100),
+//   );
+
+//   if (picked != null && picked != checkOutDate) {
+//     setState(() {
+//       checkOutDate = picked;
+//     });
+//   }
+// }
+
+  Future<void> _pickCheckOutDate(BuildContext context) async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: checkOutDate ?? DateTime.now().add(const Duration(days: 1)),
+      firstDate: checkInDate ?? DateTime.now(),
+      lastDate: DateTime(2100),
+    );
+
+    if (picked != null) {
+      setState(() {
+        if (picked.isBefore(checkInDate!)) {
+          // Ensure check-out date is at least 1 day after the check-in date
+          checkOutDate = checkInDate!.add(const Duration(days: 1));
+
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                'Check-Out Date must be after Check-In Date. Adjusted to ${getFormattedDate(checkOutDate)}.',
+                style: const TextStyle(color: Colors.white),
+              ),
+              backgroundColor: Colors.orange,
+              duration: const Duration(seconds: 3),
+            ),
+          );
+        } else {
+          checkOutDate = picked;
+        }
+      });
+    }
+  }
+
+  String getFormattedDate(DateTime? date) {
+    if (date == null) return 'Not Set';
+    return DateFormat('yyyy-MM-dd').format(date);
   }
 
   @override
@@ -1297,28 +1418,30 @@ class _AddToCartScreenState extends State<AddToCartScreen> {
                           : Colors.grey[400]!,
                     ),
                     children: [
+                      if (isReservation)
+                        TableRow(
+                          children: [
+                            const Padding(
+                              padding: EdgeInsets.all(8.0),
+                              child: Text(
+                                'Delivery Location',
+                                style: TextStyle(fontWeight: FontWeight.bold),
+                              ),
+                            ),
+                            Padding(
+                              padding: const EdgeInsets.all(8.0),
+                              child: Text(currentStreetName ?? 'N/A'),
+                            ),
+                          ],
+                        ),
                       TableRow(
                         children: [
-                          const Padding(
-                            padding: EdgeInsets.all(8.0),
-                            child: Text(
-                              'Delivery Location',
-                              style: TextStyle(fontWeight: FontWeight.bold),
-                            ),
-                          ),
                           Padding(
                             padding: const EdgeInsets.all(8.0),
-                            child: Text(currentStreetName ?? 'N/A'),
-                          ),
-                        ],
-                      ),
-                      TableRow(
-                        children: [
-                          const Padding(
-                            padding: EdgeInsets.all(8.0),
                             child: Text(
-                              'Quantity',
-                              style: TextStyle(fontWeight: FontWeight.bold),
+                              isReservation ? 'Quantity' : 'Rooms',
+                              style:
+                                  const TextStyle(fontWeight: FontWeight.bold),
                             ),
                           ),
                           Padding(
@@ -1327,63 +1450,257 @@ class _AddToCartScreenState extends State<AddToCartScreen> {
                           ),
                         ],
                       ),
+                      if (!isReservation)
+                      // Adults
                       TableRow(
                         children: [
                           const Padding(
                             padding: EdgeInsets.all(8.0),
                             child: Text(
-                              'Estimated Time',
+                              'Adults',
+                              style: TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Slider(
+                                  value: adults.toDouble(),
+                                  min: 1,
+                                  max: 20,
+                                  divisions: 20,
+                                  label: adults.toString(),
+                                  activeColor: Theme.of(context).brightness ==
+                                          Brightness.dark
+                                      ? Colors.white
+                                      : Colors
+                                          .black, // Set active color based on theme
+                                  inactiveColor: Theme.of(context).brightness ==
+                                          Brightness.dark
+                                      ? Colors.white.withOpacity(0.5)
+                                      : Colors.black.withOpacity(
+                                          0.5), // Set inactive color based on theme
+                                  thumbColor: Theme.of(context).brightness ==
+                                          Brightness.dark
+                                      ? Colors.white
+                                      : Colors
+                                          .black, // Set thumb color based on theme
+                                  onChanged: (value) {
+                                    setState(() {
+                                      adults = value.toInt();
+                                    });
+
+                                    // Trigger haptic feedback on value change
+                                    HapticFeedback.vibrate();
+                                  },
+                                ),
+                              ),
+                              Padding(
+                                padding: const EdgeInsets.only(right: 8.0),
+                                child: Text('$adults'),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                      
+                      if (!isReservation)
+                      // Children
+                      TableRow(
+                        children: [
+                          const Padding(
+                            padding: EdgeInsets.all(8.0),
+                            child: Text(
+                              'Children',
+                              style: TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Slider(
+                                  value: children.toDouble(),
+                                  min: 0,
+                                  max: 20,
+                                  divisions: 20,
+                                  label: children.toString(),
+                                  activeColor: Theme.of(context).brightness ==
+                                          Brightness.dark
+                                      ? Colors.white
+                                      : Colors
+                                          .black, // Active color based on theme
+                                  inactiveColor: Theme.of(context).brightness ==
+                                          Brightness.dark
+                                      ? Colors.white.withOpacity(0.5)
+                                      : Colors.black.withOpacity(
+                                          0.5), // Inactive color based on theme
+                                  thumbColor: Theme.of(context).brightness ==
+                                          Brightness.dark
+                                      ? Colors.white
+                                      : Colors
+                                          .black, // Thumb color based on theme
+                                  onChanged: (value) {
+                                    setState(() {
+                                      children = value.toInt();
+                                    });
+
+                                    // Trigger haptic feedback on value change
+                                    HapticFeedback.vibrate();
+                                  },
+                                ),
+                              ),
+                              Padding(
+                                padding: const EdgeInsets.only(right: 8.0),
+                                child: Text('$children'),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+
+if (!isReservation)
+                      TableRow(
+                        children: [
+                          const Padding(
+                            padding: EdgeInsets.all(8.0),
+                            child: Text(
+                              'Check-In Date',
                               style: TextStyle(fontWeight: FontWeight.bold),
                             ),
                           ),
                           Padding(
                             padding: const EdgeInsets.all(8.0),
-                            child: Text(
-                              estimatedTime.contains('min')
-                                  ? formatEstimatedTime(estimatedTime)
-                                  : 'Calculating...',
+                            child: InkWell(
+                              onTap: () => _pickCheckInDate(context),
+                              child: Row(
+                                children: [
+                                  const Icon(
+                                    Icons.calendar_today_outlined,
+                                    // color: checkInDate == null ? Colors.blue : Colors.black,
+                                    size: 18,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    checkInDate == null
+                                        ? 'Tap to Set'
+                                        : getFormattedDate(checkInDate),
+                                    style: const TextStyle(
+                                      // color: checkInDate == null ? Colors.blue : Colors.black,
+                                      fontSize: 14,
+                                      // fontWeight: checkInDate == null ? FontWeight.bold : FontWeight.normal,
+                                      // decoration: checkInDate == null
+                                      //     ? TextDecoration.underline
+                                      //     : TextDecoration.none,
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
                         ],
                       ),
+
+if (!isReservation)
                       TableRow(
                         children: [
                           const Padding(
                             padding: EdgeInsets.all(8.0),
                             child: Text(
-                              'Delivery Cost (Tsh)',
+                              'Check-Out Date',
                               style: TextStyle(fontWeight: FontWeight.bold),
                             ),
                           ),
                           Padding(
-                            padding: const EdgeInsets.symmetric(
-                                vertical: 8.0, horizontal: 4),
-                            // child: Text(
-                            //   // Display the converted delivery cost
-                            //   (deliveryCost.contains('Tsh') &&
-                            //           _exchangeRate != null)
-                            //       ? 'Tsh ${(double.parse(deliveryCost.replaceAll('Tsh ', '').trim()) * _exchangeRate!).toStringAsFixed(2)}'
-                            //       : 'Calculating...',
-                            // ),
-                            child: Text(
-                              // Display the formatted delivery cost
-                              (deliveryCost.contains('Tsh') &&
-                                      _exchangeRate != null)
-                                  ? NumberFormat.currency(
-                                      locale: 'sw_TZ',
-                                      symbol: '',
-                                      decimalDigits: 2, // No decimal points
-                                    ).format(
-                                      double.parse(deliveryCost
-                                              .replaceAll('Tsh ', '')
-                                              .trim()) *
-                                          _exchangeRate!,
-                                    )
-                                  : 'Calculating...',
+                            padding: const EdgeInsets.all(8.0),
+                            child: InkWell(
+                              onTap: () => _pickCheckOutDate(context),
+                              child: Row(
+                                children: [
+                                  const Icon(
+                                    Icons.calendar_today_outlined,
+                                    // color: checkOutDate == null ? Colors.white : Colors.black,
+                                    size: 18,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    checkOutDate == null
+                                        ? 'Tap to Set'
+                                        : getFormattedDate(checkOutDate),
+                                    style: const TextStyle(
+                                      // color: checkOutDate == null ? Colors.white : Colors.black,
+                                      fontSize: 14,
+                                      // fontWeight: checkOutDate == null ? FontWeight.bold : FontWeight.normal,
+                                      // decoration: checkOutDate == null
+                                      //     ? TextDecoration.underline
+                                      //     : TextDecoration.none,
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
                         ],
                       ),
+
+                      if (isReservation)
+                        TableRow(
+                          children: [
+                            const Padding(
+                              padding: EdgeInsets.all(8.0),
+                              child: Text(
+                                'Estimated Time',
+                                style: TextStyle(fontWeight: FontWeight.bold),
+                              ),
+                            ),
+                            Padding(
+                              padding: const EdgeInsets.all(8.0),
+                              child: Text(
+                                estimatedTime.contains('min')
+                                    ? formatEstimatedTime(estimatedTime)
+                                    : 'Calculating...',
+                              ),
+                            ),
+                          ],
+                        ),
+                      if (isReservation)
+                        TableRow(
+                          children: [
+                            const Padding(
+                              padding: EdgeInsets.all(8.0),
+                              child: Text(
+                                'Delivery Cost (Tsh)',
+                                style: TextStyle(fontWeight: FontWeight.bold),
+                              ),
+                            ),
+                            Padding(
+                              padding: const EdgeInsets.symmetric(
+                                  vertical: 8.0, horizontal: 4),
+                              // child: Text(
+                              //   // Display the converted delivery cost
+                              //   (deliveryCost.contains('Tsh') &&
+                              //           _exchangeRate != null)
+                              //       ? 'Tsh ${(double.parse(deliveryCost.replaceAll('Tsh ', '').trim()) * _exchangeRate!).toStringAsFixed(2)}'
+                              //       : 'Calculating...',
+                              // ),
+                              child: Text(
+                                // Display the formatted delivery cost
+                                (deliveryCost.contains('Tsh') &&
+                                        _exchangeRate != null)
+                                    ? NumberFormat.currency(
+                                        locale: 'sw_TZ',
+                                        symbol: '',
+                                        decimalDigits: 2, // No decimal points
+                                      ).format(
+                                        double.parse(deliveryCost
+                                                .replaceAll('Tsh ', '')
+                                                .trim()) *
+                                            _exchangeRate!,
+                                      )
+                                    : 'Calculating...',
+                              ),
+                            ),
+                          ],
+                        ),
                       TableRow(
                         children: [
                           const Padding(
@@ -1405,43 +1722,44 @@ class _AddToCartScreenState extends State<AddToCartScreen> {
                           ),
                         ],
                       ),
-                      TableRow(
-                        children: [
-                          const Padding(
-                            padding: EdgeInsets.all(8.0),
-                            child: Text(
-                              'Total Price (Tsh)',
-                              style: TextStyle(fontWeight: FontWeight.bold),
+                      if (isReservation)
+                        TableRow(
+                          children: [
+                            const Padding(
+                              padding: EdgeInsets.all(8.0),
+                              child: Text(
+                                'Total Price (Tsh)',
+                                style: TextStyle(fontWeight: FontWeight.bold),
+                              ),
                             ),
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.symmetric(
-                                vertical: 8.0, horizontal: 4),
-                            child: Text(
-                              deliveryCost.contains('Tsh') &&
-                                      _exchangeRate != null
-                                  ? NumberFormat.currency(
-                                      locale: 'sw_TZ',
-                                      symbol:
-                                          '', // Omit the symbol here to manually add "TSh"
-                                      decimalDigits:
-                                          2, // Two decimal points for formatting
-                                    ).format(
-                                      widget.price * itemCount +
-                                          double.parse(deliveryCost
-                                              .replaceAll('Tsh ', '')
-                                              .trim()) + // Add base delivery cost
-                                          double.parse(deliveryCost
-                                                  .replaceAll('Tsh ', '')
-                                                  .trim()) *
-                                              _exchangeRate!, // Add exchange-rate-adjusted delivery cost
-                                    )
-                                  : 'Calculating...',
-                              style: const TextStyle(fontSize: 15),
+                            Padding(
+                              padding: const EdgeInsets.symmetric(
+                                  vertical: 8.0, horizontal: 4),
+                              child: Text(
+                                deliveryCost.contains('Tsh') &&
+                                        _exchangeRate != null
+                                    ? NumberFormat.currency(
+                                        locale: 'sw_TZ',
+                                        symbol:
+                                            '', // Omit the symbol here to manually add "TSh"
+                                        decimalDigits:
+                                            2, // Two decimal points for formatting
+                                      ).format(
+                                        widget.price * itemCount +
+                                            double.parse(deliveryCost
+                                                .replaceAll('Tsh ', '')
+                                                .trim()) + // Add base delivery cost
+                                            double.parse(deliveryCost
+                                                    .replaceAll('Tsh ', '')
+                                                    .trim()) *
+                                                _exchangeRate!, // Add exchange-rate-adjusted delivery cost
+                                      )
+                                    : 'Calculating...',
+                                style: const TextStyle(fontSize: 15),
+                              ),
                             ),
-                          ),
-                        ],
-                      ),
+                          ],
+                        ),
                     ],
                   ),
 
@@ -1511,50 +1829,51 @@ class _AddToCartScreenState extends State<AddToCartScreen> {
 
                 const Divider(),
                 const Gap(0),
-
-                // Delivery Destination TextField
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text(
-                      'Delivery Destination',
-                      style:
-                          TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.info_outline, color: Colors.grey),
-                      onPressed: () {
-                        showDialog(
-                          context: context,
-                          builder: (BuildContext context) {
-                            return AlertDialog(
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(15.0),
-                              ),
-                              title: const Text('Location Information'),
-                              content: const Text(
-                                'When location permission is granted:\n\n'
-                                '1. If no delivery destination is selected, your current location will be used automatically.\n'
-                                '2. If both a delivery destination and your current location are available, the delivery destination will be used.\n'
-                                '3. If your current location is not available, you will need to search for and select a delivery destination manually.\n\n'
-                                'By allowing location permission, the app can auto-fill your location for a seamless experience.',
-                                style: TextStyle(fontSize: 14),
-                              ),
-                              actions: [
-                                TextButton(
-                                  onPressed: () {
-                                    Navigator.of(context).pop();
-                                  },
-                                  child: const Text('OK'),
+                if (isReservation)
+                  // Delivery Destination TextField
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        'Delivery Destination',
+                        style: TextStyle(
+                            fontSize: 15, fontWeight: FontWeight.bold),
+                      ),
+                      IconButton(
+                        icon:
+                            const Icon(Icons.info_outline, color: Colors.grey),
+                        onPressed: () {
+                          showDialog(
+                            context: context,
+                            builder: (BuildContext context) {
+                              return AlertDialog(
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(15.0),
                                 ),
-                              ],
-                            );
-                          },
-                        );
-                      },
-                    ),
-                  ],
-                ),
+                                title: const Text('Location Information'),
+                                content: const Text(
+                                  'When location permission is granted:\n\n'
+                                  '1. If no delivery destination is selected, your current location will be used automatically.\n'
+                                  '2. If both a delivery destination and your current location are available, the delivery destination will be used.\n'
+                                  '3. If your current location is not available, you will need to search for and select a delivery destination manually.\n\n'
+                                  'By allowing location permission, the app can auto-fill your location for a seamless experience.',
+                                  style: TextStyle(fontSize: 14),
+                                ),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () {
+                                      Navigator.of(context).pop();
+                                    },
+                                    child: const Text('OK'),
+                                  ),
+                                ],
+                              );
+                            },
+                          );
+                        },
+                      ),
+                    ],
+                  ),
 
                 const Gap(10),
                 // TypeAheadField<Map<String, String>>(
@@ -1638,67 +1957,75 @@ class _AddToCartScreenState extends State<AddToCartScreen> {
                 //   },
                 //   controller: _typeAheadController,
                 // ),
-
-                TypeAheadField<Map<String, String>>(
-                  suggestionsCallback: _getPlaceSuggestions,
-                  itemBuilder: (context, Map<String, String> suggestion) {
-                    if (suggestion['place_id'] == '') {
-                      return Center(
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 10.0),
-                          child: Text(
-                            suggestion['description']!,
-                            style: const TextStyle(
-                              fontSize: 14,
-                              color: Colors.grey,
-                              fontStyle: FontStyle.italic,
+                if (isReservation)
+                  TypeAheadField<Map<String, String>>(
+                    suggestionsCallback: _getPlaceSuggestions,
+                    itemBuilder: (context, Map<String, String> suggestion) {
+                      if (suggestion['place_id'] == '') {
+                        return Center(
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 10.0),
+                            child: Text(
+                              suggestion['description']!,
+                              style: const TextStyle(
+                                fontSize: 14,
+                                color: Colors.grey,
+                                fontStyle: FontStyle.italic,
+                              ),
+                              textAlign: TextAlign.center,
                             ),
-                            textAlign: TextAlign.center,
                           ),
+                        );
+                      }
+                      return ListTile(
+                        title: Text(suggestion['description']!),
+                      );
+                    },
+                    onSelected: (Map<String, String> suggestion) async {
+                      if (suggestion['place_id'] != '') {
+                        _typeAheadController.text = suggestion['description']!;
+                        final placeId = suggestion['place_id']!;
+                        await _getPlaceDetails(placeId);
+
+                        setState(() {
+                          currentStreetName = suggestion['description'];
+                          selectedStreetName = suggestion['description'];
+                        });
+
+                        fetchTransportCost(); // Fetch transport cost for the new destination
+                      } else {
+                        LogService.logInfo(
+                            'Invalid selection: ${suggestion['description']}');
+                      }
+                    },
+                    direction: VerticalDirection.up,
+                    builder: (context, controller, focusNode) {
+                      return TextField(
+                        controller: controller,
+                        focusNode: focusNode,
+                        decoration: const InputDecoration(
+                          labelText: 'Enter delivery destination',
+                          border: OutlineInputBorder(),
+                          prefixIcon: Icon(Iconsax.location),
                         ),
                       );
-                    }
-                    return ListTile(
-                      title: Text(suggestion['description']!),
-                    );
-                  },
-                  onSelected: (Map<String, String> suggestion) async {
-                    if (suggestion['place_id'] != '') {
-                      _typeAheadController.text = suggestion['description']!;
-                      final placeId = suggestion['place_id']!;
-                      await _getPlaceDetails(placeId);
-
-                      setState(() {
-                        currentStreetName = suggestion['description'];
-                        selectedStreetName = suggestion['description'];
-                      });
-
-                      fetchTransportCost(); // Fetch transport cost for the new destination
-                    } else {
-                      LogService.logInfo(
-                          'Invalid selection: ${suggestion['description']}');
-                    }
-                  },
-                  direction: VerticalDirection.up,
-                  builder: (context, controller, focusNode) {
-                    return TextField(
-                      controller: controller,
-                      focusNode: focusNode,
-                      decoration: const InputDecoration(
-                        labelText: 'Enter delivery destination',
-                        border: OutlineInputBorder(),
-                        prefixIcon: Icon(Iconsax.location),
-                      ),
-                    );
-                  },
-                  controller: _typeAheadController,
+                    },
+                    controller: _typeAheadController,
+                  ),
+                if (isReservation) const Gap(10),
+                if (isReservation) const Divider(),
+                if (isReservation) const Gap(5),
+if(!isReservation)
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: fullNameInput(
+                    controller: _fullNameController,
+                    onChanged: _validateAndSetFullName,
+                    errorMessage: _errorMessage,
+                  ),
                 ),
-
-                const Gap(10),
-
+if (!isReservation)
                 const Divider(),
-
-                const Gap(5),
 
                 buildQuantityAdjustmentRow(),
 
@@ -1746,6 +2073,38 @@ class _AddToCartScreenState extends State<AddToCartScreen> {
                       child: deliveryCost.contains('Tsh')
                           ? buildWideGradientButton(
                               onTap: () {
+
+                                if(!isReservation){
+                                // Validate Full Name for at least two words
+                                final fullName =
+                                    _fullNameController.text.trim();
+                                if (fullName.isEmpty ||
+                                    fullName.split(' ').length < 2) {
+                                  setState(() {
+                                    _errorMessage =
+                                        "Please enter your full name (first and last name).";
+                                  });
+
+                                  // Optionally show a SnackBar for better feedback
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text(
+                                        'Please provide your full name before proceeding.',
+                                        style: TextStyle(color: Colors.white),
+                                      ),
+                                      backgroundColor: Colors.red,
+                                    ),
+                                  );
+
+                                  return; // Exit the function if validation fails
+                                } else {
+                                  setState(() {
+                                    _errorMessage =
+                                        null; // Clear error message if validation passes
+                                  });
+                                }
+                                }
+
                                 final totalPrice = widget.price * itemCount +
                                     double.parse(deliveryCost
                                         .replaceAll('Tsh ', '')
@@ -1767,20 +2126,27 @@ class _AddToCartScreenState extends State<AddToCartScreen> {
                                     return FractionallySizedBox(
                                       heightFactor: 0.95,
                                       child: PaymentMethodModal(
-                                        currentPosition: _currentPosition,
-                                        deliveryDestination: selectedStreetName,
-                                        deliveryLatitude: latitude,
-                                        deliveryLongitude: longitude,
-                                        totalPrice: totalPrice,
-                                        quantity: itemCount,
-                                        postId: widget.postId,
-                                      ),
+                                          currentPosition: _currentPosition,
+                                          deliveryDestination:
+                                              selectedStreetName,
+                                          deliveryLatitude: latitude,
+                                          deliveryLongitude: longitude,
+                                          totalPrice: isReservation
+                                              ? totalPrice
+                                              : widget.price * itemCount,
+                                          quantity: itemCount,
+                                          postId: widget.postId,
+                                          adults: adults, // Pass adults
+                                          children: children, // Pass children
+                                          fullName: _fullNameController.text
+                                              .trim(), // Pass full name
+                                          isReservation: !isReservation),
                                     );
                                   },
                                 );
                               },
                               label:
-                                  'Buy Now', // Show label when deliveryCost is loaded
+                                  'Pay Now', // Show label when deliveryCost is loaded
                               startColor: LarosaColors.secondary,
                               endColor: LarosaColors.purple,
                             )
@@ -2024,4 +2390,41 @@ class _AddToCartScreenState extends State<AddToCartScreen> {
       ),
     );
   }
+}
+
+Widget fullNameInput({
+  required TextEditingController controller,
+  required Function(String) onChanged,
+  String? errorMessage,
+}) {
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      const Text(
+        "Full Name",
+        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+      ),
+      const SizedBox(height: 8),
+      TextField(
+        controller: controller,
+        decoration: InputDecoration(
+          hintText: "Enter your full name",
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(8),
+          ),
+          prefixIcon: const Icon(Icons.person),
+          // errorText: errorMessage,
+        ),
+        onChanged: onChanged,
+      ),
+      if (errorMessage != null)
+        Padding(
+          padding: const EdgeInsets.only(top: 8.0),
+          child: Text(
+            errorMessage,
+            style: const TextStyle(color: Colors.red, fontSize: 12),
+          ),
+        ),
+    ],
+  );
 }

@@ -24,6 +24,11 @@ class PaymentMethodModal extends StatelessWidget {
   final int quantity;
   final int postId;
 
+  final int adults; // New parameter
+  final int children; // New parameter
+  final String fullName; // New parameter
+  final bool isReservation; // New parameter
+
   PaymentMethodModal({
     super.key,
     required this.currentPosition,
@@ -33,6 +38,11 @@ class PaymentMethodModal extends StatelessWidget {
     required this.totalPrice,
     required this.quantity,
     required this.postId,
+
+    required this.adults, // Initialize in constructor
+    required this.children, // Initialize in constructor
+    required this.fullName, // Initialize in constructor
+    required this.isReservation, // Initialize in constructor
   });
 
   @override
@@ -124,6 +134,11 @@ class PaymentMethodModal extends StatelessWidget {
                                 currentLongitude: deliveryLongitude == null
                                     ? currentPosition?.longitude
                                     : null,
+
+                                    adults: adults, // Pass adults parameter
+  children: children, // Pass children parameter
+  fullName: fullName, // Pass fullName parameter
+  isReservation: isReservation, // Pass isReservation parameter
                               ),
                             );
                           },
@@ -226,6 +241,11 @@ class PaymentMethodModal extends StatelessWidget {
                                 currentLongitude: deliveryLongitude == null
                                     ? currentPosition?.longitude
                                     : null,
+
+                                    adults: adults, // Pass adults parameter
+  children: children, // Pass children parameter
+  fullName: fullName, // Pass fullName parameter
+  isReservation: isReservation, // Pass isReservation parameter
                               ),
                             );
                           },
