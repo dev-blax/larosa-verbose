@@ -764,6 +764,7 @@ import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:gap/gap.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:go_router/go_router.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:iconsax/iconsax.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter_typeahead/flutter_typeahead.dart';
@@ -1334,6 +1335,38 @@ class _AddToCartScreenState extends State<AddToCartScreen> {
     if (date == null) return 'Not Set';
     return DateFormat('yyyy-MM-dd').format(date);
   }
+
+  Future<Map<String, String>> calculateTimeAndDistance(
+    LatLng pickup, LatLng destination) async {
+  const String apiKey = 'AIzaSyA30rAh34FrfL-71H0wdZpdtNB-MkZ8u3A';
+  final String url =
+      'https://maps.googleapis.com/maps/api/distancematrix/json?origins=${pickup.latitude},${pickup.longitude}&destinations=${destination.latitude},${destination.longitude}&key=$apiKey';
+
+  try {
+    final response = await http.get(Uri.parse(url));
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+
+      final distanceText = data['rows'][0]['elements'][0]['distance']['text'];
+      final durationText = data['rows'][0]['elements'][0]['duration']['text'];
+
+      return {
+        'distance': distanceText,
+        'duration': durationText,
+      };
+    } else {
+      throw Exception('Failed to fetch distance and duration');
+    }
+  } catch (e) {
+    print('Error calculating distance and duration: $e');
+    return {
+      'distance': 'N/A',
+      'duration': 'N/A',
+    };
+  }
+}
+
 
   @override
   Widget build(BuildContext context) {
