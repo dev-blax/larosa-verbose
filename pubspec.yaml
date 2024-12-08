@@ -84,6 +84,7 @@ dependencies:
   flutter_sound: ^9.11.2
   avatar_glow: ^3.0.1
   flutter_local_notifications: ^18.0.1
+  recase: ^4.1.0
   
 
 dev_dependencies:

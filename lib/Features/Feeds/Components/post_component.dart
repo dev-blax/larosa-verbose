@@ -188,271 +188,6 @@ class _PostComponentState extends State<PostComponent>
     }
   }
 
-  // Widget _mediaAndIntro() {
-  //   List<String> images = [];
-  //   for (var image in widget.post['names'].split(',')) {
-  //     images.add(image);
-  //   }
-  //   return GestureDetector(
-  //     onDoubleTap: () async {
-  //       if (!_isLiked) {
-  //         setState(() {
-  //           _isLiked = true;
-  //           _likesCount++;
-  //         });
-  //         await _likePost();
-  //       }
-  //     },
-  //     child: Stack(
-  //       children: [
-  //         CenterSnapCarousel(
-  //           mediaUrls: images,
-  //           isPlayingState: widget.isPlaying,
-  //           postHeight: widget.post['height'], // Pass the height here
-  //         ),
-  //         Positioned(
-  //           bottom: 0,
-  //           left: 0,
-  //           height: 150,
-  //           width: MediaQuery.of(context).size.width,
-  //           child: !_isLiked
-  //               ? Container(
-  //                   decoration: const BoxDecoration(
-  //                     gradient: LinearGradient(
-  //                       colors: [
-  //                         Colors.black,
-  //                         Colors.transparent,
-  //                       ],
-  //                       begin: Alignment.bottomCenter,
-  //                       end: Alignment.topCenter,
-  //                     ),
-  //                   ),
-  //                 )
-  //               : Animate(
-  //                   effects: const [
-  //                     SlideEffect(
-  //                       begin: Offset(.4, 0),
-  //                       end: Offset(0, 0),
-  //                       curve: Curves.elasticOut,
-  //                       duration: Duration(seconds: 1),
-  //                     )
-  //                   ],
-  //                   child: Container(
-  //                     decoration: const BoxDecoration(
-  //                       gradient: LinearGradient(
-  //                         colors: [
-  //                           Color.fromRGBO(133, 16, 7, 1),
-  //                           Colors.transparent
-  //                         ],
-  //                         begin: Alignment.bottomCenter,
-  //                         end: Alignment.topCenter,
-  //                       ),
-  //                     ),
-  //                   ),
-  //                 ),
-  //         ),
-  //         Positioned(
-  //           bottom: 10,
-  //           left: 5,
-  //           right: 5,
-  //           child: Row(
-  //             mainAxisAlignment: MainAxisAlignment.spaceBetween,
-  //             children: [
-  //               Row(
-  //                 children: [
-  //                   Row(
-  //                     children: [
-  //                       InkWell(
-  //                         onTap: () {
-  //                           if (widget.post['profileId'] ==
-  //                               AuthService.getProfileId()) {
-  //                             context.pushNamed('homeprofile');
-  //                             return;
-  //                           }
-
-  //                           double accountType =
-  //                               widget.post['accountType'] == 'BUSINESS'
-  //                                   ? 2
-  //                                   : 1;
-
-  //                           context.push(
-  //                             '/profilevisit/?profileId=${widget.post['profileId']}&accountType=$accountType',
-  //                           );
-  //                         },
-  //                         child: widget.post['profile_picture'] != null
-  //                             ? CircleAvatar(
-  //                                 backgroundImage: CachedNetworkImageProvider(
-  //                                   widget.post['profile_picture'],
-  //                                 ),
-  //                               )
-  //                             : ClipOval(
-  //                                 child: Image.asset(
-  //                                   'assets/images/EXPLORE.png',
-  //                                   height: 43,
-  //                                   width: 43,
-  //                                   fit: BoxFit.cover,
-  //                                 ),
-  //                               ),
-  //                       ),
-
-  //                       const Gap(10),
-  //                       // Name and Location
-  //                       Column(
-  //                         crossAxisAlignment: CrossAxisAlignment.start,
-  //                         children: [
-  //                           GestureDetector(
-  //                             onTap: () {
-  //                               if (widget.post['profileId'] ==
-  //                                   AuthService.getProfileId()) {
-  //                                 context.pushNamed('homeprofile');
-  //                                 return;
-  //                               }
-
-  //                               double accountType =
-  //                                   widget.post['accountType'] == 'BUSINESS'
-  //                                       ? 2
-  //                                       : 1;
-
-  //                               context.push(
-  //                                 '/profilevisit/?profileId=${widget.post['profileId']}&accountType=$accountType',
-  //                               );
-  //                             },
-  //                             child: Row(
-  //                               children: [
-  //                                 Text(
-  //                                   widget.post['name'].toString(),
-  //                                   style: const TextStyle(
-  //                                     color: Colors.white,
-  //                                     fontSize: 12,
-  //                                     fontWeight: FontWeight.w600,
-  //                                   ),
-  //                                 ),
-  //                                 const Gap(5),
-  //                                 if (widget.post['verification_status'] != 1)
-  //                                   SvgPicture.asset(
-  //                                     'assets/svg_icons/IcSharpVerified.svg',
-  //                                     colorFilter: const ColorFilter.mode(
-  //                                       Colors.white,
-  //                                       BlendMode.srcIn,
-  //                                     ),
-  //                                     height: 16,
-  //                                   ),
-  //                               ],
-  //                             ),
-  //                           ),
-  //                           Row(
-  //                             children: [
-  //                               const Icon(
-  //                                 Iconsax.location5,
-  //                                 color: Colors.white,
-  //                                 size: 15,
-  //                               ),
-  //                               const SizedBox(
-  //                                 width: 3,
-  //                               ),
-  //                               Text(
-  //                                 widget.post['country'],
-  //                                 style: const TextStyle(
-  //                                   color: Colors.white,
-  //                                   fontSize: 12,
-  //                                 ),
-  //                               )
-  //                             ],
-  //                           )
-  //                         ],
-  //                       ),
-  //                     ],
-  //                   ),
-  //                 ],
-  //               ),
-  //               // Display the Container only if accountType is 'BUSINESS'
-  //               if (widget.post['accountType'] == 'BUSINESS' &&
-  //                   widget.post['price'] != null)
-  //                 Row(
-  //                   children: [
-  //                     // Price and Rating Column
-  //                     Column(
-  //                       children: [
-  //                         // 'Tsh ${widget.post['price'].toString()}',
-  //                         Text(
-  //                           'Tsh ${HelperFunctions.formatPrice(widget.post['price']).toString()}',
-  //                           style: const TextStyle(
-  //                             fontWeight: FontWeight.bold,
-  //                             fontSize: 13,
-  //                             color: Colors.white,
-  //                           ),
-  //                         ),
-  //                         Row(
-  //                           mainAxisAlignment: MainAxisAlignment.center,
-  //                           children: [
-  //                             const Icon(
-  //                               Iconsax.star1,
-  //                               color: Colors.yellow,
-  //                               size: 16,
-  //                             ),
-  //                             const SizedBox(width: 4),
-  //                             Text(
-  //                               widget.post['rate']
-  //                                   .toString(), // Replace with actual rating value
-  //                               style: const TextStyle(
-  //                                 fontSize: 12,
-  //                                 color: Colors.white,
-  //                               ),
-  //                             ),
-  //                           ],
-  //                         ),
-  //                       ],
-  //                     ),
-  //                     const SizedBox(width: 10),
-  //                     // "Add to Cart" Button Container
-  //                     Container(
-  //                       width:
-  //                           41, // Set the width and height to be equal for a perfect circle
-  //                       height: 41,
-  //                       decoration: BoxDecoration(
-  //                         shape:
-  //                             BoxShape.circle, // Makes the container a circle
-  //                         border: Border.all(
-  //                           color: Colors.grey, // Set the border color here
-  //                           width: 1.0, // Set the border width
-  //                         ),
-  //                       ),
-  //                       child: IconButton(
-  //                         onPressed: () {
-  //                           String username = widget.post['username'];
-  //                           double price =
-  //                               double.parse(widget.post['price'].toString());
-  //                           String names = widget.post['names'];
-  //                           int postId = widget.post['id'];
-
-  //                           Navigator.push(
-  //                             context,
-  //                             MaterialPageRoute(
-  //                               builder: (context) => AddToCartScreen(
-  //                                   username: username,
-  //                                   price: price,
-  //                                   names: names,
-  //                                   postId: postId),
-  //                             ),
-  //                           );
-  //                         },
-  //                         icon: const HugeIcon(
-  //                           icon: HugeIcons.strokeRoundedShoppingCartCheckIn01,
-  //                           color: Colors.white,
-  //                           size: 25,
-  //                         ),
-  //                       ),
-  //                     ),
-  //                   ],
-  //                 )
-  //             ],
-  //           ),
-  //         ),
-  //       ],
-  //     ),
-  //   );
-  // }
-
   Widget _mediaAndIntro() {
     List<String> images = [];
     for (var image in widget.post['names'].split(',')) {
@@ -680,20 +415,24 @@ class _PostComponentState extends State<PostComponent>
                                 double.parse(widget.post['price'].toString());
                             String names = widget.post['names'];
                             int postId = widget.post['id'];
-                            String? reservationType = widget.post['reservation_type'];
-  int? adults = widget.post['adults'];
-  bool? breakfastIncluded = widget.post['breakfast_included'];
+                            String? reservationType =
+                                widget.post['reservation_type'];
+                            int? adults = widget.post['adults'];
+                            bool? breakfastIncluded =
+                                widget.post['breakfast_included'];
 
                             Navigator.push(
                               context,
                               MaterialPageRoute(
                                 builder: (context) => AddToCartScreen(
-                                    username: username,
-                                    price: price,
-                                    names: names,
-                                    postId: postId, reservationType: reservationType,
-        adults: adults,
-        breakfastIncluded: breakfastIncluded,),
+                                  username: username,
+                                  price: price,
+                                  names: names,
+                                  postId: postId,
+                                  reservationType: reservationType,
+                                  adults: adults,
+                                  breakfastIncluded: breakfastIncluded,
+                                ),
                               ),
                             );
                           },
@@ -737,104 +476,6 @@ class _PostComponentState extends State<PostComponent>
       ),
     );
   }
-
-  // Widget _postInteracts() {
-  //   return Container(
-  //     decoration: BoxDecoration(
-  //       color: Theme.of(context).scaffoldBackgroundColor,
-  //     ),
-  //     child: Row(
-  //       mainAxisAlignment: MainAxisAlignment.spaceBetween,
-  //       children: [
-  //         // Like Section
-  //         Row(
-  //           mainAxisAlignment: MainAxisAlignment.center,
-  //           children: [
-  //             IconButton(
-  //               onPressed: () async {
-  //                 setState(() {
-  //                   _isLiked = !_isLiked;
-  //                   if (_isLiked) {
-  //                     _likesCount++;
-  //                   } else {
-  //                     _likesCount--;
-  //                   }
-  //                 });
-
-  //                 await _likePost();
-  //               },
-  //               icon: _isLiked
-  //                   ? SvgPicture.asset(
-  //                       'assets/icons/SolarHeartAngleBold.svg',
-  //                       width: 25,
-  //                       height: 25,
-  //                       colorFilter: const ColorFilter.mode(
-  //                         Color.fromRGBO(180, 23, 12, 1),
-  //                         BlendMode.srcIn,
-  //                       ),
-  //                       semanticsLabel: 'Like icon',
-  //                     )
-  //                   : SvgPicture.asset(
-  //                       "assets/icons/SolarHeartAngleLinear.svg",
-  //                       width: 25,
-  //                       height: 25,
-  //                       colorFilter: ColorFilter.mode(
-  //                         Theme.of(context).colorScheme.secondary,
-  //                         BlendMode.srcIn,
-  //                       ),
-  //                       semanticsLabel: 'Like icon',
-  //                     ),
-  //             ),
-  //             Text(
-  //               _likesCount.toString(),
-  //               style: Theme.of(context).textTheme.bodySmall,
-  //             )
-  //           ],
-  //         ),
-
-  //         Row(
-  //           children: [
-  //             IconButton(
-  //               onPressed: () {
-  //                 setState(() {
-  //                   _isFavorite = !_isFavorite;
-  //                   if (_isFavorite) {
-  //                     _favoriteCount++;
-  //                   } else {
-  //                     _favoriteCount--;
-  //                   }
-  //                 });
-
-  //                 _favouritePost();
-  //               },
-  //               icon: _isFavorite
-  //                   ? SvgPicture.asset(
-  //                       SvgIconsPaths.starBold,
-  //                       width: 25,
-  //                       height: 25,
-  //                       colorFilter: const ColorFilter.mode(
-  //                         LarosaColors.gold,
-  //                         BlendMode.srcIn,
-  //                       ),
-  //                       semanticsLabel: 'Star icon',
-  //                     )
-  //                   : SvgPicture.asset(
-  //                       SvgIconsPaths.starOutline,
-  //                       width: 25,
-  //                       height: 25,
-  //                       colorFilter: ColorFilter.mode(
-  //                         Theme.of(context).colorScheme.secondary,
-  //                         BlendMode.srcIn,
-  //                       ),
-  //                       semanticsLabel: 'Star icon',
-  //                     ),
-  //             ),
-  //             Text(
-  //               _favoriteCount.toString(),
-  //               style: Theme.of(context).textTheme.bodySmall,
-  //             )
-  //           ],
-  //         ),
 
   Widget _postInteracts() {
     return Padding(
@@ -1103,6 +744,7 @@ class _PostComponentState extends State<PostComponent>
       children: [
         _mediaAndIntro(),
         //_mediaTest(),
+        // Text('${widget.post}'),
         _postInteracts(),
         PostDetails(
           caption: widget.post['caption'],

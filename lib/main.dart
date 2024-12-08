@@ -70,10 +70,21 @@ import 'package:larosa_block/Services/hive_service.dart';
 import 'package:larosa_block/app.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:stomp_dart_client/stomp_dart_client.dart';
+
+import 'Services/auth_service.dart';
+import 'Services/log_service.dart';
+import 'Utils/helpers.dart';
+import 'Utils/links.dart';
 
 // Create a global instance of FlutterLocalNotificationsPlugin
 final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
     FlutterLocalNotificationsPlugin();
+
+// Global instance for StompClient
+late StompClient stompClient;
+
+bool connectedToSocket = false;
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -96,6 +107,9 @@ Future<void> main() async {
 
   // Initialize local notifications
   await _initializeNotifications();
+
+  // Initialize WebSocket connection
+  await _socketConnection2();
 
   // Run the main app
   runApp(const App());
@@ -120,3 +134,46 @@ Future<void> _initializeNotifications() async {
   );
 }
 
+// Initialize WebSocket connection
+Future<void> _socketConnection2() async {
+  stompClient = StompClient(
+    config: StompConfig.sockJS(
+      url: LarosaLinks.socketUrl,
+      onConnect: onConnect,
+      onWebSocketError: (dynamic error) =>
+          LogService.logError('WebSocket error: $error'),
+      onStompError: (StompFrame frame) =>
+          LogService.logWarning('Stomp error: ${frame.body}'),
+      onDisconnect: (StompFrame frame) =>
+          LogService.logFatal('Disconnected from WebSocket'),
+    ),
+  );
+  stompClient.activate();
+}
+
+// Callback for handling successful connection
+void onConnect(StompFrame frame) {
+  connectedToSocket = true;
+  LogService.logInfo('Connected to WebSocket server: $frame');
+
+  final String subscriptionDestination = '/topic/customer/${AuthService.getProfileId()}';
+
+  // Log the subscription destination
+  LogService.logInfo('Subscribing to destination: $subscriptionDestination');
+
+  stompClient.subscribe(
+    destination: subscriptionDestination,
+    callback: (StompFrame message) {
+      // Log the received message
+      LogService.logInfo(
+        'Received message from $subscriptionDestination: ${message.body}',
+      );
+
+      // Show the message in a toast
+      HelperFunctions.showToast(
+        message.body.toString(),
+        true,
+      );
+    },
+  );
+}

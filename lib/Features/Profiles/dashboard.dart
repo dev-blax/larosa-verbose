@@ -189,17 +189,53 @@ class _SupplierDashboardState extends State<SupplierDashboard> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Supplier Dashboard')),
+      appBar: AppBar(
+  backgroundColor: Theme.of(context).appBarTheme.backgroundColor, // Adapts to the system theme
+  elevation: 2, // Minimal shadow for a clean look
+  centerTitle: true, // Title is centered for balance
+  title: Text(
+    'Supplier Dashboard',
+    style: TextStyle(
+      fontSize: 20,
+      fontWeight: FontWeight.w600,
+      letterSpacing: 1.0, // Elegant spacing
+      color: Theme.of(context).appBarTheme.foregroundColor, // Matches the theme
+    ),
+  ),
+  shape: const RoundedRectangleBorder(
+    borderRadius: BorderRadius.vertical(
+      bottom: Radius.circular(20), // Smoothly rounded bottom edge
+    ),
+  ),
+  bottom: PreferredSize(
+    preferredSize: const Size.fromHeight(50), // Additional height for bottom design
+    child: Container(
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.secondaryContainer, // Adapts to theme
+        borderRadius: const BorderRadius.vertical(
+          bottom: Radius.circular(20), // Matches the AppBar shape
+        ),
+      ),
+      alignment: Alignment.center,
+      child: Padding(
+        padding: const EdgeInsets.all(12.0),
+        child: Text(
+          'Welcome back! Stay on top of your tasks 🚀',
+          style: TextStyle(
+            fontSize: 14,
+            fontStyle: FontStyle.italic,
+            fontWeight: FontWeight.w500,
+            color: Theme.of(context).colorScheme.onSecondaryContainer, // Text matches theme
+          ),
+        ),
+      ),
+    ),
+  ),
+),
+
       body: SingleChildScrollView(
         child: Column(
           children: [
-            const Padding(
-              padding: EdgeInsets.all(8.0),
-              child: Text(
-                'Supplier Notifications',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
-              ),
-            ),
             ...supplierNotifications.map((notification) {
               final int index = supplierNotifications.indexOf(notification);
               return Card(

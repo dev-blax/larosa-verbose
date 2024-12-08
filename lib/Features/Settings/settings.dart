@@ -116,17 +116,22 @@ class SettingsScreen extends StatelessWidget {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text('Logout'),
-                        Text(
-                          'Current Session data will be destroyed',
-                          style: TextStyle(
-                            fontSize: 10,
+                    InkWell(
+                      onTap: () {
+                        HelperFunctions.logout(context);
+                      },
+                      child: const Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('Logout'),
+                          Text(
+                            'Current Session data will be destroyed',
+                            style: TextStyle(
+                              fontSize: 10,
+                            ),
                           ),
-                        )
-                      ],
+                        ],
+                      ),
                     ),
                     IconButton(
                       onPressed: () async {

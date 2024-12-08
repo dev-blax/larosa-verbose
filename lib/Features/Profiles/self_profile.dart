@@ -590,7 +590,7 @@ class _HomeProfileScreenState extends State<HomeProfileScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 16.0),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: List.generate(4, (index) {
+                children: List.generate(10, (index) {
                   return Shimmer.fromColors(
                     baseColor:
                         isDarkMode ? Colors.grey[900]! : Colors.grey[400]!,
@@ -683,6 +683,8 @@ class _HomeProfileScreenState extends State<HomeProfileScreen> {
                                 profile: profile,
                               ),
                               _actionButtons(false),
+// Text('Hello ${AuthService.isBusinessAccount()}'),
+                              if(AuthService.isBusinessAccount())
                               Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [

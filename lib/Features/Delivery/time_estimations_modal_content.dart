@@ -6,6 +6,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:recase/recase.dart';
 import 'package:stomp_dart_client/stomp_dart_client.dart';
 
 import '../../Services/auth_service.dart';
@@ -167,14 +168,13 @@ class _TimeEstimationsModalContentState
       callback: (StompFrame message) {
         final messageBody = message.body;
         // if (messageBody != null) {
-          final data = jsonDecode(messageBody!);
-          HelperFunctions.larosaLogger('Update for driver larosa : $messageBody');
+        final data = jsonDecode(messageBody!);
+        HelperFunctions.larosaLogger('Update for driver larosa : $messageBody');
         // } else {
         //   print('Message body is null.');
         // }
       },
     );
-
 
     HelperFunctions.larosaLogger('Successfully subscribed to /topic/$_city');
 
@@ -326,20 +326,20 @@ class _TimeEstimationsModalContentState
     return {"country": "Unknown", "city": "Unknown"};
   }
 
- @override
-  void initState() { 
+  @override
+  void initState() {
     super.initState();
 
-_initializeMarkers();
+    _initializeMarkers();
     _drawRoute();
-_updateCurrentCityFromLocation();
+    _updateCurrentCityFromLocation();
     _connectToStomp();
   }
 
   void _initializeMarkers() {
     _markers.add(
       Marker(
-        markerId: MarkerId('source'),
+        markerId: const MarkerId('source'),
         position: LatLng(widget.sourceLatitude, widget.sourceLongitude),
         infoWindow: const InfoWindow(title: 'Source Location'),
         icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueGreen),
@@ -348,8 +348,9 @@ _updateCurrentCityFromLocation();
 
     _markers.add(
       Marker(
-        markerId: MarkerId('destination'),
-        position: LatLng(widget.destinationLatitude, widget.destinationLongitude),
+        markerId: const MarkerId('destination'),
+        position:
+            LatLng(widget.destinationLatitude, widget.destinationLongitude),
         infoWindow: const InfoWindow(title: 'Destination Location'),
         icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed),
       ),
@@ -357,7 +358,8 @@ _updateCurrentCityFromLocation();
   }
 
   Future<void> _drawRoute() async {
-    String apiKey = dotenv.env['GOOGLE_MAPS_PLACES_API_KEY']!; // Replace with your API key
+    String apiKey =
+        dotenv.env['GOOGLE_MAPS_PLACES_API_KEY']!; // Replace with your API key
     const String baseUrl =
         'https://maps.googleapis.com/maps/api/directions/json';
 
@@ -435,10 +437,14 @@ _updateCurrentCityFromLocation();
     if (points.length == 1) {
       bounds = LatLngBounds(southwest: points.first, northeast: points.first);
     } else {
-      final southwestLat = points.map((p) => p.latitude).reduce((a, b) => a < b ? a : b);
-      final southwestLng = points.map((p) => p.longitude).reduce((a, b) => a < b ? a : b);
-      final northeastLat = points.map((p) => p.latitude).reduce((a, b) => a > b ? a : b);
-      final northeastLng = points.map((p) => p.longitude).reduce((a, b) => a > b ? a : b);
+      final southwestLat =
+          points.map((p) => p.latitude).reduce((a, b) => a < b ? a : b);
+      final southwestLng =
+          points.map((p) => p.longitude).reduce((a, b) => a < b ? a : b);
+      final northeastLat =
+          points.map((p) => p.latitude).reduce((a, b) => a > b ? a : b);
+      final northeastLng =
+          points.map((p) => p.longitude).reduce((a, b) => a > b ? a : b);
 
       bounds = LatLngBounds(
         southwest: LatLng(southwestLat, southwestLng),
@@ -449,6 +455,19 @@ _updateCurrentCityFromLocation();
     _mapController.animateCamera(
       CameraUpdate.newLatLngBounds(bounds, 50), // Add padding for better view
     );
+  }
+
+  Widget getVehicleIcon(String vehicleType) {
+    switch (vehicleType.toLowerCase()) {
+      case 'motorcycle':
+        return Icon(Icons.motorcycle, color: Colors.blue);
+      case 'bajaj':
+        return Icon(Icons.electric_rickshaw, color: Colors.orange);
+      case 'larosamini':
+        return Icon(Icons.directions_car, color: Colors.green);
+      default:
+        return Icon(Icons.help_outline, color: Colors.grey); // Default icon
+    }
   }
 
   @override
@@ -507,7 +526,8 @@ _updateCurrentCityFromLocation();
                   // Fit map bounds once the map is created
                   _fitMapToBounds([
                     LatLng(widget.sourceLatitude, widget.sourceLongitude),
-                    LatLng(widget.destinationLatitude, widget.destinationLongitude),
+                    LatLng(widget.destinationLatitude,
+                        widget.destinationLongitude),
                   ]);
                 },
               ),
@@ -525,15 +545,15 @@ _updateCurrentCityFromLocation();
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(
-                      Icons.directions_car,
-                      color: Colors.blueAccent,
-                      size: 20,
-                    ),
-                    SizedBox(width: 8),
+                    // Icon(
+                    //   Icons.directions_car,
+                    //   color: Colors.blueAccent,
+                    //   size: 20,
+                    // ),
+                    // SizedBox(width: 8),
                     Flexible(
                       child: Text(
-                        "Driver Availability and Travel Time Estimates",
+                        "Driver Availability and Travel Time",
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
@@ -549,125 +569,258 @@ _updateCurrentCityFromLocation();
                 Divider(thickness: 1, color: Colors.grey),
               ],
             ),
+            // children: [
+            //   ...widget.estimations.entries.map((entry) {
+            //     final vehicleType = entry.key;
+            //     final data = entry.value;
+
+            //     if (data.containsKey('message')) {
+            //       return Column(
+            //         crossAxisAlignment: CrossAxisAlignment.start,
+            //         children: [
+            //           Text(
+            //             vehicleType
+            //                 .sentenceCase, // Converts the text to "Sentence case"
+            //             style: const TextStyle(
+            //               fontWeight: FontWeight.w600,
+            //               fontSize: 14,
+            //             ),
+            //           ),
+            //           Padding(
+            //             padding: const EdgeInsets.only(left: 8.0),
+            //             child: Text(
+            //               data['message'],
+            //               style: const TextStyle(
+            //                 fontSize: 12,
+            //                 color: Colors.red,
+            //                 fontStyle: FontStyle.italic,
+            //               ),
+            //             ),
+            //           ),
+            //           const Divider(thickness: 0.5),
+            //         ],
+            //       );
+            //     }
+
+            //     return Column(
+            //       crossAxisAlignment: CrossAxisAlignment.start,
+            //       children: [
+            //         Text(
+            //           vehicleType
+            //               .sentenceCase, // Convert "MOTORCYCLE" to "Motorcycle"
+            //           style: const TextStyle(
+            //             fontWeight: FontWeight.w600,
+            //             fontSize: 14,
+            //           ),
+            //         ),
+            //         Padding(
+            //           padding: const EdgeInsets.only(left: 8.0),
+            //           child: Column(
+            //             children: [
+            //               Row(
+            //                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            //                 children: [
+            //                   const Text("Closest Driver:"),
+            //                   Text(data['closestDriver']),
+            //                 ],
+            //               ),
+            //               Row(
+            //                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            //                 children: [
+            //                   const Text("Time to Customer:"),
+            //                   Text(formatTime(data['timeToCustomer'])),
+            //                 ],
+            //               ),
+            //               Row(
+            //                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            //                 children: [
+            //                   const Text("Travel Time:"),
+            //                   Text(formatTime(
+            //                       data['timeFromCustomerToDestination'])),
+            //                 ],
+            //               ),
+            //             ],
+            //           ),
+            //         ),
+            //         const SizedBox(height: 8),
+            //         Container(
+            //           width: double.infinity,
+            //           decoration: BoxDecoration(
+            //             gradient: const LinearGradient(
+            //               colors: [LarosaColors.secondary, LarosaColors.purple],
+            //               begin: Alignment.topLeft,
+            //               end: Alignment.bottomRight,
+            //             ),
+            //             borderRadius: BorderRadius.circular(30),
+            //           ),
+            //           child: FilledButton(
+            //             style: ButtonStyle(
+            //               backgroundColor:
+            //                   WidgetStateProperty.all(Colors.transparent),
+            //               padding: WidgetStateProperty.all(
+            //                 const EdgeInsets.symmetric(vertical: 10),
+            //               ),
+            //               shape: WidgetStateProperty.all(
+            //                 RoundedRectangleBorder(
+            //                   borderRadius: BorderRadius.circular(30),
+            //                 ),
+            //               ),
+            //             ),
+            //             onPressed: isRequestingRide
+            //                 ? null
+            //                 : () =>
+            //                     _requestRide(selectedVehicleType: vehicleType),
+            //             child: isRequestingRide
+            //                 ? const CupertinoActivityIndicator(
+            //                     color: Colors.white,
+            //                     radius: 10.0,
+            //                   )
+            //                 : const Text(
+            //                     'Confirm Ride Request',
+            //                     style: TextStyle(
+            //                       color: Colors.white,
+            //                       fontWeight: FontWeight.w600,
+            //                       letterSpacing: 1.0,
+            //                     ),
+            //                   ),
+            //           ),
+            //         ),
+            //         const SizedBox(height: 6),
+            //       ],
+            //     );
+            //   }),
+            // ],
+
             children: [
-              ...widget.estimations.entries.map((entry) {
-                final vehicleType = entry.key;
-                final data = entry.value;
+  ...widget.estimations.entries.map((entry) {
+    final vehicleType = entry.key;
+    final data = entry.value;
 
-                if (data.containsKey('message')) {
-                  return Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        vehicleType,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w600,
-                          fontSize: 14,
-                        ),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.only(left: 8.0),
-                        child: Text(
-                          data['message'],
-                          style: const TextStyle(
-                            fontSize: 12,
-                            color: Colors.red,
-                            fontStyle: FontStyle.italic,
-                          ),
-                        ),
-                      ),
-                      const Divider(thickness: 0.5),
-                    ],
-                  );
-                }
-
-                return Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      vehicleType,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w600,
-                        fontSize: 14,
-                      ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.only(left: 8.0),
-                      child: Column(
-                        children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              const Text("Closest Driver:"),
-                              Text(data['closestDriver']),
-                            ],
-                          ),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              const Text("Time to Customer:"),
-                              Text(formatTime(data['timeToCustomer'])),
-                            ],
-                          ),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              const Text("Travel Time:"),
-                              Text(formatTime(
-                                  data['timeFromCustomerToDestination'])),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Container(
-                      width: double.infinity,
-                      decoration: BoxDecoration(
-                        gradient: const LinearGradient(
-                          colors: [LarosaColors.secondary, LarosaColors.purple],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                        ),
-                        borderRadius: BorderRadius.circular(30),
-                      ),
-                      child: FilledButton(
-                        style: ButtonStyle(
-                          backgroundColor:
-                              WidgetStateProperty.all(Colors.transparent),
-                          padding: WidgetStateProperty.all(
-                            const EdgeInsets.symmetric(vertical: 10),
-                          ),
-                          shape: WidgetStateProperty.all(
-                            RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(30),
-                            ),
-                          ),
-                        ),
-                        onPressed: isRequestingRide
-                            ? null
-                            : () =>
-                                _requestRide(selectedVehicleType: vehicleType),
-                        child: isRequestingRide
-                            ? const CupertinoActivityIndicator(
-                                color: Colors.white,
-                                radius: 10.0,
-                              )
-                            : const Text(
-                                'Confirm Ride Request',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.w600,
-                                  letterSpacing: 1.0,
-                                ),
-                              ),
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                  ],
-                );
-              }),
+    if (data.containsKey('message')) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              getVehicleIcon(vehicleType), // Dynamically get the icon
+              const SizedBox(width: 8),
+              Text(
+                vehicleType.sentenceCase, // Converts the text to "Sentence case"
+                style: const TextStyle(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 14,
+                ),
+              ),
             ],
+          ),
+          Padding(
+            padding: const EdgeInsets.only(left: 8.0),
+            child: Text(
+              data['message'],
+              style: const TextStyle(
+                fontSize: 12,
+                color: Colors.red,
+                fontStyle: FontStyle.italic,
+              ),
+            ),
+          ),
+          const Divider(thickness: 0.5),
+        ],
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            getVehicleIcon(vehicleType), // Dynamically get the icon
+            const SizedBox(width: 8),
+            Text(
+              vehicleType.sentenceCase, // Convert "MOTORCYCLE" to "Motorcycle"
+              style: const TextStyle(
+                fontWeight: FontWeight.w600,
+                fontSize: 14,
+              ),
+            ),
+          ],
+        ),
+        Padding(
+          padding: const EdgeInsets.only(left: 8.0),
+          child: Column(
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text("Closest Driver:"),
+                  Text(data['closestDriver']),
+                ],
+              ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text("Time to Customer:"),
+                  Text(formatTime(data['timeToCustomer'])),
+                ],
+              ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text("Travel Time:"),
+                  Text(formatTime(data['timeFromCustomerToDestination'])),
+                ],
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 8),
+        Container(
+          width: double.infinity,
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              colors: [LarosaColors.secondary, LarosaColors.purple],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.circular(30),
+          ),
+          child: FilledButton(
+            style: ButtonStyle(
+              backgroundColor:
+                  WidgetStateProperty.all(Colors.transparent),
+              padding: WidgetStateProperty.all(
+                const EdgeInsets.symmetric(vertical: 10),
+              ),
+              shape: WidgetStateProperty.all(
+                RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(30),
+                ),
+              ),
+            ),
+            onPressed: isRequestingRide
+                ? null
+                : () => _requestRide(selectedVehicleType: vehicleType),
+            child: isRequestingRide
+                ? const CupertinoActivityIndicator(
+                    color: Colors.white,
+                    radius: 10.0,
+                  )
+                : const Text(
+                    'Confirm Ride Request',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: 1.0,
+                    ),
+                  ),
+          ),
+        ),
+        const SizedBox(height: 6),
+      ],
+    );
+  }),
+],
+
           ),
         ],
       ),
