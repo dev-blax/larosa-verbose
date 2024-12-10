@@ -839,10 +839,9 @@ class _AddToCartScreenState extends State<AddToCartScreen> {
   DateTime? checkInDate; // Nullable variable for the check-in date
   DateTime? checkOutDate; // Nullable variable for the check-out date
 
-  bool get isReservation =>
-      widget.reservationType == null;
-      // bool get isReservation =>
-      // widget.reservationType != null && widget.reservationType!.isNotEmpty;
+  bool get isReservation => widget.reservationType == null;
+  // bool get isReservation =>
+  // widget.reservationType != null && widget.reservationType!.isNotEmpty;
 
   // Future<void> _getCurrentLocation() async {
   //   bool serviceEnabled;
@@ -1022,6 +1021,7 @@ class _AddToCartScreenState extends State<AddToCartScreen> {
       "startLng": pickupLng,
       "endLat": latitude!,
       "endLng": longitude!,
+      "country": "Tanzania",
     };
 
     try {
@@ -1039,6 +1039,8 @@ class _AddToCartScreenState extends State<AddToCartScreen> {
         },
         body: jsonEncode(requestBody),
       );
+
+      // print('${response.body}');
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body) as Map<String, dynamic>;
@@ -1337,36 +1339,35 @@ class _AddToCartScreenState extends State<AddToCartScreen> {
   }
 
   Future<Map<String, String>> calculateTimeAndDistance(
-    LatLng pickup, LatLng destination) async {
-  const String apiKey = 'AIzaSyA30rAh34FrfL-71H0wdZpdtNB-MkZ8u3A';
-  final String url =
-      'https://maps.googleapis.com/maps/api/distancematrix/json?origins=${pickup.latitude},${pickup.longitude}&destinations=${destination.latitude},${destination.longitude}&key=$apiKey';
+      LatLng pickup, LatLng destination) async {
+    const String apiKey = 'AIzaSyA30rAh34FrfL-71H0wdZpdtNB-MkZ8u3A';
+    final String url =
+        'https://maps.googleapis.com/maps/api/distancematrix/json?origins=${pickup.latitude},${pickup.longitude}&destinations=${destination.latitude},${destination.longitude}&key=$apiKey';
 
-  try {
-    final response = await http.get(Uri.parse(url));
+    try {
+      final response = await http.get(Uri.parse(url));
 
-    if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
 
-      final distanceText = data['rows'][0]['elements'][0]['distance']['text'];
-      final durationText = data['rows'][0]['elements'][0]['duration']['text'];
+        final distanceText = data['rows'][0]['elements'][0]['distance']['text'];
+        final durationText = data['rows'][0]['elements'][0]['duration']['text'];
 
+        return {
+          'distance': distanceText,
+          'duration': durationText,
+        };
+      } else {
+        throw Exception('Failed to fetch distance and duration');
+      }
+    } catch (e) {
+      print('Error calculating distance and duration: $e');
       return {
-        'distance': distanceText,
-        'duration': durationText,
+        'distance': 'N/A',
+        'duration': 'N/A',
       };
-    } else {
-      throw Exception('Failed to fetch distance and duration');
     }
-  } catch (e) {
-    print('Error calculating distance and duration: $e');
-    return {
-      'distance': 'N/A',
-      'duration': 'N/A',
-    };
   }
-}
-
 
   @override
   Widget build(BuildContext context) {
@@ -1484,197 +1485,195 @@ class _AddToCartScreenState extends State<AddToCartScreen> {
                         ],
                       ),
                       if (!isReservation)
-                      // Adults
-                      TableRow(
-                        children: [
-                          const Padding(
-                            padding: EdgeInsets.all(8.0),
-                            child: Text(
-                              'Adults',
-                              style: TextStyle(fontWeight: FontWeight.bold),
+                        // Adults
+                        TableRow(
+                          children: [
+                            const Padding(
+                              padding: EdgeInsets.all(8.0),
+                              child: Text(
+                                'Adults',
+                                style: TextStyle(fontWeight: FontWeight.bold),
+                              ),
                             ),
-                          ),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: Slider(
-                                  value: adults.toDouble(),
-                                  min: 1,
-                                  max: 20,
-                                  divisions: 20,
-                                  label: adults.toString(),
-                                  activeColor: Theme.of(context).brightness ==
-                                          Brightness.dark
-                                      ? Colors.white
-                                      : Colors
-                                          .black, // Set active color based on theme
-                                  inactiveColor: Theme.of(context).brightness ==
-                                          Brightness.dark
-                                      ? Colors.white.withOpacity(0.5)
-                                      : Colors.black.withOpacity(
-                                          0.5), // Set inactive color based on theme
-                                  thumbColor: Theme.of(context).brightness ==
-                                          Brightness.dark
-                                      ? Colors.white
-                                      : Colors
-                                          .black, // Set thumb color based on theme
-                                  onChanged: (value) {
-                                    setState(() {
-                                      adults = value.toInt();
-                                    });
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: Slider(
+                                    value: adults.toDouble(),
+                                    min: 1,
+                                    max: 20,
+                                    divisions: 20,
+                                    label: adults.toString(),
+                                    activeColor: Theme.of(context).brightness ==
+                                            Brightness.dark
+                                        ? Colors.white
+                                        : Colors
+                                            .black, // Set active color based on theme
+                                    inactiveColor: Theme.of(context)
+                                                .brightness ==
+                                            Brightness.dark
+                                        ? Colors.white.withOpacity(0.5)
+                                        : Colors.black.withOpacity(
+                                            0.5), // Set inactive color based on theme
+                                    thumbColor: Theme.of(context).brightness ==
+                                            Brightness.dark
+                                        ? Colors.white
+                                        : Colors
+                                            .black, // Set thumb color based on theme
+                                    onChanged: (value) {
+                                      setState(() {
+                                        adults = value.toInt();
+                                      });
 
-                                    // Trigger haptic feedback on value change
-                                    HapticFeedback.vibrate();
-                                  },
+                                      // Trigger haptic feedback on value change
+                                      HapticFeedback.vibrate();
+                                    },
+                                  ),
                                 ),
-                              ),
-                              Padding(
-                                padding: const EdgeInsets.only(right: 8.0),
-                                child: Text('$adults'),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                      
+                                Padding(
+                                  padding: const EdgeInsets.only(right: 8.0),
+                                  child: Text('$adults'),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
                       if (!isReservation)
-                      // Children
-                      TableRow(
-                        children: [
-                          const Padding(
-                            padding: EdgeInsets.all(8.0),
-                            child: Text(
-                              'Children',
-                              style: TextStyle(fontWeight: FontWeight.bold),
+                        // Children
+                        TableRow(
+                          children: [
+                            const Padding(
+                              padding: EdgeInsets.all(8.0),
+                              child: Text(
+                                'Children',
+                                style: TextStyle(fontWeight: FontWeight.bold),
+                              ),
                             ),
-                          ),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: Slider(
-                                  value: children.toDouble(),
-                                  min: 0,
-                                  max: 20,
-                                  divisions: 20,
-                                  label: children.toString(),
-                                  activeColor: Theme.of(context).brightness ==
-                                          Brightness.dark
-                                      ? Colors.white
-                                      : Colors
-                                          .black, // Active color based on theme
-                                  inactiveColor: Theme.of(context).brightness ==
-                                          Brightness.dark
-                                      ? Colors.white.withOpacity(0.5)
-                                      : Colors.black.withOpacity(
-                                          0.5), // Inactive color based on theme
-                                  thumbColor: Theme.of(context).brightness ==
-                                          Brightness.dark
-                                      ? Colors.white
-                                      : Colors
-                                          .black, // Thumb color based on theme
-                                  onChanged: (value) {
-                                    setState(() {
-                                      children = value.toInt();
-                                    });
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: Slider(
+                                    value: children.toDouble(),
+                                    min: 0,
+                                    max: 20,
+                                    divisions: 20,
+                                    label: children.toString(),
+                                    activeColor: Theme.of(context).brightness ==
+                                            Brightness.dark
+                                        ? Colors.white
+                                        : Colors
+                                            .black, // Active color based on theme
+                                    inactiveColor: Theme.of(context)
+                                                .brightness ==
+                                            Brightness.dark
+                                        ? Colors.white.withOpacity(0.5)
+                                        : Colors.black.withOpacity(
+                                            0.5), // Inactive color based on theme
+                                    thumbColor: Theme.of(context).brightness ==
+                                            Brightness.dark
+                                        ? Colors.white
+                                        : Colors
+                                            .black, // Thumb color based on theme
+                                    onChanged: (value) {
+                                      setState(() {
+                                        children = value.toInt();
+                                      });
 
-                                    // Trigger haptic feedback on value change
-                                    HapticFeedback.vibrate();
-                                  },
+                                      // Trigger haptic feedback on value change
+                                      HapticFeedback.vibrate();
+                                    },
+                                  ),
+                                ),
+                                Padding(
+                                  padding: const EdgeInsets.only(right: 8.0),
+                                  child: Text('$children'),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      if (!isReservation)
+                        TableRow(
+                          children: [
+                            const Padding(
+                              padding: EdgeInsets.all(8.0),
+                              child: Text(
+                                'Check-In Date',
+                                style: TextStyle(fontWeight: FontWeight.bold),
+                              ),
+                            ),
+                            Padding(
+                              padding: const EdgeInsets.all(8.0),
+                              child: InkWell(
+                                onTap: () => _pickCheckInDate(context),
+                                child: Row(
+                                  children: [
+                                    const Icon(
+                                      Icons.calendar_today_outlined,
+                                      // color: checkInDate == null ? Colors.blue : Colors.black,
+                                      size: 18,
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      checkInDate == null
+                                          ? 'Tap to Set'
+                                          : getFormattedDate(checkInDate),
+                                      style: const TextStyle(
+                                        // color: checkInDate == null ? Colors.blue : Colors.black,
+                                        fontSize: 14,
+                                        // fontWeight: checkInDate == null ? FontWeight.bold : FontWeight.normal,
+                                        // decoration: checkInDate == null
+                                        //     ? TextDecoration.underline
+                                        //     : TextDecoration.none,
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
-                              Padding(
-                                padding: const EdgeInsets.only(right: 8.0),
-                                child: Text('$children'),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-
-if (!isReservation)
-                      TableRow(
-                        children: [
-                          const Padding(
-                            padding: EdgeInsets.all(8.0),
-                            child: Text(
-                              'Check-In Date',
-                              style: TextStyle(fontWeight: FontWeight.bold),
                             ),
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: InkWell(
-                              onTap: () => _pickCheckInDate(context),
-                              child: Row(
-                                children: [
-                                  const Icon(
-                                    Icons.calendar_today_outlined,
-                                    // color: checkInDate == null ? Colors.blue : Colors.black,
-                                    size: 18,
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Text(
-                                    checkInDate == null
-                                        ? 'Tap to Set'
-                                        : getFormattedDate(checkInDate),
-                                    style: const TextStyle(
-                                      // color: checkInDate == null ? Colors.blue : Colors.black,
-                                      fontSize: 14,
-                                      // fontWeight: checkInDate == null ? FontWeight.bold : FontWeight.normal,
-                                      // decoration: checkInDate == null
-                                      //     ? TextDecoration.underline
-                                      //     : TextDecoration.none,
-                                    ),
-                                  ),
-                                ],
+                          ],
+                        ),
+                      if (!isReservation)
+                        TableRow(
+                          children: [
+                            const Padding(
+                              padding: EdgeInsets.all(8.0),
+                              child: Text(
+                                'Check-Out Date',
+                                style: TextStyle(fontWeight: FontWeight.bold),
                               ),
                             ),
-                          ),
-                        ],
-                      ),
-
-if (!isReservation)
-                      TableRow(
-                        children: [
-                          const Padding(
-                            padding: EdgeInsets.all(8.0),
-                            child: Text(
-                              'Check-Out Date',
-                              style: TextStyle(fontWeight: FontWeight.bold),
-                            ),
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: InkWell(
-                              onTap: () => _pickCheckOutDate(context),
-                              child: Row(
-                                children: [
-                                  const Icon(
-                                    Icons.calendar_today_outlined,
-                                    // color: checkOutDate == null ? Colors.white : Colors.black,
-                                    size: 18,
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Text(
-                                    checkOutDate == null
-                                        ? 'Tap to Set'
-                                        : getFormattedDate(checkOutDate),
-                                    style: const TextStyle(
+                            Padding(
+                              padding: const EdgeInsets.all(8.0),
+                              child: InkWell(
+                                onTap: () => _pickCheckOutDate(context),
+                                child: Row(
+                                  children: [
+                                    const Icon(
+                                      Icons.calendar_today_outlined,
                                       // color: checkOutDate == null ? Colors.white : Colors.black,
-                                      fontSize: 14,
-                                      // fontWeight: checkOutDate == null ? FontWeight.bold : FontWeight.normal,
-                                      // decoration: checkOutDate == null
-                                      //     ? TextDecoration.underline
-                                      //     : TextDecoration.none,
+                                      size: 18,
                                     ),
-                                  ),
-                                ],
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      checkOutDate == null
+                                          ? 'Tap to Set'
+                                          : getFormattedDate(checkOutDate),
+                                      style: const TextStyle(
+                                        // color: checkOutDate == null ? Colors.white : Colors.black,
+                                        fontSize: 14,
+                                        // fontWeight: checkOutDate == null ? FontWeight.bold : FontWeight.normal,
+                                        // decoration: checkOutDate == null
+                                        //     ? TextDecoration.underline
+                                        //     : TextDecoration.none,
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
                             ),
-                          ),
-                        ],
-                      ),
-
+                          ],
+                        ),
                       if (isReservation)
                         TableRow(
                           children: [
@@ -1726,8 +1725,9 @@ if (!isReservation)
                                       ).format(
                                         double.parse(deliveryCost
                                                 .replaceAll('Tsh ', '')
-                                                .trim()) *
-                                            _exchangeRate!,
+                                                .trim()) 
+                                            //     *
+                                            // _exchangeRate!,
                                       )
                                     : 'Calculating...',
                               ),
@@ -1781,11 +1781,12 @@ if (!isReservation)
                                         widget.price * itemCount +
                                             double.parse(deliveryCost
                                                 .replaceAll('Tsh ', '')
-                                                .trim()) + // Add base delivery cost
-                                            double.parse(deliveryCost
-                                                    .replaceAll('Tsh ', '')
-                                                    .trim()) *
-                                                _exchangeRate!, // Add exchange-rate-adjusted delivery cost
+                                                .trim()) // Add base delivery cost
+                                            // double.parse(deliveryCost
+                                            //         .replaceAll('Tsh ', '')
+                                                    // .trim()) 
+                                                //     *
+                                                // _exchangeRate!, // Add exchange-rate-adjusted delivery cost
                                       )
                                     : 'Calculating...',
                                 style: const TextStyle(fontSize: 15),
@@ -2048,17 +2049,16 @@ if (!isReservation)
                 if (isReservation) const Gap(10),
                 if (isReservation) const Divider(),
                 if (isReservation) const Gap(5),
-if(!isReservation)
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: fullNameInput(
-                    controller: _fullNameController,
-                    onChanged: _validateAndSetFullName,
-                    errorMessage: _errorMessage,
+                if (!isReservation)
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: fullNameInput(
+                      controller: _fullNameController,
+                      onChanged: _validateAndSetFullName,
+                      errorMessage: _errorMessage,
+                    ),
                   ),
-                ),
-if (!isReservation)
-                const Divider(),
+                if (!isReservation) const Divider(),
 
                 buildQuantityAdjustmentRow(),
 
@@ -2106,36 +2106,35 @@ if (!isReservation)
                       child: deliveryCost.contains('Tsh')
                           ? buildWideGradientButton(
                               onTap: () {
+                                if (!isReservation) {
+                                  // Validate Full Name for at least two words
+                                  final fullName =
+                                      _fullNameController.text.trim();
+                                  if (fullName.isEmpty ||
+                                      fullName.split(' ').length < 2) {
+                                    setState(() {
+                                      _errorMessage =
+                                          "Please enter your full name (first and last name).";
+                                    });
 
-                                if(!isReservation){
-                                // Validate Full Name for at least two words
-                                final fullName =
-                                    _fullNameController.text.trim();
-                                if (fullName.isEmpty ||
-                                    fullName.split(' ').length < 2) {
-                                  setState(() {
-                                    _errorMessage =
-                                        "Please enter your full name (first and last name).";
-                                  });
-
-                                  // Optionally show a SnackBar for better feedback
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                      content: Text(
-                                        'Please provide your full name before proceeding.',
-                                        style: TextStyle(color: Colors.white),
+                                    // Optionally show a SnackBar for better feedback
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text(
+                                          'Please provide your full name before proceeding.',
+                                          style: TextStyle(color: Colors.white),
+                                        ),
+                                        backgroundColor: Colors.red,
                                       ),
-                                      backgroundColor: Colors.red,
-                                    ),
-                                  );
+                                    );
 
-                                  return; // Exit the function if validation fails
-                                } else {
-                                  setState(() {
-                                    _errorMessage =
-                                        null; // Clear error message if validation passes
-                                  });
-                                }
+                                    return; // Exit the function if validation fails
+                                  } else {
+                                    setState(() {
+                                      _errorMessage =
+                                          null; // Clear error message if validation passes
+                                    });
+                                  }
                                 }
 
                                 final totalPrice = widget.price * itemCount +

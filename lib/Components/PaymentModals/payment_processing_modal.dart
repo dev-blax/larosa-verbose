@@ -223,29 +223,81 @@ class _PaymentProcessingModalState extends State<PaymentProcessingModal> {
                   const SizedBox(height: 20),
                   const Text(
                     'Payment Successful!',
+                    textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.bold,
                       color: Color.fromARGB(255, 15, 106, 18),
                     ),
                   ),
-                  const SizedBox(height: 10),
-                  const Text(
-                    'Your payment has been processed successfully. You will receive a confirmation notification shortly with the status of your order.\n\nWe appreciate your trust and look forward to serving you again!',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontStyle: FontStyle.italic,
+                  const SizedBox(height: 16),
+                  const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 16.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Text(
+                          "Your payment is now under processing.",
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontStyle: FontStyle.normal,
+                            height: 1.5,
+                          ),
+                        ),
+                        SizedBox(height: 8),
+                        Text(
+                          "We will notify you shortly with an update on its status.",
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontStyle: FontStyle.normal,
+                            height: 1.5,
+                          ),
+                        ),
+                        SizedBox(height: 8),
+                        Text(
+                          "Once confirmed, you'll receive detailed information about your order's next steps.",
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontStyle: FontStyle.normal,
+                            height: 1.5,
+                          ),
+                        ),
+                        SizedBox(height: 8),
+                        Text(
+                          "We truly value your trust in us and are committed to delivering an exceptional experience.",
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontStyle: FontStyle.normal,
+                            height: 1.5,
+                          ),
+                        ),
+                        SizedBox(height: 20),
+                        Text(
+                          "Thank you for choosing us!",
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontStyle: FontStyle.italic,
+                            height: 1.5,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 16),
                   const Text(
                     'LAROSA EXPLORE',
                     textAlign: TextAlign.center,
                     style: TextStyle(
-                        fontSize: 16,
-                        fontStyle: FontStyle.italic,
-                        fontWeight: FontWeight.bold),
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      fontStyle: FontStyle.italic,
+                      letterSpacing: 1.5,
+                    ),
                   ),
                   const SizedBox(height: 20),
 
@@ -266,152 +318,6 @@ class _PaymentProcessingModalState extends State<PaymentProcessingModal> {
       },
     );
   }
-
-  // @override
-  // Widget build(BuildContext context) {
-  //   return Padding(
-  //     padding: EdgeInsets.only(
-  //         bottom: MediaQuery.of(context).viewInsets.bottom,
-  //         left: 15,
-  //         right: 15),
-  //     child: SingleChildScrollView(
-  //       controller: _scrollController,
-  //       child: ConstrainedBox(
-  //         constraints: BoxConstraints(
-  //           maxHeight: MediaQuery.of(context).size.height * 0.75,
-  //         ),
-  //         child: IntrinsicHeight(
-  //           child: Column(
-  //             crossAxisAlignment: CrossAxisAlignment.start,
-  //             children: [
-  //               Center(
-  //                 child: Icon(
-  //                   widget.paymentType == 'Bank'
-  //                       ? Iconsax.bank
-  //                       : Iconsax.mobile,
-  //                   size: MediaQuery.of(context).size.height * 0.2,
-  //                   color: Colors.grey,
-  //                 ),
-  //               ),
-  //               const SizedBox(height: 10),
-  //               Center(
-  //                 child: Text(
-  //                   widget.paymentMethod,
-  //                   style: const TextStyle(
-  //                     fontSize: 20,
-  //                     fontWeight: FontWeight.bold,
-  //                   ),
-  //                 ),
-  //               ),
-  //               const SizedBox(height: 5),
-  //               const Center(
-  //                 child: Text(
-  //                   'Payment Processing',
-  //                   style: TextStyle(
-  //                     fontSize: 20,
-  //                     fontWeight: FontWeight.bold,
-  //                   ),
-  //                 ),
-  //               ),
-  //               const SizedBox(height: 15),
-  //               Expanded(
-  //                 child: _buildPaymentForm(),
-  //               ),
-  //               const SizedBox(height: 20),
-  //               if (_isLoading)
-  //                 const Center(
-  //                   child: CircularProgressIndicator(),
-  //                 )
-  //               else
-  //                 buildWideGradientButton(
-  //                   onTap: _submitOrder,
-  //                   label: 'Confirm Payment',
-  //                   startColor: LarosaColors.secondary,
-  //                   endColor: LarosaColors.purple,
-  //                 ),
-  //             ],
-  //           ),
-  //         ),
-  //       ),
-  //     ),
-  //   );
-  // }
-
-//   @override
-// Widget build(BuildContext context) {
-//   final isDarkMode = Theme.of(context).brightness == Brightness.dark;
-
-//   return Padding(
-//     padding: EdgeInsets.only(
-//       bottom: MediaQuery.of(context).viewInsets.bottom,
-//       left: 15,
-//       right: 15,
-//     ),
-//     child: SingleChildScrollView(
-//       controller: _scrollController,
-//       child: ConstrainedBox(
-//         constraints: BoxConstraints(
-//           maxHeight: MediaQuery.of(context).size.height * 0.75,
-//         ),
-//         child: IntrinsicHeight(
-//           child: Container(
-//             color: isDarkMode ? Colors.black : Colors.white, // Dynamic background color
-//             child: Column(
-//               crossAxisAlignment: CrossAxisAlignment.start,
-//               children: [
-//                 Center(
-//                   child: Icon(
-//                     widget.paymentType == 'Bank'
-//                         ? Iconsax.bank
-//                         : Iconsax.mobile,
-//                     size: MediaQuery.of(context).size.height * 0.2,
-//                     color: Colors.grey,
-//                   ),
-//                 ),
-//                 const SizedBox(height: 10),
-//                 Center(
-//                   child: Text(
-//                     widget.paymentMethod,
-//                     style: const TextStyle(
-//                       fontSize: 20,
-//                       fontWeight: FontWeight.bold,
-//                     ),
-//                   ),
-//                 ),
-//                 const SizedBox(height: 5),
-//                 const Center(
-//                   child: Text(
-//                     'Payment Processing',
-//                     style: TextStyle(
-//                       fontSize: 20,
-//                       fontWeight: FontWeight.bold,
-//                     ),
-//                   ),
-//                 ),
-//                 const SizedBox(height: 15),
-//                 Expanded(
-//                   child: _buildPaymentForm(),
-//                 ),
-//                 const SizedBox(height: 20),
-//                 if (_isLoading)
-//                   const Center(
-//                     child: CircularProgressIndicator(),
-//                   )
-//                 else
-//                   buildWideGradientButton(
-//                     onTap: _submitOrder,
-//                     label: 'Confirm Payment',
-//                     startColor: LarosaColors.secondary,
-//                     endColor: LarosaColors.purple,
-//                   ),
-//               ],
-//             ),
-//           ),
-//         ),
-//       ),
-//     ),
-//   );
-// }
 
   @override
   Widget build(BuildContext context) {

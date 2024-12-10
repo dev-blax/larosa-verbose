@@ -460,15 +460,26 @@ class _TimeEstimationsModalContentState
   Widget getVehicleIcon(String vehicleType) {
     switch (vehicleType.toLowerCase()) {
       case 'motorcycle':
-        return Icon(Icons.motorcycle, color: Colors.blue);
+        return const Icon(Icons.motorcycle, color: Colors.blue);
       case 'bajaj':
-        return Icon(Icons.electric_rickshaw, color: Colors.orange);
+        return const Icon(Icons.electric_rickshaw, color: Colors.orange);
       case 'larosamini':
-        return Icon(Icons.directions_car, color: Colors.green);
+        return const Icon(Icons.directions_car, color: Colors.green);
       default:
-        return Icon(Icons.help_outline, color: Colors.grey); // Default icon
+        return const Icon(Icons.help_outline, color: Colors.grey); // Default icon
     }
   }
+
+  String _formatVehicleType(String vehicleType) {
+  if (vehicleType.toLowerCase().contains('mini')) {
+    return 'Larosa Mini';
+  } else if (vehicleType.toLowerCase().contains('max')) {
+    return 'Larosa Max';
+  } else {
+    return vehicleType.sentenceCase; // Converts to "Sentence case"
+  }
+}
+
 
   @override
   Widget build(BuildContext context) {
@@ -701,18 +712,19 @@ class _TimeEstimationsModalContentState
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            children: [
-              getVehicleIcon(vehicleType), // Dynamically get the icon
-              const SizedBox(width: 8),
-              Text(
-                vehicleType.sentenceCase, // Converts the text to "Sentence case"
-                style: const TextStyle(
-                  fontWeight: FontWeight.w600,
-                  fontSize: 14,
-                ),
-              ),
-            ],
-          ),
+  children: [
+    getVehicleIcon(vehicleType), // Dynamically get the icon
+    const SizedBox(width: 8),
+    Text(
+      _formatVehicleType(vehicleType), // Call a helper method to format the text
+      style: const TextStyle(
+        fontWeight: FontWeight.w600,
+        fontSize: 14,
+      ),
+    ),
+  ],
+),
+
           Padding(
             padding: const EdgeInsets.only(left: 8.0),
             child: Text(

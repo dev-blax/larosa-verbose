@@ -684,62 +684,62 @@ class _HomeProfileScreenState extends State<HomeProfileScreen> {
                               ),
                               _actionButtons(false),
 // Text('Hello ${AuthService.isBusinessAccount()}'),
-                              if(AuthService.isBusinessAccount())
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  GestureDetector(
-                                    onTap: () {
-                                      final int? supplierId =
-                                          AuthService.getProfileId();
+                              if (AuthService.isBusinessAccount())
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    GestureDetector(
+                                      onTap: () {
+                                        final int? supplierId =
+                                            AuthService.getProfileId();
 
-                                      if (supplierId != null) {
-                                        Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                            builder: (context) =>
-                                                SupplierDashboard(
-                                                    supplierId:
-                                                        supplierId.toString()),
+                                        if (supplierId != null) {
+                                          Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder: (context) =>
+                                                  SupplierDashboard(
+                                                      supplierId: supplierId
+                                                          .toString()),
+                                            ),
+                                          );
+                                        } else {
+                                          ScaffoldMessenger.of(context)
+                                              .showSnackBar(
+                                            const SnackBar(
+                                                content: Text(
+                                                    'Supplier ID not found. Please try again.')),
+                                          );
+                                        }
+                                      },
+                                      child: Container(
+                                        margin: const EdgeInsets.symmetric(
+                                            vertical: 2),
+                                        padding: const EdgeInsets.symmetric(
+                                            vertical: 10, horizontal: 30),
+                                        decoration: BoxDecoration(
+                                          borderRadius: BorderRadius.circular(
+                                              8), // Rounded corners
+                                          gradient: const LinearGradient(
+                                              colors: [
+                                                LarosaColors.primary,
+                                                LarosaColors.secondary
+                                              ],
+                                              begin: Alignment.centerLeft,
+                                              end: Alignment.centerRight),
+                                        ),
+                                        child: const Text(
+                                          'Business Dashboard',
+                                          style: TextStyle(
+                                            color: Colors.white, // Text color
+                                            fontSize: 15,
+                                            fontWeight: FontWeight.bold,
                                           ),
-                                        );
-                                      } else {
-                                        ScaffoldMessenger.of(context)
-                                            .showSnackBar(
-                                          const SnackBar(
-                                              content: Text(
-                                                  'Supplier ID not found. Please try again.')),
-                                        );
-                                      }
-                                    },
-                                    child: Container(
-                                      margin: const EdgeInsets.symmetric(
-                                          vertical: 2),
-                                      padding: const EdgeInsets.symmetric(
-                                          vertical: 10, horizontal: 30),
-                                      decoration: BoxDecoration(
-                                        borderRadius: BorderRadius.circular(
-                                            8), // Rounded corners
-                                        gradient: const LinearGradient(
-                                            colors: [
-                                              LarosaColors.primary,
-                                              LarosaColors.secondary
-                                            ],
-                                            begin: Alignment.centerLeft,
-                                            end: Alignment.centerRight),
-                                      ),
-                                      child: const Text(
-                                        'Business Dashboard',
-                                        style: TextStyle(
-                                          color: Colors.white, // Text color
-                                          fontSize: 15,
-                                          fontWeight: FontWeight.bold,
                                         ),
                                       ),
                                     ),
-                                  ),
-                                ],
-                              ),
+                                  ],
+                                ),
                             ],
                           ),
                         ),

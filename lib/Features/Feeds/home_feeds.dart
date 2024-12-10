@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:larosa_block/Components/bottom_navigation.dart';
@@ -58,28 +60,54 @@ class _HomeFeedsScreenState extends State<HomeFeedsScreen> {
             CustomScrollView(
               controller: controller.scrollController,
               slivers: [
-                SliverAppBar(
-                  elevation: 20,
-                  backgroundColor: Colors.blue,
-                  floating: true,
-                  bottom: const PreferredSize(
-                    preferredSize: Size.fromHeight(35.0),
-                    child: Text(''),
-                  ),
-                  automaticallyImplyLeading: false,
-                  flexibleSpace: Container(
-                    decoration: BoxDecoration(
-                      color: Theme.of(context).scaffoldBackgroundColor,
-                    ),
-                    child: const Column(
-                      mainAxisSize: MainAxisSize.max,
-                      children: [
-                        TopBar1(),
-                        TopBar2(),
-                      ],
-                    ),
-                  ),
-                ),
+                // SliverAppBar(
+                //   elevation: 20,
+                //   // backgroundColor: Colors.blue,
+                //   floating: true,
+                //   bottom: const PreferredSize(
+                //     preferredSize: Size.fromHeight(35.0),
+                //     child: Text(''),
+                //   ),
+                //   automaticallyImplyLeading: false,
+                //   flexibleSpace: Container(
+                //     color: Colors.red,
+                //     child: const Column(
+                //       mainAxisSize: MainAxisSize.max,
+                //       children: [
+                //         TopBar1(),
+                //         TopBar2(),
+                //       ],
+                //     ),
+                //   ),
+                // ),
+               SliverAppBar(
+  elevation: 0, // Remove shadow for a seamless look
+  floating: true,
+  pinned: false,
+  snap: false,
+  automaticallyImplyLeading: false,
+  backgroundColor: Colors.transparent, // Make the app bar background transparent
+  flexibleSpace: ClipRect(
+    child: BackdropFilter(
+      filter: ImageFilter.blur(sigmaX: 0.0, sigmaY: 0.0), // Add blur effect
+      child: Container(
+        color:Theme.of(context).colorScheme.surface.withOpacity(.3), // Ensure the background is fully transparent
+        child: const Column(
+          mainAxisSize: MainAxisSize.max,
+          children: [
+            TopBar1(), // Your custom widget
+            TopBar2(), // Your custom widget
+          ],
+        ),
+      ),
+    ),
+  ),
+  bottom: const PreferredSize(
+    preferredSize: Size.fromHeight(35.0),
+    child: Text(''), // Placeholder for bottom spacing
+  ),
+),
+
                 SliverToBoxAdapter(
                   child: Transform.translate(
                     offset: const Offset(0, -23),

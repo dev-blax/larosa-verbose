@@ -218,44 +218,80 @@ class _PostComponentState extends State<PostComponent>
             isPlayingState: widget.isPlaying,
             postHeight: widget.post['height'], // Pass the height here
           ),
+          // Positioned(
+          //   bottom: isVideoMedia ? 10 : 0, // Adjust position if it's a video
+          //   left: 0,
+          //   height: 50,
+          //   width: MediaQuery.of(context).size.width,
+          //   child: Animate(
+          //     key: ValueKey(
+          //         _isLiked), // Unique key to reset animation on state change
+          //     effects: [
+          //       SlideEffect(
+          //         begin:
+          //             _isLiked ? const Offset(0.4, 0) : const Offset(-0.4, 0),
+          //         end: const Offset(0, 0),
+          //         curve: Curves.elasticOut,
+          //         duration: const Duration(seconds: 2),
+          //       ),
+          //     ],
+          //     child: Container(
+          //       decoration: BoxDecoration(
+          //         gradient: LinearGradient(
+          //           colors: !_isLiked
+          //               ? [
+          //                   Colors.black.withOpacity(0.7),
+          //                   Colors.black.withOpacity(0.3),
+          //                 ]
+          //               : [
+          //                   const Color.fromRGBO(133, 16, 7, 1)
+          //                       .withOpacity(0.9),
+          //                   const Color.fromRGBO(133, 16, 7, 1)
+          //                       .withOpacity(0.3),
+          //                 ],
+          //           begin: Alignment.bottomCenter,
+          //           end: Alignment.topCenter,
+          //         ),
+          //       ),
+          //     ),
+          //   ),
+          // ),
+          
           Positioned(
-            bottom: isVideoMedia ? 10 : 0, // Adjust position if it's a video
-            left: 0,
-            height: 50,
-            width: MediaQuery.of(context).size.width,
-            child: Animate(
-              key: ValueKey(
-                  _isLiked), // Unique key to reset animation on state change
-              effects: [
-                SlideEffect(
-                  begin:
-                      _isLiked ? const Offset(0.4, 0) : const Offset(-0.4, 0),
-                  end: const Offset(0, 0),
-                  curve: Curves.elasticOut,
-                  duration: const Duration(seconds: 2),
-                ),
-              ],
-              child: Container(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: !_isLiked
-                        ? [
-                            Colors.black.withOpacity(0.7),
-                            Colors.black.withOpacity(0.3),
-                          ]
-                        : [
-                            const Color.fromRGBO(133, 16, 7, 1)
-                                .withOpacity(0.9),
-                            const Color.fromRGBO(133, 16, 7, 1)
-                                .withOpacity(0.3),
-                          ],
-                    begin: Alignment.bottomCenter,
-                    end: Alignment.topCenter,
-                  ),
-                ),
-              ),
-            ),
-          ),
+  bottom: isVideoMedia ? 10 : 0, // Adjust position if it's a video
+  left: 0,
+  height: 50,
+  width: MediaQuery.of(context).size.width,
+  child: Animate(
+    key: ValueKey(_isLiked), // Unique key to reset animation on state change
+    effects: [
+      SlideEffect(
+        begin: _isLiked ? const Offset(0.4, 0) : const Offset(-0.4, 0),
+        end: const Offset(0, 0),
+        curve: Curves.elasticOut,
+        duration: const Duration(seconds: 2),
+      ),
+    ],
+    child: Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: !_isLiked
+              ? [
+                  Colors.black.withOpacity(0.7), // Darker at the bottom
+                  Colors.black.withOpacity(0.01), // Almost fully colorless
+                ]
+              : [
+                  const Color.fromRGBO(133, 16, 7, 1).withOpacity(0.9), // Strong red
+                  const Color.fromRGBO(133, 16, 7, 1).withOpacity(0.01), // Almost fully colorless red
+                ],
+          begin: Alignment.bottomCenter,
+          end: Alignment.topCenter,
+        ),
+      ),
+    ),
+  ),
+),
+
           Positioned(
             bottom: isVideoMedia
                 ? 14
