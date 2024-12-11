@@ -438,15 +438,19 @@ class _SupplierDashboardState extends State<SupplierDashboard> {
       destination: supplierChannel,
       callback: (StompFrame frame) {
         if (frame.body != null) {
-          final Map<String, dynamic> notification = jsonDecode(frame.body!);
-          setState(() {
-            supplierNotifications.insert(0, {
-              'id': notification['orderId'],
-              'message': notification['caption'],
-              'isAcknowledgeLoading': false,
-              'isReadyLoading': false,
-            });
-          });
+          // final Map<String, dynamic> notification = jsonDecode(frame.body!);
+          // setState(() {
+          //   supplierNotifications.insert(0, {
+          //     'id': notification['orderId'],
+          //     'message': notification['caption'],
+          //     'isAcknowledgeLoading': false,
+          //     'isReadyLoading': false,
+          //   });
+          // });
+
+
+          // Reload notifications after successful acknowledgment
+         _loadNotifications();
         }
       },
     );
