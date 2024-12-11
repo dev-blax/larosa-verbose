@@ -293,6 +293,7 @@
 // }
 
 import 'dart:convert';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
@@ -540,6 +541,11 @@ class _SupplierDashboardState extends State<SupplierDashboard> {
 
         // Reload notifications after successful acknowledgment
         await _loadNotifications();
+
+        // Trigger a rebuild
+      setState(() {
+        // Optionally update UI-specific variables here if needed
+      });
       } else {
         LogService.logError('Failed to acknowledge: ${response.body}');
         ScaffoldMessenger.of(context).showSnackBar(
@@ -590,50 +596,117 @@ class _SupplierDashboardState extends State<SupplierDashboard> {
   //   }
   // }
 
-  Future<void> markAsReadyForPickup(int notificationId, int index) async {
-    final String token = AuthService.getToken(); // Fetch the token
-    final String endpoint =
-        '${LarosaLinks.baseurl}/api/v1/notifications/ready-for-pickup/$notificationId';
+  // Future<void> markAsReadyForPickup(int notificationId, int index) async {
+  //   final String token = AuthService.getToken(); // Fetch the token
+  //   final String endpoint =
+  //       '${LarosaLinks.baseurl}/api/v1/notifications/ready-for-pickup/$notificationId';
 
-    setState(() {
-      supplierNotifications[index]['isReadyLoading'] = true;
-    });
+  //   setState(() {
+  //     supplierNotifications[index]['isReadyLoading'] = true;
+  //   });
 
-    try {
-      final response = await http.post(
-        Uri.parse(endpoint),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $token', // Add the Authorization header
-        },
-      );
+  //   try {
+  //     final response = await http.post(
+  //       Uri.parse(endpoint),
+  //       headers: {
+  //         'Content-Type': 'application/json',
+  //         'Authorization': 'Bearer $token', // Add the Authorization header
+  //       },
+  //     );
 
-      print(response.statusCode);
-      print(response.body);
-      if (response.statusCode == 200) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Marked as ready for pickup')),
-        );
+  //     print(response.statusCode);
+  //     print(response.body);
+  //     if (response.statusCode == 200) {
+  //       ScaffoldMessenger.of(context).showSnackBar(
+  //         const SnackBar(content: Text('Marked as ready for pickup')),
+  //       );
 
-        // Reload notifications after successful acknowledgment
-        await _loadNotifications();
-      } else {
-        LogService.logError('Failed to mark as ready: ${response.body}');
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to mark as ready: ${response.body}')),
-        );
-      }
-    } catch (e) {
-      LogService.logError('Error marking as ready: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: $e')),
-      );
-    } finally {
-      setState(() {
-        supplierNotifications[index]['isReadyLoading'] = false;
-      });
-    }
+  //       // Reload notifications after successful acknowledgment
+  //       await _loadNotifications();
+
+  //       // Trigger a rebuild
+  //     setState(() {
+  //       // Optionally update UI-specific variables here if needed
+  //     });
+  //     } else {
+  //       LogService.logError('Failed to mark as ready: ${response.body}');
+  //       ScaffoldMessenger.of(context).showSnackBar(
+  //         SnackBar(content: Text('Failed to mark as ready: ${response.body}')),
+  //       );
+  //     }
+  //   } catch (e) {
+  //     LogService.logError('Error marking as ready: $e');
+  //     ScaffoldMessenger.of(context).showSnackBar(
+  //       SnackBar(content: Text('Error: $e')),
+  //     );
+  //   } finally {
+  //     setState(() {
+  //       supplierNotifications[index]['isReadyLoading'] = false;
+  //     });
+  //   }
+  // }
+
+  Future<void> markAsReadyForPickup(int? notificationId, int? productId, int index) async {
+  if (notificationId == null || productId == null) {
+    print(
+        'Invalid IDs: notificationId=$notificationId, productId=$productId');
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Invalid data. Cannot mark as ready.')),
+    );
+    return;
   }
+
+  final String token = AuthService.getToken();
+  final String endpoint =
+      '${LarosaLinks.baseurl}/api/v1/notifications/ready-for-pickup/$notificationId';
+
+  // Create the request body with dynamic key
+  // final Map<String, dynamic> requestBody = {productId.toString(): true};
+
+  setState(() {
+    supplierNotifications[index]['isReadyLoading'] = true;
+  });
+
+  try {
+    final response = await http.post(
+      Uri.parse(endpoint),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+      // body: jsonEncode(requestBody), // Send dynamic key-value pair
+    );
+
+    print('Response status code: ${response.statusCode}');
+    print('Response body: ${response.body}');
+    if (response.statusCode == 200) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Marked as ready for pickup')),
+      );
+
+      // Reload notifications after successful acknowledgment
+      await _loadNotifications();
+
+      setState(() {
+      });
+    } else {
+      LogService.logError('Failed to mark as ready: ${response.body}');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to mark as ready: ${response.body}')),
+      );
+    }
+  } catch (e) {
+    LogService.logError('Error marking as ready: $e');
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Error: $e')),
+    );
+  } finally {
+    setState(() {
+      supplierNotifications[index]['isReadyLoading'] = false;
+    });
+  }
+}
+
 
   @override
   void initState() {
@@ -901,8 +974,9 @@ class _SupplierDashboardState extends State<SupplierDashboard> {
                             !notification['readyForPickup'])
                           buildCustomButton(
                             label: 'Mark Ready for Pickup',
-                            onTap: () => markAsReadyForPickup(
-                                notification['notificationId'], index),
+                            onTap: () => markAsReadyForPickup(notification['notificationId'],
+                                product['id'],
+                                index),
                             isLoading: notification['isReadyLoading'],
                           ),
 
@@ -970,17 +1044,14 @@ class _SupplierDashboardState extends State<SupplierDashboard> {
           ),
           child: isLoading
               ? const Center(
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                  ),
+                  child: CupertinoActivityIndicator(),
                 )
               : Center(
                   child: Text(
                     label,
                     style: const TextStyle(
                       color: Colors.white,
-                      fontSize: 15,
+                      fontSize: 14,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -992,7 +1063,7 @@ class _SupplierDashboardState extends State<SupplierDashboard> {
 
   @override
   Widget build(BuildContext context) {
-    print(supplierNotifications);
+    // print(supplierNotifications);
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Theme.of(context)
@@ -1114,7 +1185,7 @@ class _SupplierDashboardState extends State<SupplierDashboard> {
             if (isLoading)
               const Padding(
                 padding: EdgeInsets.all(16.0),
-                child: CircularProgressIndicator(),
+                child: CupertinoActivityIndicator(),
               )
             else
               ElevatedButton(
