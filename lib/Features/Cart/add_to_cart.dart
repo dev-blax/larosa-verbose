@@ -1722,13 +1722,12 @@ class _AddToCartScreenState extends State<AddToCartScreen> {
                                         locale: 'sw_TZ',
                                         symbol: '',
                                         decimalDigits: 2, // No decimal points
-                                      ).format(
-                                        double.parse(deliveryCost
-                                                .replaceAll('Tsh ', '')
-                                                .trim()) 
-                                            //     *
-                                            // _exchangeRate!,
-                                      )
+                                      ).format(double.parse(deliveryCost
+                                            .replaceAll('Tsh ', '')
+                                            .trim())
+                                        //     *
+                                        // _exchangeRate!,
+                                        )
                                     : 'Calculating...',
                               ),
                             ),
@@ -1777,17 +1776,16 @@ class _AddToCartScreenState extends State<AddToCartScreen> {
                                             '', // Omit the symbol here to manually add "TSh"
                                         decimalDigits:
                                             2, // Two decimal points for formatting
-                                      ).format(
-                                        widget.price * itemCount +
+                                      ).format(widget.price * itemCount +
                                             double.parse(deliveryCost
                                                 .replaceAll('Tsh ', '')
                                                 .trim()) // Add base delivery cost
-                                            // double.parse(deliveryCost
-                                            //         .replaceAll('Tsh ', '')
-                                                    // .trim()) 
-                                                //     *
-                                                // _exchangeRate!, // Add exchange-rate-adjusted delivery cost
-                                      )
+                                        // double.parse(deliveryCost
+                                        //         .replaceAll('Tsh ', '')
+                                        // .trim())
+                                        //     *
+                                        // _exchangeRate!, // Add exchange-rate-adjusted delivery cost
+                                        )
                                     : 'Calculating...',
                                 style: const TextStyle(fontSize: 15),
                               ),
@@ -2140,11 +2138,11 @@ class _AddToCartScreenState extends State<AddToCartScreen> {
                                 final totalPrice = widget.price * itemCount +
                                     double.parse(deliveryCost
                                         .replaceAll('Tsh ', '')
-                                        .trim()) +
-                                    double.parse(deliveryCost
-                                            .replaceAll('Tsh ', '')
-                                            .trim()) *
-                                        _exchangeRate!; // Total price calculation
+                                        .trim());
+                                // double.parse(deliveryCost
+                                //         .replaceAll('Tsh ', ''));
+                                //     .trim()) *
+                                // _exchangeRate!; // Total price calculation
 
                                 showModalBottomSheet(
                                   context: context,
