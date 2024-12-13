@@ -54,8 +54,6 @@ class _NewDeliveryState extends State<NewDelivery> {
 
   bool isLoading = true; // Track loading state
 
-  
-
   Future<void> _asyncInit() async {
     // await _socketConnection2();
     // await _updateCurrentCityFromLocation();
@@ -714,6 +712,8 @@ class _NewDeliveryState extends State<NewDelivery> {
         LogService.logInfo(response.body);
         setState(() {
           orders = jsonDecode(response.body);
+          // Reverse the orders
+          orders = orders.reversed.toList();
         });
         return;
       }
@@ -1239,31 +1239,33 @@ class _NewDeliveryState extends State<NewDelivery> {
                           ),
                         ),
                         TextButton(
-  onPressed: () {
-    // Show modal to display ride history
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (BuildContext context) {
-        return RideHistoryModal(rideHistory: rideHistory);
-      },
-    );
-  },
-  child: Text(
-    'Ride History',
-    style: TextStyle(
-      fontSize: 16,
-      fontWeight: FontWeight.bold,
-      color: Theme.of(context).brightness == Brightness.dark
-          ? Colors.white
-          : Colors.black,
-    ),
-  ),
-),
-
+                          onPressed: () {
+                            // Show modal to display ride history
+                            showModalBottomSheet(
+                              context: context,
+                              isScrollControlled: true,
+                              shape: const RoundedRectangleBorder(
+                                borderRadius: BorderRadius.vertical(
+                                    top: Radius.circular(20)),
+                              ),
+                              builder: (BuildContext context) {
+                                return RideHistoryModal(
+                                    rideHistory: rideHistory);
+                              },
+                            );
+                          },
+                          child: Text(
+                            'Ride History',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: Theme.of(context).brightness ==
+                                      Brightness.dark
+                                  ? Colors.white
+                                  : Colors.black,
+                            ),
+                          ),
+                        ),
                       ],
                     ),
                     const Gap(5),
@@ -1279,55 +1281,57 @@ class _NewDeliveryState extends State<NewDelivery> {
                     //       )
 
                     orders.isEmpty
-    ? Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.shopping_cart_outlined,
-            size: 80,
-            color: Colors.grey[400],
-          ),
-          const SizedBox(height: 20),
-          const Text(
-            "No current orders",
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: Colors.grey,
-            ),
-          ),
-          const SizedBox(height: 10),
-          const Text(
-            "It looks like you haven't placed any orders yet.",
-            style: TextStyle(
-              fontSize: 14,
-              color: Colors.grey,
-            ),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 20),
-          ElevatedButton(
-            onPressed: () {
-              // Navigate to the page where users can make a new order
-              Navigator.of(context).push(_createRoute());
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: LarosaColors.purple, // Use your theme colors
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(20),
-              ),
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-            ),
-            child: const Text(
-              "Make a New Order",
-              style: TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-        ],
-      )
+                        ? Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.shopping_cart_outlined,
+                                size: 80,
+                                color: Colors.grey[400],
+                              ),
+                              const SizedBox(height: 20),
+                              const Text(
+                                "No current orders",
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.grey,
+                                ),
+                              ),
+                              const SizedBox(height: 10),
+                              const Text(
+                                "It looks like you haven't placed any orders yet.",
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: Colors.grey,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                              const SizedBox(height: 20),
+                              ElevatedButton(
+                                onPressed: () {
+                                  // Navigate to the page where users can make a new order
+                                  Navigator.of(context).push(_createRoute());
+                                },
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: LarosaColors
+                                      .purple, // Use your theme colors
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 20, vertical: 10),
+                                ),
+                                child: const Text(
+                                  "Make a New Order",
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          )
                         : ListView.builder(
                             shrinkWrap:
                                 true, // Ensures ListView takes only required space
@@ -1790,11 +1794,11 @@ class MapModal extends StatelessWidget {
   }
 }
 
-
 class RideHistoryModal extends StatelessWidget {
   final List<dynamic> rideHistory;
 
-  const RideHistoryModal({Key? key, required this.rideHistory}) : super(key: key);
+  const RideHistoryModal({Key? key, required this.rideHistory})
+      : super(key: key);
 
   String formatDateTime(String? dateTime) {
     if (dateTime == null) return '';
@@ -1838,7 +1842,8 @@ class RideHistoryModal extends StatelessWidget {
                 ? const Center(
                     child: Text(
                       "No ride history available",
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+                      style:
+                          TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
                     ),
                   )
                 : ListView.builder(
@@ -1852,12 +1857,14 @@ class RideHistoryModal extends StatelessWidget {
                         elevation: 2,
                         margin: const EdgeInsets.symmetric(vertical: 4),
                         child: Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
+                          padding: const EdgeInsets.symmetric(
+                              vertical: 10, horizontal: 8),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
                                 children: [
                                   Text(
                                     "Ride ID: ${ride['rideId']}",
@@ -1890,7 +1897,8 @@ class RideHistoryModal extends StatelessWidget {
                               const SizedBox(height: 12),
                               Row(
                                 children: [
-                                  const Icon(Icons.person, size: 20, color: Colors.grey),
+                                  const Icon(Icons.person,
+                                      size: 20, color: Colors.grey),
                                   const SizedBox(width: 8),
                                   Text(
                                     "${ride['driverFirstName']} ${ride['driverLastName']}",
@@ -1947,7 +1955,8 @@ class RideHistoryModal extends StatelessWidget {
                               //     ),
                               //   ],
                               // ),
-                              if (ride['startTime'] != null || ride['endTime'] != null)
+                              if (ride['startTime'] != null ||
+                                  ride['endTime'] != null)
                                 Column(
                                   children: [
                                     const SizedBox(height: 12),
@@ -1959,17 +1968,20 @@ class RideHistoryModal extends StatelessWidget {
                                         const SizedBox(width: 8),
                                         Expanded(
                                           child: Column(
-                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
                                             children: [
                                               if (ride['startTime'] != null)
                                                 Text(
                                                   "Start Time: ${formatDateTime(ride['startTime'])}",
-                                                  style: const TextStyle(fontSize: 13),
+                                                  style: const TextStyle(
+                                                      fontSize: 13),
                                                 ),
                                               if (ride['endTime'] != null)
                                                 Text(
                                                   "End Time: ${formatDateTime(ride['endTime'])}",
-                                                  style: const TextStyle(fontSize: 13),
+                                                  style: const TextStyle(
+                                                      fontSize: 13),
                                                 ),
                                             ],
                                           ),

@@ -2255,7 +2255,7 @@ class _AddToCartScreenState extends State<AddToCartScreen> {
                     // ),
 
                     Expanded(
-  child: buildWideGradientButton(
+  child: deliveryCost.contains('Tsh') ? buildWideGradientButton(
     onTap: () async {
       try {
         // Fetch the user's profile ID dynamically
@@ -2274,8 +2274,16 @@ class _AddToCartScreenState extends State<AddToCartScreen> {
 
         await addItemToCart(profileId, items);
 
+         // Show a success message
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text("Item successfully added to the cart!"),
+        duration: Duration(seconds: 2),
+      ),
+    );
+
         // Navigate to the cart screen
-        // context.push('/maincart');
+        context.push('/maincart');
       } catch (error) {
         LogService.logError('Error in Add to Cart: $error');
       }
@@ -2283,7 +2291,11 @@ class _AddToCartScreenState extends State<AddToCartScreen> {
     label: 'Add to Cart',
     startColor: LarosaColors.secondary,
     endColor: LarosaColors.purple,
-  ),
+  ) :const Center(
+                              child: CupertinoActivityIndicator(
+                                radius: 10.0, // Adjust the size as needed
+                              ),
+                            ),
 ),
 
                   ],

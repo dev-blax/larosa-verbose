@@ -379,7 +379,7 @@ class _CenterSnapCarouselState extends State<CenterSnapCarousel> {
                   imageUrl: url,
                   fit: BoxFit.cover,
                   // placeholder: (context, url) => _buildShimmerLoader(height: widget.postHeight),
-                  // placeholder: (context, url) => _buildShimmerLoader(),
+                  placeholder: (context, url) => _buildShimmerLoader(),
                   errorWidget: (context, url, error) => const Icon(Icons.error),
                 ),
               );
@@ -410,7 +410,7 @@ class _CenterSnapCarouselState extends State<CenterSnapCarousel> {
       highlightColor: isDarkMode ? Colors.grey[700]! : Colors.grey[100]!,
       child: Container(
         width: MediaQuery.of(context).size.width,
-        // height: widget.postHeight,
+        height: 300,
         color: Colors.grey[100],
       ),
     );
