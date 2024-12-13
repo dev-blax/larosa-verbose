@@ -28,6 +28,11 @@ class AuthService {
     return box.get('refreshToken');
   }
 
+  static String getCategories() {
+    var box = Hive.box('userBox');
+    return box.get('categories');
+  }
+
   static int? getProfileId() {
     var box = Hive.box('userBox');
     return box.get('profileId');

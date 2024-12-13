@@ -515,7 +515,7 @@ class _PostComponentState extends State<PostComponent>
 
   Widget _postInteracts() {
     return Padding(
-        padding: const EdgeInsets.only(left: 10.0, right: 3.0),
+        padding: const EdgeInsets.only(left: 9.0, right: 0.0),
         child: Container(
           decoration: BoxDecoration(
             color: Theme.of(context).scaffoldBackgroundColor,

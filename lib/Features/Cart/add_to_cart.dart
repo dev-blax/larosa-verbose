@@ -1369,6 +1369,47 @@ class _AddToCartScreenState extends State<AddToCartScreen> {
     }
   }
 
+  Future<void> addItemToCart(
+      int profileId, List<Map<String, dynamic>> items) async {
+    final Uri uri = Uri.https(
+      'burnished-core-439210-f6.uc.r.appspot.com',
+      '/cart/add-item',
+    );
+
+    try {
+      String token = AuthService.getToken();
+
+      if (token == null) {
+        throw Exception('Token is missing. Please log in again.');
+      }
+
+      final Map<String, dynamic> requestBody = {
+        "profileId": profileId,
+        "items": items,
+      };
+
+      final http.Response response = await http.post(
+        uri,
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer $token",
+        },
+        body: jsonEncode(requestBody),
+      );
+      print(response.body);
+      print(response.statusCode);
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        LogService.logInfo('Item added to cart successfully: $data');
+      } else {
+        LogService.logError(
+            'Failed to add item to cart. Status Code: ${response.statusCode}');
+      }
+    } catch (error) {
+      // LogService.logError('Error in addItemToCart: $error');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final cartNotifier = Provider.of<CartController>(context);
@@ -2165,12 +2206,12 @@ class _AddToCartScreenState extends State<AddToCartScreen> {
                                               ? totalPrice
                                               : widget.price * itemCount,
                                           quantity: itemCount,
-                                          postId: widget.postId,
+                                          postId: [widget.postId],
                                           adults: adults, // Pass adults
                                           children: children, // Pass children
                                           fullName: _fullNameController.text
                                               .trim(), // Pass full name
-                                          isReservation: !isReservation),
+                                          isReservation: !isReservation, items: [],),
                                     );
                                   },
                                 );
@@ -2189,29 +2230,62 @@ class _AddToCartScreenState extends State<AddToCartScreen> {
 
                     const SizedBox(
                         width: 70), // Add some spacing between the buttons
+                    // Expanded(
+                    //   child: buildWideGradientButton(
+                    //     onTap: () {
+                    //       // Handle add to cart
+
+                    //       Product newProduct = Product(
+                    //         id: '2',
+                    //         imageUrl: '',
+                    //         name: 'Product Name',
+                    //         price: 2500,
+                    //         shortDescription: 'Some description',
+                    //         quantity: 20,
+                    //       );
+
+                    //       cartNotifier.addProduct(newProduct);
+
+                    //       context.push('/maincart');
+                    //     },
+                    //     label: 'Add to Cart',
+                    //     startColor: LarosaColors.secondary,
+                    //     endColor: LarosaColors.purple,
+                    //   ),
+                    // ),
+
                     Expanded(
-                      child: buildWideGradientButton(
-                        onTap: () {
-                          // Handle add to cart
+  child: buildWideGradientButton(
+    onTap: () async {
+      try {
+        // Fetch the user's profile ID dynamically
+        int? profileId = AuthService.getProfileId(); // Ensure this returns an actual int value
+        if (profileId == null) {
+          throw Exception('Profile ID is null. Please log in again.');
+        }
 
-                          Product newProduct = Product(
-                            id: '2',
-                            imageUrl: '',
-                            name: 'Product Name',
-                            price: 2500,
-                            shortDescription: 'Some description',
-                            quantity: 20,
-                          );
+        // Replace `itemCount` and `widget.postId` with actual dynamic values
+        List<Map<String, dynamic>> items = [
+          {
+            "postId": widget.postId, // Ensure `widget.postId` is a valid int
+            "quantity": itemCount, // Ensure `itemCount` is a valid int
+          }
+        ];
 
-                          cartNotifier.addProduct(newProduct);
+        await addItemToCart(profileId, items);
 
-                          context.push('/maincart');
-                        },
-                        label: 'Add to Cart',
-                        startColor: LarosaColors.secondary,
-                        endColor: LarosaColors.purple,
-                      ),
-                    ),
+        // Navigate to the cart screen
+        // context.push('/maincart');
+      } catch (error) {
+        LogService.logError('Error in Add to Cart: $error');
+      }
+    },
+    label: 'Add to Cart',
+    startColor: LarosaColors.secondary,
+    endColor: LarosaColors.purple,
+  ),
+),
+
                   ],
                 )
               ],

@@ -18,7 +18,7 @@ class PaymentProcessingModal extends StatefulWidget {
   final String paymentType; // Either 'Bank' or 'Mobile'
   final double totalPrice;
   final int quantity;
-  final int postId;
+  final List<int> postId;
   final double? deliveryLatitude;
   final double? deliveryLongitude;
   final String? deliveryDestination;
@@ -29,6 +29,8 @@ class PaymentProcessingModal extends StatefulWidget {
   final int children; // New parameter
   final String fullName; // New parameter
   final bool isReservation; // New parameter
+
+  final List<Map<String, dynamic>> items;
 
   const PaymentProcessingModal({
     super.key,
@@ -45,7 +47,8 @@ class PaymentProcessingModal extends StatefulWidget {
     required this.adults, // Initialize in constructor
     required this.children, // Initialize in constructor
     required this.fullName, // Initialize in constructor
-    required this.isReservation, // Initialize in constructor
+    required this.isReservation,
+    required this.items, // Initialize in constructor
   });
 
   @override
@@ -84,13 +87,17 @@ class _PaymentProcessingModalState extends State<PaymentProcessingModal> {
 
     var url = Uri.https(LarosaLinks.nakedBaseUrl, '/api/v1/orders/new');
 
+//  final formattedItems = widget.items
+//       .map((item) => {
+//             "productId": item['productId'],
+//             "quantity": item['quantity'],
+//           })
+//       .toList();
+
+//   print('Formatted items: $formattedItems');
+
     Map<String, dynamic> body = {
-      "items": [
-        {
-          "productId": widget.postId,
-          "quantity": widget.quantity,
-        }
-      ],
+      "items": widget.items,
       "provider": widget.paymentMethod,
       "paymentMethod": widget.paymentType.toUpperCase(),
       "accountNumber": _accountNumberController.text,
@@ -118,8 +125,10 @@ class _PaymentProcessingModalState extends State<PaymentProcessingModal> {
         "otp": _otpController.text,
       });
     }
+    
 
     LogService.logInfo('Request Body: $body');
+    LogService.logInfo('Request items: ${widget.items}');
 
     try {
       final response = await http.post(

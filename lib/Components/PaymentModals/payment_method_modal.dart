@@ -22,12 +22,14 @@ class PaymentMethodModal extends StatelessWidget {
   final double? deliveryLongitude;
   final double totalPrice;
   final int quantity;
-  final int postId;
+  final List<int> postId;
 
   final int adults; // New parameter
   final int children; // New parameter
   final String fullName; // New parameter
   final bool isReservation; // New parameter
+
+  final List<Map<String, dynamic>> items;
 
   PaymentMethodModal({
     super.key,
@@ -38,17 +40,19 @@ class PaymentMethodModal extends StatelessWidget {
     required this.totalPrice,
     required this.quantity,
     required this.postId,
-
     required this.adults, // Initialize in constructor
     required this.children, // Initialize in constructor
     required this.fullName, // Initialize in constructor
-    required this.isReservation, // Initialize in constructor
+    required this.isReservation,
+    required this.items, // Initialize in constructor
   });
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: Theme.of(context).brightness == Brightness.dark ?Colors.black : Colors.white,
+      color: Theme.of(context).brightness == Brightness.dark
+          ? Colors.black
+          : Colors.white,
       padding: const EdgeInsets.all(8.0),
       constraints: BoxConstraints(
         maxHeight: MediaQuery.of(context).size.height * 0.75,
@@ -125,6 +129,7 @@ class PaymentMethodModal extends StatelessWidget {
                                 totalPrice: totalPrice,
                                 quantity: quantity,
                                 postId: postId,
+                                items: items,
                                 deliveryLatitude: deliveryLatitude,
                                 deliveryLongitude: deliveryLongitude,
                                 deliveryDestination: destination,
@@ -135,10 +140,11 @@ class PaymentMethodModal extends StatelessWidget {
                                     ? currentPosition?.longitude
                                     : null,
 
-                                    adults: adults, // Pass adults parameter
-  children: children, // Pass children parameter
-  fullName: fullName, // Pass fullName parameter
-  isReservation: isReservation, // Pass isReservation parameter
+                                adults: adults, // Pass adults parameter
+                                children: children, // Pass children parameter
+                                fullName: fullName, // Pass fullName parameter
+                                isReservation:
+                                    isReservation, // Pass isReservation parameter
                               ),
                             );
                           },
@@ -232,6 +238,7 @@ class PaymentMethodModal extends StatelessWidget {
                                 totalPrice: totalPrice,
                                 quantity: quantity,
                                 postId: postId,
+                                items: items,
                                 deliveryLatitude: deliveryLatitude,
                                 deliveryLongitude: deliveryLongitude,
                                 deliveryDestination: destination,
@@ -242,10 +249,11 @@ class PaymentMethodModal extends StatelessWidget {
                                     ? currentPosition?.longitude
                                     : null,
 
-                                    adults: adults, // Pass adults parameter
-  children: children, // Pass children parameter
-  fullName: fullName, // Pass fullName parameter
-  isReservation: isReservation, // Pass isReservation parameter
+                                adults: adults, // Pass adults parameter
+                                children: children, // Pass children parameter
+                                fullName: fullName, // Pass fullName parameter
+                                isReservation:
+                                    isReservation, // Pass isReservation parameter
                               ),
                             );
                           },

@@ -1,197 +1,340 @@
-import 'package:cached_network_image/cached_network_image.dart';
-import 'package:flutter/cupertino.dart';
+import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:gap/gap.dart';
-import 'package:larosa_block/Features/Cart/Models/product_model.dart';
-import 'package:larosa_block/Features/Cart/controllers/cart_controller.dart';
-import 'package:larosa_block/Features/Delivery/explore_services.dart';
-import 'package:provider/provider.dart';
+import 'package:http/http.dart' as http;
+import 'package:intl/intl.dart';
+import '../../Services/auth_service.dart';
+import '../../Services/log_service.dart';
+import '../../Utils/colors.dart';
+import 'prepare_for_payment.dart';
 
-class MyCart extends StatelessWidget {
-  const MyCart({super.key});
+// Function to list cart items
+Future<List<Map<String, dynamic>>> listCartItems(int profileId) async {
+  final Uri uri = Uri.https(
+    'burnished-core-439210-f6.uc.r.appspot.com',
+    '/cart/list',
+  );
 
-  @override
-  Widget build(BuildContext context) {
-    final cartNotifier = Provider.of<CartController>(context);
+  try {
+    String? token = AuthService.getToken();
 
-    return Scaffold(
-      appBar: AppBar(
-        leading: IconButton(
-          onPressed: () => Navigator.pop(context),
-          icon: const Icon(
-            CupertinoIcons.back,
-          ),
-        ),
-        title: const Text("Your Cart"),
-        centerTitle: true,
-      ),
-      body: cartNotifier.cartItems.isEmpty
-          ? Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.max,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(CupertinoIcons.zzz),
-                  const Gap(10),
-                  const Text(
-                    'You have no Products in your Cart',
-                  ),
-                  const Gap(10),
-                  FilledButton(
-                    style: FilledButton.styleFrom(
-                      shape: const RoundedRectangleBorder(
-                        borderRadius: BorderRadius.all(Radius.circular(10)),
-                        side: BorderSide(color: Colors.blue),
-                      ),
-                    ),
-                    onPressed: () => Navigator.of(context).push(_createRoute()),
-                    child: const Text(
-                      'Look for Nearby Services and Products',
-                    ),
-                  ),
-                ],
-              ),
-            )
-          : Column(
-              children: [
-                Expanded(
-                  child: ListView.builder(
-                    itemCount: cartNotifier.cartItems.length,
-                    itemBuilder: (context, index) {
-                      var product = cartNotifier.cartItems[index];
-                      return CartItemWidget(
-                        product: product,
-                        onAdd: (product) => cartNotifier.addProduct(product),
-                        onRemove: (product) =>
-                            cartNotifier.removeProduct(product),
-                        onDelete: (product) =>
-                            cartNotifier.deleteProduct(product),
-                      );
-                    },
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Text(
-                    'Total: \$${cartNotifier.totalPrice.toStringAsFixed(2)}',
-                    style: const TextStyle(
-                        fontSize: 20, fontWeight: FontWeight.bold),
-                  ),
-                ),
-                const SizedBox(height: 10),
-                ElevatedButton(
-                  onPressed: () {
-                    // Handle checkout functionality
-                  },
-                  child: const Text('Checkout'),
-                ),
-              ],
-            ),
-    );
-  }
+    if (token == null) {
+      throw Exception('Token is missing. Please log in again.');
+    }
 
+    final Map<String, dynamic> requestBody = {
+      "profileId": profileId,
+    };
 
-    Route _createRoute() {
-    return PageRouteBuilder(
-      pageBuilder: (context, animation, secondaryAnimation) =>
-          const ExploreModal(),
-      transitionsBuilder: (context, animation, secondaryAnimation, child) {
-        const begin = Offset(0.0, 1.0);
-        const end = Offset.zero;
-        const curve = Curves.easeInOut;
-
-        var tween =
-            Tween(begin: begin, end: end).chain(CurveTween(curve: curve));
-        var offsetAnimation = animation.drive(tween);
-
-        return SlideTransition(
-          position: offsetAnimation,
-          child: child,
-        );
+    final http.Response response = await http.post(
+      uri,
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer $token",
       },
+      body: jsonEncode(requestBody),
     );
+    // print(response.body);
+    if (response.statusCode == 200) {
+      final List<dynamic> data = jsonDecode(response.body);
+      // return data.map((item) => item as Map<String, dynamic>).toList();
+      return List<Map<String, dynamic>>.from(
+          data.reversed.map((item) => item as Map<String, dynamic>));
+    } else {
+      LogService.logError(
+          'Failed to list cart items. Status Code: ${response.statusCode}');
+      return [];
+    }
+  } catch (error) {
+    LogService.logError('Error in listCartItems: $error');
+    return [];
   }
 }
 
-class CartItemWidget extends StatelessWidget {
-  final Product product;
-  final Function(Product) onAdd;
-  final Function(Product) onRemove;
-  final Function(Product) onDelete;
+// Function to remove an item from the cart
+Future<void> removeItemFromCart(int profileId, int productId) async {
+  final Uri uri = Uri.https(
+    'burnished-core-439210-f6.uc.r.appspot.com',
+    '/cart/remove-item',
+  );
 
-  const CartItemWidget({
-    super.key,
-    required this.product,
-    required this.onAdd,
-    required this.onRemove,
-    required this.onDelete,
-  });
+  try {
+    String? token = AuthService.getToken();
+
+    if (token == null) {
+      throw Exception('Token is missing. Please log in again.');
+    }
+
+    // Assuming that you want to remove one product at a time from the cart, you need to specify its quantity (e.g., 1)
+    final Map<String, dynamic> requestBody = {
+      "profileId": profileId,
+      "items": [
+        {
+          "postId": productId, // Assuming productId maps to postId
+          "quantity": 1 // Set quantity to 1 or adjust accordingly
+        }
+      ]
+    };
+
+    final http.Response response = await http.post(
+      uri,
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer $token",
+      },
+      body: jsonEncode(requestBody),
+    );
+    if (response.statusCode == 200) {
+      LogService.logInfo('Item removed from cart successfully.');
+    } else {
+      print('Response body : ${response.body}');
+      LogService.logError(
+          'Failed to remove item from cart. Status Code: ${response.statusCode}');
+    }
+  } catch (error) {
+    LogService.logError('Error in removeItemFromCart: $error');
+  }
+}
+
+// Widget to display cart items with delete and payment checkbox functionality
+class MyCart extends StatefulWidget {
+  @override
+  _MyCartState createState() => _MyCartState();
+}
+
+class _MyCartState extends State<MyCart> {
+  List<Map<String, dynamic>> cartItems = [];
+  List<int> selectedItems = [];
+
+  @override
+  void initState() {
+    super.initState();
+    fetchCartItems();
+  }
+
+  void fetchCartItems() async {
+    int profileId =
+        AuthService.getProfileId() ?? 0; // Replace with actual profile ID logic
+    if (profileId == 0) {
+      LogService.logError('Profile ID is missing.');
+      return;
+    }
+    List<Map<String, dynamic>> items = await listCartItems(profileId);
+    setState(() {
+      cartItems = items;
+    });
+  }
+
+  void deleteSelectedItems() async {
+    int profileId = AuthService.getProfileId() ?? 0;
+    for (int productId in selectedItems) {
+      await removeItemFromCart(profileId, productId);
+    }
+    fetchCartItems();
+    setState(() {
+      selectedItems.clear();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-      margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12.0),
-        child: Row(
-          children: [
-            ClipRRect(
-              borderRadius: BorderRadius.circular(10),
-              child: CachedNetworkImage(
-                imageUrl: product.imageUrl,
-                width: 80,
-                height: 80,
-                fit: BoxFit.cover,
-                errorWidget: (context, url, error) => const Icon(Icons.error),
-              ),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    product.name,
-                    style: Theme.of(context).textTheme.headlineSmall,
-                  ),
-                  Text(
-                    product.shortDescription,
-                    style: Theme.of(context).textTheme.bodySmall!.copyWith(
-                          fontSize: 12,
-                        ),
-                  ),
-                  const Gap(8),
-                  Text(
-                    '\$${product.price.toStringAsFixed(2)}',
-                    style: Theme.of(context).textTheme.bodyLarge!.copyWith(
-                          color: Colors.orange,
-                        ),
-                  ),
-                ],
-              ),
-            ),
-            Column(
-              children: [
-                IconButton(
-                  icon: const Icon(Icons.add),
-                  onPressed: () => onAdd(product),
-                ),
-                Text(product.quantity.toString()),
-                IconButton(
-                  icon: const Icon(Icons.remove),
-                  onPressed: () => onRemove(product),
-                ),
-              ],
-            ),
+    return Scaffold(
+        appBar: AppBar(
+          title: const Text("Cart"),
+          actions: [
             IconButton(
-              icon: const Icon(Icons.delete, color: Colors.red),
-              onPressed: () => onDelete(product),
+              icon: const Icon(Icons.delete),
+              onPressed: deleteSelectedItems,
             ),
           ],
         ),
+        body: cartItems.isEmpty
+            ? const Center(child: Text("No items in the cart"))
+            : ListView.builder(
+                itemCount: cartItems.length,
+                itemBuilder: (context, index) {
+                  final item = cartItems[index];
+                  final productId = item['productId'];
+                  final imageUrls =
+                      (item['names'] ?? '').split(','); // Split names by commas
+
+                  return Card(
+                    margin:
+                        const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8.0, vertical: 4),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          CheckboxListTile(
+                            // checkColor: Colors.grey,
+                            activeColor: Colors.grey[300],
+                            value: selectedItems.contains(productId),
+                            onChanged: (value) {
+                              setState(() {
+                                if (value == true) {
+                                  selectedItems.add(productId);
+                                } else {
+                                  selectedItems.remove(productId);
+                                }
+                              });
+                            },
+                            title: Text(
+                              item['caption'] ?? 'Unnamed Product',
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 14,
+                              ),
+                            ),
+                            controlAffinity: ListTileControlAffinity.leading,
+                          ),
+                          const SizedBox(height: 1),
+                          SizedBox(
+                            height: 100, // Height for the image row
+                            child: ListView.separated(
+                              scrollDirection: Axis.horizontal,
+                              itemCount: imageUrls.length,
+                              itemBuilder: (context, imgIndex) {
+                                return ClipRRect(
+                                  borderRadius: BorderRadius.circular(8),
+                                  child: Image.network(
+                                    imageUrls[imgIndex],
+                                    width: 100,
+                                    height: 100,
+                                    fit: BoxFit.cover,
+                                    errorBuilder:
+                                        (context, error, stackTrace) =>
+                                            const Icon(Icons.broken_image,
+                                                size: 100),
+                                  ),
+                                );
+                              },
+                              separatorBuilder: (context, _) =>
+                                  const SizedBox(width: 8),
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          Text(
+                            'Quantity: ${item['quantity']}',
+                            style: const TextStyle(
+                              color: Colors.grey,
+                              fontSize: 14,
+                            ),
+                          ),
+                          Text(
+                            'Price: Tsh ${NumberFormat('#,##0', 'en_US').format(item['price'])}',
+                            style: const TextStyle(
+                              color: Colors.green,
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+              ),
+        bottomNavigationBar: Container(
+          margin: const EdgeInsets.symmetric(
+            vertical: 4,
+              horizontal: 20), // Adjust horizontal padding
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              colors: [LarosaColors.secondary, LarosaColors.purple],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.circular(30), // Rounded corners
+          ),
+          child: FilledButton(
+            style: ButtonStyle(
+              backgroundColor: WidgetStateProperty.all(Colors.transparent),
+              padding: WidgetStateProperty.all(
+                const EdgeInsets.symmetric(vertical: 12, horizontal: 24),
+              ),
+              shape: WidgetStateProperty.all(
+                RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(
+                    30, // Ensures button shape matches container
+                  ),
+                ),
+              ),
+            ),
+
+            onPressed: () {
+  // Ensure at least one item is selected
+  if (selectedItems.isEmpty) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text("No items selected for payment."),
       ),
     );
+    return;
+  }
+
+  // Variables to hold data for PrepareForPayment
+  List<int> productIds = [];
+  double totalPrice = 0.0;
+  int totalQuantity = 0; // Variable to track total quantity
+  List<String> combinedNamesList = [];
+  List<Map<String, dynamic>> items = []; // Array to hold detailed items
+
+  // Collect details for each selected item
+  for (var productId in selectedItems) {
+    var item = cartItems.firstWhere((item) => item['productId'] == productId);
+
+    productIds.add(item['productId']); // Add product ID to the list
+    totalPrice += (item['price'] ?? 0.0) * (item['quantity'] ?? 1); // Sum up the total price
+    totalQuantity += (item['quantity'] ?? 1) as int; // Cast to int to avoid type issues // Add to total quantity
+
+    var names = (item['names'] ?? '').split(','); // Split names into a list
+    combinedNamesList.addAll(names); // Add names to the combined list
+
+    // Add detailed item to items array
+    items.add({
+      'productId': item['productId'],
+      'quantity': item['quantity'] ?? 1
+    });
+  }
+
+  // Combine all names into a single string
+  String combinedNames = combinedNamesList.join(',');
+
+  // Debugging prints
+  // print('Product IDs: $productIds');
+  // print('Total Price: \$${totalPrice.toStringAsFixed(2)}');
+  // print('Total Quantity: $totalQuantity');
+  // print('Combined Names: $combinedNames');
+  // print('Items: $items');
+
+  // Navigate to PrepareForPayment screen
+  Navigator.push(
+    context,
+    MaterialPageRoute(
+      builder: (context) => PrepareForPayment(
+        productIds: productIds,
+        totalPrice: totalPrice,
+        totalQuantity: totalQuantity,
+        combinedNames: combinedNames,
+        items: items,
+        reservationType: false,
+      ),
+    ),
+  );
+},
+            child: const Text(
+              'Proceed to Payment',
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w600, // Semi-bold for emphasis
+                letterSpacing: 1.0, // Add slight spacing for a clean look
+              ),
+            ),
+          ),
+        ));
   }
 }

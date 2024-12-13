@@ -698,7 +698,7 @@ class _HomeProfileScreenState extends State<HomeProfileScreen> {
                                             context,
                                             MaterialPageRoute(
                                               builder: (context) =>
-                                                  SupplierDashboard(
+                                                  Dashboard(
                                                       supplierId: supplierId
                                                           .toString()),
                                             ),

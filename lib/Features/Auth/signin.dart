@@ -64,10 +64,11 @@ class _SigninScreenState extends State<SigninScreen> {
 
       var box = await Hive.openBox('userBox');
       await box.clear();
-
+      print('Categories : ${data['categories'][0]}');
       box.put('profileId', data['profileId']);
       box.put('accountId', data['accountType']['id']);
       box.put('accountName', data['accountType']['name']);
+      box.put('categories', data['categories'][0]);
       box.put('token', data['jwtAuthenticationResponse']['token']);
       LogService.logInfo(
           'got toke ${data['jwtAuthenticationResponse']['token']}');

@@ -144,7 +144,7 @@ class RouterService {
       GoRoute(
         name: 'maincart',
         path: '/maincart',
-        builder: (context, state) => const MyCart(),
+        builder: (context, state) => MyCart(),
       ),
 
       // reels routes

@@ -370,16 +370,16 @@ class _CenterSnapCarouselState extends State<CenterSnapCarousel> {
               );
             } else {
               return ConstrainedBox(
-                constraints: BoxConstraints(
-                  maxHeight: widget.postHeight ??
-                      calculatedHeight, // Use postHeight if available, otherwise calculatedHeight
+                constraints: const BoxConstraints(
+                  // maxHeight: widget.postHeight ??
+                  //     calculatedHeight, // Use postHeight if available, otherwise calculatedHeight
                 ),
                 child: CachedNetworkImage(
                   width: MediaQuery.of(context).size.width,
                   imageUrl: url,
                   fit: BoxFit.cover,
                   // placeholder: (context, url) => _buildShimmerLoader(height: widget.postHeight),
-                  placeholder: (context, url) => _buildShimmerLoader(),
+                  // placeholder: (context, url) => _buildShimmerLoader(),
                   errorWidget: (context, url, error) => const Icon(Icons.error),
                 ),
               );
@@ -410,7 +410,7 @@ class _CenterSnapCarouselState extends State<CenterSnapCarousel> {
       highlightColor: isDarkMode ? Colors.grey[700]! : Colors.grey[100]!,
       child: Container(
         width: MediaQuery.of(context).size.width,
-        height: 300,
+        // height: widget.postHeight,
         color: Colors.grey[100],
       ),
     );
