@@ -170,8 +170,11 @@ class _MyCartState extends State<MyCart> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           CheckboxListTile(
+                            contentPadding: EdgeInsets.zero, // No padding around CheckboxListTile
                             // checkColor: Colors.grey,
-                            activeColor: Colors.grey[300],
+                            activeColor: Theme.of(context).brightness == Brightness.dark
+      ? Colors.white
+      : Colors.black,
                             value: selectedItems.contains(productId),
                             onChanged: (value) {
                               setState(() {
