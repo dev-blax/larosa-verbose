@@ -31,6 +31,7 @@ class PrepareForPayment extends StatefulWidget {
   final int totalQuantity;
   final bool reservationType;
   final List<Map<String, dynamic>> items;
+  final List<Map<String, dynamic>> itemsToDisplay;
 
   const PrepareForPayment({
     super.key,
@@ -40,6 +41,7 @@ class PrepareForPayment extends StatefulWidget {
     required this.reservationType,
     required this.totalQuantity,
     required this.items,
+    required this.itemsToDisplay,
   });
 
   @override
@@ -500,35 +502,121 @@ class _PrepareForPaymentState extends State<PrepareForPayment> {
           ),
         ),
         title: const Text(
-          'Add To Cart',
+          'Proceed To Payment',
           style: TextStyle(fontSize: 16),
         ),
         centerTitle: true,
       ),
       body: ListView(
         children: [
+          // SingleChildScrollView(
+          //   scrollDirection: Axis.horizontal,
+          //   child: Row(
+          //     children: imageUrls.map((imageUrl) {
+          //       return CachedNetworkImage(
+          //         imageUrl: imageUrl.trim(),
+          //         height: 500,
+          //         progressIndicatorBuilder: (context, url, downloadProgress) =>
+          //             const SpinKitCircle(
+          //           color: Colors.blue,
+          //         ),
+          //         errorWidget: (context, url, error) => const Icon(Icons.error),
+          //       );
+          //     }).toList(),
+          //   ),
+          // ),
+
           SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(
-              children: imageUrls.map((imageUrl) {
-                return CachedNetworkImage(
-                  imageUrl: imageUrl.trim(),
-                  height: 500,
-                  progressIndicatorBuilder: (context, url, downloadProgress) =>
-                      const SpinKitCircle(
-                    color: Colors.blue,
-                  ),
-                  errorWidget: (context, url, error) => const Icon(Icons.error),
-                );
-              }).toList(),
-            ),
-          ),
+  child: Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      // Other widgets above the ListView.builder
+      SizedBox(
+        height: 300, // Specify the height as per your requirement
+        child: ListView.builder(
+          itemCount: widget.itemsToDisplay.length,
+          itemBuilder: (context, index) {
+            final item = widget.itemsToDisplay[index];
+            final imageUrls = (item['names'] ?? '').split(',');
+
+            return Card(
+              color: Theme.of(context).brightness == Brightness.dark
+      ? Colors.black
+      : Colors.white,
+              margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 8.0, vertical: 4),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    SizedBox(
+                      height: 100, // Height for the image row
+                      child: ListView.separated(
+                        scrollDirection: Axis.horizontal,
+                        itemCount: imageUrls.length,
+                        itemBuilder: (context, imgIndex) {
+                          return ClipRRect(
+                            borderRadius: BorderRadius.circular(8),
+                            child: Image.network(
+                              imageUrls[imgIndex],
+                              width: 100,
+                              height: 100,
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) =>
+                                  const Icon(Icons.broken_image, size: 100),
+                            ),
+                          );
+                        },
+                        separatorBuilder: (context, _) =>
+                            const SizedBox(width: 8),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'Quantity: ${item['quantity']}',
+                          style: const TextStyle(
+                            color: Colors.grey,
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                    Text(
+                      'Price: Tsh ${NumberFormat('#,##0', 'en_US').format(item['price'])}',
+                      style: const TextStyle(
+                        color: Colors.green,
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        ),
+      ),
+    ],
+  ),
+)
+,
+
+const Divider(),
+    
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 8.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Gap(10),
+                const Gap(8),
                 // Display current location if available
                 // Table for Current Location
 

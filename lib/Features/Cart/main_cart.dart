@@ -240,8 +240,7 @@ class _MyCartState extends State<MyCart> {
               ),
         bottomNavigationBar: Container(
           margin: const EdgeInsets.symmetric(
-            vertical: 4,
-              horizontal: 20), // Adjust horizontal padding
+              vertical: 4, horizontal: 20), // Adjust horizontal padding
           decoration: BoxDecoration(
             gradient: const LinearGradient(
               colors: [LarosaColors.secondary, LarosaColors.purple],
@@ -264,6 +263,74 @@ class _MyCartState extends State<MyCart> {
                 ),
               ),
             ),
+            // onPressed: () {
+            //   // Ensure at least one item is selected
+            //   if (selectedItems.isEmpty) {
+            //     ScaffoldMessenger.of(context).showSnackBar(
+            //       const SnackBar(
+            //         content: Text("No items selected for payment."),
+            //       ),
+            //     );
+            //     return;
+            //   }
+
+            //   // Variables to hold data for PrepareForPayment
+            //   List<int> productIds = [];
+            //   double totalPrice = 0.0;
+            //   int totalQuantity = 0; // Variable to track total quantity
+            //   List<String> combinedNamesList = [];
+            //   List<Map<String, dynamic>> items =
+            //       []; // Array to hold detailed items
+            //   List<Map<String, dynamic>> itemsToDisplay = [];
+
+            //   // Collect details for each selected item
+            //   for (var productId in selectedItems) {
+            //     var item = cartItems
+            //         .firstWhere((item) => item['productId'] == productId);
+
+            //     productIds.add(item['productId']); // Add product ID to the list
+            //     totalPrice += (item['price'] ?? 0.0) *
+            //         (item['quantity'] ?? 1); // Sum up the total price
+            //     totalQuantity += (item['quantity'] ?? 1)
+            //         as int; // Cast to int to avoid type issues // Add to total quantity
+
+            //     var names =
+            //         (item['names'] ?? '').split(','); // Split names into a list
+            //     combinedNamesList
+            //         .addAll(names); // Add names to the combined list
+
+            //     // Add detailed item to items array
+            //     items.add({
+            //       'productId': item['productId'],
+            //       'quantity': item['quantity'] ?? 1
+            //     });
+            //   }
+
+            //   // Combine all names into a single string
+            //   String combinedNames = combinedNamesList.join(',');
+
+            //   // Debugging prints
+            //   // print('Product IDs: $productIds');
+            //   // print('Total Price: \$${totalPrice.toStringAsFixed(2)}');
+            //   // print('Total Quantity: $totalQuantity');
+            //   // print('Combined Names: $combinedNames');
+            //   // print('Items: $items');
+
+            //   // Navigate to PrepareForPayment screen
+            //   Navigator.push(
+            //     context,
+            //     MaterialPageRoute(
+            //       builder: (context) => PrepareForPayment(
+            //         productIds: productIds,
+            //         totalPrice: totalPrice,
+            //         totalQuantity: totalQuantity,
+            //         combinedNames: combinedNames,
+            //         items: items,
+            //         reservationType: false,
+            //       ),
+            //     ),
+            //   );
+            // },
 
             onPressed: () {
   // Ensure at least one item is selected
@@ -282,6 +349,7 @@ class _MyCartState extends State<MyCart> {
   int totalQuantity = 0; // Variable to track total quantity
   List<String> combinedNamesList = [];
   List<Map<String, dynamic>> items = []; // Array to hold detailed items
+  List<Map<String, dynamic>> itemsToDisplay = []; // Array to display the items
 
   // Collect details for each selected item
   for (var productId in selectedItems) {
@@ -289,7 +357,7 @@ class _MyCartState extends State<MyCart> {
 
     productIds.add(item['productId']); // Add product ID to the list
     totalPrice += (item['price'] ?? 0.0) * (item['quantity'] ?? 1); // Sum up the total price
-    totalQuantity += (item['quantity'] ?? 1) as int; // Cast to int to avoid type issues // Add to total quantity
+    totalQuantity += (item['quantity'] ?? 1) as int; // Add to total quantity
 
     var names = (item['names'] ?? '').split(','); // Split names into a list
     combinedNamesList.addAll(names); // Add names to the combined list
@@ -299,17 +367,25 @@ class _MyCartState extends State<MyCart> {
       'productId': item['productId'],
       'quantity': item['quantity'] ?? 1
     });
+
+    // Add item details for display
+    itemsToDisplay.add({
+      'names': item['names'] ?? 'Unnamed Item', // Add the name
+      'price': item['price'] ?? 0.0, // Add the price
+      'quantity': item['quantity'] ?? 1, // Add the quantity
+    });
   }
 
   // Combine all names into a single string
   String combinedNames = combinedNamesList.join(',');
 
   // Debugging prints
-  // print('Product IDs: $productIds');
-  // print('Total Price: \$${totalPrice.toStringAsFixed(2)}');
-  // print('Total Quantity: $totalQuantity');
-  // print('Combined Names: $combinedNames');
-  // print('Items: $items');
+  print('Product IDs: $productIds');
+  print('Total Price: \$${totalPrice.toStringAsFixed(2)}');
+  print('Total Quantity: $totalQuantity');
+  print('Combined Names: $combinedNames');
+  print('Items: $items');
+  print('Items to Display: $itemsToDisplay');
 
   // Navigate to PrepareForPayment screen
   Navigator.push(
@@ -321,11 +397,13 @@ class _MyCartState extends State<MyCart> {
         totalQuantity: totalQuantity,
         combinedNames: combinedNames,
         items: items,
+        itemsToDisplay: itemsToDisplay, // Pass itemsToDisplay to the screen
         reservationType: false,
       ),
     ),
   );
-},
+}
+,
             child: const Text(
               'Proceed to Payment',
               style: TextStyle(
