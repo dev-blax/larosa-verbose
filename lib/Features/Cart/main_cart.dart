@@ -389,12 +389,12 @@ class _MyCartState extends State<MyCart> {
   String combinedNames = combinedNamesList.join(',');
 
   // Debugging prints
-  print('Product IDs: $productIds');
-  print('Total Price: \$${totalPrice.toStringAsFixed(2)}');
-  print('Total Quantity: $totalQuantity');
-  print('Combined Names: $combinedNames');
-  print('Items: $items');
-  print('Items to Display: $itemsToDisplay');
+  // print('Product IDs: $productIds');
+  // print('Total Price: \$${totalPrice.toStringAsFixed(2)}');
+  // print('Total Quantity: $totalQuantity');
+  // print('Combined Names: $combinedNames');
+  // print('Items: $items');
+  // print('Items to Display: $itemsToDisplay');
 
   // Navigate to PrepareForPayment screen
   Navigator.push(
@@ -416,6 +416,7 @@ class _MyCartState extends State<MyCart> {
             child: const Text(
               'Proceed to Payment',
               style: TextStyle(
+                fontSize: 14,
                 color: Colors.white,
                 fontWeight: FontWeight.w600, // Semi-bold for emphasis
                 letterSpacing: 1.0, // Add slight spacing for a clean look
