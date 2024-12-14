@@ -159,7 +159,7 @@ class _MyCartState extends State<MyCart> {
 
                   return Card(
                     margin:
-                        const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+                        const EdgeInsets.symmetric(vertical: 4, horizontal: 10),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
@@ -220,21 +220,27 @@ class _MyCartState extends State<MyCart> {
                             ),
                           ),
                           const SizedBox(height: 12),
-                          Text(
-                            'Quantity: ${item['quantity']}',
-                            style: const TextStyle(
-                              color: Colors.grey,
-                              fontSize: 14,
-                            ),
+                           Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'Quantity: ${item['quantity']}',
+                          style: const TextStyle(
+                            color: Colors.grey,
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
                           ),
-                          Text(
-                            'Price: Tsh ${NumberFormat('#,##0', 'en_US').format(item['price'])}',
-                            style: const TextStyle(
-                              color: Colors.green,
-                              fontSize: 14,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
+                        ),
+                    Text(
+                      'Price: Tsh ${NumberFormat('#,##0', 'en_US').format(item['price'])}',
+                      style: const TextStyle(
+                        color: Colors.green,
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                      ],
+                    ),
                         ],
                       ),
                     ),
