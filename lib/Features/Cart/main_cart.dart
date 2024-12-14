@@ -158,6 +158,9 @@ class _MyCartState extends State<MyCart> {
                       (item['names'] ?? '').split(','); // Split names by commas
 
                   return Card(
+                    color: Theme.of(context).brightness == Brightness.dark
+      ? Colors.black
+      : Colors.white,
                     margin:
                         const EdgeInsets.symmetric(vertical: 4, horizontal: 10),
                     shape: RoundedRectangleBorder(
