@@ -1,5 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
+import 'package:flutter/cupertino.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_emoji/flutter_emoji.dart';
 import 'package:http/http.dart' as http;
@@ -524,56 +526,12 @@ class _PostComponentState extends State<PostComponent>
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               // Like Section
-              // Row(
-              //   mainAxisAlignment: MainAxisAlignment.center,
-              //   children: [
-              //     IconButton(
-              //       onPressed: () async {
-              //         setState(() {
-              //           _isLiked = !_isLiked;
-              //           if (_isLiked) {
-              //             _likesCount++;
-              //           } else {
-              //             _likesCount--;
-              //           }
-              //         });
-
-              //         await _likePost();
-              //       },
-              //       icon: _isLiked
-              //           ? SvgPicture.asset(
-              //               'assets/icons/SolarHeartAngleBold.svg',
-              //               width: 25,
-              //               height: 25,
-              //               colorFilter: const ColorFilter.mode(
-              //                 Color.fromRGBO(180, 23, 12, 1),
-              //                 BlendMode.srcIn,
-              //               ),
-              //               semanticsLabel: 'Like icon',
-              //             )
-              //           : SvgPicture.asset(
-              //               "assets/icons/SolarHeartAngleLinear.svg",
-              //               width: 25,
-              //               height: 25,
-              //               colorFilter: ColorFilter.mode(
-              //                 Theme.of(context).colorScheme.secondary,
-              //                 BlendMode.srcIn,
-              //               ),
-              //               semanticsLabel: 'Like icon',
-              //             ),
-              //     ),
-              //     Text(
-              //       _likesCount.toString(),
-              //       style: Theme.of(context).textTheme.bodySmall,
-              //     )
-              //   ],
-              // ),
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   // Second LikeButton (small)
                   LikeButton(
-                    size: 25.0,
+                    size: 23.0,
                     isLiked: _isLiked,
                     likeCount: _likesCount,
                     animationDuration: const Duration(milliseconds: 500),
@@ -592,8 +550,8 @@ class _PostComponentState extends State<PostComponent>
                         isLiked
                             ? 'assets/icons/SolarHeartAngleBold.svg'
                             : 'assets/icons/SolarHeartAngleLinear.svg',
-                        width: 25,
-                        height: 25,
+                        // width: 25,
+                        // height: 25,
                         colorFilter: ColorFilter.mode(
                           isLiked
                               ? const Color.fromRGBO(180, 23, 12, 1)
@@ -665,7 +623,7 @@ class _PostComponentState extends State<PostComponent>
               Row(
                 children: [
                   LikeButton(
-                    size: 25.0,
+                    size: 23.0,
                     isLiked: _isFavorite,
                     likeCount: _favoriteCount,
                     animationDuration:
@@ -686,8 +644,8 @@ class _PostComponentState extends State<PostComponent>
                         isLiked
                             ? SvgIconsPaths.starBold
                             : SvgIconsPaths.starOutline,
-                        width: 25,
-                        height: 25,
+                        // width: 25,
+                        // height: 25,
                         colorFilter: ColorFilter.mode(
                           isLiked
                               ? LarosaColors.gold
@@ -739,9 +697,9 @@ class _PostComponentState extends State<PostComponent>
                       );
                     },
                     icon: Icon(
-                      Iconsax.message,
+                      CupertinoIcons.chat_bubble,
                       color: Theme.of(context).colorScheme.secondary,
-                      size: 25,
+                      size: 23,
                     ),
                   ),
                   Text(
@@ -764,7 +722,7 @@ class _PostComponentState extends State<PostComponent>
                     Theme.of(context).colorScheme.secondary,
                     BlendMode.srcIn,
                   ),
-                  height: 25,
+                  height: 23,
                 ),
               ),
             ],
@@ -784,11 +742,11 @@ class _PostComponentState extends State<PostComponent>
         _postInteracts(),
         PostDetails(
           caption: widget.post['caption'],
-          username: widget.post['username'],
+          username: widget.post['username'], date: widget.post['duration'],
         ),
         //_priceAndLocation(),
         const Padding(
-          padding: EdgeInsets.only(top: 3, bottom: 3), // Eliminates all padding
+          padding: EdgeInsets.only(top: 1, bottom: 0), // Eliminates all padding
           child: Divider(
             height: 1, // Reduces the height to a minimal value
             thickness: 2, // Sets the line thickness
@@ -800,47 +758,348 @@ class _PostComponentState extends State<PostComponent>
   }
 }
 
-class PostDetails extends StatelessWidget {
+
+// class PostDetails extends StatefulWidget {
+//   final String caption;
+//   final String username;
+//   final String date;
+
+//   const PostDetails({
+//     Key? key,
+//     required this.caption,
+//     required this.username,
+//     required this.date,
+//   }) : super(key: key);
+
+//   @override
+//   _PostDetailsState createState() => _PostDetailsState();
+// }
+
+// class _PostDetailsState extends State<PostDetails> {
+//   bool isExpanded = false;
+
+//   @override
+//   Widget build(BuildContext context) {
+//     final theme = Theme.of(context);
+//     final textTheme = theme.textTheme;
+//     const int maxCaptionLength = 100;
+
+//     final bool isCaptionLong = widget.caption.length > maxCaptionLength;
+
+//     String truncatedCaption = isExpanded
+//         ? widget.caption
+//         : (isCaptionLong ? "${widget.caption.substring(0, maxCaptionLength)}..." : widget.caption);
+
+//     return Container(
+//       padding: const EdgeInsets.symmetric(horizontal: 12),
+//       decoration: BoxDecoration(
+//         color: Colors.transparent,
+//         borderRadius: BorderRadius.circular(12),
+//         border: Border.all(color: theme.colorScheme.primary.withOpacity(0.15), width: 0.8),
+//       ),
+//       child: Column(
+//         crossAxisAlignment: CrossAxisAlignment.start,
+//         children: [
+//           Row(
+//             children: [
+//               Container(
+//                 width: 4,
+//                 height: 4,
+//                 margin: const EdgeInsets.only(right: 6),
+//                 decoration: BoxDecoration(color: theme.colorScheme.primary, shape: BoxShape.circle),
+//               ),
+//               Expanded(
+//                 child: Text(
+//                   widget.username,
+//                   style: textTheme.bodyMedium?.copyWith(
+//                     fontWeight: FontWeight.bold,
+//                     fontSize: 14,
+//                     color: theme.colorScheme.onSurface,
+//                   ),
+//                   maxLines: 1,
+//                   overflow: TextOverflow.ellipsis,
+//                 ),
+//               ),
+//               Text(
+//                 widget.date,
+//                 style: textTheme.bodySmall?.copyWith(fontSize: 12, fontWeight: FontWeight.bold, color: theme.colorScheme.onSurface.withOpacity(0.7)),
+//               ),
+//             ],
+//           ),
+//           const SizedBox(height: 5),
+//           GestureDetector(
+//             onTap: () => setState(() => isExpanded = !isExpanded),
+//             child: RichText(
+//               text: TextSpan(
+//                 children: _buildCaptionWithHashtags(truncatedCaption, textTheme),
+//               ),
+//               maxLines: isExpanded ? null : 3,
+//               overflow: TextOverflow.ellipsis,
+//             ),
+//           ),
+//         ],
+//       ),
+//     );
+//   }
+
+//   List<TextSpan> _buildCaptionWithHashtags(String caption, TextTheme textTheme) {
+//     final regex = RegExp(r"(#[\w]+)|(\s+)|(.)");
+//     final matches = regex.allMatches(caption);
+
+//     return matches.map((match) {
+//       final matchText = match.group(0) ?? "";
+
+//       if (matchText.startsWith("#")) {
+//         return TextSpan(
+//           text: matchText,
+//           style: textTheme.bodySmall?.copyWith(
+//             fontSize: 12,
+//             color: LarosaColors.primary,
+//             fontWeight: FontWeight.bold,
+//           ),
+//           recognizer: TapGestureRecognizer()
+//             ..onTap = () {
+//               context.go(
+//                 '/search',
+//                 extra: {'query': matchText.substring(1)}, // Pass hashtag without "#"
+//               );
+//             },
+//         );
+//       }
+
+//       // Regular text
+//       return TextSpan(
+//         text: matchText,
+//         style: textTheme.bodySmall?.copyWith(
+//           fontSize: 13,
+//           color: Theme.of(context).colorScheme.onSurface,
+//         ),
+//       );
+//     }).toList();
+//   }
+// }
+
+
+
+
+
+
+// class PostDetails extends StatefulWidget {
+//   final String caption;
+//   final String username;
+//   final String date;
+
+//   const PostDetails({
+//     Key? key,
+//     required this.caption,
+//     required this.username,
+//     required this.date,
+//   }) : super(key: key);
+
+//   @override
+//   _PostDetailsState createState() => _PostDetailsState();
+// }
+
+// class _PostDetailsState extends State<PostDetails> {
+//   bool isExpanded = false;
+
+//   @override
+//   Widget build(BuildContext context) {
+//     final theme = Theme.of(context);
+//     final textTheme = theme.textTheme;
+//     const int maxCaptionLength = 120;
+
+//     final bool isCaptionLong = widget.caption.isNotEmpty && widget.caption.length > maxCaptionLength;
+
+//     String truncatedCaption = isExpanded
+//         ? widget.caption
+//         : (isCaptionLong ? "${widget.caption.substring(0, maxCaptionLength)}..." : widget.caption);
+
+//     return Container(
+//       padding: const EdgeInsets.symmetric(horizontal: 12),
+//       decoration: BoxDecoration(
+//         color: Colors.transparent,
+//         borderRadius: BorderRadius.circular(12),
+//         border: Border.all(color: theme.colorScheme.primary.withOpacity(0.15), width: 0.8),
+//       ),
+//       child: Column(
+//         crossAxisAlignment: CrossAxisAlignment.start,
+//         children: [
+//           Row(
+//             children: [
+//               Container(
+//                 width: 4,
+//                 height: 4,
+//                 margin: const EdgeInsets.only(right: 6),
+//                 decoration: BoxDecoration(color: theme.colorScheme.primary, shape: BoxShape.circle),
+//               ),
+//               Expanded(
+//                 child: Text(
+//                   widget.username,
+//                   style: textTheme.bodyMedium?.copyWith(
+//                     fontWeight: FontWeight.bold,
+//                     fontSize: 14,
+//                     color: theme.colorScheme.onSurface,
+//                   ),
+//                   maxLines: 1,
+//                   overflow: TextOverflow.ellipsis,
+//                 ),
+//               ),
+//               Text(
+//                 widget.date,
+//                 style: textTheme.bodySmall?.copyWith(
+//                   fontSize: 12,
+//                   fontWeight: FontWeight.bold,
+//                   color: theme.colorScheme.onSurface.withOpacity(0.7),
+//                 ),
+//               ),
+//             ],
+//           ),
+//           if (widget.caption.isNotEmpty) ...[
+//             const SizedBox(height: 5),
+//             GestureDetector(
+//               onTap: () => setState(() => isExpanded = !isExpanded),
+//               child: RichText(
+//                 text: TextSpan(
+//                   children: _buildCaptionWithHashtags(truncatedCaption, textTheme),
+//                 ),
+//                 maxLines: isExpanded ? null : 3,
+//                 overflow: TextOverflow.ellipsis,
+//               ),
+//             ),
+//           ],
+//         ],
+//       ),
+//     );
+//   }
+
+
+class PostDetails extends StatefulWidget {
   final String caption;
   final String username;
+  final String date;
+
   const PostDetails({
-    super.key,
+    Key? key,
     required this.caption,
     required this.username,
-  });
+    required this.date,
+  }) : super(key: key);
 
   @override
+  _PostDetailsState createState() => _PostDetailsState();
+}
+
+class _PostDetailsState extends State<PostDetails> {
+  @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final textTheme = theme.textTheme;
+    const int maxCaptionLength = 500;
+
+    // Determine if the caption needs truncation
+    final bool isCaptionLong = widget.caption.isNotEmpty && widget.caption.length > maxCaptionLength;
+
+    // Truncate the caption if necessary
+    String captionText = isCaptionLong
+        ? "${widget.caption.substring(0, maxCaptionLength)}..."
+        : widget.caption;
+
     return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12),
       decoration: BoxDecoration(
-        color: Theme.of(context).scaffoldBackgroundColor,
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: theme.colorScheme.primary.withOpacity(0.15), width: 0.8),
       ),
-      padding: const EdgeInsets.symmetric(
-        horizontal: 8,
-        vertical: 0,
-      ),
-      child: Wrap(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          RichText(
-            maxLines: 4,
-            text: TextSpan(
-              text: '$username  ',
-              style: Theme.of(context).textTheme.bodyLarge!.copyWith(
+          Row(
+            children: [
+              Container(
+                width: 4,
+                height: 4,
+                margin: const EdgeInsets.only(right: 6),
+                decoration: BoxDecoration(color: theme.colorScheme.primary, shape: BoxShape.circle),
+              ),
+              Expanded(
+                child: Text(
+                  widget.username,
+                  style: textTheme.bodyMedium?.copyWith(
                     fontWeight: FontWeight.bold,
-                    fontSize: 12,
+                    fontSize: 14,
+                    color: theme.colorScheme.onSurface,
                   ),
-              children: [
-                TextSpan(
-                  text: EmojiParser().emojify(caption),
-                  style: Theme.of(context).textTheme.bodyLarge!.copyWith(
-                        fontSize: 12,
-                      ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
-              ],
+              ),
+              Text(
+                widget.date,
+                style: textTheme.bodySmall?.copyWith(
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                  color: theme.colorScheme.onSurface.withOpacity(0.7),
+                ),
+              ),
+            ],
+          ),
+          if (widget.caption.isNotEmpty) ...[
+            const SizedBox(height: 5),
+            RichText(
+              text: TextSpan(
+                children: _buildCaptionWithHashtags(captionText, textTheme),
+              ),
+              maxLines: 5,
+              overflow: TextOverflow.ellipsis,
             ),
-          )
+          ],
         ],
       ),
     );
   }
+
+
+  List<TextSpan> _buildCaptionWithHashtags(String caption, TextTheme textTheme) {
+    final regex = RegExp(r"(#[\w]+)|(\s+)|(.)");
+    final matches = regex.allMatches(caption);
+
+    return matches.map((match) {
+      final matchText = match.group(0) ?? "";
+
+      if (matchText.startsWith("#")) {
+        return TextSpan(
+          text: matchText,
+          style: textTheme.bodySmall?.copyWith(
+            fontSize: 12,
+            color: LarosaColors.primary,
+            fontWeight: FontWeight.bold,
+          ),
+          recognizer: TapGestureRecognizer()
+            ..onTap = () {
+              context.go(
+                '/search',
+                extra: {'query': matchText.substring(1)}, // Pass hashtag without "#"
+              );
+            },
+        );
+      }
+
+      // Regular text
+      return TextSpan(
+        text: matchText,
+        style: textTheme.bodySmall?.copyWith(
+          fontSize: 13,
+          color: Theme.of(context).colorScheme.onSurface,
+        ),
+      );
+    }).toList();
+  }
 }
+
+
+
+
+
+

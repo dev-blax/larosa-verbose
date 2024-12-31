@@ -2185,6 +2185,16 @@ class _AddToCartScreenState extends State<AddToCartScreen> {
                                 //     .trim()) *
                                 // _exchangeRate!; // Total price calculation
 
+                                // Replace `itemCount` and `widget.postId` with actual dynamic values
+                                List<Map<String, dynamic>> items = [
+                                  {
+                                    "productId": widget
+                                        .postId, // Ensure `widget.postId` is a valid int
+                                    "quantity":
+                                        itemCount, // Ensure `itemCount` is a valid int
+                                  }
+                                ];
+
                                 showModalBottomSheet(
                                   context: context,
                                   shape: const RoundedRectangleBorder(
@@ -2197,21 +2207,24 @@ class _AddToCartScreenState extends State<AddToCartScreen> {
                                     return FractionallySizedBox(
                                       heightFactor: 0.95,
                                       child: PaymentMethodModal(
-                                          currentPosition: _currentPosition,
-                                          deliveryDestination:
-                                              selectedStreetName,
-                                          deliveryLatitude: latitude,
-                                          deliveryLongitude: longitude,
-                                          totalPrice: isReservation
-                                              ? totalPrice
-                                              : widget.price * itemCount,
-                                          quantity: itemCount,
-                                          postId: [widget.postId],
-                                          adults: adults, // Pass adults
-                                          children: children, // Pass children
-                                          fullName: _fullNameController.text
-                                              .trim(), // Pass full name
-                                          isReservation: !isReservation, items: [],),
+                                        currentPosition: _currentPosition,
+                                        deliveryDestination: selectedStreetName,
+                                        deliveryLatitude: latitude,
+                                        deliveryLongitude: longitude,
+                                        totalPrice: isReservation
+                                            ? totalPrice
+                                            : widget.price * itemCount,
+                                        quantity: itemCount,
+                                        postId: [widget.postId],
+                                        adults: adults, // Pass adults
+                                        children: children, // Pass children
+                                        fullName: _fullNameController.text
+                                            .trim(), // Pass full name
+                                        checkInDate: checkInDate,
+                                        checkOutDate: checkOutDate,
+                                        isReservation: !isReservation,
+                                        items: items,
+                                      ),
                                     );
                                   },
                                 );
@@ -2255,49 +2268,56 @@ class _AddToCartScreenState extends State<AddToCartScreen> {
                     // ),
 
                     Expanded(
-  child: deliveryCost.contains('Tsh') ? buildWideGradientButton(
-    onTap: () async {
-      try {
-        // Fetch the user's profile ID dynamically
-        int? profileId = AuthService.getProfileId(); // Ensure this returns an actual int value
-        if (profileId == null) {
-          throw Exception('Profile ID is null. Please log in again.');
-        }
+                      child: deliveryCost.contains('Tsh')
+                          ? buildWideGradientButton(
+                              onTap: () async {
+                                try {
+                                  // Fetch the user's profile ID dynamically
+                                  int? profileId = AuthService
+                                      .getProfileId(); // Ensure this returns an actual int value
+                                  if (profileId == null) {
+                                    throw Exception(
+                                        'Profile ID is null. Please log in again.');
+                                  }
 
-        // Replace `itemCount` and `widget.postId` with actual dynamic values
-        List<Map<String, dynamic>> items = [
-          {
-            "postId": widget.postId, // Ensure `widget.postId` is a valid int
-            "quantity": itemCount, // Ensure `itemCount` is a valid int
-          }
-        ];
+                                  // Replace `itemCount` and `widget.postId` with actual dynamic values
+                                  List<Map<String, dynamic>> items = [
+                                    {
+                                      "productId": widget
+                                          .postId, // Ensure `widget.postId` is a valid int
+                                      "quantity":
+                                          itemCount, // Ensure `itemCount` is a valid int
+                                    }
+                                  ];
 
-        await addItemToCart(profileId, items);
+                                  await addItemToCart(profileId, items);
 
-         // Show a success message
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text("Item successfully added to the cart!"),
-        duration: Duration(seconds: 2),
-      ),
-    );
+                                  // Show a success message
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text(
+                                          "Item successfully added to the cart!"),
+                                      duration: Duration(seconds: 2),
+                                    ),
+                                  );
 
-        // Navigate to the cart screen
-        context.push('/maincart');
-      } catch (error) {
-        LogService.logError('Error in Add to Cart: $error');
-      }
-    },
-    label: 'Add to Cart',
-    startColor: LarosaColors.secondary,
-    endColor: LarosaColors.purple,
-  ) :const Center(
+                                  // Navigate to the cart screen
+                                  context.push('/maincart');
+                                } catch (error) {
+                                  LogService.logError(
+                                      'Error in Add to Cart: $error');
+                                }
+                              },
+                              label: 'Add to Cart',
+                              startColor: LarosaColors.secondary,
+                              endColor: LarosaColors.purple,
+                            )
+                          : const Center(
                               child: CupertinoActivityIndicator(
                                 radius: 10.0, // Adjust the size as needed
                               ),
                             ),
-),
-
+                    ),
                   ],
                 )
               ],

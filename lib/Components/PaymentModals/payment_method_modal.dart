@@ -29,6 +29,10 @@ class PaymentMethodModal extends StatelessWidget {
   final String fullName; // New parameter
   final bool isReservation; // New parameter
 
+ final DateTime? checkInDate; // Allow null values
+final DateTime? checkOutDate; // Allow null values
+
+
   final List<Map<String, dynamic>> items;
 
   PaymentMethodModal({
@@ -44,7 +48,9 @@ class PaymentMethodModal extends StatelessWidget {
     required this.children, // Initialize in constructor
     required this.fullName, // Initialize in constructor
     required this.isReservation,
-    required this.items, // Initialize in constructor
+    required this.items,
+    required this.checkInDate,
+    required this.checkOutDate, // Initialize in constructor
   });
 
   @override
@@ -143,6 +149,8 @@ class PaymentMethodModal extends StatelessWidget {
                                 adults: adults, // Pass adults parameter
                                 children: children, // Pass children parameter
                                 fullName: fullName, // Pass fullName parameter
+                                checkInDate: checkInDate,
+                                checkOutDate: checkOutDate,
                                 isReservation:
                                     isReservation, // Pass isReservation parameter
                               ),
@@ -252,6 +260,8 @@ class PaymentMethodModal extends StatelessWidget {
                                 adults: adults, // Pass adults parameter
                                 children: children, // Pass children parameter
                                 fullName: fullName, // Pass fullName parameter
+                                checkInDate: checkInDate,
+                                checkOutDate: checkOutDate,
                                 isReservation:
                                     isReservation, // Pass isReservation parameter
                               ),

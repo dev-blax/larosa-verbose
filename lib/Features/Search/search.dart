@@ -18,6 +18,7 @@ import 'package:larosa_block/Utils/svg_paths.dart';
 import 'package:mime/mime.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:video_player/video_player.dart';
 import 'package:video_thumbnail/video_thumbnail.dart';
 
 class SearchScreen extends StatefulWidget {
@@ -131,7 +132,7 @@ class _SearchScreenState extends State<SearchScreen> {
     }
 
     List<dynamic> data = json.decode(response.body);
-
+    
     setState(() {
       suggestions = data;
       isLoadingSuggestions = false;
@@ -152,6 +153,7 @@ class _SearchScreenState extends State<SearchScreen> {
 
   @override
   Widget build(BuildContext context) {
+    print(suggestions);
     return RefreshIndicator(
       onRefresh: () async {
         await _loadSuggestions();
@@ -230,88 +232,99 @@ class _SearchScreenState extends State<SearchScreen> {
                           duration: Duration(seconds: 3),
                         )
                       ],
-                      child: Stack(
-                        alignment: Alignment.bottomCenter,
-                        children: [
-                          if (thumbnailPath != null)
-                            ClipRRect(
-                              borderRadius: const BorderRadius.all(
-                                Radius.circular(10),
-                              ),
-                              child: Image.file(
-                                File(thumbnailPath),
-                                fit: BoxFit.cover,
-                                width: double.infinity,
-                                height: double.infinity,
-                              ),
-                            )
-                          else
-                            const Center(
-                                child: SpinKitCircle(
-                              color: LarosaColors.primary,
-                            )),
-                          // Padding(
-                          //   padding: const EdgeInsets.all(8.0),
-                          //   child: SvgPicture.asset(
-                          //     'assets/svg_icons/reels.svg',
-                          //     colorFilter: ColorFilter.mode(
-                          //       Theme.of(context).colorScheme.secondary,
-                          //       BlendMode.srcIn,
-                          //     ),
-                          //     height: 25,
-                          //   ),
-                          // ),
-                          Container(
-                          height: 70,
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              colors: [
-                                Colors.black.withOpacity(.8),
-                                Colors.transparent,
-                              ],
-                              begin: Alignment.bottomCenter,
-                              end: Alignment.topCenter,
+                      child: GestureDetector(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) =>
+                                  FullScreenVideoViewer(videoUrl: firstMedia),
                             ),
-                          ),
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: Row(
-                            children: [
-                              CircleAvatar(
-                                radius: 14,
-                                backgroundImage: profilePicturePath != null
-                                    ? CachedNetworkImageProvider(
-                                        profilePicturePath,
-                                      ) as ImageProvider<Object>
-                                    : const AssetImage(
-                                        'assets/images/EXPLORE.png',
-                                      ) as ImageProvider<Object>,
+                          );
+                        },
+                        child: Stack(
+                          alignment: Alignment.bottomCenter,
+                          children: [
+                            if (thumbnailPath != null)
+                              ClipRRect(
+                                borderRadius: const BorderRadius.all(
+                                  Radius.circular(10),
+                                ),
+                                child: Image.file(
+                                  File(thumbnailPath),
+                                  fit: BoxFit.cover,
+                                  width: double.infinity,
+                                  height: double.infinity,
+                                ),
+                              )
+                            else
+                              const Center(
+                                  child: SpinKitCircle(
+                                color: LarosaColors.primary,
+                              )),
+                            // Padding(
+                            //   padding: const EdgeInsets.all(8.0),
+                            //   child: SvgPicture.asset(
+                            //     'assets/svg_icons/reels.svg',
+                            //     colorFilter: ColorFilter.mode(
+                            //       Theme.of(context).colorScheme.secondary,
+                            //       BlendMode.srcIn,
+                            //     ),
+                            //     height: 25,
+                            //   ),
+                            // ),
+                            Container(
+                              height: 70,
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  colors: [
+                                    Colors.black.withOpacity(.8),
+                                    Colors.transparent,
+                                  ],
+                                  begin: Alignment.bottomCenter,
+                                  end: Alignment.topCenter,
+                                ),
                               ),
-                              const Gap(5),
-                              Text(
-                                name,
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .labelLarge!
-                                    .copyWith(
-                                      color: Colors.white,
-                                    ),
-                              ),
-                              const Gap(5),
-                              if (isVerified)
-                                SvgPicture.asset(
-                                  SvgIconsPaths.sharpVerified,
-                                  colorFilter: const ColorFilter.mode(
-                                    Colors.blue,
-                                    BlendMode.srcIn,
+                            ),
+                            Padding(
+                              padding: const EdgeInsets.all(8.0),
+                              child: Row(
+                                children: [
+                                  CircleAvatar(
+                                    radius: 14,
+                                    backgroundImage: profilePicturePath != null
+                                        ? CachedNetworkImageProvider(
+                                            profilePicturePath,
+                                          ) as ImageProvider<Object>
+                                        : const AssetImage(
+                                            'assets/images/EXPLORE.png',
+                                          ) as ImageProvider<Object>,
                                   ),
-                                  height: 20,
-                                )
-                            ],
-                          ),
+                                  const Gap(5),
+                                  Text(
+                                    name,
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .labelLarge!
+                                        .copyWith(
+                                          color: Colors.white,
+                                        ),
+                                  ),
+                                  const Gap(5),
+                                  if (isVerified)
+                                    SvgPicture.asset(
+                                      SvgIconsPaths.sharpVerified,
+                                      colorFilter: const ColorFilter.mode(
+                                        Colors.blue,
+                                        BlendMode.srcIn,
+                                      ),
+                                      height: 20,
+                                    )
+                                ],
+                              ),
+                            ),
+                          ],
                         ),
-                        ],
                       ),
                     );
                   }
@@ -417,6 +430,83 @@ class _SearchScreenState extends State<SearchScreen> {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class FullScreenVideoViewer extends StatefulWidget {
+  final String videoUrl;
+
+  const FullScreenVideoViewer({Key? key, required this.videoUrl})
+      : super(key: key);
+
+  @override
+  State<FullScreenVideoViewer> createState() => _FullScreenVideoViewerState();
+}
+
+class _FullScreenVideoViewerState extends State<FullScreenVideoViewer> {
+  late VideoPlayerController _videoController;
+
+  @override
+  void initState() {
+    super.initState();
+    _videoController = VideoPlayerController.network(widget.videoUrl)
+      ..initialize().then((_) {
+        setState(() {});
+        _videoController.play();
+      });
+  }
+
+  @override
+  void dispose() {
+    _videoController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // Determine theme colors
+    final theme = Theme.of(context);
+    final bgColor = theme.brightness == Brightness.dark
+        ? Colors.black.withOpacity(.3)
+        : Colors.white.withOpacity(.3);
+    final iconColor =
+        theme.brightness == Brightness.dark ? Colors.white : Colors.black;
+
+    return Scaffold(
+      backgroundColor: Colors.black,
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.close, color: Colors.white),
+          onPressed: () => Navigator.pop(context),
+        ),
+      ),
+      body: Center(
+        child: _videoController.value.isInitialized
+            ? AspectRatio(
+                aspectRatio: _videoController.value.aspectRatio,
+                child: VideoPlayer(_videoController),
+              )
+            : const CircularProgressIndicator(),
+      ),
+      floatingActionButton: FloatingActionButton(
+        backgroundColor: bgColor,
+        onPressed: () {
+          setState(() {
+            if (_videoController.value.isPlaying) {
+              _videoController.pause();
+            } else {
+              _videoController.play();
+            }
+          });
+        },
+        child: Icon(
+          _videoController.value.isPlaying ? Icons.pause : Icons.play_arrow,
+          color: iconColor,
         ),
       ),
     );

@@ -28,9 +28,9 @@ class AuthService {
     return box.get('refreshToken');
   }
 
-  static String getCategories() {
+  static bool isReservation() {
     var box = Hive.box('userBox');
-    return box.get('categories');
+    return box.get('reservation');
   }
 
   static int? getProfileId() {

@@ -322,125 +322,163 @@ class ChatBubbleComponent extends HookWidget {
     );
   }
 
+
+  String _formatDuration(Duration duration) {
+  String twoDigits(int n) => n.toString().padLeft(2, '0');
+  final minutes = twoDigits(duration.inMinutes);
+  final seconds = twoDigits(duration.inSeconds.remainder(60));
+  return '$minutes:$seconds';
+}
+
+Widget _iconButton({
+  required BuildContext context,
+  required IconData icon,
+  required VoidCallback onPressed,
+}) {
+  return Container(
+    margin: const EdgeInsets.all(4.0),
+    padding: const EdgeInsets.all(0.0),
+    decoration: BoxDecoration(
+      shape: BoxShape.circle,
+      border: Border.all(color: Colors.white, width: 2.0),
+    ),
+    child: IconButton(
+      icon: Icon(icon, color: Colors.white,),
+      onPressed: onPressed,
+      splashRadius: 8,
+    ),
+  );
+}
+
+
   Widget _buildMediaBubble(
       BuildContext context, VideoPlayerController? videoController) {
     if (videoController != null && message.endsWith('.mp4')) {
-      // Display video with controls
-      return GestureDetector(
-        onTap: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (_) => FullScreenMediaViewer(mediaUrl: message),
-            ),
-          );
-        },
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(10),
-          child: Container(
-            decoration: BoxDecoration(
-              gradient: LarosaColors.blueGradient,
-              borderRadius: BorderRadius.circular(10),
-            ),
-            constraints: BoxConstraints(
-              maxWidth: MediaQuery.of(context).size.width * .7,
-            ),
-            child: Column(
-              children: [
-                AspectRatio(
-                  aspectRatio: videoController.value.aspectRatio,
-                  child: VideoPlayer(videoController),
-                ),
-                Column(
-                  children: [
-                    // Timeline slider at the top
-                    SliderTheme(
-                      data: SliderTheme.of(context).copyWith(
-                        activeTrackColor: isSentByMe
-                            ? LarosaColors.secondary
-                            : LarosaColors.secondary,
-                        inactiveTrackColor: Colors.grey[300],
-                        thumbColor: Colors.white,
-                        overlayColor: Colors.white.withOpacity(0.2),
-                        trackHeight: 4.0,
-                      ),
-                      child: Slider(
-                        min: 0,
-                        max: videoController.value.duration.inMilliseconds
-                            .toDouble(),
-                        value: videoController.value.position.inMilliseconds
-                            .toDouble(),
-                        onChanged: (value) {
-                          videoController.seekTo(
-                            Duration(milliseconds: value.toInt()),
-                          );
-                        },
-                      ),
-                    ),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Container(
-                          margin: const EdgeInsets.only(bottom: 8.0, left: 5),
-                          padding: const EdgeInsets.all(0.0),
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            border: Border.all(color: Colors.white, width: 2.0),
-                          ),
-                          child: IconButton(
-                            icon: Icon(
-                              videoController.value.volume > 0
-                                  ? Icons.volume_up
-                                  : Icons.volume_off,
-                              color: Colors.white,
-                            ),
-                            onPressed: () {
-                              videoController.setVolume(
-                                  videoController.value.volume > 0 ? 0 : 1);
-                            },
-                          ),
-                        ),
-                        Container(
-                          margin: const EdgeInsets.only(bottom: 8.0, right: 5),
-                          padding: const EdgeInsets.all(0.0),
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            border: Border.all(color: Colors.white, width: 2.0),
-                          ),
-                          child: IconButton(
-                            icon: Icon(
-                              videoController.value.isPlaying
-                                  ? Icons.pause
-                                  : Icons.play_arrow,
-                              color: Colors.white,
-                            ),
-                            onPressed: () {
-                              videoController.value.isPlaying
-                                  ? videoController.pause()
-                                  : videoController.play();
-                            },
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-                if (isSending)
-                  const Positioned(
-                    bottom: 4,
-                    right: 4,
-                    child: SizedBox(
-                      width: 12,
-                      height: 12,
-                      child: CircularProgressIndicator(strokeWidth: 1.5),
-                    ),
-                  ),
-              ],
-            ),
-          ),
+  // Display video with enhanced UI and controls
+  return GestureDetector(
+    onTap: () {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => FullScreenMediaViewer(mediaUrl: message),
         ),
       );
-    } else if (message.endsWith('.jpg') ||
+    },
+    child: ClipRRect(
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        decoration: BoxDecoration(
+          // gradient: LarosaColors.blueGradient,
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 6,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        constraints: BoxConstraints(
+          maxWidth: MediaQuery.of(context).size.width * 0.75,
+        ),
+        child: Column(
+          children: [
+            AspectRatio(
+              aspectRatio: videoController.value.aspectRatio,
+              child: VideoPlayer(videoController),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 4.0, vertical: 0.0),
+              child: Column(
+                children: [
+                  // Timeline slider with labels
+                  Row(
+                    children: [
+                      Text(
+                        _formatDuration(videoController.value.position),
+                        style: const TextStyle(color: Colors.white, fontSize: 12),
+                      ),
+                      Expanded(
+                        child: SliderTheme(
+                          data: SliderTheme.of(context).copyWith(
+                            activeTrackColor: LarosaColors.secondary,
+                            inactiveTrackColor: Colors.grey[300],
+                            thumbColor: Colors.white,
+                            overlayColor: Colors.white.withOpacity(0.2),
+                            trackHeight: 4.0,
+                          ),
+                          child: Slider(
+                            min: 0,
+                            max: videoController.value.duration.inMilliseconds
+                                .toDouble(),
+                            value: videoController.value.position.inMilliseconds
+                                .toDouble(),
+                            onChanged: (value) {
+                              videoController.seekTo(
+                                Duration(milliseconds: value.toInt()),
+                              );
+                            },
+                          ),
+                        ),
+                      ),
+                      Text(
+                        _formatDuration(videoController.value.duration),
+                        style: const TextStyle(color: Colors.white, fontSize: 12),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 6),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      // Volume Control
+                      _iconButton(
+                        context: context,
+                        icon: videoController.value.volume > 0
+                            ? Icons.volume_up
+                            : Icons.volume_off,
+                        onPressed: () {
+                          videoController.setVolume(
+                              videoController.value.volume > 0 ? 0 : 1);
+                        },
+                      ),
+                      // Play/Pause Control
+                      _iconButton(
+                        context: context,
+                        icon: videoController.value.isPlaying
+                            ? Icons.pause
+                            : Icons.play_arrow,
+                        onPressed: () {
+                          videoController.value.isPlaying
+                              ? videoController.pause()
+                              : videoController.play();
+                        },
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            if (isSending)
+              const Positioned(
+                bottom: 4,
+                right: 4,
+                child: SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 1.5,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
+    ),
+  );
+}
+        else if (message.endsWith('.jpg') ||
         message.endsWith('.jpeg') ||
         message.endsWith('.png') ||
         message.endsWith('.webp')) {

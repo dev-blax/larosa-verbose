@@ -11,6 +11,7 @@ import 'package:larosa_block/Utils/helpers.dart';
 import 'package:mime/mime.dart';
 import 'package:cached_video_player_plus/cached_video_player_plus.dart';
 import 'package:shimmer/shimmer.dart';
+import 'package:video_player/video_player.dart';
 
 class CenterSnapCarousel extends StatefulWidget {
   final List<String> mediaUrls;
@@ -226,8 +227,8 @@ class _CenterSnapCarouselState extends State<CenterSnapCarousel> {
           children: widget.mediaUrls.map((url) {
             final index = widget.mediaUrls.indexOf(url);
 
-            double calculatedHeight =
-                _heights[index] ?? MediaQuery.of(context).size.width / (16 / 9);
+            // double calculatedHeight =
+            //     _heights[index] ?? MediaQuery.of(context).size.width / (16 / 9);
 
             if (_isVideo(url)) {
               if (!_videoControllers.containsKey(index)) {
@@ -271,6 +272,30 @@ class _CenterSnapCarouselState extends State<CenterSnapCarousel> {
                           : _buildShimmerLoader(),
                     ),
                   ),
+
+//                   Container(
+//   height: 300,
+//   alignment: Alignment.center,
+//   width: MediaQuery.of(context).size.width,
+//   child: controller.value.isInitialized
+//       ? FittedBox(
+//           fit: BoxFit.cover, // Ensures the video behaves like "cover" in CSS
+//           child: SizedBox(
+//             width: controller.value.size.width,
+//             height: controller.value.size.height,
+//             child: CachedVideoPlayerPlus(controller),
+//           ),
+//         )
+//       : _buildShimmerLoader(),
+// ),
+
+// buildMediaContainer(
+//         imageUrl: null,
+//         videoController: controller,
+//         context: context,
+//         isVideo: true,
+//       ),
+
                   if (controller.value.isInitialized)
                     Positioned(
                       right: 5, // Align to the right
@@ -383,6 +408,28 @@ class _CenterSnapCarouselState extends State<CenterSnapCarousel> {
                   errorWidget: (context, url, error) => const Icon(Icons.error),
                 ),
               );
+
+//               return ConstrainedBox(
+//   constraints: const BoxConstraints(
+//     maxHeight: 300, // Fixed height for the media container
+//   ),
+//   child: Container(
+//     height: 300, // Explicitly set the height
+//     width: MediaQuery.of(context).size.width, // Full-width
+//     decoration: BoxDecoration(
+//       image: DecorationImage(
+//         image: CachedNetworkImageProvider(url),
+//         fit: BoxFit.cover, // Ensures the image behaves like "cover" in CSS
+//       ),
+//     ),
+//     child: CachedNetworkImage(
+//       imageUrl: url,
+//       placeholder: (context, url) => _buildShimmerLoader(),
+//       errorWidget: (context, url, error) => const Icon(Icons.error),
+//     ),
+//   ),
+// );
+
             }
           }).toList(),
         ),
@@ -390,32 +437,83 @@ class _CenterSnapCarouselState extends State<CenterSnapCarousel> {
     );
   }
 
-  // Widget _buildShimmerLoader({double? height}) {
-  //   final isDarkMode = Theme.of(context).brightness == Brightness.dark;
-  //   return Shimmer.fromColors(
-  //     baseColor: isDarkMode ? Colors.grey[900]! : Colors.grey[400]!,
-  //     highlightColor: isDarkMode ? Colors.grey[700]! : Colors.grey[100]!,
-  //     child: Container(
-  //       width: MediaQuery.of(context).size.width,
-  //       height: height ?? 300,
-  //       color: Colors.grey[100],
-  //     ),
-  //   );
-  // }
-
-  Widget _buildShimmerLoader() {
+  Widget _buildShimmerLoader({double? height}) {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     return Shimmer.fromColors(
       baseColor: isDarkMode ? Colors.grey[900]! : Colors.grey[400]!,
       highlightColor: isDarkMode ? Colors.grey[700]! : Colors.grey[100]!,
       child: Container(
         width: MediaQuery.of(context).size.width,
-        height: 300,
+        height: height ?? 300,
         color: Colors.grey[100],
       ),
     );
   }
+
+  // Widget _buildShimmerLoader() {
+  //   final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+  //   return Shimmer.fromColors(
+  //     baseColor: isDarkMode ? Colors.grey[900]! : Colors.grey[400]!,
+  //     highlightColor: isDarkMode ? Colors.grey[700]! : Colors.grey[100]!,
+  //     child: Container(
+  //       width: MediaQuery.of(context).size.width,
+  //       height: 300,
+  //       color: Colors.grey[100],
+  //     ),
+  //   );
+  // }
+
+
+
+/// A media container that handles both image and video rendering creatively
+Widget buildMediaContainer({
+  required String? imageUrl,
+  required CachedVideoPlayerPlusController? videoController,
+  required BuildContext context,
+  required bool isVideo,
+}) {
+  const double containerHeight = 300;
+
+  return ConstrainedBox(
+    constraints: const BoxConstraints(
+      maxHeight: containerHeight, // Fixed height for the media container
+    ),
+    child: Container(
+      height: containerHeight,
+      width: MediaQuery.of(context).size.width, // Full width
+      decoration: isVideo
+          ? null
+          : BoxDecoration(
+              image: imageUrl != null
+                  ? DecorationImage(
+                      image: CachedNetworkImageProvider(imageUrl),
+                      fit: BoxFit.cover, // Ensures the image behaves like "cover" in CSS
+                    )
+                  : null,
+            ),
+      child: isVideo
+          ? videoController != null && videoController.value.isInitialized
+              ? FittedBox(
+                  fit: BoxFit.cover, // Ensures the video behaves like "cover" in CSS
+                  child: SizedBox(
+                    width: videoController.value.size.width,
+                    height: videoController.value.size.height,
+                    child: CachedVideoPlayerPlus(videoController),
+                  ),
+                )
+              : _buildShimmerLoader()
+          : CachedNetworkImage(
+              imageUrl: imageUrl!,
+              placeholder: (context, url) => _buildShimmerLoader(),
+              errorWidget: (context, url, error) =>
+                  const Icon(Icons.error, size: 50, color: Colors.redAccent),
+            ),
+    ),
+  );
+
 }
+}
+
 
 
 

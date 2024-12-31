@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:gap/gap.dart';
 import 'package:http/http.dart' as http;
 import 'package:iconsax/iconsax.dart';
+import 'package:intl/intl.dart';
 import 'package:larosa_block/Utils/helpers.dart';
 import 'package:lottie/lottie.dart';
 import 'package:stomp_dart_client/stomp_dart_client.dart';
@@ -32,6 +33,9 @@ class PaymentProcessingModal extends StatefulWidget {
 
   final List<Map<String, dynamic>> items;
 
+  final DateTime? checkInDate; // Allow null values
+  final DateTime? checkOutDate; // Allow null values
+
   const PaymentProcessingModal({
     super.key,
     required this.paymentMethod,
@@ -48,7 +52,9 @@ class PaymentProcessingModal extends StatefulWidget {
     required this.children, // Initialize in constructor
     required this.fullName, // Initialize in constructor
     required this.isReservation,
-    required this.items, // Initialize in constructor
+    required this.items,
+    required this.checkInDate,
+    required this.checkOutDate, // Initialize in constructor // Initialize in constructor
   });
 
   @override
@@ -73,98 +79,233 @@ class _PaymentProcessingModalState extends State<PaymentProcessingModal> {
 
   bool _isLoading = false;
 
-  Future<void> _submitOrder() async {
-    setState(() {
-      _isLoading = true;
-    });
-
-    String token = AuthService.getToken();
-    Map<String, String> headers = {
-      "Content-Type": "application/json",
-      "Access-Control-Allow-Origin": "*",
-      'Authorization': token.isNotEmpty ? 'Bearer $token' : '',
-    };
-
-    var url = Uri.https(LarosaLinks.nakedBaseUrl, '/api/v1/orders/new');
-
-//  final formattedItems = widget.items
-//       .map((item) => {
-//             "productId": item['productId'],
-//             "quantity": item['quantity'],
-//           })
-//       .toList();
-
-//   print('Formatted items: $formattedItems');
-
-    Map<String, dynamic> body = {
-      "items": widget.items,
-      "provider": widget.paymentMethod,
-      "paymentMethod": widget.paymentType.toUpperCase(),
-      "accountNumber": _accountNumberController.text,
-      "amount": widget.totalPrice,
-      "latitude": widget.deliveryLatitude ?? widget.currentLatitude,
-      "longitude": widget.deliveryLongitude ?? widget.currentLongitude,
-      "city": "Dodoma",
-      "country": "Tanzania",
-    };
-
-    // Add reservation-specific data if isReservation is true
-    if (widget.isReservation) {
-      body.addAll({
-        "adults": widget.adults,
-        "children": widget.children,
-        "fullName": widget.fullName,
-        "isReservation": widget.isReservation,
-      });
-    }
-
-    if (widget.paymentType == 'Bank') {
-      body.addAll({
-        "merchantMobileNumber": _merchantMobileNumberController.text,
-        "merchantName": _merchantNameController.text,
-        "otp": _otpController.text,
-      });
-    }
-    
-
-    LogService.logInfo('Request Body: $body');
-    LogService.logInfo('Request items: ${widget.items}');
-
-    try {
-      final response = await http.post(
-        url,
-        body: jsonEncode(body),
-        headers: headers,
-      );
-
-      LogService.logInfo('Status Code: ${response.statusCode}');
-      LogService.logInfo('Response Body: ${response.body}');
-
-      _showSuccessDialog(r'esponse.body');
-
-      if (response.statusCode == 200) {
-        // _showSuccessDialog(response.body);
-      } else if (response.statusCode == 302 ||
-          response.statusCode == 403 ||
-          response.statusCode == 401) {
-        await AuthService.refreshToken();
-        await _submitOrder();
-      } else {
-        throw Exception('Failed to place order');
-      }
-    } catch (e) {
-      LogService.logError('Error placing order: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('An error occurred. Please try again.'),
-        ),
-      );
-    } finally {
-      setState(() {
-        _isLoading = false;
-      });
-    }
+  // Format the dates
+  String formatDate(DateTime? date) {
+    if (date == null) return '';
+    return DateFormat('yyyy-MM-dd').format(date);
   }
+
+  // Future<void> _submitOrder() async {
+  //   setState(() {
+  //     _isLoading = true;
+  //   });
+
+  //   String token = AuthService.getToken();
+  //   Map<String, String> headers = {
+  //     "Content-Type": "application/json",
+  //     "Access-Control-Allow-Origin": "*",
+  //     'Authorization': token.isNotEmpty ? 'Bearer $token' : '',
+  //   };
+
+  //   var url = Uri.https(
+  //       LarosaLinks.nakedBaseUrl,
+  //       widget.isReservation
+  //           ? '/api/v1/reservations/new'
+  //           : '/api/v1/orders/new');
+
+  //   Map<String, dynamic> body = {
+  //     "items": widget.items,
+  //     "provider": widget.paymentMethod,
+  //     "paymentMethod": widget.paymentType.toUpperCase(),
+  //     "accountNumber": _accountNumberController.text,
+  //     "amount": widget.totalPrice,
+  //     "latitude": widget.deliveryLatitude ?? widget.currentLatitude,
+  //     "longitude": widget.deliveryLongitude ?? widget.currentLongitude,
+  //     "city": "Dodoma",
+  //     "country": "Tanzania",
+  //   };
+
+  //   // Add reservation-specific data if isReservation is true
+  //   if (widget.isReservation) {
+  //     body.addAll({
+  //       "adults": widget.adults,
+  //       "children": widget.children,
+  //       "fullName": widget.fullName,
+  //       // "checkInDate": widget.checkInDate?.toIso8601String(),
+  //       // "checkOutDate": widget.checkOutDate?.toIso8601String(),
+  //       "checkInDate": formatDate(widget.checkInDate),
+  //       "checkOutDate": formatDate(widget.checkOutDate),
+  //       // "isReservation": widget.isReservation,
+  //     });
+  //   }
+
+  //   if (widget.paymentType == 'Bank') {
+  //     body.addAll({
+  //       "merchantMobileNumber": _merchantMobileNumberController.text,
+  //       "merchantName": _merchantNameController.text,
+  //       "otp": _otpController.text,
+  //     });
+  //   }
+
+  //   LogService.logInfo('Request Body: $body');
+  //   LogService.logInfo('Request items: ${widget.items}');
+
+  //   try {
+  //     final response = await http.post(
+  //       url,
+  //       body: jsonEncode(body),
+  //       headers: headers,
+  //     );
+
+  //     LogService.logInfo('Status Code: ${response.statusCode}');
+  //     LogService.logInfo('Response Body: ${response.body}');
+
+  //     _showSuccessDialog(r'esponse.body');
+
+  //     if (response.statusCode == 200) {
+  //       // _showSuccessDialog(response.body);
+  //     } else if (response.statusCode == 302 ||
+  //         response.statusCode == 403 ||
+  //         response.statusCode == 401) {
+  //       await AuthService.refreshToken();
+  //       await _submitOrder();
+  //     } else {
+  //       throw Exception('Failed to place order');
+  //     }
+  //   } catch (e) {
+  //     LogService.logError('Error placing order: $e');
+  //     ScaffoldMessenger.of(context).showSnackBar(
+  //       const SnackBar(
+  //         content: Text('An error occurred. Please try again.'),
+  //       ),
+  //     );
+  //   } finally {
+  //     setState(() {
+  //       _isLoading = false;
+  //     });
+  //   }
+  // }
+
+
+  Future<void> _submitOrder() async {
+  setState(() {
+    _isLoading = true;
+  });
+
+  String token = AuthService.getToken();
+  Map<String, String> headers = {
+    "Content-Type": "application/json",
+    "Access-Control-Allow-Origin": "*",
+    'Authorization': token.isNotEmpty ? 'Bearer $token' : '',
+  };
+
+  var url = Uri.https(
+      LarosaLinks.nakedBaseUrl,
+      widget.isReservation
+          ? '/api/v1/reservations/new'
+          : '/api/v1/orders/new');
+
+  Map<String, dynamic> body = {
+    "items": widget.items,
+    "provider": widget.paymentMethod,
+    "paymentMethod": widget.paymentType.toUpperCase(),
+    "accountNumber": _accountNumberController.text,
+    "amount": widget.totalPrice,
+    "latitude": widget.deliveryLatitude ?? widget.currentLatitude,
+    "longitude": widget.deliveryLongitude ?? widget.currentLongitude,
+    "city": "Dodoma",
+    "country": "Tanzania",
+  };
+
+  if (widget.isReservation) {
+    body.addAll({
+      "adults": widget.adults,
+      "children": widget.children,
+      "fullName": widget.fullName,
+      "checkInDate": formatDate(widget.checkInDate),
+      "checkOutDate": formatDate(widget.checkOutDate),
+    });
+  }
+
+  if (widget.paymentType == 'Bank') {
+    body.addAll({
+      "merchantMobileNumber": _merchantMobileNumberController.text,
+      "merchantName": _merchantNameController.text,
+      "otp": _otpController.text,
+    });
+  }
+
+  LogService.logInfo('Request Body: $body');
+
+  try {
+    final response = await http.post(
+      url,
+      body: jsonEncode(body),
+      headers: headers,
+    );
+
+    LogService.logInfo('Status Code: ${response.statusCode}');
+    LogService.logInfo('Response Body: ${response.body}');
+
+    if (response.statusCode == 200) {
+      _showSuccessDialog('Reservation is under processing.');
+    } else if (response.statusCode == 409) {
+      // Handle date conflict (already booked)
+      _showConflictDialog(response.body);
+    } else if ([302, 403, 401].contains(response.statusCode)) {
+      await AuthService.refreshToken();
+      await _submitOrder();
+    } else {
+      throw Exception('Failed to place order');
+    }
+  } catch (e) {
+    LogService.logError('Error placing order: $e');
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('An error occurred. Please try again.'),
+      ),
+    );
+  } finally {
+    setState(() {
+      _isLoading = false;
+    });
+  }
+}
+
+void _showConflictDialog(String responseBody) {
+  List<String> unavailableDates = [];
+  try {
+    final parsedBody = jsonDecode(responseBody);
+    unavailableDates = List<String>.from(parsedBody['unavailableDates']);
+  } catch (e) {
+    LogService.logError('Error parsing response: $e');
+  }
+
+  showDialog(
+    context: context,
+    builder: (context) {
+      return AlertDialog(
+        title: const Text('Dates Unavailable'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text(
+              'The selected dates are already booked. Please choose different dates.',
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 10),
+            if (unavailableDates.isNotEmpty)
+              Text(
+                'Unavailable dates:\n${unavailableDates.join(", ")}',
+                style: const TextStyle(
+                  color: Colors.redAccent,
+                  fontWeight: FontWeight.bold,
+                ),
+                textAlign: TextAlign.center,
+              ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('OK'),
+          ),
+        ],
+      );
+    },
+  );
+}
+
 
   @override
   void initState() {
@@ -201,6 +342,133 @@ class _PaymentProcessingModalState extends State<PaymentProcessingModal> {
     }
   }
 
+  // void _showSuccessDialog(String responseBody) {
+  //   showDialog(
+  //     context: context,
+  //     builder: (BuildContext context) {
+  //       return AlertDialog(
+  //         backgroundColor: Colors.black,
+  //         shape: RoundedRectangleBorder(
+  //           borderRadius: BorderRadius.circular(15.0),
+  //         ),
+  //         content: Stack(
+  //           children: [
+  //             // Background bubble animation
+  //             Positioned.fill(
+  //               child: Lottie.asset(
+  //                 'assets/lotties/bubbles.json',
+  //                 fit: BoxFit.cover,
+  //                 repeat: true,
+  //               ),
+  //             ),
+  //             Column(
+  //               mainAxisSize: MainAxisSize.min,
+  //               children: [
+  //                 // Green checkmark icon
+  //                 const Icon(
+  //                   Icons.check_circle,
+  //                   color: Color.fromARGB(255, 13, 72, 15),
+  //                   size: 100,
+  //                 ),
+  //                 const SizedBox(height: 20),
+  //                 const Text(
+  //                   'Payment Successful!',
+  //                   textAlign: TextAlign.center,
+  //                   style: TextStyle(
+  //                     fontSize: 24,
+  //                     fontWeight: FontWeight.bold,
+  //                     color: Color.fromARGB(255, 15, 106, 18),
+  //                   ),
+  //                 ),
+  //                 const SizedBox(height: 16),
+  //                 const Padding(
+  //                   padding: EdgeInsets.symmetric(horizontal: 16.0),
+  //                   child: Column(
+  //                     crossAxisAlignment: CrossAxisAlignment.center,
+  //                     children: [
+  //                       Text(
+  //                         "Your payment is now under processing.",
+  //                         textAlign: TextAlign.center,
+  //                         style: TextStyle(
+  //                           fontSize: 16,
+  //                           fontStyle: FontStyle.normal,
+  //                           height: 1.5,
+  //                         ),
+  //                       ),
+  //                       SizedBox(height: 8),
+  //                       Text(
+  //                         "We will notify you shortly with an update on its status.",
+  //                         textAlign: TextAlign.center,
+  //                         style: TextStyle(
+  //                           fontSize: 16,
+  //                           fontStyle: FontStyle.normal,
+  //                           height: 1.5,
+  //                         ),
+  //                       ),
+  //                       SizedBox(height: 8),
+  //                       Text(
+  //                         "Once confirmed, you'll receive detailed information about your order's next steps.",
+  //                         textAlign: TextAlign.center,
+  //                         style: TextStyle(
+  //                           fontSize: 16,
+  //                           fontStyle: FontStyle.normal,
+  //                           height: 1.5,
+  //                         ),
+  //                       ),
+  //                       SizedBox(height: 8),
+  //                       Text(
+  //                         "We truly value your trust in us and are committed to delivering an exceptional experience.",
+  //                         textAlign: TextAlign.center,
+  //                         style: TextStyle(
+  //                           fontSize: 16,
+  //                           fontStyle: FontStyle.normal,
+  //                           height: 1.5,
+  //                         ),
+  //                       ),
+  //                       SizedBox(height: 20),
+  //                       Text(
+  //                         "Thank you for choosing us!",
+  //                         textAlign: TextAlign.center,
+  //                         style: TextStyle(
+  //                           fontSize: 16,
+  //                           fontStyle: FontStyle.italic,
+  //                           height: 1.5,
+  //                         ),
+  //                       ),
+  //                     ],
+  //                   ),
+  //                 ),
+  //                 const SizedBox(height: 16),
+  //                 const Text(
+  //                   'LAROSA EXPLORE',
+  //                   textAlign: TextAlign.center,
+  //                   style: TextStyle(
+  //                     fontSize: 16,
+  //                     fontWeight: FontWeight.bold,
+  //                     fontStyle: FontStyle.italic,
+  //                     letterSpacing: 1.5,
+  //                   ),
+  //                 ),
+  //                 const SizedBox(height: 20),
+
+  //                 buildWideGradientButton(
+  //                   onTap: () {
+  //                     Navigator.of(context).pop(); // Close the dialog
+  //                     Navigator.pop(context); // Navigate back
+  //                   },
+  //                   label: 'OK',
+  //                   startColor: const Color.fromARGB(255, 13, 72, 15),
+  //                   endColor: Colors.purple,
+  //                 ),
+  //               ],
+  //             ),
+  //           ],
+  //         ),
+  //       );
+  //     },
+  //   );
+  // }
+
   void _showSuccessDialog(String responseBody) {
     showDialog(
       context: context,
@@ -210,116 +478,54 @@ class _PaymentProcessingModalState extends State<PaymentProcessingModal> {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(15.0),
           ),
-          content: Stack(
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
             children: [
-              // Background bubble animation
-              Positioned.fill(
-                child: Lottie.asset(
-                  'assets/lotties/bubbles.json',
-                  fit: BoxFit.cover,
-                  repeat: true,
+              // Green checkmark icon
+              const Icon(
+                Icons.check_circle,
+                color: Color.fromARGB(255, 13, 72, 15),
+                size: 80,
+              ),
+              const SizedBox(height: 20),
+              const Text(
+                'Payment Successful!',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                  color: Color.fromARGB(255, 15, 106, 18),
                 ),
               ),
-              Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // Green checkmark icon
-                  const Icon(
-                    Icons.check_circle,
-                    color: Color.fromARGB(255, 13, 72, 15),
-                    size: 100,
-                  ),
-                  const SizedBox(height: 20),
-                  const Text(
-                    'Payment Successful!',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                      color: Color.fromARGB(255, 15, 106, 18),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  const Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 16.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        Text(
-                          "Your payment is now under processing.",
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontStyle: FontStyle.normal,
-                            height: 1.5,
-                          ),
-                        ),
-                        SizedBox(height: 8),
-                        Text(
-                          "We will notify you shortly with an update on its status.",
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontStyle: FontStyle.normal,
-                            height: 1.5,
-                          ),
-                        ),
-                        SizedBox(height: 8),
-                        Text(
-                          "Once confirmed, you'll receive detailed information about your order's next steps.",
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontStyle: FontStyle.normal,
-                            height: 1.5,
-                          ),
-                        ),
-                        SizedBox(height: 8),
-                        Text(
-                          "We truly value your trust in us and are committed to delivering an exceptional experience.",
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontStyle: FontStyle.normal,
-                            height: 1.5,
-                          ),
-                        ),
-                        SizedBox(height: 20),
-                        Text(
-                          "Thank you for choosing us!",
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontStyle: FontStyle.italic,
-                            height: 1.5,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  const Text(
-                    'LAROSA EXPLORE',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      fontStyle: FontStyle.italic,
-                      letterSpacing: 1.5,
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-
-                  buildWideGradientButton(
-                    onTap: () {
-                      Navigator.of(context).pop(); // Close the dialog
-                      Navigator.pop(context); // Navigate back
-                    },
-                    label: 'OK',
-                    startColor: const Color.fromARGB(255, 13, 72, 15),
-                    endColor: Colors.purple,
-                  ),
-                ],
+              const SizedBox(height: 12),
+              const Text(
+                "Your payment is being processed. We'll notify you with an update soon.",
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 16,
+                  height: 1.5,
+                ),
+              ),
+              const SizedBox(height: 12),
+              const Text(
+                'Thank you for choosing LAROSA EXPLORE!',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 16,
+                  fontStyle: FontStyle.italic,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 1.2,
+                ),
+              ),
+              const SizedBox(height: 20),
+              buildWideGradientButton(
+                onTap: () {
+                  Navigator.of(context).pop(); // Close the dialog
+                  Navigator.pop(context); // Navigate back
+                },
+                label: 'OK',
+                startColor: const Color.fromARGB(255, 13, 72, 15),
+                endColor: Colors.purple,
               ),
             ],
           ),

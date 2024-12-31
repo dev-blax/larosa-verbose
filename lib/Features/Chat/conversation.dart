@@ -537,6 +537,14 @@ class _LarosaConversationState extends State<LarosaConversation> {
         setState(() {
           sendingMessages[messageId] = {'isSending': false, 'hasFailed': false};
           _fetchChatMessages(); // Reload chat to fetch the new message state
+
+
+          // Clear the input file and reset video controller
+        pickedFile = null;
+        audioData = null;
+        _videoController?.dispose();
+        _videoController = null;
+
         });
       } else {
         throw Exception('Failed to send message');
@@ -972,33 +980,84 @@ class _LarosaConversationState extends State<LarosaConversation> {
     );
   }
 
-  Widget _previewMedia() {
-    if (pickedFile == null) return Container();
+  // Widget _previewMedia() {
+  //   if (pickedFile == null) return Container();
 
-    // Display video if picked file is a video
-    if (_videoController != null && pickedFile!.path.endsWith('.mp4')) {
-      return Expanded(
-        child: AspectRatio(
-          aspectRatio: _videoController!.value.aspectRatio,
-          child: VideoPlayer(_videoController!),
-        ),
-      );
+  //   // Display video if picked file is a video
+  //   if (_videoController != null && pickedFile!.path.endsWith('.mp4')) {
+  //     return Expanded(
+  //       child: AspectRatio(
+  //         aspectRatio: _videoController!.value.aspectRatio,
+  //         child: VideoPlayer(_videoController!),
+  //       ),
+  //     );
+  //   }
+
+  //   // Display image if picked file is an image
+  //   return Expanded(
+  //     child: Image.file(
+  //       pickedFile!,
+  //       fit: BoxFit.cover,
+  //     ),
+  //   );
+  // }
+
+
+//   Widget _previewMedia() {
+//   if (pickedFile == null) return Container();
+
+//   // Display video if picked file is a video
+//   if (_videoController != null && pickedFile!.path.endsWith('.mp4')) {
+//     return AspectRatio(
+//       aspectRatio: _videoController!.value.aspectRatio,
+//       child: VideoPlayer(_videoController!),
+//     );
+//   }
+
+//   // Display image if picked file is an image
+//   return SizedBox(
+//     height: MediaQuery.of(context).size.height * .7, // Set a fixed height for the image preview
+//     child: Image.file(
+//       pickedFile!,
+//       fit: BoxFit.cover,
+//     ),
+//   );
+// }
+
+Widget _previewMedia() {
+  if (pickedFile == null) return Container();
+
+  if (_videoController != null && pickedFile!.path.endsWith('.mp4')) {
+    if (!_videoController!.value.isInitialized) {
+      return const Center(child: CircularProgressIndicator());
     }
 
-    // Display image if picked file is an image
-    return Expanded(
-      child: Image.file(
-        pickedFile!,
-        fit: BoxFit.cover,
+    return SizedBox(
+      height: MediaQuery.of(context).size.height * 0.7, // Adjust height as needed
+      child: AspectRatio(
+        aspectRatio: _videoController!.value.aspectRatio,
+        child: VideoPlayer(_videoController!),
       ),
     );
   }
+
+  return SizedBox(
+    height: MediaQuery.of(context).size.height * 0.7,
+    child: Image.file(
+      pickedFile!,
+      fit: BoxFit.cover,
+    ),
+  );
+}
+
+
 
   @override
   Widget build(BuildContext context) {
     return RefreshIndicator(
       onRefresh: _fetchChatMessages,
       child: Scaffold(
+        resizeToAvoidBottomInset: true,
         appBar: AppBar(
           leading: IconButton(
             onPressed: () {

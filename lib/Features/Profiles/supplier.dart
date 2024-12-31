@@ -22,58 +22,63 @@ class SupplierDashboard extends StatefulWidget {
 
 class _SupplierDashboardState extends State<SupplierDashboard> {
   late StompClient stompClient;
-  List<Map<String, dynamic>> supplierNotifications = [];
+  final ValueNotifier<List<Map<String, dynamic>>> supplierNotifications =
+      ValueNotifier<List<Map<String, dynamic>>>([]); // Use ValueNotifier
   int pageNumber = 0;
   bool isLoading = false;
 
   final String token = AuthService.getToken();
 
-  Future<void> _loadNotifications() async {
-    if (isLoading) return;
+ Future<void> _loadNotifications() async {
+  if (isLoading) return;
 
-    setState(() {
-      isLoading = true;
-    });
+  setState(() {
+    isLoading = true;
+  });
 
-    final String url =
-        '${LarosaLinks.baseurl}/api/v1/notifications/supplier/$pageNumber';
+  final String url =
+      '${LarosaLinks.baseurl}/api/v1/notifications/supplier/$pageNumber';
 
-    try {
-      final response = await http.get(
-        Uri.parse(url),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $token',
-        },
-      );
-      HelperFunctions.larosaLogger(response.body);
-      if (response.statusCode == 200) {
-        final List<dynamic> notifications = jsonDecode(response.body);
-        setState(() {
-          // Add notifications with state management fields
-          supplierNotifications.addAll(
-            notifications.map((dynamic notification) {
-              return {
-                ...(notification as Map<String, dynamic>),
-                'isAcknowledgeLoading': false,
-                'isReadyLoading': false,
-              };
-            }).toList(),
-          );
-        });
-        pageNumber++;
-      } else {
-        LogService.logError(
-            'Failed to fetch notifications: ${response.statusCode}');
-      }
-    } catch (e) {
-      LogService.logError('Error fetching notifications: $e');
-    } finally {
-      setState(() {
-        isLoading = false;
-      });
+  try {
+    final response = await http.get(
+      Uri.parse(url),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+    );
+
+    HelperFunctions.larosaLogger(response.body);
+
+    if (response.statusCode == 200) {
+      final List<dynamic> notifications = jsonDecode(response.body);
+
+      // Update the ValueNotifier
+      supplierNotifications.value = [
+        ...supplierNotifications.value,
+        ...notifications.map((dynamic notification) {
+          return {
+            ...(notification as Map<String, dynamic>),
+            'isAcknowledgeLoading': false,
+            'isReadyLoading': false,
+          };
+        }).toList(),
+      ];
+
+      pageNumber++;
+    } else {
+      LogService.logError(
+          'Failed to fetch notifications: ${response.statusCode}');
     }
+  } catch (e) {
+    LogService.logError('Error fetching notifications: $e');
+  } finally {
+    setState(() {
+      isLoading = false;
+    });
   }
+}
+
 
   Future<void> initializeWebSocket(String supplierId) async {
     stompClient = StompClient(
@@ -124,134 +129,99 @@ class _SupplierDashboardState extends State<SupplierDashboard> {
     }
   }
 
-  Future<void> acknowledgeNotification(
-      int? notificationId, int? productId, int index) async {
-    if (notificationId == null || productId == null) {
-      print(
-          'Invalid IDs: notificationId=$notificationId, productId=$productId');
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Invalid data. Cannot acknowledge.')),
-      );
-      return;
-    }
-// print('Invalid IDs: notificationId=$notificationId, productId=$productId');
-    final String token = AuthService.getToken(); // Get the token
-    final String endpoint =
-        '${LarosaLinks.baseurl}/api/v1/notifications/acknowledge/$notificationId';
-
-    // Create the request body with dynamic key
-    final Map<String, dynamic> requestBody = {productId.toString(): true};
-
-    setState(() {
-      supplierNotifications[index]['isAcknowledgeLoading'] = true;
-    });
-
-    try {
-      final response = await http.post(
-        Uri.parse(endpoint),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $token', // Add the Authorization header
-        },
-        body: jsonEncode(requestBody), // Send dynamic key-value pair
-      );
-      print('Responce status code : ${response.statusCode}');
-      print('Responce body : ${response.body}');
-      if (response.statusCode == 200) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Notification acknowledged')),
-        );
-
-        // Reload notifications after successful acknowledgment
-        await _loadNotifications();
-
-        // Trigger a rebuild
-        setState(() {
-          // Optionally update UI-specific variables here if needed
-        });
-      } else {
-        LogService.logError('Failed to acknowledge: ${response.body}');
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to acknowledge: ${response.body}')),
-        );
-      }
-    } catch (e) {
-      LogService.logError('Error acknowledging notification: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: $e')),
-      );
-    } finally {
-      setState(() {
-        supplierNotifications[index]['isAcknowledgeLoading'] = false;
-      });
-    }
+  Future<void> acknowledgeNotification(int? notificationId, int? productId, int index) async {
+  if (notificationId == null || productId == null) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Invalid data. Cannot acknowledge.')),
+    );
+    return;
   }
 
-  Future<void> markAsReadyForPickup(
-      int? notificationId, int? productId, int index) async {
-    if (notificationId == null || productId == null) {
-      print(
-          'Invalid IDs: notificationId=$notificationId, productId=$productId');
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Invalid data. Cannot mark as ready.')),
-      );
-      return;
-    }
+  final String endpoint =
+      '${LarosaLinks.baseurl}/api/v1/notifications/acknowledge/$notificationId';
+  final Map<String, dynamic> requestBody = {productId.toString(): true};
 
-    final String token = AuthService.getToken();
-    final String endpoint =
-        '${LarosaLinks.baseurl}/api/v1/notifications/ready-for-pickup/$notificationId';
+  await handleNotificationAction(
+    endpoint: endpoint,
+    index: index,
+    loadingKey: 'isAcknowledgeLoading',
+    requestBody: requestBody,
+  );
+}
 
-    // Create the request body with dynamic key
-    // final Map<String, dynamic> requestBody = {productId.toString(): true};
 
-    setState(() {
-      supplierNotifications[index]['isReadyLoading'] = true;
-    });
-
-    try {
-      final response = await http.post(
-        Uri.parse(endpoint),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $token',
-        },
-        // body: jsonEncode(requestBody), // Send dynamic key-value pair
-      );
-
-      print('Response status code: ${response.statusCode}');
-      print('Response body: ${response.body}');
-      if (response.statusCode == 200) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Marked as ready for pickup')),
-        );
-
-        // Reload notifications after successful acknowledgment
-        await _loadNotifications();
-
-        setState(() {});
-      } else {
-        LogService.logError('Failed to mark as ready: ${response.body}');
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to mark as ready: ${response.body}')),
-        );
-      }
-    } catch (e) {
-      LogService.logError('Error marking as ready: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: $e')),
-      );
-    } finally {
-      setState(() {
-        supplierNotifications[index]['isReadyLoading'] = false;
-      });
-    }
+Future<void> markAsReadyForPickup(int? notificationId, int? productId, int index) async {
+  if (notificationId == null || productId == null) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Invalid data. Cannot mark as ready.')),
+    );
+    return;
   }
+
+  final String endpoint =
+      '${LarosaLinks.baseurl}/api/v1/notifications/ready-for-pickup/$notificationId';
+
+  await handleNotificationAction(
+    endpoint: endpoint,
+    index: index,
+    loadingKey: 'isReadyLoading',
+  );
+}
+
+Future<void> handleNotificationAction({
+  required String endpoint,
+  required int index,
+  required String loadingKey, // Key to indicate which action is loading
+  Map<String, dynamic>? requestBody,
+}) async {
+  // Set loading state
+  supplierNotifications.value[index][loadingKey] = true;
+  supplierNotifications.notifyListeners();
+
+  try {
+    final response = await http.post(
+      Uri.parse(endpoint),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+      body: requestBody != null ? jsonEncode(requestBody) : null,
+    );
+
+    print('Response status code: ${response.statusCode}');
+    print('Response body: ${response.body}');
+
+    if (response.statusCode == 200) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Action completed successfully')),
+      );
+
+      // Reload notifications to reflect the updated state
+      await _loadNotifications();
+    } else {
+      LogService.logError('Failed to complete action: ${response.body}');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed: ${response.body}')),
+      );
+    }
+  } catch (e) {
+    LogService.logError('Error completing action: $e');
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Error: $e')),
+    );
+  } finally {
+    // Reset loading state
+    supplierNotifications.value[index][loadingKey] = false;
+    supplierNotifications.notifyListeners();
+  }
+}
+
+
 
   @override
   void initState() {
     super.initState();
-    print(AuthService.getCategories());
+    print(AuthService.isReservation());
     initializeWebSocket(widget.supplierId);
     _loadNotifications();
   }
@@ -669,81 +639,86 @@ class _SupplierDashboardState extends State<SupplierDashboard> {
                 Radius.circular(16), // Smooth rounded bottom for a premium feel
           ),
         ),
-        bottom: PreferredSize(
-          preferredSize:
-              const Size.fromHeight(60), // Extended height for modern look
-          child: Container(
-            decoration: BoxDecoration(
-              color: Theme.of(context)
-                  .colorScheme
-                  .secondaryContainer, // Clean, modern theme
-              borderRadius: const BorderRadius.vertical(
-                bottom: Radius.circular(16), // Matches the AppBar shape
-              ),
-            ),
-            padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 16),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'Welcome back, Aslay Mihogo!', // Dynamic welcome text
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                    color: Theme.of(context).colorScheme.onSecondaryContainer,
-                  ),
+        // bottom: PreferredSize(
+        //   preferredSize:
+        //       const Size.fromHeight(60), // Extended height for modern look
+        //   child: Container(
+        //     decoration: BoxDecoration(
+        //       color: Theme.of(context)
+        //           .colorScheme
+        //           .secondaryContainer, // Clean, modern theme
+        //       borderRadius: const BorderRadius.vertical(
+        //         bottom: Radius.circular(16), // Matches the AppBar shape
+        //       ),
+        //     ),
+        //     padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 16),
+        //     child: Row(
+        //       mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        //       children: [
+        //         Text(
+        //           'Welcome back, Aslay Mihogo!', // Dynamic welcome text
+        //           style: TextStyle(
+        //             fontSize: 14,
+        //             fontWeight: FontWeight.w500,
+        //             color: Theme.of(context).colorScheme.onSecondaryContainer,
+        //           ),
+        //         ),
+        //         OutlinedButton.icon(
+        //           style: OutlinedButton.styleFrom(
+        //             side: BorderSide(
+        //               color: Theme.of(context).colorScheme.primary,
+        //               width: 1,
+        //             ),
+        //             shape: RoundedRectangleBorder(
+        //               borderRadius: BorderRadius.circular(8),
+        //             ),
+        //           ),
+        //           onPressed: () {
+        //             // Action for "View Insights"
+        //           },
+        //           icon: Icon(
+        //             Icons.insights_outlined,
+        //             size: 16,
+        //             color: Theme.of(context).colorScheme.primary,
+        //           ),
+        //           label: Text(
+        //             'View Insights',
+        //             style: TextStyle(
+        //               fontSize: 12,
+        //               color: Theme.of(context).colorScheme.primary,
+        //             ),
+        //           ),
+        //         ),
+        //       ],
+        //     ),
+        //   ),
+        // ),
+      ),
+      body: ValueListenableBuilder<List<Map<String, dynamic>>>(
+      valueListenable: supplierNotifications,
+      builder: (context, notifications, child) {
+        return SingleChildScrollView(
+          child: Column(
+            children: [
+              ...notifications.map((notification) {
+                final int index = notifications.indexOf(notification);
+                return buildNotificationCard(notification, index);
+              }),
+              if (isLoading)
+                const Padding(
+                  padding: EdgeInsets.all(16.0),
+                  child: CupertinoActivityIndicator(),
+                )
+              else
+                ElevatedButton(
+                  onPressed: _loadNotifications,
+                  child: const Text('Load More Notifications'),
                 ),
-                OutlinedButton.icon(
-                  style: OutlinedButton.styleFrom(
-                    side: BorderSide(
-                      color: Theme.of(context).colorScheme.primary,
-                      width: 1,
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                  ),
-                  onPressed: () {
-                    // Action for "View Insights"
-                  },
-                  icon: Icon(
-                    Icons.insights_outlined,
-                    size: 16,
-                    color: Theme.of(context).colorScheme.primary,
-                  ),
-                  label: Text(
-                    'View Insights',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Theme.of(context).colorScheme.primary,
-                    ),
-                  ),
-                ),
-              ],
-            ),
+            ],
           ),
-        ),
-      ),
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            ...supplierNotifications.map((notification) {
-              final int index = supplierNotifications.indexOf(notification);
-              return buildNotificationCard(notification, index);
-            }),
-            if (isLoading)
-              const Padding(
-                padding: EdgeInsets.all(16.0),
-                child: CupertinoActivityIndicator(),
-              )
-            else
-              ElevatedButton(
-                onPressed: _loadNotifications,
-                child: const Text('Load More Notifications'),
-              ),
-          ],
-        ),
-      ),
+        );
+      },
+    )
     );
   }
 }

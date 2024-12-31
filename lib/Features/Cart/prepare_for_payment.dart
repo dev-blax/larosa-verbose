@@ -1174,6 +1174,8 @@ const Divider(),
                                           children: children, // Pass children
                                           fullName: _fullNameController.text
                                               .trim(), // Pass full name
+                                              checkInDate: isReservation ? checkInDate : null, // Conditionally include checkInDate
+      checkOutDate: isReservation ? checkOutDate : null, // Conditionally include checkOutDate
                                           isReservation: !isReservation),
                                     );
                                   },

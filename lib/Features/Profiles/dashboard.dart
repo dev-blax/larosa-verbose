@@ -22,23 +22,42 @@ class _DashboardState extends State<Dashboard> {
     });
   }
 
+  // Future<void> loadDashboard(String supplierId) async {
+  //   try {
+  //     String? category = AuthService.isReservation();
+
+  //     if (category == null) {
+  //       throw Exception('Category is missing. Please log in again.');
+  //     }
+
+  //     if (category == 'Restaurant') {
+  //       navigateToSupplierDashboard(supplierId);
+  //     } else {
+  //       navigateToReservationDashboard(supplierId);
+  //     }
+  //   } catch (error) {
+  //     LogService.logError('Error in loadDashboard: $error');
+  //   }
+  // }
+
   Future<void> loadDashboard(String supplierId) async {
-    try {
-      String? category = AuthService.getCategories();
+  try {
+    bool? isReservation = AuthService.isReservation();
 
-      if (category == null) {
-        throw Exception('Category is missing. Please log in again.');
-      }
-
-      if (category == 'Restaurant') {
-        navigateToSupplierDashboard(supplierId);
-      } else {
-        navigateToReservationDashboard(supplierId);
-      }
-    } catch (error) {
-      LogService.logError('Error in loadDashboard: $error');
+    if (isReservation == null) {
+      throw Exception('Reservation status is missing. Please log in again.');
     }
+
+    if (isReservation) {
+      navigateToReservationDashboard(supplierId);
+    } else {
+      navigateToSupplierDashboard(supplierId);
+    }
+  } catch (error) {
+    LogService.logError('Error in loadDashboard: $error');
   }
+}
+
 
   void navigateToSupplierDashboard(String supplierId) {
     Navigator.push(
@@ -60,6 +79,9 @@ class _DashboardState extends State<Dashboard> {
 
   @override
   Widget build(BuildContext context) {
+
+    Navigator.pop(context);
+    
     return Scaffold(
       appBar: AppBar(
         title: const Text('Dashboard'),

@@ -12,11 +12,11 @@ import 'Utils/helpers.dart';
 import 'Utils/links.dart';
 
 // Create a global instance of FlutterLocalNotificationsPlugin
-final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
-    FlutterLocalNotificationsPlugin();
+// final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
+    // FlutterLocalNotificationsPlugin();
 
 // Global instance for StompClient
-late StompClient stompClient;
+// late StompClient stompClient;
 
 bool connectedToSocket = false;
 
@@ -49,68 +49,68 @@ Future<void> main() async {
   runApp(const App());
 }
 
-Future<void> _initializeNotifications() async {
-  const AndroidInitializationSettings androidSettings =
-      AndroidInitializationSettings('@mipmap/ic_launcher');
+// Future<void> _initializeNotifications() async {
+//   const AndroidInitializationSettings androidSettings =
+//       AndroidInitializationSettings('@mipmap/ic_launcher');
 
-  const InitializationSettings initializationSettings =
-      InitializationSettings(android: androidSettings);
+//   const InitializationSettings initializationSettings =
+//       InitializationSettings(android: androidSettings);
 
-  await flutterLocalNotificationsPlugin.initialize(
-    initializationSettings,
-    onDidReceiveNotificationResponse: (NotificationResponse response) async {
-      // Handle notification tap
-      if (response.payload != null) {
-        debugPrint('Notification payload: ${response.payload}');
-        // Add logic here for navigation or other actions based on the payload
-      }
-    },
-  );
-}
+//   await flutterLocalNotificationsPlugin.initialize(
+//     initializationSettings,
+//     onDidReceiveNotificationResponse: (NotificationResponse response) async {
+//       // Handle notification tap
+//       if (response.payload != null) {
+//         debugPrint('Notification payload: ${response.payload}');
+//         // Add logic here for navigation or other actions based on the payload
+//       }
+//     },
+//   );
+// }
 
 // Initialize WebSocket connection
-Future<void> _socketConnection2() async {
-  stompClient = StompClient(
-    config: StompConfig.sockJS(
-      url: LarosaLinks.socketUrl,
-      onConnect: onConnect,
-      onWebSocketError: (dynamic error) =>
-          LogService.logError('WebSocket error: $error'),
-      onStompError: (StompFrame frame) =>
-          LogService.logWarning('Stomp error: ${frame.body}'),
-      onDisconnect: (StompFrame frame) =>
-          LogService.logFatal('Disconnected from WebSocket'),
-    ),
-  );
-  stompClient.activate();
-}
+// Future<void> _socketConnection2() async {
+//   stompClient = StompClient(
+//     config: StompConfig.sockJS(
+//       url: LarosaLinks.socketUrl,
+//       onConnect: onConnect,
+//       onWebSocketError: (dynamic error) =>
+//           LogService.logError('WebSocket error: $error'),
+//       onStompError: (StompFrame frame) =>
+//           LogService.logWarning('Stomp error: ${frame.body}'),
+//       onDisconnect: (StompFrame frame) =>
+//           LogService.logFatal('Disconnected from WebSocket'),
+//     ),
+//   );
+//   stompClient.activate();
+// }
 
 // Callback for handling successful connection
-void onConnect(StompFrame frame) {
-  connectedToSocket = true;
-  LogService.logInfo('Connected to WebSocket server: $frame');
+// void onConnect(StompFrame frame) {
+//   connectedToSocket = true;
+//   LogService.logInfo('Connected to WebSocket server: $frame');
 
-  final String subscriptionDestination = '/topic/customer/${AuthService.getProfileId()}';
+//   final String subscriptionDestination = '/topic/customer/${AuthService.getProfileId()}';
 
-  // Log the subscription destination
-  LogService.logInfo('Subscribing to destination: $subscriptionDestination');
+//   // Log the subscription destination
+//   LogService.logInfo('Subscribing to destination: $subscriptionDestination');
 
-  stompClient.subscribe(
-    destination: subscriptionDestination,
-    callback: (StompFrame message) {
-      // Log the received message
-      LogService.logInfo(
-        'Received message from $subscriptionDestination: ${message.body}',
-      );
+//   stompClient.subscribe(
+//     destination: subscriptionDestination,
+//     callback: (StompFrame message) {
+//       // Log the received message
+//       LogService.logInfo(
+//         'Received message from $subscriptionDestination: ${message.body}',
+//       );
 
-      // Show the message in a toast
-      HelperFunctions.showToast(
-        message.body.toString(),
-        true,
-      );
-    },
-  );
-}
+//       // Show the message in a toast
+//       HelperFunctions.showToast(
+//         message.body.toString(),
+//         true,
+//       );
+//     },
+//   );
+// }
 
 
 // import 'package:flutter/material.dart';

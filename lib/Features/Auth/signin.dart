@@ -64,16 +64,16 @@ class _SigninScreenState extends State<SigninScreen> {
 
       var box = await Hive.openBox('userBox');
       await box.clear();
-      // print('Categories : ${data['categories'][0]}');
+      // print('Categories : ${data}');
       box.put('profileId', data['profileId']);
       box.put('accountId', data['accountType']['id']);
       box.put('accountName', data['accountType']['name']);
-      // box.put('categories', data['categories'][0]);
-      if (data['categories'] != null && data['categories'].isNotEmpty && data['categories'][0] != null) {
-  box.put('categories', data['categories'][0]);
-} else {
-  print('No valid categories to add.');
-}
+      box.put('reservation', data['reservation']);
+//       if (data['categories'] != null && data['categories'].isNotEmpty && data['categories'][0] != null) {
+//   box.put('categories', data['categories'][0]);
+// } else {
+//   print('No valid categories to add.');
+// }
 
       box.put('token', data['jwtAuthenticationResponse']['token']);
       LogService.logInfo(
