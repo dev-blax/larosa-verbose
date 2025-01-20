@@ -472,53 +472,54 @@ class _CenterSnapCarouselState extends State<CenterSnapCarousel> {
   //   );
   // }
 
-  /// A media container that handles both image and video rendering creatively
-  Widget buildMediaContainer({
-    required String? imageUrl,
-    required CachedVideoPlayerPlusController? videoController,
-    required BuildContext context,
-    required bool isVideo,
-  }) {
-    const double containerHeight = 300;
-    return ConstrainedBox(
-      constraints: const BoxConstraints(
-        maxHeight: containerHeight, // Fixed height for the media container
-      ),
-      child: Container(
-        height: containerHeight,
-        width: MediaQuery.of(context).size.width, // Full width
-        decoration: isVideo
-            ? null
-            : BoxDecoration(
-                image: imageUrl != null
-                    ? DecorationImage(
-                        image: CachedNetworkImageProvider(imageUrl),
-                        fit: BoxFit
-                            .cover, // Ensures the image behaves like "cover" in CSS
-                      )
-                    : null,
-              ),
-        child: isVideo
-            ? videoController != null && videoController.value.isInitialized
-                ? FittedBox(
-                    fit: BoxFit
-                        .cover, // Ensures the video behaves like "cover" in CSS
-                    child: SizedBox(
-                      width: videoController.value.size.width,
-                      height: videoController.value.size.height,
-                      child: CachedVideoPlayerPlus(videoController),
-                    ),
-                  )
-                : _buildShimmerLoader()
-            : CachedNetworkImage(
-                imageUrl: imageUrl!,
-                placeholder: (context, url) => _buildShimmerLoader(),
-                errorWidget: (context, url, error) =>
-                    const Icon(Icons.error, size: 50, color: Colors.redAccent),
-              ),
-      ),
-    );
-  }
+
+//****//
+/// A media container that handles both image and video rendering creatively
+Widget buildMediaContainer({
+  required String? imageUrl,
+  required CachedVideoPlayerPlusController? videoController,
+  required BuildContext context,
+  required bool isVideo,
+}) {
+  const double containerHeight = 300;
+  return ConstrainedBox(
+    constraints: const BoxConstraints(
+      maxHeight: containerHeight, // Fixed height for the media container
+    ),
+    child: Container(
+      height: containerHeight,
+      width: MediaQuery.of(context).size.width, // Full width
+      decoration: isVideo
+          ? null
+          : BoxDecoration(
+              image: imageUrl != null
+                  ? DecorationImage(
+                      image: CachedNetworkImageProvider(imageUrl),
+                      fit: BoxFit.cover, // Ensures the image behaves like "cover" in CSS
+                    )
+                  : null,
+            ),
+      child: isVideo
+          ? videoController != null && videoController.value.isInitialized
+              ? FittedBox(
+                  fit: BoxFit.cover, // Ensures the video behaves like "cover" in CSS
+                  child: SizedBox(
+                    width: videoController.value.size.width,
+                    height: videoController.value.size.height,
+                    child: CachedVideoPlayerPlus(videoController),
+                  ),
+                )
+              : _buildShimmerLoader()
+          : CachedNetworkImage(
+              imageUrl: imageUrl!,
+              placeholder: (context, url) => _buildShimmerLoader(),
+              errorWidget: (context, url, error) =>
+                  const Icon(Icons.error, size: 50, color: Colors.redAccent),
+            ),
+    ),
+  );
+
+}
 }
 
 // import 'dart:async';
