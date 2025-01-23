@@ -466,20 +466,20 @@ class _TimeEstimationsModalContentState
       case 'larosamini':
         return const Icon(Icons.directions_car, color: Colors.green);
       default:
-        return const Icon(Icons.help_outline, color: Colors.grey); // Default icon
+        return const Icon(Icons.help_outline,
+            color: Colors.grey); // Default icon
     }
   }
 
   String _formatVehicleType(String vehicleType) {
-  if (vehicleType.toLowerCase().contains('mini')) {
-    return 'Larosa Mini';
-  } else if (vehicleType.toLowerCase().contains('max')) {
-    return 'Larosa Max';
-  } else {
-    return vehicleType.sentenceCase; // Converts to "Sentence case"
+    if (vehicleType.toLowerCase().contains('mini')) {
+      return 'Larosa Mini';
+    } else if (vehicleType.toLowerCase().contains('max')) {
+      return 'Larosa Max';
+    } else {
+      return vehicleType.sentenceCase; // Converts to "Sentence case"
+    }
   }
-}
-
 
   @override
   Widget build(BuildContext context) {
@@ -548,294 +548,386 @@ class _TimeEstimationsModalContentState
           const SizedBox(height: 8),
 
           // Expandable Driver Availability Section
-          ExpansionTile(
-            initiallyExpanded: true,
-            title: const Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    // Icon(
-                    //   Icons.directions_car,
-                    //   color: Colors.blueAccent,
-                    //   size: 20,
-                    // ),
-                    // SizedBox(width: 8),
-                    Flexible(
-                      child: Text(
-                        "Driver Availability and Travel Time",
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
-                        textAlign: TextAlign.center,
-                        overflow: TextOverflow.ellipsis,
-                        maxLines: 1,
-                      ),
-                    ),
-                  ],
-                ),
-                SizedBox(height: 4),
-                Divider(thickness: 1, color: Colors.grey),
-              ],
-            ),
-            // children: [
-            //   ...widget.estimations.entries.map((entry) {
-            //     final vehicleType = entry.key;
-            //     final data = entry.value;
+          // ExpansionTile(
+          //   initiallyExpanded: true,
+          //   title: const Column(
+          //     crossAxisAlignment: CrossAxisAlignment.stretch,
+          //     children: [
+          //       Row(
+          //         mainAxisAlignment: MainAxisAlignment.center,
+          //         children: [
+          //           // Icon(
+          //           //   Icons.directions_car,
+          //           //   color: Colors.blueAccent,
+          //           //   size: 20,
+          //           // ),
+          //           // SizedBox(width: 8),
+          //           Flexible(
+          //             child: Text(
+          //               "Driver Availability and Travel Time",
+          //               style: TextStyle(
+          //                 fontSize: 16,
+          //                 fontWeight: FontWeight.bold,
+          //               ),
+          //               textAlign: TextAlign.center,
+          //               overflow: TextOverflow.ellipsis,
+          //               maxLines: 1,
+          //             ),
+          //           ),
+          //         ],
+          //       ),
+          //       SizedBox(height: 4),
+          //       Divider(thickness: 1, color: Colors.grey),
+          //     ],
+          //   ),
+          //   // children: [
+          //   //   ...widget.estimations.entries.map((entry) {
+          //   //     final vehicleType = entry.key;
+          //   //     final data = entry.value;
 
-            //     if (data.containsKey('message')) {
-            //       return Column(
-            //         crossAxisAlignment: CrossAxisAlignment.start,
-            //         children: [
-            //           Text(
-            //             vehicleType
-            //                 .sentenceCase, // Converts the text to "Sentence case"
-            //             style: const TextStyle(
-            //               fontWeight: FontWeight.w600,
-            //               fontSize: 14,
-            //             ),
-            //           ),
-            //           Padding(
-            //             padding: const EdgeInsets.only(left: 8.0),
-            //             child: Text(
-            //               data['message'],
-            //               style: const TextStyle(
-            //                 fontSize: 12,
-            //                 color: Colors.red,
-            //                 fontStyle: FontStyle.italic,
-            //               ),
-            //             ),
-            //           ),
-            //           const Divider(thickness: 0.5),
-            //         ],
-            //       );
-            //     }
+          //   //     if (data.containsKey('message')) {
+          //   //       return Column(
+          //   //         crossAxisAlignment: CrossAxisAlignment.start,
+          //   //         children: [
+          //   //           Text(
+          //   //             vehicleType
+          //   //                 .sentenceCase, // Converts the text to "Sentence case"
+          //   //             style: const TextStyle(
+          //   //               fontWeight: FontWeight.w600,
+          //   //               fontSize: 14,
+          //   //             ),
+          //   //           ),
+          //   //           Padding(
+          //   //             padding: const EdgeInsets.only(left: 8.0),
+          //   //             child: Text(
+          //   //               data['message'],
+          //   //               style: const TextStyle(
+          //   //                 fontSize: 12,
+          //   //                 color: Colors.red,
+          //   //                 fontStyle: FontStyle.italic,
+          //   //               ),
+          //   //             ),
+          //   //           ),
+          //   //           const Divider(thickness: 0.5),
+          //   //         ],
+          //   //       );
+          //   //     }
 
-            //     return Column(
-            //       crossAxisAlignment: CrossAxisAlignment.start,
-            //       children: [
-            //         Text(
-            //           vehicleType
-            //               .sentenceCase, // Convert "MOTORCYCLE" to "Motorcycle"
-            //           style: const TextStyle(
-            //             fontWeight: FontWeight.w600,
-            //             fontSize: 14,
-            //           ),
-            //         ),
-            //         Padding(
-            //           padding: const EdgeInsets.only(left: 8.0),
-            //           child: Column(
-            //             children: [
-            //               Row(
-            //                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            //                 children: [
-            //                   const Text("Closest Driver:"),
-            //                   Text(data['closestDriver']),
-            //                 ],
-            //               ),
-            //               Row(
-            //                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            //                 children: [
-            //                   const Text("Time to Customer:"),
-            //                   Text(formatTime(data['timeToCustomer'])),
-            //                 ],
-            //               ),
-            //               Row(
-            //                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            //                 children: [
-            //                   const Text("Travel Time:"),
-            //                   Text(formatTime(
-            //                       data['timeFromCustomerToDestination'])),
-            //                 ],
-            //               ),
-            //             ],
-            //           ),
-            //         ),
-            //         const SizedBox(height: 8),
-            //         Container(
-            //           width: double.infinity,
-            //           decoration: BoxDecoration(
-            //             gradient: const LinearGradient(
-            //               colors: [LarosaColors.secondary, LarosaColors.purple],
-            //               begin: Alignment.topLeft,
-            //               end: Alignment.bottomRight,
-            //             ),
-            //             borderRadius: BorderRadius.circular(30),
-            //           ),
-            //           child: FilledButton(
-            //             style: ButtonStyle(
-            //               backgroundColor:
-            //                   WidgetStateProperty.all(Colors.transparent),
-            //               padding: WidgetStateProperty.all(
-            //                 const EdgeInsets.symmetric(vertical: 10),
-            //               ),
-            //               shape: WidgetStateProperty.all(
-            //                 RoundedRectangleBorder(
-            //                   borderRadius: BorderRadius.circular(30),
-            //                 ),
-            //               ),
-            //             ),
-            //             onPressed: isRequestingRide
-            //                 ? null
-            //                 : () =>
-            //                     _requestRide(selectedVehicleType: vehicleType),
-            //             child: isRequestingRide
-            //                 ? const CupertinoActivityIndicator(
-            //                     color: Colors.white,
-            //                     radius: 10.0,
-            //                   )
-            //                 : const Text(
-            //                     'Confirm Ride Request',
-            //                     style: TextStyle(
-            //                       color: Colors.white,
-            //                       fontWeight: FontWeight.w600,
-            //                       letterSpacing: 1.0,
-            //                     ),
-            //                   ),
-            //           ),
-            //         ),
-            //         const SizedBox(height: 6),
-            //       ],
-            //     );
-            //   }),
-            // ],
+          //   //     return Column(
+          //   //       crossAxisAlignment: CrossAxisAlignment.start,
+          //   //       children: [
+          //   //         Text(
+          //   //           vehicleType
+          //   //               .sentenceCase, // Convert "MOTORCYCLE" to "Motorcycle"
+          //   //           style: const TextStyle(
+          //   //             fontWeight: FontWeight.w600,
+          //   //             fontSize: 14,
+          //   //           ),
+          //   //         ),
+          //   //         Padding(
+          //   //           padding: const EdgeInsets.only(left: 8.0),
+          //   //           child: Column(
+          //   //             children: [
+          //   //               Row(
+          //   //                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          //   //                 children: [
+          //   //                   const Text("Closest Driver:"),
+          //   //                   Text(data['closestDriver']),
+          //   //                 ],
+          //   //               ),
+          //   //               Row(
+          //   //                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          //   //                 children: [
+          //   //                   const Text("Time to Customer:"),
+          //   //                   Text(formatTime(data['timeToCustomer'])),
+          //   //                 ],
+          //   //               ),
+          //   //               Row(
+          //   //                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          //   //                 children: [
+          //   //                   const Text("Travel Time:"),
+          //   //                   Text(formatTime(
+          //   //                       data['timeFromCustomerToDestination'])),
+          //   //                 ],
+          //   //               ),
+          //   //             ],
+          //   //           ),
+          //   //         ),
+          //   //         const SizedBox(height: 8),
+          //   //         Container(
+          //   //           width: double.infinity,
+          //   //           decoration: BoxDecoration(
+          //   //             gradient: const LinearGradient(
+          //   //               colors: [LarosaColors.secondary, LarosaColors.purple],
+          //   //               begin: Alignment.topLeft,
+          //   //               end: Alignment.bottomRight,
+          //   //             ),
+          //   //             borderRadius: BorderRadius.circular(30),
+          //   //           ),
+          //   //           child: FilledButton(
+          //   //             style: ButtonStyle(
+          //   //               backgroundColor:
+          //   //                   WidgetStateProperty.all(Colors.transparent),
+          //   //               padding: WidgetStateProperty.all(
+          //   //                 const EdgeInsets.symmetric(vertical: 10),
+          //   //               ),
+          //   //               shape: WidgetStateProperty.all(
+          //   //                 RoundedRectangleBorder(
+          //   //                   borderRadius: BorderRadius.circular(30),
+          //   //                 ),
+          //   //               ),
+          //   //             ),
+          //   //             onPressed: isRequestingRide
+          //   //                 ? null
+          //   //                 : () =>
+          //   //                     _requestRide(selectedVehicleType: vehicleType),
+          //   //             child: isRequestingRide
+          //   //                 ? const CupertinoActivityIndicator(
+          //   //                     color: Colors.white,
+          //   //                     radius: 10.0,
+          //   //                   )
+          //   //                 : const Text(
+          //   //                     'Confirm Ride Request',
+          //   //                     style: TextStyle(
+          //   //                       color: Colors.white,
+          //   //                       fontWeight: FontWeight.w600,
+          //   //                       letterSpacing: 1.0,
+          //   //                     ),
+          //   //                   ),
+          //   //           ),
+          //   //         ),
+          //   //         const SizedBox(height: 6),
+          //   //       ],
+          //   //     );
+          //   //   }),
+          //   // ],
 
-            children: [
-  ...widget.estimations.entries.map((entry) {
-    final vehicleType = entry.key;
-    final data = entry.value;
+          //   children: [
+          //     ...widget.estimations.entries.map((entry) {
+          //       final vehicleType = entry.key;
+          //       final data = entry.value;
 
-    if (data.containsKey('message')) {
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
+          //       if (data.containsKey('message')) {
+          //         return Column(
+          //           crossAxisAlignment: CrossAxisAlignment.start,
+          //           children: [
+          //             Row(
+          //               children: [
+          //                 getVehicleIcon(
+          //                     vehicleType), // Dynamically get the icon
+          //                 const SizedBox(width: 8),
+          //                 Text(
+          //                   _formatVehicleType(
+          //                       vehicleType), // Call a helper method to format the text
+          //                   style: const TextStyle(
+          //                     fontWeight: FontWeight.w600,
+          //                     fontSize: 14,
+          //                   ),
+          //                 ),
+          //               ],
+          //             ),
+          //             Padding(
+          //               padding: const EdgeInsets.only(left: 8.0),
+          //               child: Text(
+          //                 data['message'],
+          //                 style: const TextStyle(
+          //                   fontSize: 12,
+          //                   color: Colors.red,
+          //                   fontStyle: FontStyle.italic,
+          //                 ),
+          //               ),
+          //             ),
+          //             const Divider(thickness: 0.5),
+          //           ],
+          //         );
+          //       }
+
+          //       return Column(
+          //         crossAxisAlignment: CrossAxisAlignment.start,
+          //         children: [
+          //           Row(
+          //             children: [
+          //               getVehicleIcon(vehicleType), // Dynamically get the icon
+          //               const SizedBox(width: 8),
+          //               Text(
+          //                 vehicleType
+          //                     .sentenceCase, // Convert "MOTORCYCLE" to "Motorcycle"
+          //                 style: const TextStyle(
+          //                   fontWeight: FontWeight.w600,
+          //                   fontSize: 14,
+          //                 ),
+          //               ),
+          //             ],
+          //           ),
+          //           Padding(
+          //             padding: const EdgeInsets.only(left: 8.0),
+          //             child: Column(
+          //               children: [
+          //                 Row(
+          //                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          //                   children: [
+          //                     const Text("Closest Driver:"),
+          //                     Text(data['closestDriver']),
+          //                   ],
+          //                 ),
+          //                 Row(
+          //                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          //                   children: [
+          //                     const Text("Time to Customer:"),
+          //                     Text(formatTime(data['timeToCustomer'])),
+          //                   ],
+          //                 ),
+          //                 Row(
+          //                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          //                   children: [
+          //                     const Text("Travel Time:"),
+          //                     Text(formatTime(
+          //                         data['timeFromCustomerToDestination'])),
+          //                   ],
+          //                 ),
+          //               ],
+          //             ),
+          //           ),
+          //           const SizedBox(height: 8),
+          //           Container(
+          //             width: double.infinity,
+          //             decoration: BoxDecoration(
+          //               gradient: const LinearGradient(
+          //                 colors: [LarosaColors.secondary, LarosaColors.purple],
+          //                 begin: Alignment.topLeft,
+          //                 end: Alignment.bottomRight,
+          //               ),
+          //               borderRadius: BorderRadius.circular(30),
+          //             ),
+          //             child: FilledButton(
+          //               style: ButtonStyle(
+          //                 backgroundColor:
+          //                     WidgetStateProperty.all(Colors.transparent),
+          //                 padding: WidgetStateProperty.all(
+          //                   const EdgeInsets.symmetric(vertical: 10),
+          //                 ),
+          //                 shape: WidgetStateProperty.all(
+          //                   RoundedRectangleBorder(
+          //                     borderRadius: BorderRadius.circular(30),
+          //                   ),
+          //                 ),
+          //               ),
+          //               onPressed: isRequestingRide
+          //                   ? null
+          //                   : () =>
+          //                       _requestRide(selectedVehicleType: vehicleType),
+          //               child: isRequestingRide
+          //                   ? const CupertinoActivityIndicator(
+          //                       color: Colors.white,
+          //                       radius: 10.0,
+          //                     )
+          //                   : const Text(
+          //                       'Confirm Ride Request',
+          //                       style: TextStyle(
+          //                         color: Colors.white,
+          //                         fontWeight: FontWeight.w600,
+          //                         letterSpacing: 1.0,
+          //                       ),
+          //                     ),
+          //             ),
+          //           ),
+          //           const SizedBox(height: 6),
+          //         ],
+          //       );
+          //     }),
+          //   ],
+          // ),
+
+          Expanded(
+  child: Column(
+    children: [
+      Expanded(
+        child: ListView(
+          children: widget.estimations.entries.map((entry) {
+            return _buildVehicleRow(entry.key, entry.value);
+          }).toList(),
+        ),
+      ),
+      if (widget.estimations.entries.every((entry) =>
+          !entry.value.containsKey('closestDriver') || entry.value['closestDriver'] == null))
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 16.0),
+          child: Column(
   children: [
-    getVehicleIcon(vehicleType), // Dynamically get the icon
-    const SizedBox(width: 8),
-    Text(
-      _formatVehicleType(vehicleType), // Call a helper method to format the text
-      style: const TextStyle(
-        fontWeight: FontWeight.w600,
-        fontSize: 14,
+    Icon(Icons.bus_alert, size: 40, color: LarosaColors.primary),
+    SizedBox(height: 8),
+    RichText(
+      textAlign: TextAlign.center,
+      text: TextSpan(
+        children: [
+          TextSpan(
+            text: 'All ',
+            style: TextStyle(fontSize: 16, color: Colors.black),
+          ),
+          TextSpan(
+            text: 'LaRosa Rides',
+            style: TextStyle(
+              fontSize: 15,
+              color: LarosaColors.primary,
+              fontStyle: FontStyle.italic,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          TextSpan(
+            text:
+                ' are currently engaged. We appreciate your patience as we work to serve you soon.',
+            style: TextStyle(fontSize: 14, color: Colors.black),
+          ),
+        ],
       ),
     ),
   ],
-),
-
-          Padding(
-            padding: const EdgeInsets.only(left: 8.0),
-            child: Text(
-              data['message'],
-              style: const TextStyle(
-                fontSize: 12,
-                color: Colors.red,
-                fontStyle: FontStyle.italic,
-              ),
-            ),
-          ),
-          const Divider(thickness: 0.5),
+)
+        ),
+    ],
+  ),
+)
         ],
-      );
-    }
+      ),
+    );
+  }
+
+  Widget _buildVehicleRow(String vehicleType, Map<String, dynamic> data) {
+    final isAvailable =
+        data.containsKey('closestDriver') && data['closestDriver'] != null;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
           children: [
-            getVehicleIcon(vehicleType), // Dynamically get the icon
+            Icon(Icons.directions_car,
+                color: isAvailable ? Colors.blue : Colors.grey),
             const SizedBox(width: 8),
             Text(
-              vehicleType.sentenceCase, // Convert "MOTORCYCLE" to "Motorcycle"
-              style: const TextStyle(
-                fontWeight: FontWeight.w600,
-                fontSize: 14,
+              vehicleType.sentenceCase,
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                color: isAvailable ? Colors.black : Colors.grey,
               ),
             ),
           ],
         ),
-        Padding(
-          padding: const EdgeInsets.only(left: 8.0),
-          child: Column(
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text("Closest Driver:"),
-                  Text(data['closestDriver']),
-                ],
-              ),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text("Time to Customer:"),
-                  Text(formatTime(data['timeToCustomer'])),
-                ],
-              ),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text("Travel Time:"),
-                  Text(formatTime(data['timeFromCustomerToDestination'])),
-                ],
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 8),
-        Container(
-          width: double.infinity,
-          decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              colors: [LarosaColors.secondary, LarosaColors.purple],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
+        if (isAvailable) // Only show details if available
+          Padding(
+            padding: const EdgeInsets.only(left: 16.0, top: 4.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text("Closest Driver: ${data['closestDriver']}"),
+                Text("Time to Customer: ${formatTime(data['timeToCustomer'])}"),
+                Text(
+                    "Travel Time: ${formatTime(data['timeFromCustomerToDestination'])}"),
+              ],
             ),
-            borderRadius: BorderRadius.circular(30),
           ),
-          child: FilledButton(
-            style: ButtonStyle(
-              backgroundColor:
-                  WidgetStateProperty.all(Colors.transparent),
-              padding: WidgetStateProperty.all(
-                const EdgeInsets.symmetric(vertical: 10),
-              ),
-              shape: WidgetStateProperty.all(
-                RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(30),
-                ),
-              ),
-            ),
-            onPressed: isRequestingRide
-                ? null
-                : () => _requestRide(selectedVehicleType: vehicleType),
-            child: isRequestingRide
-                ? const CupertinoActivityIndicator(
-                    color: Colors.white,
-                    radius: 10.0,
-                  )
-                : const Text(
-                    'Confirm Ride Request',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w600,
-                      letterSpacing: 1.0,
-                    ),
-                  ),
-          ),
-        ),
-        const SizedBox(height: 6),
+        const Divider(),
       ],
-    );
-  }),
-],
-
-          ),
-        ],
-      ),
     );
   }
 
