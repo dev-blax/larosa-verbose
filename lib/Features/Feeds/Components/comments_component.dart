@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:gap/gap.dart';
-import 'package:get/get.dart';
 import 'package:iconsax/iconsax.dart';
 import 'package:http/http.dart' as http;
 import 'package:larosa_block/Services/auth_service.dart';
@@ -127,72 +126,6 @@ class _CommentSectionState extends State<CommentSection> {
     }
   }
 
-  // Future<void> _sendComment(
-  //   String comment,
-  //   bool isReply,
-  //   int parentCommentId,
-  // ) async {
-  //   String token = AuthService.getToken();
-
-  //   Map<String, String> headers = {
-  //     "Content-Type": "application/json",
-  //     "Access-Control-Allow-Origin": "*",
-  //     'Authorization': 'Bearer $token',
-  //   };
-
-  //   if (token.isEmpty) {
-  //     //Get.off(const SigninScreen());
-  //     return;
-  //   }
-
-  //   var url = Uri.https(
-  //     LarosaLinks.nakedBaseUrl,
-  //     isReply ? '/comments/reply' : '/comments/new',
-  //   );
-
-  //   try {
-  //     var body = isReply
-  //         ? {
-  //             'profileId': AuthService.getProfileId(),
-  //             'postId': widget.postId,
-  //             'parentId': parentCommentId,
-  //             'message': comment,
-  //           }
-  //         : {
-  //             'profileId': AuthService.getProfileId(),
-  //             'postId': widget.postId,
-  //             'message': comment,
-  //           };
-
-  //     final response = await http.post(
-  //       url,
-  //       body: jsonEncode(body),
-  //       headers: headers,
-  //     );
-
-  //     if (response.statusCode == 201) {
-  //       setState(() {
-  //         _commentController.clear();
-  //         replyToUsername = null;
-  //         this.parentCommentId = null;
-  //       });
-
-  //       //HelperFunctions.displaySnackbar('Your comment has been added');
-
-  //       await fetchComments();
-
-  //       return;
-  //     } else if (response.statusCode == 403 || response.statusCode == 302) {
-  //       await AuthService.refreshToken();
-  //       _sendComment(comment, isReply, parentCommentId);
-  //       return;
-  //     } else {
-  //       // HelperFunctions.displaySnackbar('Failed to Comment');
-  //     }
-  //   } catch (e) {
-  //     Get.snackbar('Explore Larosa', 'An error occured! Try again');
-  //   }
-  // }
 
   @override
   void initState() {
@@ -499,7 +432,8 @@ class _CommentSectionState extends State<CommentSection> {
                         floating: false,
                         pinned: true,
                         backgroundColor: Colors.black,
-                        leading: IconButton(
+                        leading: IconButton.filledTonal(
+                          splashColor: Colors.transparent,
                           icon: const Icon(Icons.arrow_downward),
                           onPressed: () {
                             Navigator.pop(context);
@@ -638,10 +572,10 @@ class _CommentSectionState extends State<CommentSection> {
                             ),
                             onSubmitted: (value) async {
                               if (value.isEmpty) {
-                                Get.snackbar(
-                                  'Explore Larosa',
-                                  'You can not post an empty comment',
-                                );
+                                // Get.snackbar(
+                                //   'Explore Larosa',
+                                //   'You can not post an empty comment',
+                                // );
                                 return;
                               }
                               await _sendComment(

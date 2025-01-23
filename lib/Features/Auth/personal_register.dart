@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:ui';
 
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
@@ -14,6 +15,7 @@ import 'package:larosa_block/Components/text_input.dart';
 import 'package:larosa_block/Features/Auth/Components/oauth_buttons.dart';
 import 'package:larosa_block/Services/log_service.dart';
 import 'package:larosa_block/Utils/colors.dart';
+import 'package:larosa_block/Utils/helpers.dart';
 import 'package:larosa_block/Utils/links.dart';
 import 'package:larosa_block/Utils/validation_helpers.dart';
 
@@ -59,6 +61,8 @@ class _PersonalRegisterScreenState extends State<PersonalRegisterScreen> {
       );
 
       if (response.statusCode != 201) {
+        LogService.logError('Error ${response.body}');
+        HelperFunctions.showToast(response.body, false);
         return;
       }
 
@@ -78,6 +82,8 @@ class _PersonalRegisterScreenState extends State<PersonalRegisterScreen> {
       // Get.offAll(
       //   const HomeFeedsScreen(),
       // );
+
+      context.goNamed('home');
     } catch (e) {
       LogService.logError('Error $e');
     }
@@ -285,15 +291,14 @@ class _PersonalRegisterScreenState extends State<PersonalRegisterScreen> {
                                     ),
                                   ),
                                 )
-                              : const SpinKitThreeBounce(
-                                  color: Colors.blue,
-                                ),
+                              : CupertinoActivityIndicator(
+                                  radius: 15,
+                                  color: LarosaColors.light,
+                              ),
                           const Gap(10),
 
                           TextButton(
                             onPressed: () {
-                              // Get.to(const SigninScreen());
-
                               context.pushNamed('login');
                             },
                             child: const Text(

@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:ui';
+import 'package:flutter/cupertino.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hive/hive.dart';
 import 'package:http/http.dart' as http;
@@ -269,8 +270,9 @@ class _SigninScreenState extends State<SigninScreen> {
                                     ),
                                   ),
                                 )
-                              : const SpinKitCircle(
-                                  color: Colors.blue,
+                              : CupertinoActivityIndicator(
+                                  radius: 15,
+                                  color: LarosaColors.white,
                                 ),
                           const Gap(10),
 

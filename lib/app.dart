@@ -1,20 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:larosa_block/Features/Cart/controllers/cart_controller.dart';
-import 'package:larosa_block/Features/Feeds/Controllers/content_controller.dart';
-import 'package:larosa_block/Features/Feeds/Controllers/home_feeds_controller.dart';
-import 'package:larosa_block/Features/Onboarding/onboarding_controller.dart';
-import 'package:larosa_block/Utils/theme.dart';
-import 'package:larosa_block/router.dart';
 import 'package:provider/provider.dart';
 import 'package:stomp_dart_client/stomp_dart_client.dart';
 import 'package:toastification/toastification.dart';
-
+import 'Features/Cart/controllers/cart_controller.dart';
 import 'Features/Feeds/Controllers/business_post_controller.dart';
+import 'Features/Feeds/Controllers/content_controller.dart';
+import 'Features/Feeds/Controllers/home_feeds_controller.dart';
+import 'Features/Onboarding/onboarding_controller.dart';
 import 'Services/auth_service.dart';
 import 'Services/log_service.dart';
 import 'Utils/helpers.dart';
 import 'Utils/links.dart';
+import 'Utils/theme.dart';
+import 'router.dart';
 
 class App extends StatefulWidget {
   const App({super.key});
@@ -71,7 +70,6 @@ class _AppState extends State<App> {
       },
     );
 
-    LogService.logInfo('Successfully subscribed to /topic/customer/48');
   }
 
 

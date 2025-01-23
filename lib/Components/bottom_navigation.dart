@@ -942,20 +942,23 @@ class _BottomNavigationState extends State<BottomNavigation> {
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 500),
         curve: Curves.easeInOut,
-        height: _isVisible ? 70 : 0,
+        height: _isVisible ? 60 : 0,
         child: Container(
           decoration: BoxDecoration(
             gradient: LinearGradient(
               colors: [
-                Theme.of(context).colorScheme.surface.withOpacity(0.5),
-                Theme.of(context).colorScheme.surface.withOpacity(0.7),
+                      LarosaColors.primary.withOpacity(.3),
+                            LarosaColors.purple.withOpacity(.3),
               ],
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
             ),
-            borderRadius: const BorderRadius.vertical(
-              top: Radius.circular(20),
-            ),
+                      borderRadius: const BorderRadius.only(
+            topLeft: Radius.circular(20), // Top left corner curve
+            topRight: Radius.circular(20), // Top right corner curve
+            bottomLeft: Radius.circular(50), // Bottom left corner curve
+            bottomRight: Radius.circular(50), // Bottom right corner curve
+          ),
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withOpacity(0.1),
@@ -1019,44 +1022,175 @@ class _BottomNavigationState extends State<BottomNavigation> {
     );
   }
 
+
+
+  @override
+// Widget build(BuildContext context) {
+//   return ClipRect(
+//     child: AnimatedContainer(
+//       duration: const Duration(milliseconds: 500),
+//       curve: Curves.easeInOut,
+//       // height: _isVisible ? 70 : 0,
+//       height: 55,
+//       child: Container(
+//         decoration: BoxDecoration(
+//           gradient: LinearGradient(
+//             colors: [
+//               LarosaColors.primary.withOpacity(.3),
+//               LarosaColors.purple.withOpacity(.3),
+//             ],
+//             begin: Alignment.topCenter,
+//             end: Alignment.bottomCenter,
+//           ),
+          // borderRadius: const BorderRadius.only(
+          //   topLeft: Radius.circular(20), // Top left corner curve
+          //   topRight: Radius.circular(20), // Top right corner curve
+          //   bottomLeft: Radius.circular(50), // Bottom left corner curve
+          //   bottomRight: Radius.circular(50), // Bottom right corner curve
+          // ),
+//           boxShadow: [
+//             BoxShadow(
+//               color: Colors.black.withOpacity(0.1),
+//               blurRadius: 8,
+//               offset: const Offset(0, -2),
+//             ),
+//           ],
+//         ),
+//         padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 12),
+//         child: SingleChildScrollView(
+//           child: Row(
+//             mainAxisAlignment: MainAxisAlignment.spaceAround,
+//             children: [
+//               _buildNavItem(
+//                 context,
+//                 icon: Icons.home_outlined,
+//                 label: 'Home',
+//                 isActive: widget.activePage == ActivePage.feeds,
+//                 onTap: () => context.goNamed('home'),
+//               ),
+//               _buildNavItem(
+//                 context,
+//                 icon: Icons.search_outlined,
+//                 label: 'Search',
+//                 isActive: widget.activePage == ActivePage.search,
+//                 onTap: () => context.push('/search'),
+//               ),
+//               _buildFloatingActionButton(context),
+//               _buildNavItem(
+//                 context,
+//                 icon: Icons.local_shipping_outlined,
+//                 label: 'Delivery',
+//                 isActive: widget.activePage == ActivePage.delivery,
+//                 onTap: () {
+//                   if (AuthService.getToken().isEmpty) {
+//                     context.pushNamed('login');
+//                     return;
+//                   }
+//                   context.pushNamed('maindelivery');
+//                 },
+//               ),
+//               _buildNavItem(
+//                 context,
+//                 icon: Icons.person_outline,
+//                 label: 'Profile',
+//                 isActive: widget.activePage == ActivePage.account,
+//                 onTap: () {
+//                   if (AuthService.getToken().isNotEmpty) {
+//                     context.pushNamed('homeprofile');
+//                   } else {
+//                     context.pushNamed('login');
+//                   }
+//                 },
+//               ),
+//             ],
+//           ),
+//         ),
+//       ),
+//     ),
+//   );
+// }
+
+
+  // Widget _buildNavItem(
+  //   BuildContext context, {
+  //   required IconData icon,
+  //   required String label,
+  //   required bool isActive,
+  //   required VoidCallback onTap,
+  // }) {
+  //   return GestureDetector(
+  //     onTap: onTap,
+  //     child: Column(
+  //       mainAxisSize: MainAxisSize.min,
+  //       children: [
+  //         AnimatedContainer(
+  //           duration: const Duration(milliseconds: 200),
+  //           curve: Curves.easeInOut,
+  //           height: isActive ? 28 : 22,
+  //           width: isActive ? 28 : 22,
+  //           child: Icon(
+  //             icon,
+  //             size: isActive ? 30 : 22,
+  //             color: isActive ? LarosaColors.secondary : Colors.black87,
+  //           ),
+  //         ),
+  //         const SizedBox(height: 4),
+  //         Text(
+  //           label,
+  //           style: TextStyle(
+  //             fontSize: 10,
+  //             fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
+  //             color: isActive
+  //                 ? LarosaColors.secondary
+  //                 : Theme.of(context).colorScheme.secondary,
+  //           ),
+  //         ),
+  //       ],
+  //     ),
+  //   );
+  // }
+
+
   Widget _buildNavItem(
-    BuildContext context, {
-    required IconData icon,
-    required String label,
-    required bool isActive,
-    required VoidCallback onTap,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          AnimatedContainer(
-            duration: const Duration(milliseconds: 200),
-            curve: Curves.easeInOut,
-            height: isActive ? 28 : 22,
-            width: isActive ? 28 : 22,
-            child: Icon(
-              icon,
-              size: isActive ? 30 : 22,
-              color: isActive ? LarosaColors.secondary : Colors.black87,
-            ),
+  BuildContext context, {
+  required IconData icon,
+  required String label,
+  required bool isActive,
+  required VoidCallback onTap,
+}) {
+  return GestureDetector(
+    onTap: onTap,
+    child: Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          curve: Curves.easeInOut,
+          // height: isActive ? 28 : 22, // Larger size for active
+          // width: isActive ? 28 : 22,
+          child: Icon(
+            icon,
+            // size: isActive ? 30 : 22,
+            // color: isActive ? LarosaColors.secondary : Colors.black87,
+            color: Colors.white,
           ),
-          const SizedBox(height: 4),
+        ),
+        if (isActive) ...[
+          // const SizedBox(height: 4), // Spacing between icon and label
           Text(
             label,
             style: TextStyle(
-              fontSize: 10,
-              fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
-              color: isActive
-                  ? LarosaColors.secondary
-                  : Theme.of(context).colorScheme.secondary,
+              fontSize: 12, // Adjust font size as needed
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
             ),
           ),
         ],
-      ),
-    );
-  }
+      ],
+    ),
+  );
+}
+
 
   Widget _buildFloatingActionButton(BuildContext context) {
     return GestureDetector(
@@ -1068,8 +1202,8 @@ class _BottomNavigationState extends State<BottomNavigation> {
         context.pushNamed('main-post');
       },
       child: Container(
-        width: 50,
-        height: 50,
+        width: 40,
+        height: 40,
         decoration: BoxDecoration(
           gradient: const LinearGradient(
             colors: [LarosaColors.secondary, LarosaColors.purple],
@@ -1095,5 +1229,4 @@ class _BottomNavigationState extends State<BottomNavigation> {
     );
   }
 }
-
 

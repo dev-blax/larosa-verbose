@@ -102,6 +102,7 @@ class HelperFunctions {
   }
 
   static Future<void> logout(BuildContext context) async {
+    print('logging out');
     // Clear all Hive boxes
     await Hive.deleteFromDisk();
     

@@ -52,6 +52,7 @@ class ContentController extends ChangeNotifier {
     LogService.logInfo('token ${AuthService.getToken()}');
 
     try {
+      LogService.logInfo('Files: ${formData.files.length} ');
       Dio.Response response = await client.post(
         'https://${LarosaLinks.nakedBaseUrl}/api/v1/post/create',
         data: formData,

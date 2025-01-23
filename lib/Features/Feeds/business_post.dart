@@ -126,7 +126,7 @@ class _BusinessPostScreenState extends State<BusinessPostScreen>
                 }
               },
             ),
-            if (!hasImage) // Only show "Pick Video" if no image is selected
+            if (!hasImage)
               ListTile(
                 leading: const Icon(Icons.videocam, color: Colors.white),
                 title: const Text(
@@ -139,6 +139,20 @@ class _BusinessPostScreenState extends State<BusinessPostScreen>
                     source: ImageSource.gallery,
                   );
                   if (pickedFile != null) {
+                    File videoFile = File(pickedFile.path);
+                    final VideoPlayerController controller = VideoPlayerController.file(videoFile);
+                    await controller.initialize();
+
+                    final Duration videoDuration = controller.value.duration;
+
+                    if(videoDuration.inMinutes > 5){
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Video duration should not exceed 5 minutes'),
+                        ),
+                      );
+                      return;
+                    }
                     _addVideo(pickedFile.path);
                   }
                 },
@@ -372,7 +386,7 @@ class _BusinessPostScreenState extends State<BusinessPostScreen>
                     // const Gap(5),
                     _buildUnitSelector(),
                     const Gap(10),
-                    _buildReservationTypeSelector(), // Add reservation type
+                    _buildReservationTypeSelector(),
                     const Gap(10),
                     _buildPriceInputField(),
                     const Gap(10),
@@ -387,9 +401,10 @@ class _BusinessPostScreenState extends State<BusinessPostScreen>
                   ],
 
                   if (!isBusinessPost)
-                    SizedBox(
-                      height: MediaQuery.of(context).size.height * .13,
-                    ),
+                  Gap(10),
+                    // SizedBox(
+                    //   height: MediaQuery.of(context).size.height * .13,
+                    // ),
                   _buildConditionalGap(isBusinessPost),
                   _buildCaptionInputField(isBusinessPost),
                   const Gap(15),
@@ -942,6 +957,7 @@ class _BusinessPostScreenState extends State<BusinessPostScreen>
               );
             } else {
               // Use uploadPost for personal accounts
+              LogService.logInfo('uploading post');
               success = await contentController.uploadPost(
                 _captionController.text,
                 double.tryParse(_priceController.text.replaceAll(',', '')) ?? 0,
@@ -970,7 +986,10 @@ class _BusinessPostScreenState extends State<BusinessPostScreen>
           ),
           child: Center(
             child: isCreatingPost
-                ? const SpinKitCircle(size: 20, color: Colors.white)
+                ? CupertinoActivityIndicator(
+                    radius: 16,
+                    animating: true,
+                )
                 : const Text(
                     'CONFIRM POST',
                     style: TextStyle(

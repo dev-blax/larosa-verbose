@@ -2,6 +2,7 @@ import 'dart:io';
 import 'dart:ui';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:larosa_block/Components/bottom_navigation.dart';
 import 'package:larosa_block/Features/Feeds/Components/post_component.dart';
 import 'package:larosa_block/Features/Feeds/Controllers/home_feeds_controller.dart';
@@ -19,8 +20,13 @@ class HomeFeedsScreen extends StatefulWidget {
   State<HomeFeedsScreen> createState() => _HomeFeedsScreenState();
 }
 
-class _HomeFeedsScreenState extends State<HomeFeedsScreen> {
+class _HomeFeedsScreenState extends State<HomeFeedsScreen> with SingleTickerProviderStateMixin{
   final Map<int, ValueNotifier<bool>> _postPlayStates = {};
+
+   late AnimationController _animationController;
+  late Animation<Offset> _offsetAnimation;
+
+  bool _isVisible = true;
 
   void _updatePostState(int postId, bool isPlaying) {
     if (_postPlayStates[postId] == null) {
@@ -30,18 +36,70 @@ class _HomeFeedsScreenState extends State<HomeFeedsScreen> {
     }
   }
 
+   void _onScroll() {
+    final controller = Provider.of<HomeFeedsController>(context, listen: false);
+
+    if (controller.scrollController.position.userScrollDirection ==
+        ScrollDirection.reverse) {
+      if (_isVisible) {
+        setState(() {
+          _isVisible = false;
+          _animationController.reverse(); // Trigger hide animation
+        });
+      }
+    } else if (controller.scrollController.position.userScrollDirection ==
+        ScrollDirection.forward) {
+      if (!_isVisible) {
+        setState(() {
+          _isVisible = true;
+          _animationController.forward(); // Trigger show animation
+        });
+      }
+    }
+  }
+
+
   @override
+  // void initState() {
+  //   super.initState();
+  //   final controller = Provider.of<HomeFeedsController>(context, listen: false);
+  //   controller.scrollController.addListener(() {
+  //     if (controller.scrollController.position.atEdge) {
+  //       bool isBottom = controller.scrollController.position.pixels != 0;
+  //       if (isBottom && !controller.isFetchingMore) {
+  //         controller.fetchMorePosts();
+  //       }
+  //     }
+  //   });
+  // }
+
+
   void initState() {
     super.initState();
     final controller = Provider.of<HomeFeedsController>(context, listen: false);
-    controller.scrollController.addListener(() {
-      if (controller.scrollController.position.atEdge) {
-        bool isBottom = controller.scrollController.position.pixels != 0;
-        if (isBottom && !controller.isFetchingMore) {
-          controller.fetchMorePosts();
-        }
-      }
-    });
+    controller.scrollController.addListener(_onScroll);
+
+    // Initialize animation controller and animation
+    _animationController = AnimationController(
+      duration: const Duration(milliseconds: 700),
+      vsync: this,
+    );
+
+    _offsetAnimation = Tween<Offset>(
+      begin: Offset(0, -.7), // Hidden position
+      end: Offset(0, 0), // Visible position
+    ).animate(CurvedAnimation(
+      parent: _animationController,
+      curve: Curves.easeInOut,
+    ));
+  }
+
+  @override
+  void dispose() {
+    final controller = Provider.of<HomeFeedsController>(context, listen: false);
+    controller.scrollController.removeListener(_onScroll);
+    _animationController.dispose();
+    super.dispose();
   }
 
   @override
@@ -80,54 +138,97 @@ class _HomeFeedsScreenState extends State<HomeFeedsScreen> {
                 //     ),
                 //   ),
                 // ),
-               SliverAppBar(
-  elevation: 0, // Remove shadow for a seamless look
-  floating: true,
-  pinned: false,
-  snap: false,
-  automaticallyImplyLeading: false,
-  backgroundColor: Colors.transparent, // Make the app bar background transparent
-  flexibleSpace: ClipRect(
-    child: BackdropFilter(
-      filter: ImageFilter.blur(sigmaX: 0.0, sigmaY: 0.0), // Add blur effect
-      child: Container(
-        color:Theme.of(context).colorScheme.surface.withOpacity(.3), // Ensure the background is fully transparent
-        child: const Column(
-          mainAxisSize: MainAxisSize.max,
-          children: [
-            TopBar1(), // Your custom widget
-            TopBar2(), // Your custom widget
-          ],
-        ),
-      ),
-    ),
-  ),
-  // bottom: const PreferredSize(
-  //   preferredSize: Size.fromHeight(35.0),
-  //   child: Text(''), // Placeholder for bottom spacing
-  // ),
-//   bottom: PreferredSize(
-//   preferredSize: Size.fromHeight(Platform.isIOS ? 0.0 : 35.0), // Dynamic height
-//   child: const Text(''), // Placeholder for bottom spacing
+//                SliverAppBar(
+//   elevation: 0, // Remove shadow for a seamless look
+//   floating: true,
+//   pinned: false,
+//   snap: false,
+//   automaticallyImplyLeading: false,
+//   backgroundColor: Colors.transparent, // Make the app bar background transparent
+//   flexibleSpace: ClipRect(
+//     child: BackdropFilter(
+//       filter: ImageFilter.blur(sigmaX: 0.0, sigmaY: 0.0), // Add blur effect
+//       child: Container(
+//         color:Theme.of(context).colorScheme.surface.withOpacity(.3), // Ensure the background is fully transparent
+//         child: const Column(
+//           mainAxisSize: MainAxisSize.max,
+//           children: [
+//             TopBar1(), // Your custom widget
+//             TopBar2(), // Your custom widget
+//           ],
+//         ),
+//       ),
+//     ),
+//   ),
+//   // bottom: const PreferredSize(
+//   //   preferredSize: Size.fromHeight(35.0),
+//   //   child: Text(''), // Placeholder for bottom spacing
+//   // ),
+// //   bottom: PreferredSize(
+// //   preferredSize: Size.fromHeight(Platform.isIOS ? 0.0 : 35.0), // Dynamic height
+// //   child: const Text(''), // Placeholder for bottom spacing
+// // ),
+
+// bottom: PreferredSize(
+//   preferredSize: Size.fromHeight(Platform.isIOS ? 33.0 : 35.0), // Minimal positive height for iOS
+//   child: Transform.translate(
+//     offset: Platform.isIOS ? const Offset(0, -0) : Offset.zero, // Adjust offset for iOS
+//     child: const SizedBox.shrink(), // Use SizedBox for clean rendering
+//   ),
 // ),
 
-bottom: PreferredSize(
-  preferredSize: Size.fromHeight(Platform.isIOS ? 33.0 : 35.0), // Minimal positive height for iOS
-  child: Transform.translate(
-    offset: Platform.isIOS ? const Offset(0, -0) : Offset.zero, // Adjust offset for iOS
-    child: const SizedBox.shrink(), // Use SizedBox for clean rendering
+
+
+// ),
+
+
+SliverAppBar(
+                  elevation: 0,
+                  floating: false,
+                  pinned: true,
+                  snap: false,
+                  automaticallyImplyLeading: false,
+                  backgroundColor: Colors.transparent,
+                  flexibleSpace: SlideTransition(
+                    position: _offsetAnimation,
+                    child: Container(
+                      // decoration: BoxDecoration(
+                      //   gradient: LinearGradient(
+                      //     colors: [
+                      //       LarosaColors.primary.withOpacity(.2),
+                      //       LarosaColors.purple.withOpacity(.2),
+                      //     ],
+                      //     begin: Alignment.topCenter,
+                      //     end: Alignment.bottomCenter,
+                      //   ),
+                      //   borderRadius: const BorderRadius.vertical(
+                      //     bottom: Radius.circular(20),
+                      //   ),
+                      // ),
+                      child: const Column(
+                        children: [
+                          TopBar1(), // Your custom widget
+                          TopBar2(), // Your custom widget
+                        ],
+                      ),
+                    ),
+                  ),
+                  
+                  bottom: PreferredSize(
+    preferredSize: Size.fromHeight(Platform.isIOS ? 36.0 : 36.0),
+    child: const SizedBox.shrink(), // Clean bottom space
   ),
-),
+  ),
 
 
 
-),
+
 
                 SliverToBoxAdapter(
                   child: Transform.translate(
                     // offset: const Offset(0, -23),
                     offset: Platform.isIOS
-        ? const Offset(0, -60) // Reduced space for iOS
+        ? const Offset(0, -210) // Reduced space for iOS
         : const Offset(0, -23), // Default space for other platforms
                     child: ValueListenableBuilder<bool>(
                       valueListenable: controller.isLoading,

@@ -1,6 +1,5 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:flutter_typeahead/flutter_typeahead.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
@@ -20,7 +19,6 @@ import 'package:shimmer/shimmer.dart';
 import 'package:stomp_dart_client/stomp_dart_client.dart';
 
 import '../../Utils/colors.dart';
-import '../../Utils/wavy_border_painter.dart';
 import 'explore_services.dart';
 import 'time_estimations_modal_content.dart';
 
@@ -1832,12 +1830,12 @@ class RideHistoryModal extends StatelessWidget {
               IconButton(
                 icon: const Icon(Icons.close),
                 onPressed: () {
-                  Navigator.of(context).pop(); // Closes the modal
+                  Navigator.of(context).pop();
                 },
               ),
             ],
           ),
-          const Divider(), // Separates the header from the list
+          const Divider(),
           Expanded(
             child: rideHistory.isEmpty
                 ? const Center(
@@ -1926,7 +1924,7 @@ class RideHistoryModal extends StatelessWidget {
                                       size: 20, color: Colors.grey),
                                   const SizedBox(width: 8),
                                   Text(
-                                    "Total Fare: \$${ride['totalFare']}",
+                                    "Total Fare: Tsh ${ride['totalFare']}",
                                     style: const TextStyle(fontSize: 14),
                                   ),
                                 ],

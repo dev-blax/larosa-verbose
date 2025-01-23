@@ -108,8 +108,6 @@ class SettingsScreen extends StatelessWidget {
                 await onboardingBox.clear();
 
                 if (context.mounted) HelperFunctions.logout(context);
-
-                // Get.offAll(const SigninScreen());
               },
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 8.0),
@@ -135,12 +133,7 @@ class SettingsScreen extends StatelessWidget {
                     ),
                     IconButton(
                       onPressed: () async {
-                        var userbox = Hive.box('userBox');
-                        var onboardingBox = Hive.box('onboardingBox');
-                        await userbox.clear();
-                        await onboardingBox.clear();
-
-                        // Get.offAll(const SigninScreen());
+                        HelperFunctions.logout(context);
                       },
                       icon: const Icon(
                         Iconsax.logout_1,

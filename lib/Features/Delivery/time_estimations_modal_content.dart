@@ -121,7 +121,6 @@ class _TimeEstimationsModalContentState
         url: LarosaLinks.baseWsUrl,
         onConnect: _onStompConnect,
         onWebSocketError: (dynamic error) {
-          print('WebSocket error occurred: $error');
           setState(() {
             // isLoading = false; // Stop shimmer on WebSocket failure
           });
