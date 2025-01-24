@@ -233,8 +233,15 @@ SliverAppBar(
                     child: ValueListenableBuilder<bool>(
                       valueListenable: controller.isLoading,
                       builder: (context, isLoading, child) {
-                        if (isLoading && controller.posts.isEmpty) {
-                          return _buildShimmerLoading();
+                        if (!isLoading && !controller.posts.isEmpty) {
+                          // return _buildShimmerLoading();
+                          return Column(
+  children: List.generate(
+    5, // Number of times to call _buildShimmerLoading()
+    (index) => _buildShimmerLoading(),
+  ),
+);
+
                         } else if (controller.posts.isEmpty) {
                           return const Center(
                             child: Padding(
@@ -508,36 +515,36 @@ SliverAppBar(
             ),
           ),
 
-          const SizedBox(height: 20),
-          Shimmer.fromColors(
-            baseColor: isDarkMode ? Colors.grey[900]! : Colors.grey[400]!,
-            highlightColor: isDarkMode ? Colors.grey[700]! : Colors.grey[100]!,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Container(
-                    height: 10,
-                    width: double.infinity,
-                    color: Colors.grey[300],
-                  ),
-                  const SizedBox(height: 5),
-                  Container(
-                    height: 10,
-                    width: double.infinity,
-                    color: Colors.grey[300],
-                  ),
-                  const SizedBox(height: 5),
-                  Container(
-                    height: 10,
-                    width: 150,
-                    color: Colors.grey[300],
-                  ),
-                ],
-              ),
-            ),
-          ),
+          // const SizedBox(height: 20),
+          // Shimmer.fromColors(
+          //   baseColor: isDarkMode ? Colors.grey[900]! : Colors.grey[400]!,
+          //   highlightColor: isDarkMode ? Colors.grey[700]! : Colors.grey[100]!,
+          //   child: Padding(
+          //     padding: const EdgeInsets.symmetric(horizontal: 16.0),
+          //     child: Column(
+          //       crossAxisAlignment: CrossAxisAlignment.start,
+          //       children: [
+          //         Container(
+          //           height: 10,
+          //           width: double.infinity,
+          //           color: Colors.grey[300],
+          //         ),
+          //         const SizedBox(height: 5),
+          //         Container(
+          //           height: 10,
+          //           width: double.infinity,
+          //           color: Colors.grey[300],
+          //         ),
+          //         const SizedBox(height: 5),
+          //         Container(
+          //           height: 10,
+          //           width: 150,
+          //           color: Colors.grey[300],
+          //         ),
+          //       ],
+          //     ),
+          //   ),
+          // ),
         ],
       ),
     );
