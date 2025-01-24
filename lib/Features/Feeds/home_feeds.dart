@@ -349,14 +349,14 @@ SliverAppBar(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const SizedBox(
-            height: 10,
-          ),
+          // const SizedBox(
+          //   height: 10,
+          // ),
           Shimmer.fromColors(
             baseColor: isDarkMode ? Colors.grey[900]! : Colors.grey[400]!,
             highlightColor: isDarkMode ? Colors.grey[700]! : Colors.grey[100]!,
             child: Padding(
-              padding: const EdgeInsets.all(16.0),
+              padding: const EdgeInsets.all(10.0),
               child: Row(
                 children: [
                   Container(
