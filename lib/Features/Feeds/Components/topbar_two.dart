@@ -67,6 +67,7 @@ import 'dart:io';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:go_router/go_router.dart';
 import 'package:larosa_block/Services/auth_service.dart';
 
 import '../../../Utils/colors.dart';
@@ -93,7 +94,8 @@ class TopBar2 extends StatelessWidget {
             context,
             iconPath: 'assets/svg_icons/reels.svg',
             onPressed: () {
-              Navigator.pushNamed(context, '/reels');
+              // Navigator.pushNamed(context, '/reels');
+              context.push('/reels');
             },
             semanticsLabel: 'Reels icon',
           ),

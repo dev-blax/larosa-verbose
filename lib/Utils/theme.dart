@@ -190,6 +190,7 @@ class LarosaAppTheme {
       contentTextStyle: TextStyle(color: LarosaColors.light),
     ),
     useMaterial3: true,
+    // fontFamily: 'NotoColorEmoji', // Set emoji-compatible font
     fontFamily: GoogleFonts.roboto().fontFamily,
     filledButtonTheme: FilledButtonThemeData(
       style: FilledButton.styleFrom(

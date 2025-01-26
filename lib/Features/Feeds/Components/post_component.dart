@@ -981,6 +981,93 @@ class _PostComponentState extends State<PostComponent>
 //   }
 
 
+// class PostDetails extends StatefulWidget {
+//   final String caption;
+//   final String username;
+//   final String date;
+
+//   const PostDetails({
+//     Key? key,
+//     required this.caption,
+//     required this.username,
+//     required this.date,
+//   }) : super(key: key);
+
+//   @override
+//   _PostDetailsState createState() => _PostDetailsState();
+// }
+
+// class _PostDetailsState extends State<PostDetails> {
+//   @override
+//   Widget build(BuildContext context) {
+//     final theme = Theme.of(context);
+//     final textTheme = theme.textTheme;
+//     const int maxCaptionLength = 500;
+
+//     // Determine if the caption needs truncation
+//     final bool isCaptionLong = widget.caption.isNotEmpty && widget.caption.length > maxCaptionLength;
+
+//     // Truncate the caption if necessary
+//     String captionText = isCaptionLong
+//         ? "${widget.caption.substring(0, maxCaptionLength)}..."
+//         : widget.caption;
+
+//     return Container(
+//       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
+//       decoration: BoxDecoration(
+//         color: Colors.transparent,
+//         borderRadius: BorderRadius.circular(12),
+//         border: Border.all(color: theme.colorScheme.primary.withOpacity(0.15), width: 0.8),
+//       ),
+//       child: Column(
+//         crossAxisAlignment: CrossAxisAlignment.start,
+//         children: [
+//           Row(
+//             children: [
+//               Container(
+//                 width: 4,
+//                 height: 4,
+//                 margin: const EdgeInsets.only(right: 6),
+//                 decoration: BoxDecoration(color: theme.colorScheme.primary, shape: BoxShape.circle),
+//               ),
+//               Expanded(
+//                 child: Text(
+//                   widget.username,
+//                   style: textTheme.bodyMedium?.copyWith(
+//                     fontWeight: FontWeight.bold,
+//                     fontSize: 14,
+//                     color: theme.colorScheme.onSurface,
+//                   ),
+//                   maxLines: 1,
+//                   overflow: TextOverflow.ellipsis,
+//                 ),
+//               ),
+//               Text(
+//                 widget.date,
+//                 style: textTheme.bodySmall?.copyWith(
+//                   fontSize: 12,
+//                   fontWeight: FontWeight.bold,
+//                   color: theme.colorScheme.onSurface.withOpacity(0.7),
+//                 ),
+//               ),
+//             ],
+//           ),
+//           if (widget.caption.isNotEmpty) ...[
+//             const SizedBox(height: 5),
+//             RichText(
+//               text: TextSpan(
+//                 children: _buildCaptionWithHashtags(captionText, textTheme),
+//               ),
+//               maxLines: 5,
+//               overflow: TextOverflow.ellipsis,
+//             ),
+//           ],
+//         ],
+//       ),
+//     );
+//   }
+
+
 class PostDetails extends StatefulWidget {
   final String caption;
   final String username;
@@ -1054,9 +1141,11 @@ class _PostDetailsState extends State<PostDetails> {
           ),
           if (widget.caption.isNotEmpty) ...[
             const SizedBox(height: 5),
-            RichText(
-              text: TextSpan(
-                children: _buildCaptionWithHashtags(captionText, textTheme),
+            Text(
+              captionText,
+              style: textTheme.bodyMedium?.copyWith(
+                fontSize: 14,
+                color: theme.colorScheme.onSurface,
               ),
               maxLines: 5,
               overflow: TextOverflow.ellipsis,
@@ -1066,6 +1155,7 @@ class _PostDetailsState extends State<PostDetails> {
       ),
     );
   }
+
 
 
   // List<TextSpan> _buildCaptionWithHashtags(String caption, TextTheme textTheme) {
