@@ -1,6 +1,8 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:gap/gap.dart';
+import 'package:go_router/go_router.dart';
 import 'package:iconsax/iconsax.dart';
 import 'package:http/http.dart' as http;
 import 'package:larosa_block/Services/auth_service.dart';
@@ -13,6 +15,7 @@ import 'package:lottie/lottie.dart';
 import 'package:modal_bottom_sheet/modal_bottom_sheet.dart';
 import 'package:shimmer/shimmer.dart';
 
+import '../../Services/log_service.dart';
 import '../Feeds/Components/carousel.dart';
 import '../Feeds/Components/comments_component.dart';
 
@@ -36,55 +39,14 @@ class _DeReelsScreenState extends State<DeReelsScreen> {
   int _currentPage = 1;
   bool _isFetchingMore = false;
 
+  bool _isExpanded = false;
+  int currentIndex = 0;
+
   @override
   void initState() {
     super.initState();
     _loadSnippets();
   }
-
-//   Future<void> _loadSnippets() async {
-//     String token = AuthService.getToken();
-//     final headers = {
-//       "Content-Type": "application/json",
-//       "Access-Control-Allow-Origin": "*",
-//       'Authorization': token.isNotEmpty ? 'Bearer $token' : '',
-//     };
-
-//     var url = Uri.https(LarosaLinks.nakedBaseUrl, '/reels/fetch');
-//     try {
-//       final response = await http.post(
-//         url,
-//         body: jsonEncode({
-//           'profileId': AuthService.getProfileId(),
-//           'countryId': "1",
-//         }),
-//         headers: headers,
-//       );
-
-// // print('Response status: ${response.statusCode}');
-// // print('Response body: ${response.body}');
-
-//       if (response.statusCode == 200) {
-//         List<dynamic> data = json.decode(response.body);
-//         setState(() {
-//           snippets = data.cast<
-//               Map<String, dynamic>>(); // Properly casting to the required type
-//           _isLoading = false;
-//         });
-//       } else {
-//         HelperFunctions.showToast('Cannot Load Snippets', false);
-//       }
-//     } catch (e) {
-//       HelperFunctions.displaySnackbar(
-//         'An unknown error occurred!',
-//         context,
-//         false,
-//       );
-//       setState(() {
-//         _isLoading = false;
-//       });
-//     }
-//   }
 
   Future<void> _loadSnippets({bool loadMore = false}) async {
     if (_isFetchingMore) return; // Prevent concurrent fetches
@@ -257,7 +219,6 @@ class _DeReelsScreenState extends State<DeReelsScreen> {
   }
 
   @override
-  @override
   Widget build(BuildContext context) {
     return Scaffold(
         extendBodyBehindAppBar: true,
@@ -279,27 +240,25 @@ class _DeReelsScreenState extends State<DeReelsScreen> {
 
                       // Toggle play/pause for the current video
                       setState(() {
-                        snippets[currentIndex]['isPlaying'] = 
+                        snippets[currentIndex]['isPlaying'] =
                             !(snippets[currentIndex]['isPlaying'] ?? true);
                       });
                     },
                     child: Container(
                         child: PageView.builder(
                       controller: _pageController,
-                      itemCount:
-                          snippets.length + 1, // Includes the loading indicator
+                      itemCount: snippets.length + 1,
                       scrollDirection: Axis.vertical,
                       onPageChanged: (index) {
                         if (index == snippets.length - 1) {
-                          _loadSnippets(
-                              loadMore:
-                                  true); // Trigger loading more when reaching the end
+                          _loadSnippets(loadMore: true);
                         }
 
                         setState(() {
                           for (var i = 0; i < snippets.length; i++) {
                             snippets[i]['isPlaying'] = i == index;
                           }
+                          currentIndex = index;
                         });
                       },
                       itemBuilder: (context, index) {
@@ -315,8 +274,9 @@ class _DeReelsScreenState extends State<DeReelsScreen> {
                         }
 
                         final snippet = snippets[index];
-                        snippet['isPlaying'] ??=
-                            true; // Initialize playing state if null
+                        snippet['isPlaying'] ??= true;
+
+                        LogService.logInfo(snippet.toString());
 
                         return Stack(
                           alignment: Alignment.center,
@@ -350,6 +310,12 @@ class _DeReelsScreenState extends State<DeReelsScreen> {
                               snippet['favorite'],
                               snippet['favorites'],
                             ),
+                            _postProfileAndCaption(
+                              snippet['profileImageUrl'] ?? 'https://avatar.iran.liara.run/username?username=${snippet['username'][0]}+${snippet['username'][1]}',
+                              snippet['name'] ?? 'Unknown',
+                              snippet['username'] ?? 'Unknown',
+                              snippet['caption'] ?? '',
+                            ),
                           ],
                         );
                       },
@@ -357,6 +323,134 @@ class _DeReelsScreenState extends State<DeReelsScreen> {
                   ),
           ],
         ));
+  }
+
+  Widget _postProfileAndCaption(String profileImageUrl, String name, String username, String caption) {
+    final maxLines = 2;
+    final textSpan = TextSpan(text: caption);
+    final textPainter = TextPainter(
+      text: textSpan,
+      textDirection: TextDirection.ltr,
+      maxLines: maxLines,
+    );
+    textPainter.layout(maxWidth: MediaQuery.of(context).size.width - 100);
+    final bool hasOverflow = textPainter.didExceedMaxLines;
+
+    return Positioned(
+      bottom: 0,
+      left: 0,
+      right: 0,
+      child: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.bottomCenter,
+            end: Alignment.topCenter,
+            colors: [
+              Colors.black.withOpacity(0.8),
+              Colors.black.withOpacity(0.5),
+              Colors.transparent,
+            ],
+            stops: const [0.0, 0.5, 1.0],
+          ),
+        ),
+        padding: const EdgeInsets.only(
+          left: 16,
+          right: 16,
+          bottom: 10,
+          top: 50,
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Profile section
+            Row(
+              children: [
+                GestureDetector(
+                  onTap: () => _navigateToProfile(),
+                  child: CircleAvatar(
+                    radius: 20,
+                    backgroundImage: NetworkImage(profileImageUrl),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: GestureDetector(
+                    onTap: () => _navigateToProfile(),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          name,
+                          style: Theme.of(context).textTheme.bodyLarge!.copyWith(
+                            fontSize: 16,
+                            color: Colors.white,
+                          ),
+                        ),
+                        const Gap(2),
+                        Text(
+                          username,
+                          style: Theme.of(context).textTheme.bodySmall!.copyWith(
+                            color: Colors.white70,
+                          ),
+                        )
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            // Caption section with read more
+            if(caption.isNotEmpty)
+            StatefulBuilder(
+              builder: (context, setState) {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      caption,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 14,
+                      ),
+                      maxLines: _isExpanded ? null : maxLines,
+                      overflow: _isExpanded ? TextOverflow.visible : TextOverflow.ellipsis,
+                    ),
+                    if (hasOverflow)
+                      GestureDetector(
+                        onTap: () {
+                          setState(() {
+                            _isExpanded = !_isExpanded;
+                          });
+                        },
+                        child: Text(
+                          _isExpanded ? 'Show less' : 'Read more',
+                          style: const TextStyle(
+                            color: Colors.white70,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14,
+                          ),
+                        ),
+                      ),
+                  ],
+                );
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _navigateToProfile() {
+    final snippet = snippets[currentIndex];
+    if (snippet['profileId'] == AuthService.getProfileId()) {
+      context.pushNamed('homeprofile');
+      return;
+    }
+
+    final accountType = snippet['accountType'] == 'BUSINESS' ? '2' : '1';
+    context.push('/profilevisit/?profileId=${snippet['profileId']}&accountType=$accountType');
   }
 
   Widget _postInteracts(
@@ -372,12 +466,12 @@ class _DeReelsScreenState extends State<DeReelsScreen> {
   ) {
     return Positioned(
       bottom:
-          MediaQuery.of(context).size.height / 2 - 100, // Centered with offset
+          MediaQuery.of(context).size.height / 2 - 100,
       right: 0.0,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 3.0, vertical: 8),
         decoration: BoxDecoration(
-          color: Colors.black.withOpacity(0.3), // Black with light opacity
+          color: Colors.black.withOpacity(0.3),
           borderRadius: BorderRadius.circular(10.0),
         ),
         child: Column(

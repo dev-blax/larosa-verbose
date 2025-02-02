@@ -64,7 +64,7 @@ class HelperFunctions {
 
   static void shareLink(String endPoint) {
     Share.shareUri(
-      Uri.https('explorelarosa.netlify.app', endPoint),
+      Uri.https('explorelarosa.netlify.app'),
     );
   }
 

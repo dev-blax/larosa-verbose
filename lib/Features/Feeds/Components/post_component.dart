@@ -65,21 +65,19 @@ class _PostComponentState extends State<PostComponent>
   }
 
   void _toggleLike() {
-
-    if(AuthService.getToken().isNotEmpty){
+    if (AuthService.getToken().isNotEmpty) {
       setState(() {
-      // Toggle the like state and update the like count
-      _isLiked = !_isLiked;
-      _likesCount = _isLiked ? _likesCount + 1 : _likesCount - 1;
+        // Toggle the like state and update the like count
+        _isLiked = !_isLiked;
+        _likesCount = _isLiked ? _likesCount + 1 : _likesCount - 1;
 
-      // Show the heart icon and explosion effect only when liked
-      if (_isLiked) {
-        _opacity = 1.0; // Show the heart icon with full opacity
-        _showExplosion = true; // Show explosion effect
-      }
-    });
+        // Show the heart icon and explosion effect only when liked
+        if (_isLiked) {
+          _opacity = 1.0; // Show the heart icon with full opacity
+          _showExplosion = true; // Show explosion effect
+        }
+      });
     }
-    
 
     _likePost();
 
@@ -207,15 +205,6 @@ class _PostComponentState extends State<PostComponent>
     bool isVideoMedia = isVideo(widget.post['names'].split(',')[0]);
 
     return GestureDetector(
-      // onDoubleTap: () async {
-      //   if (!_isLiked) {
-      //     setState(() {
-      //       _isLiked = true;
-      //       _likesCount++;
-      //     });
-      //     await _likePost();
-      //   }
-      // },
       onDoubleTap: () async {
         _toggleLike();
       },
@@ -225,86 +214,86 @@ class _PostComponentState extends State<PostComponent>
           CenterSnapCarousel(
             mediaUrls: images,
             isPlayingState: widget.isPlaying,
-            postHeight: widget.post['height'], // Pass the height here
+            postHeight: widget.post['height'],
           ),
-          // Positioned(
-          //   bottom: isVideoMedia ? 10 : 0, // Adjust position if it's a video
-          //   left: 0,
-          //   height: 50,
-          //   width: MediaQuery.of(context).size.width,
-          //   child: Animate(
-          //     key: ValueKey(
-          //         _isLiked), // Unique key to reset animation on state change
-          //     effects: [
-          //       SlideEffect(
-          //         begin:
-          //             _isLiked ? const Offset(0.4, 0) : const Offset(-0.4, 0),
-          //         end: const Offset(0, 0),
-          //         curve: Curves.elasticOut,
-          //         duration: const Duration(seconds: 2),
-          //       ),
-          //     ],
-          //     child: Container(
-          //       decoration: BoxDecoration(
-          //         gradient: LinearGradient(
-          //           colors: !_isLiked
-          //               ? [
-          //                   Colors.black.withOpacity(0.7),
-          //                   Colors.black.withOpacity(0.3),
-          //                 ]
-          //               : [
-          //                   const Color.fromRGBO(133, 16, 7, 1)
-          //                       .withOpacity(0.9),
-          //                   const Color.fromRGBO(133, 16, 7, 1)
-          //                       .withOpacity(0.3),
-          //                 ],
-          //           begin: Alignment.bottomCenter,
-          //           end: Alignment.topCenter,
-          //         ),
-          //       ),
-          //     ),
-          //   ),
-          // ),
-          
+          // Media count indicator
+          if (images.length > 1)
+            Positioned(
+              top: 16,
+              right: 16,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: Colors.black.withOpacity(0.7),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                    color: Colors.white.withOpacity(0.3),
+                    width: 1,
+                  ),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    SvgPicture.asset(
+                      'assets/svg_icons/gallery.svg',
+                      colorFilter: const ColorFilter.mode(
+                        Colors.white,
+                        BlendMode.srcIn,
+                      ),
+                      height: 14,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      '${images.length}',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
           Positioned(
-  bottom: isVideoMedia ? 10 : 0, // Adjust position if it's a video
-  left: 0,
-  height: 50,
-  width: MediaQuery.of(context).size.width,
-  child: Animate(
-    key: ValueKey(_isLiked), // Unique key to reset animation on state change
-    effects: [
-      SlideEffect(
-        begin: _isLiked ? const Offset(0.4, 0) : const Offset(-0.4, 0),
-        end: const Offset(0, 0),
-        curve: Curves.elasticOut,
-        duration: const Duration(seconds: 2),
-      ),
-    ],
-    child: Container(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: !_isLiked
-              ? [
-                  Colors.black.withOpacity(0.7), // Darker at the bottom
-                  Colors.black.withOpacity(0.01), // Almost fully colorless
-                ]
-              : [
-                  const Color.fromRGBO(133, 16, 7, 1).withOpacity(0.9), // Strong red
-                  const Color.fromRGBO(133, 16, 7, 1).withOpacity(0.01), // Almost fully colorless red
-                ],
-          begin: Alignment.bottomCenter,
-          end: Alignment.topCenter,
-        ),
-      ),
-    ),
-  ),
-),
-
+            bottom: isVideoMedia ? 10 : 0,
+            left: 0,
+            height: 50,
+            width: MediaQuery.of(context).size.width,
+            child: Animate(
+              key: ValueKey(_isLiked),
+              effects: [
+                SlideEffect(
+                  begin:
+                      _isLiked ? const Offset(0.4, 0) : const Offset(-0.4, 0),
+                  end: const Offset(0, 0),
+                  curve: Curves.elasticOut,
+                  duration: const Duration(seconds: 2),
+                ),
+              ],
+              child: Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: !_isLiked
+                        ? [
+                            Colors.black.withOpacity(0.7),
+                            Colors.black.withOpacity(0.01),
+                          ]
+                        : [
+                            const Color.fromRGBO(133, 16, 7, 1)
+                                .withOpacity(0.9),
+                            const Color.fromRGBO(133, 16, 7, 1)
+                                .withOpacity(0.01),
+                          ],
+                    begin: Alignment.bottomCenter,
+                    end: Alignment.topCenter,
+                  ),
+                ),
+              ),
+            ),
+          ),
           Positioned(
-            bottom: isVideoMedia
-                ? 14
-                : 4, // Adjust this position as well if it's a video
+            bottom: isVideoMedia ? 14 : 4,
             left: 5,
             right: 5,
             child: Row(
@@ -493,7 +482,6 @@ class _PostComponentState extends State<PostComponent>
               ],
             ),
           ),
-          // Lottie explosion effect (visible when liked)
           if (_showExplosion)
             LottieBuilder.asset(
               'assets/lotties/like_explode.json',
@@ -501,22 +489,6 @@ class _PostComponentState extends State<PostComponent>
               height: 250,
               repeat: false, // Play only once
             ),
-
-          // Heart icon with fade effect
-          // AnimatedOpacity(
-          //   opacity: _opacity,
-          //   duration: const Duration(milliseconds: 500),
-          //   child: SvgPicture.asset(
-          //     'assets/icons/SolarHeartAngleBold.svg',
-          //     width: 200,
-          //     height: 200,
-          //     colorFilter: const ColorFilter.mode(
-          //       Color.fromRGBO(180, 23, 12, 1),
-          //       BlendMode.srcIn,
-          //     ),
-          //     semanticsLabel: 'Like icon',
-          //   ),
-          // ),
         ],
       ),
     );
@@ -734,7 +706,8 @@ class _PostComponentState extends State<PostComponent>
               ),
             ],
           ),
-        ));
+        ),
+      );
   }
 
   @override
@@ -744,14 +717,12 @@ class _PostComponentState extends State<PostComponent>
       mainAxisSize: MainAxisSize.min,
       children: [
         _mediaAndIntro(),
-        //_mediaTest(),
-        // Text('${widget.post}'),
         _postInteracts(),
         PostDetails(
           caption: widget.post['caption'],
-          username: widget.post['username'], date: widget.post['duration'],
+          username: widget.post['username'],
+          date: widget.post['duration'],
         ),
-        //_priceAndLocation(),
         const Padding(
           padding: EdgeInsets.only(top: 1, bottom: 0), // Eliminates all padding
           child: Divider(
@@ -764,222 +735,6 @@ class _PostComponentState extends State<PostComponent>
     );
   }
 }
-
-
-// class PostDetails extends StatefulWidget {
-//   final String caption;
-//   final String username;
-//   final String date;
-
-//   const PostDetails({
-//     Key? key,
-//     required this.caption,
-//     required this.username,
-//     required this.date,
-//   }) : super(key: key);
-
-//   @override
-//   _PostDetailsState createState() => _PostDetailsState();
-// }
-
-// class _PostDetailsState extends State<PostDetails> {
-//   bool isExpanded = false;
-
-//   @override
-//   Widget build(BuildContext context) {
-//     final theme = Theme.of(context);
-//     final textTheme = theme.textTheme;
-//     const int maxCaptionLength = 100;
-
-//     final bool isCaptionLong = widget.caption.length > maxCaptionLength;
-
-//     String truncatedCaption = isExpanded
-//         ? widget.caption
-//         : (isCaptionLong ? "${widget.caption.substring(0, maxCaptionLength)}..." : widget.caption);
-
-//     return Container(
-//       padding: const EdgeInsets.symmetric(horizontal: 12),
-//       decoration: BoxDecoration(
-//         color: Colors.transparent,
-//         borderRadius: BorderRadius.circular(12),
-//         border: Border.all(color: theme.colorScheme.primary.withOpacity(0.15), width: 0.8),
-//       ),
-//       child: Column(
-//         crossAxisAlignment: CrossAxisAlignment.start,
-//         children: [
-//           Row(
-//             children: [
-//               Container(
-//                 width: 4,
-//                 height: 4,
-//                 margin: const EdgeInsets.only(right: 6),
-//                 decoration: BoxDecoration(color: theme.colorScheme.primary, shape: BoxShape.circle),
-//               ),
-//               Expanded(
-//                 child: Text(
-//                   widget.username,
-//                   style: textTheme.bodyMedium?.copyWith(
-//                     fontWeight: FontWeight.bold,
-//                     fontSize: 14,
-//                     color: theme.colorScheme.onSurface,
-//                   ),
-//                   maxLines: 1,
-//                   overflow: TextOverflow.ellipsis,
-//                 ),
-//               ),
-//               Text(
-//                 widget.date,
-//                 style: textTheme.bodySmall?.copyWith(fontSize: 12, fontWeight: FontWeight.bold, color: theme.colorScheme.onSurface.withOpacity(0.7)),
-//               ),
-//             ],
-//           ),
-//           const SizedBox(height: 5),
-//           GestureDetector(
-//             onTap: () => setState(() => isExpanded = !isExpanded),
-//             child: RichText(
-//               text: TextSpan(
-//                 children: _buildCaptionWithHashtags(truncatedCaption, textTheme),
-//               ),
-//               maxLines: isExpanded ? null : 3,
-//               overflow: TextOverflow.ellipsis,
-//             ),
-//           ),
-//         ],
-//       ),
-//     );
-//   }
-
-//   List<TextSpan> _buildCaptionWithHashtags(String caption, TextTheme textTheme) {
-//     final regex = RegExp(r"(#[\w]+)|(\s+)|(.)");
-//     final matches = regex.allMatches(caption);
-
-//     return matches.map((match) {
-//       final matchText = match.group(0) ?? "";
-
-//       if (matchText.startsWith("#")) {
-//         return TextSpan(
-//           text: matchText,
-//           style: textTheme.bodySmall?.copyWith(
-//             fontSize: 12,
-//             color: LarosaColors.primary,
-//             fontWeight: FontWeight.bold,
-//           ),
-//           recognizer: TapGestureRecognizer()
-//             ..onTap = () {
-//               context.go(
-//                 '/search',
-//                 extra: {'query': matchText.substring(1)}, // Pass hashtag without "#"
-//               );
-//             },
-//         );
-//       }
-
-//       // Regular text
-//       return TextSpan(
-//         text: matchText,
-//         style: textTheme.bodySmall?.copyWith(
-//           fontSize: 13,
-//           color: Theme.of(context).colorScheme.onSurface,
-//         ),
-//       );
-//     }).toList();
-//   }
-// }
-
-
-
-
-
-
-// class PostDetails extends StatefulWidget {
-//   final String caption;
-//   final String username;
-//   final String date;
-
-//   const PostDetails({
-//     Key? key,
-//     required this.caption,
-//     required this.username,
-//     required this.date,
-//   }) : super(key: key);
-
-//   @override
-//   _PostDetailsState createState() => _PostDetailsState();
-// }
-
-// class _PostDetailsState extends State<PostDetails> {
-//   bool isExpanded = false;
-
-//   @override
-//   Widget build(BuildContext context) {
-//     final theme = Theme.of(context);
-//     final textTheme = theme.textTheme;
-//     const int maxCaptionLength = 120;
-
-//     final bool isCaptionLong = widget.caption.isNotEmpty && widget.caption.length > maxCaptionLength;
-
-//     String truncatedCaption = isExpanded
-//         ? widget.caption
-//         : (isCaptionLong ? "${widget.caption.substring(0, maxCaptionLength)}..." : widget.caption);
-
-//     return Container(
-//       padding: const EdgeInsets.symmetric(horizontal: 12),
-//       decoration: BoxDecoration(
-//         color: Colors.transparent,
-//         borderRadius: BorderRadius.circular(12),
-//         border: Border.all(color: theme.colorScheme.primary.withOpacity(0.15), width: 0.8),
-//       ),
-//       child: Column(
-//         crossAxisAlignment: CrossAxisAlignment.start,
-//         children: [
-//           Row(
-//             children: [
-//               Container(
-//                 width: 4,
-//                 height: 4,
-//                 margin: const EdgeInsets.only(right: 6),
-//                 decoration: BoxDecoration(color: theme.colorScheme.primary, shape: BoxShape.circle),
-//               ),
-//               Expanded(
-//                 child: Text(
-//                   widget.username,
-//                   style: textTheme.bodyMedium?.copyWith(
-//                     fontWeight: FontWeight.bold,
-//                     fontSize: 14,
-//                     color: theme.colorScheme.onSurface,
-//                   ),
-//                   maxLines: 1,
-//                   overflow: TextOverflow.ellipsis,
-//                 ),
-//               ),
-//               Text(
-//                 widget.date,
-//                 style: textTheme.bodySmall?.copyWith(
-//                   fontSize: 12,
-//                   fontWeight: FontWeight.bold,
-//                   color: theme.colorScheme.onSurface.withOpacity(0.7),
-//                 ),
-//               ),
-//             ],
-//           ),
-//           if (widget.caption.isNotEmpty) ...[
-//             const SizedBox(height: 5),
-//             GestureDetector(
-//               onTap: () => setState(() => isExpanded = !isExpanded),
-//               child: RichText(
-//                 text: TextSpan(
-//                   children: _buildCaptionWithHashtags(truncatedCaption, textTheme),
-//                 ),
-//                 maxLines: isExpanded ? null : 3,
-//                 overflow: TextOverflow.ellipsis,
-//               ),
-//             ),
-//           ],
-//         ],
-//       ),
-//     );
-//   }
-
 
 class PostDetails extends StatefulWidget {
   final String caption;
@@ -1005,7 +760,8 @@ class _PostDetailsState extends State<PostDetails> {
     const int maxCaptionLength = 500;
 
     // Determine if the caption needs truncation
-    final bool isCaptionLong = widget.caption.isNotEmpty && widget.caption.length > maxCaptionLength;
+    final bool isCaptionLong =
+        widget.caption.isNotEmpty && widget.caption.length > maxCaptionLength;
 
     // Truncate the caption if necessary
     String captionText = isCaptionLong
@@ -1017,7 +773,8 @@ class _PostDetailsState extends State<PostDetails> {
       decoration: BoxDecoration(
         color: Colors.transparent,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: theme.colorScheme.primary.withOpacity(0.15), width: 0.8),
+        border: Border.all(
+            color: theme.colorScheme.primary.withOpacity(0.15), width: 0.8),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1028,7 +785,8 @@ class _PostDetailsState extends State<PostDetails> {
                 width: 4,
                 height: 4,
                 margin: const EdgeInsets.only(right: 6),
-                decoration: BoxDecoration(color: theme.colorScheme.primary, shape: BoxShape.circle),
+                decoration: BoxDecoration(
+                    color: theme.colorScheme.primary, shape: BoxShape.circle),
               ),
               Expanded(
                 child: Text(
@@ -1067,7 +825,6 @@ class _PostDetailsState extends State<PostDetails> {
     );
   }
 
-
   // List<TextSpan> _buildCaptionWithHashtags(String caption, TextTheme textTheme) {
   //   final regex = RegExp(r"(#[\w]+)|(\s+)|(.)");
   //   final matches = regex.allMatches(caption);
@@ -1104,60 +861,61 @@ class _PostDetailsState extends State<PostDetails> {
   //   }).toList();
   // }
 
+  List<TextSpan> _buildCaptionWithHashtags(
+      String caption, TextTheme textTheme) {
+    // Regex to match hashtags, spaces, and emojis/regular text
+    final regex = RegExp(
+        r"(#[\w]+)|(\s+)|([\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{1F1E6}-\u{1F1FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]|[^#\s]+)",
+        unicode: true);
+    final matches = regex.allMatches(caption);
 
-  List<TextSpan> _buildCaptionWithHashtags(String caption, TextTheme textTheme) {
-  // Regex to match hashtags, spaces, and emojis/regular text
-  final regex = RegExp(r"(#[\w]+)|(\s+)|([\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{1F1E6}-\u{1F1FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]|[^#\s]+)", unicode: true);
-  final matches = regex.allMatches(caption);
+    return matches.map((match) {
+      final matchText = match.group(0) ?? "";
 
-  return matches.map((match) {
-    final matchText = match.group(0) ?? "";
+      // Handle hashtags
+      if (matchText.startsWith("#")) {
+        return TextSpan(
+          text: matchText,
+          style: textTheme.bodySmall?.copyWith(
+            fontSize: 12,
+            color: LarosaColors.primary,
+            fontWeight: FontWeight.bold,
+            //fontFamily: 'NotoColorEmoji'
+          ),
+          recognizer: TapGestureRecognizer()
+            ..onTap = () {
+              context.go(
+                '/search',
+                extra: {
+                  'query': matchText.substring(1)
+                }, // Pass hashtag without "#"
+              );
+            },
+        );
+      }
 
-    // Handle hashtags
-    if (matchText.startsWith("#")) {
+      // Handle emojis
+      if (RegExp(
+              r"[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{1F1E6}-\u{1F1FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]",
+              unicode: true)
+          .hasMatch(matchText)) {
+        return TextSpan(
+          text: matchText, // Display emoji
+          style: textTheme.bodySmall?.copyWith(
+            fontSize: 14, // Slightly larger font size for emojis
+            color: Colors.orange, // Custom color for emojis
+          ),
+        );
+      }
+
+      // Regular text
       return TextSpan(
         text: matchText,
         style: textTheme.bodySmall?.copyWith(
-          fontSize: 12,
-          color: LarosaColors.primary,
-          fontWeight: FontWeight.bold,
-        ),
-        recognizer: TapGestureRecognizer()
-          ..onTap = () {
-            context.go(
-              '/search',
-              extra: {'query': matchText.substring(1)}, // Pass hashtag without "#"
-            );
-          },
-      );
-    }
-
-    // Handle emojis
-    if (RegExp(r"[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{1F1E6}-\u{1F1FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]", unicode: true).hasMatch(matchText)) {
-      return TextSpan(
-        text: matchText, // Display emoji
-        style: textTheme.bodySmall?.copyWith(
-          fontSize: 14, // Slightly larger font size for emojis
-          color: Colors.orange, // Custom color for emojis
+          fontSize: 13,
+          color: Theme.of(context).colorScheme.onSurface,
         ),
       );
-    }
-
-    // Regular text
-    return TextSpan(
-      text: matchText,
-      style: textTheme.bodySmall?.copyWith(
-        fontSize: 13,
-        color: Theme.of(context).colorScheme.onSurface,
-      ),
-    );
-  }).toList();
+    }).toList();
+  }
 }
-
-}
-
-
-
-
-
-

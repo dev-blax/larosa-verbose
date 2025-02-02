@@ -34,6 +34,8 @@ android {
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+
+        vectorDrawables.useSupportLibrary = true
     }
 
     signingConfigs {
@@ -52,6 +54,13 @@ android {
             signingConfig = signingConfigs.release
         }
     }
+}
+
+dependencies {
+    def emoji2_version = "1.2.0"
+    implementation "androidx.emoji2:emoji2:$emoji2_version"
+    implementation "androidx.emoji2:emoji2-views:$emoji2_version"
+    implementation "androidx.emoji2:emoji2-views-helper:$emoji2_version"
 }
 
 flutter {
