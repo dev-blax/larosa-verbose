@@ -812,9 +812,11 @@ class _PostDetailsState extends State<PostDetails> {
           ),
           if (widget.caption.isNotEmpty) ...[
             const SizedBox(height: 5),
-            RichText(
-              text: TextSpan(
-                children: _buildCaptionWithHashtags(captionText, textTheme),
+            Text(
+              captionText,
+              style: textTheme.bodyMedium?.copyWith(
+                fontSize: 14,
+                color: theme.colorScheme.onSurface,
               ),
               maxLines: 5,
               overflow: TextOverflow.ellipsis,

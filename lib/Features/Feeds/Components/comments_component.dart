@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:flutter_svg/svg.dart';
@@ -125,7 +126,6 @@ class _CommentSectionState extends State<CommentSection> {
           commentId: commentId);
     }
   }
-
 
   @override
   void initState() {
@@ -432,13 +432,46 @@ class _CommentSectionState extends State<CommentSection> {
                         floating: false,
                         pinned: true,
                         backgroundColor: Colors.black,
-                        leading: IconButton.filledTonal(
-                          splashColor: Colors.transparent,
-                          icon: const Icon(Icons.arrow_downward),
-                          onPressed: () {
-                            Navigator.pop(context);
-                          },
-                        ),
+                        // leading: IconButton.filledTonal(
+                        //   splashColor: Colors.transparent,
+                        //   icon: const Icon(Icons.arrow_downward),
+                        //   onPressed: () {
+                        //     Navigator.pop(context);
+                        //   },
+                        // ),
+                        leading: GestureDetector(
+  onTap: () {
+    Navigator.pop(context); // This will navigate back to the previous screen
+  },
+  child: Container(
+    width: 16, // Adjusted width for a smaller size
+    height: 16, // Adjusted height for a smaller size
+    decoration: BoxDecoration(
+      gradient: LinearGradient(
+        colors: [
+          LarosaColors.primary.withOpacity(.3),
+          LarosaColors.purple.withOpacity(.3),
+        ],
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+      ),
+      shape: BoxShape.circle,
+      boxShadow: [
+        BoxShadow(
+          color: Colors.black.withOpacity(0.1),
+          blurRadius: 5,
+          offset: const Offset(0, 2),
+        ),
+      ],
+    ),
+    child: Icon(
+      CupertinoIcons.down_arrow,
+      color: Colors.white,
+      size: 20,
+    ),
+  ),
+),
+
                         flexibleSpace: LayoutBuilder(
                           builder: (BuildContext context,
                               BoxConstraints constraints) {

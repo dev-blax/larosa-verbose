@@ -20,10 +20,11 @@ class HomeFeedsScreen extends StatefulWidget {
   State<HomeFeedsScreen> createState() => _HomeFeedsScreenState();
 }
 
-class _HomeFeedsScreenState extends State<HomeFeedsScreen> with SingleTickerProviderStateMixin{
+class _HomeFeedsScreenState extends State<HomeFeedsScreen>
+    with SingleTickerProviderStateMixin {
   final Map<int, ValueNotifier<bool>> _postPlayStates = {};
 
-   late AnimationController _animationController;
+  late AnimationController _animationController;
   late Animation<Offset> _offsetAnimation;
 
   bool _isVisible = true;
@@ -36,7 +37,7 @@ class _HomeFeedsScreenState extends State<HomeFeedsScreen> with SingleTickerProv
     }
   }
 
-   void _onScroll() {
+  void _onScroll() {
     final controller = Provider.of<HomeFeedsController>(context, listen: false);
 
     if (controller.scrollController.position.userScrollDirection ==
@@ -58,22 +59,7 @@ class _HomeFeedsScreenState extends State<HomeFeedsScreen> with SingleTickerProv
     }
   }
 
-
   @override
-  // void initState() {
-  //   super.initState();
-  //   final controller = Provider.of<HomeFeedsController>(context, listen: false);
-  //   controller.scrollController.addListener(() {
-  //     if (controller.scrollController.position.atEdge) {
-  //       bool isBottom = controller.scrollController.position.pixels != 0;
-  //       if (isBottom && !controller.isFetchingMore) {
-  //         controller.fetchMorePosts();
-  //       }
-  //     }
-  //   });
-  // }
-
-
   void initState() {
     super.initState();
     final controller = Provider.of<HomeFeedsController>(context, listen: false);
@@ -118,71 +104,7 @@ class _HomeFeedsScreenState extends State<HomeFeedsScreen> with SingleTickerProv
             CustomScrollView(
               controller: controller.scrollController,
               slivers: [
-                // SliverAppBar(
-                //   elevation: 20,
-                //   // backgroundColor: Colors.blue,
-                //   floating: true,
-                //   bottom: const PreferredSize(
-                //     preferredSize: Size.fromHeight(35.0),
-                //     child: Text(''),
-                //   ),
-                //   automaticallyImplyLeading: false,
-                //   flexibleSpace: Container(
-                //     color: Colors.red,
-                //     child: const Column(
-                //       mainAxisSize: MainAxisSize.max,
-                //       children: [
-                //         TopBar1(),
-                //         TopBar2(),
-                //       ],
-                //     ),
-                //   ),
-                // ),
-//                SliverAppBar(
-//   elevation: 0, // Remove shadow for a seamless look
-//   floating: true,
-//   pinned: false,
-//   snap: false,
-//   automaticallyImplyLeading: false,
-//   backgroundColor: Colors.transparent, // Make the app bar background transparent
-//   flexibleSpace: ClipRect(
-//     child: BackdropFilter(
-//       filter: ImageFilter.blur(sigmaX: 0.0, sigmaY: 0.0), // Add blur effect
-//       child: Container(
-//         color:Theme.of(context).colorScheme.surface.withOpacity(.3), // Ensure the background is fully transparent
-//         child: const Column(
-//           mainAxisSize: MainAxisSize.max,
-//           children: [
-//             TopBar1(), // Your custom widget
-//             TopBar2(), // Your custom widget
-//           ],
-//         ),
-//       ),
-//     ),
-//   ),
-//   // bottom: const PreferredSize(
-//   //   preferredSize: Size.fromHeight(35.0),
-//   //   child: Text(''), // Placeholder for bottom spacing
-//   // ),
-// //   bottom: PreferredSize(
-// //   preferredSize: Size.fromHeight(Platform.isIOS ? 0.0 : 35.0), // Dynamic height
-// //   child: const Text(''), // Placeholder for bottom spacing
-// // ),
-
-// bottom: PreferredSize(
-//   preferredSize: Size.fromHeight(Platform.isIOS ? 33.0 : 35.0), // Minimal positive height for iOS
-//   child: Transform.translate(
-//     offset: Platform.isIOS ? const Offset(0, -0) : Offset.zero, // Adjust offset for iOS
-//     child: const SizedBox.shrink(), // Use SizedBox for clean rendering
-//   ),
-// ),
-
-
-
-// ),
-
-
-SliverAppBar(
+                SliverAppBar(
                   elevation: 0,
                   floating: false,
                   pinned: true,
@@ -213,36 +135,39 @@ SliverAppBar(
                       ),
                     ),
                   ),
-                  
                   bottom: PreferredSize(
-    preferredSize: Size.fromHeight(Platform.isIOS ? 36.0 : 36.0),
-    child: const SizedBox.shrink(), // Clean bottom space
-  ),
-  ),
-
-
-
-
+                    preferredSize:
+                        Size.fromHeight(Platform.isIOS ? 36.0 : 36.0),
+                    child: const SizedBox.shrink(), // Clean bottom space
+                  ),
+                ),
 
                 SliverToBoxAdapter(
                   child: Transform.translate(
                     // offset: const Offset(0, -23),
                     offset: Platform.isIOS
-        ? const Offset(0, -210) // Reduced space for iOS
-        : const Offset(0, -23), // Default space for other platforms
+                        ? const Offset(0, -210) // Reduced space for iOS
+                        : const Offset(
+                            0, -23), // Default space for other platforms
                     child: ValueListenableBuilder<bool>(
                       valueListenable: controller.isLoading,
                       builder: (context, isLoading, child) {
                         if (isLoading && controller.posts.isEmpty) {
-                          return _buildShimmerLoading();
+                          // return _buildShimmerLoading();
+                          return Column(
+                            children: List.generate(
+                              5, // Number of times to call _buildShimmerLoading()
+                              (index) => _buildShimmerLoading(),
+                            ),
+                          );
                         } else if (controller.posts.isEmpty) {
                           return const Center(
                             child: Padding(
                               padding: EdgeInsets.only(top: 50.0),
                               child: CupertinoActivityIndicator(
-                                      radius: 15.0,
-                                    ),
-                          ),
+                                radius: 15.0,
+                              ),
+                            ),
                           );
                         } else {
                           return Padding(
@@ -325,7 +250,8 @@ SliverAppBar(
               left: 10,
               right: 10,
               child: BottomNavigation(
-                activePage: ActivePage.feeds, scrollController: controller.scrollController,
+                activePage: ActivePage.feeds,
+                scrollController: controller.scrollController,
               ),
             ),
           ],
@@ -342,14 +268,14 @@ SliverAppBar(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const SizedBox(
-            height: 10,
-          ),
+          // const SizedBox(
+          //   height: 10,
+          // ),
           Shimmer.fromColors(
             baseColor: isDarkMode ? Colors.grey[900]! : Colors.grey[400]!,
             highlightColor: isDarkMode ? Colors.grey[700]! : Colors.grey[100]!,
             child: Padding(
-              padding: const EdgeInsets.all(16.0),
+              padding: const EdgeInsets.all(4.0),
               child: Row(
                 children: [
                   Container(
@@ -477,37 +403,6 @@ SliverAppBar(
               ),
             ),
           ),
-          const SizedBox(height: 20),
-          Shimmer.fromColors(
-            baseColor: isDarkMode ? Colors.grey[900]! : Colors.grey[400]!,
-            highlightColor: isDarkMode ? Colors.grey[700]! : Colors.grey[100]!,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Container(
-                    height: 10,
-                    width: double.infinity,
-                    color: Colors.grey[300],
-                  ),
-                  const SizedBox(height: 5),
-                  Container(
-                    height: 10,
-                    width: double.infinity,
-                    color: Colors.grey[300],
-                  ),
-                  const SizedBox(height: 5),
-                  Container(
-                    height: 10,
-                    width: 150,
-                    color: Colors.grey[300],
-                  ),
-                ],
-              ),
-            ),
-          ),
-
           const SizedBox(height: 20),
           Shimmer.fromColors(
             baseColor: isDarkMode ? Colors.grey[900]! : Colors.grey[400]!,
