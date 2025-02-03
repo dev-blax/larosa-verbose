@@ -910,8 +910,8 @@ class _BusinessPostScreenState extends State<BusinessPostScreen>
       ),
       maxLines: 5,
       style: const TextStyle(color: LarosaColors.primary),
-      validator: (value) =>
-          value == null || value.isEmpty ? "Caption cannot be empty" : null,
+      // validator: (value) =>
+      //     value == null || value.isEmpty ? "Caption cannot be empty" : null,
     );
   }
 
