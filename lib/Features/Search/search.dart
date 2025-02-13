@@ -114,8 +114,6 @@ class _SearchScreenState extends State<SearchScreen> {
       'profileId': AuthService.getProfileId(),
     };
 
-    LogService.logInfo('requesting suggestions');
-
     final response = await http.post(
       url,
       body: jsonEncode(body),
@@ -169,7 +167,7 @@ class _SearchScreenState extends State<SearchScreen> {
                 showSearch(context: context, delegate: CustomSearchDelegate());
               },
               icon: const Icon(
-                Icons.search,
+                CupertinoIcons.search,
               ),
             )
           ],
@@ -317,6 +315,8 @@ class _SearchScreenState extends State<SearchScreen> {
                     );
                   }
 
+                  LogService.logInfo(suggestions[index].toString());
+
                   return Animate(
                     effects: const [
                       SlideEffect(
@@ -338,6 +338,7 @@ class _SearchScreenState extends State<SearchScreen> {
                                   imageUrls: medias,
                                   initialIndex: index,
                                   displayName: name,
+                                  postDetails: suggestions[index],
                                 ),
                               ),
                             );

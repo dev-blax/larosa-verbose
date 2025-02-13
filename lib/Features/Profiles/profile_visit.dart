@@ -799,7 +799,7 @@ class _ProfileVisitScreenState extends State<ProfileVisitScreen> {
       onRefresh: _fetchProfile,
       child: isLoading
           ? profileShimmer(
-              context) // Use the ProfileShimmer widget when loading
+              context)
           : Scaffold(
               body: isLoading
                   ? NestedScrollView(

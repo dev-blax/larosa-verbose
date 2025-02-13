@@ -172,6 +172,8 @@ class _AllPostsState extends State<AllPosts> {
               //   ),
               // )
 
+              LogService.logFatal('index $index');
+
               context.push(
                 '/profilePosts?title=Strings&activePost=$index',
                 extra: posts,

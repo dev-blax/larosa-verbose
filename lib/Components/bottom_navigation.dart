@@ -139,7 +139,6 @@ class _BottomNavigationState extends State<BottomNavigation> {
     );
   }
 
-  @override
   Widget _buildNavItem(
     BuildContext context, {
     required IconData icon,
@@ -161,20 +160,20 @@ class _BottomNavigationState extends State<BottomNavigation> {
               icon,
               // size: isActive ? 30 : 22,
               // color: isActive ? LarosaColors.secondary : Colors.black87,
-              color: isActive ? Colors.white : Colors.white38,
+              color: isActive ? Colors.white : Colors.white60,
             ),
           ),
-          // if (isActive) ...[
-          //   // const SizedBox(height: 4), // Spacing between icon and label
-          //   Text(
-          //     label,
-          //     style: TextStyle(
-          //       fontSize: 12, // Adjust font size as needed
-          //       fontWeight: FontWeight.bold,
-          //       color: Colors.white,
-          //     ),
-          //   ),
-          // ],
+          if (isActive) ...[
+            // const SizedBox(height: 4), // Spacing between icon and label
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 12, // Adjust font size as needed
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
+            ),
+          ],
         ],
       ),
     );

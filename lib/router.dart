@@ -24,6 +24,7 @@ import 'package:larosa_block/Features/Settings/settings.dart';
 import 'package:larosa_block/splash_screen.dart';
 import 'package:provider/provider.dart';
 import 'Features/Feeds/Controllers/business_post_controller.dart';
+import 'Services/log_service.dart';
 
 class RouterService {
   static bool _onboarded() {
@@ -125,11 +126,15 @@ class RouterService {
           final posts = state.extra as List<dynamic>;
           final activePost = state.uri.queryParameters['activePost'];
           final title = state.uri.queryParameters['title'];
+          LogService.logInfo(
+            'activepost $activePost, title $title',
+          );
 
           return ProfilePostsScreen(
             posts: posts,
-            activePost: int.tryParse(activePost ?? '0') ?? 0,
-            title: title ?? 'Default Title',
+            //activePost: int.tryParse(activePost ?? '0') ?? 0,
+            activePost: 0,
+            title: title ?? 'Explore Larosa',
           );
         },
       ),

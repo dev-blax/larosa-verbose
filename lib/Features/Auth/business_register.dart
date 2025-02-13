@@ -412,6 +412,13 @@ class _BusinessRegisterScreenState extends State<BusinessRegisterScreen> {
                         if (_formKey.currentState!.validate() && !isSaving) {
                           await _saveBusinessAccount();
                         }
+
+                        else {
+                          // snackbar
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Please fill all the fields')),
+                          );
+                        }
                       },
                       child: isSaving
                           ? const SpinKitThreeBounce(

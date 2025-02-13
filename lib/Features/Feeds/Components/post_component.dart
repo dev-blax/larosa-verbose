@@ -1,9 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/gestures.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:flutter_emoji/flutter_emoji.dart';
 import 'package:http/http.dart' as http;
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
@@ -25,6 +23,7 @@ import 'package:lottie/lottie.dart';
 import 'package:mime/mime.dart';
 import 'package:modal_bottom_sheet/modal_bottom_sheet.dart';
 import '../../Cart/add_to_cart.dart';
+import 'post_details.dart';
 
 class PostComponent extends StatefulWidget {
   final dynamic post;
@@ -46,8 +45,8 @@ class _PostComponentState extends State<PostComponent>
   late bool _isFavorite;
   late int _favoriteCount;
 
-  double _opacity = 0.0; // Initial opacity set to 0
-  bool _showExplosion = false; // To control Lottie animation visibility
+  double _opacity = 0.0; 
+  bool _showExplosion = false; 
 
   @override
   void initState() {
@@ -91,23 +90,6 @@ class _PostComponentState extends State<PostComponent>
       });
     }
   }
-
-// void toggleLike() {
-//     setState(() {
-//       _isLiked = !_isLiked;
-//       _likesCount = _isLiked ? _likesCount + 1 : _likesCount - 1;
-//       _opacity = 1.0; // Show the heart icon with full opacity
-//       _showExplosion = true; // Show explosion effect
-//     });
-
-//     // Fade out the icon and hide explosion after a delay
-//     Future.delayed(const Duration(milliseconds: 5000), () {
-//       setState(() {
-//         _opacity = 0.0;
-//         _showExplosion = false; // Hide explosion effect
-//       });
-//     });
-//   }
 
   Future<void> _favouritePost() async {
     String token = AuthService.getToken();
@@ -726,9 +708,8 @@ class _PostComponentState extends State<PostComponent>
         const Padding(
           padding: EdgeInsets.only(top: 1, bottom: 0), // Eliminates all padding
           child: Divider(
-            height: 1, // Reduces the height to a minimal value
-            thickness: 1, // Sets the line thickness
-            // color: Colors.grey, // Optional: Adjust the color of the divider
+            height: 1,
+            thickness: 1, 
           ),
         )
       ],
@@ -736,188 +717,3 @@ class _PostComponentState extends State<PostComponent>
   }
 }
 
-class PostDetails extends StatefulWidget {
-  final String caption;
-  final String username;
-  final String date;
-
-  const PostDetails({
-    Key? key,
-    required this.caption,
-    required this.username,
-    required this.date,
-  }) : super(key: key);
-
-  @override
-  _PostDetailsState createState() => _PostDetailsState();
-}
-
-class _PostDetailsState extends State<PostDetails> {
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final textTheme = theme.textTheme;
-    const int maxCaptionLength = 500;
-
-    // Determine if the caption needs truncation
-    final bool isCaptionLong =
-        widget.caption.isNotEmpty && widget.caption.length > maxCaptionLength;
-
-    // Truncate the caption if necessary
-    String captionText = isCaptionLong
-        ? "${widget.caption.substring(0, maxCaptionLength)}..."
-        : widget.caption;
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
-      decoration: BoxDecoration(
-        color: Colors.transparent,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-            color: theme.colorScheme.primary.withOpacity(0.15), width: 0.8),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                width: 4,
-                height: 4,
-                margin: const EdgeInsets.only(right: 6),
-                decoration: BoxDecoration(
-                    color: theme.colorScheme.primary, shape: BoxShape.circle),
-              ),
-              Expanded(
-                child: Text(
-                  widget.username,
-                  style: textTheme.bodyMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 14,
-                    color: theme.colorScheme.onSurface,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-              Text(
-                widget.date,
-                style: textTheme.bodySmall?.copyWith(
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
-                  color: theme.colorScheme.onSurface.withOpacity(0.7),
-                ),
-              ),
-            ],
-          ),
-          if (widget.caption.isNotEmpty) ...[
-            const SizedBox(height: 5),
-            Text(
-              captionText,
-              style: textTheme.bodyMedium?.copyWith(
-                fontSize: 14,
-                color: theme.colorScheme.onSurface,
-              ),
-              maxLines: 5,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-
-  // List<TextSpan> _buildCaptionWithHashtags(String caption, TextTheme textTheme) {
-  //   final regex = RegExp(r"(#[\w]+)|(\s+)|(.)");
-  //   final matches = regex.allMatches(caption);
-
-  //   return matches.map((match) {
-  //     final matchText = match.group(0) ?? "";
-
-  //     if (matchText.startsWith("#")) {
-  //       return TextSpan(
-  //         text: matchText,
-  //         style: textTheme.bodySmall?.copyWith(
-  //           fontSize: 12,
-  //           color: LarosaColors.primary,
-  //           fontWeight: FontWeight.bold,
-  //         ),
-  //         recognizer: TapGestureRecognizer()
-  //           ..onTap = () {
-  //             context.go(
-  //               '/search',
-  //               extra: {'query': matchText.substring(1)}, // Pass hashtag without "#"
-  //             );
-  //           },
-  //       );
-  //     }
-
-  //     // Regular text
-  //     return TextSpan(
-  //       text: matchText,
-  //       style: textTheme.bodySmall?.copyWith(
-  //         fontSize: 13,
-  //         color: Theme.of(context).colorScheme.onSurface,
-  //       ),
-  //     );
-  //   }).toList();
-  // }
-
-  List<TextSpan> _buildCaptionWithHashtags(
-      String caption, TextTheme textTheme) {
-    // Regex to match hashtags, spaces, and emojis/regular text
-    final regex = RegExp(
-        r"(#[\w]+)|(\s+)|([\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{1F1E6}-\u{1F1FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]|[^#\s]+)",
-        unicode: true);
-    final matches = regex.allMatches(caption);
-
-    return matches.map((match) {
-      final matchText = match.group(0) ?? "";
-
-      // Handle hashtags
-      if (matchText.startsWith("#")) {
-        return TextSpan(
-          text: matchText,
-          style: textTheme.bodySmall?.copyWith(
-            fontSize: 12,
-            color: LarosaColors.primary,
-            fontWeight: FontWeight.bold,
-            //fontFamily: 'NotoColorEmoji'
-          ),
-          recognizer: TapGestureRecognizer()
-            ..onTap = () {
-              context.go(
-                '/search',
-                extra: {
-                  'query': matchText.substring(1)
-                }, // Pass hashtag without "#"
-              );
-            },
-        );
-      }
-
-      // Handle emojis
-      if (RegExp(
-              r"[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{1F1E6}-\u{1F1FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]",
-              unicode: true)
-          .hasMatch(matchText)) {
-        return TextSpan(
-          text: matchText, // Display emoji
-          style: textTheme.bodySmall?.copyWith(
-            fontSize: 14, // Slightly larger font size for emojis
-            color: Colors.orange, // Custom color for emojis
-          ),
-        );
-      }
-
-      // Regular text
-      return TextSpan(
-        text: matchText,
-        style: textTheme.bodySmall?.copyWith(
-          fontSize: 13,
-          color: Theme.of(context).colorScheme.onSurface,
-        ),
-      );
-    }).toList();
-  }
-}

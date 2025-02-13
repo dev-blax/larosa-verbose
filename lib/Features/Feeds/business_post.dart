@@ -1,10 +1,9 @@
 import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
-import 'package:crop_your_image/crop_your_image.dart';
+import 'package:image_cropper/image_cropper.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:gap/gap.dart';
 import 'package:go_router/go_router.dart';
 import 'package:iconsax/iconsax.dart';
@@ -16,7 +15,6 @@ import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:video_player/video_player.dart';
 import 'package:http/http.dart' as http;
-
 import '../../Services/auth_service.dart';
 import '../../Services/log_service.dart';
 import '../../Utils/helpers.dart';
@@ -45,10 +43,9 @@ class _BusinessPostScreenState extends State<BusinessPostScreen>
   final _businessFormKey = GlobalKey<FormState>();
   final _personalFormKey = GlobalKey<FormState>();
 
-  final CropController _cropController = CropController();
   final ImagePicker _picker = ImagePicker();
   bool isCreatingPost = false;
-  Uint8List? _selectedImage;
+  XFile? _selectedImage;
   late TabController _tabController;
 
   bool _isBusinessAccount = false;
@@ -118,7 +115,7 @@ class _BusinessPostScreenState extends State<BusinessPostScreen>
                   source: ImageSource.gallery,
                 );
                 if (pickedFile != null) {
-                  final imageData = await pickedFile.readAsBytes();
+                  final imageData = pickedFile;
                   setState(() {
                     _selectedImage = imageData;
                   });
@@ -257,90 +254,37 @@ class _BusinessPostScreenState extends State<BusinessPostScreen>
     }
   }
 
-  void _showCropper() {
+  Future<void> _showCropper() async {
     if (_selectedImage == null) return;
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: Colors.black, // Set modal background to red
-        contentPadding: EdgeInsets.zero,
-        insetPadding: const EdgeInsets.symmetric(
-            horizontal: 24, vertical: 10), // Adjusts dialog padding
-        content: Container(
-          height: MediaQuery.of(context).size.height * 0.9,
-          width: MediaQuery.of(context).size.width * 1,
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [
-                LarosaColors.primary.withOpacity(0.8),
-                LarosaColors.secondary.withOpacity(0.8),
-              ],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Crop(
-            image: _selectedImage!,
-            controller: _cropController,
-            aspectRatio: 3 / 4,
-            onCropped: (croppedData) {
-              Navigator.pop(context);
-              _addCroppedImage(croppedData);
-            },
-          ),
+    
+    final croppedFile = await ImageCropper().cropImage(
+      sourcePath: _selectedImage!.path,
+      aspectRatio: const CropAspectRatio(ratioX: 3, ratioY: 4),
+      uiSettings: [
+        AndroidUiSettings(
+          toolbarTitle: 'Crop Image - Explore Larosa',
+          toolbarColor: LarosaColors.primary,
+          toolbarWidgetColor: Colors.white,
+
+          initAspectRatio: CropAspectRatioPreset.ratio3x2,
+          lockAspectRatio: false,
+          showCropGrid: true,
+          dimmedLayerColor: Colors.black54,
+          
+          activeControlsWidgetColor: LarosaColors.secondary,
         ),
-        actionsPadding:
-            const EdgeInsets.only(bottom: 8), // Reduce space below buttons
-        actions: [
-          TextButton(
-            onPressed: () => _cropController.crop(),
-            style: TextButton.styleFrom(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-              backgroundColor: Colors.transparent,
-            ).copyWith(
-              overlayColor: WidgetStateProperty.all(
-                  LarosaColors.secondary.withOpacity(0.2)),
-            ),
-            child: Container(
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [LarosaColors.primary, LarosaColors.secondary],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 10),
-              child: const Text(
-                'Crop',
-                style:
-                    TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-              ),
-            ),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Container(
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [LarosaColors.secondary, LarosaColors.primary],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 10),
-              child: const Text(
-                'Cancel',
-                style:
-                    TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-              ),
-            ),
-          ),
-        ],
-      ),
+        IOSUiSettings(
+          title: 'Crop Image - Explore Larosa',
+          aspectRatioLockEnabled: false,
+          resetAspectRatioEnabled: false,
+        ),
+      ],
     );
+
+    if (croppedFile != null) {
+      final bytes = await croppedFile.readAsBytes();
+      _addCroppedImage(bytes);
+    }
   }
 
   void _addCroppedImage(Uint8List croppedData) {

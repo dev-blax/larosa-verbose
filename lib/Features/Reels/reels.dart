@@ -33,8 +33,8 @@ class _DeReelsScreenState extends State<DeReelsScreen> {
 
   late bool _isLiked;
   late int _likesCount;
-  double _opacity = 0.0; // For heart animation opacity
-  bool _showExplosion = false; // For explosion animation
+  double _opacity = 0.0;
+  bool _showExplosion = false;
 
   int _currentPage = 1;
   bool _isFetchingMore = false;
@@ -693,7 +693,7 @@ class _DeReelsScreenState extends State<DeReelsScreen> {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
 
     return ListView.builder(
-      itemCount: 5, // Number of shimmer placeholders
+      itemCount: 5,
       itemBuilder: (context, index) {
         return Padding(
           padding: const EdgeInsets.symmetric(vertical: 2.0, horizontal: 2.0),

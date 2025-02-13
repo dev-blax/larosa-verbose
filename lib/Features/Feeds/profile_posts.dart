@@ -26,7 +26,6 @@ class _ProfilePostsScreenState extends State<ProfilePostsScreen> {
   void initState() {
     super.initState();
     _scrollController = ScrollController();
-    LogService.logInfo('posts ${widget.posts[1]}');
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _scrollToActivePost();
     });
@@ -84,6 +83,7 @@ class _ProfilePostsScreenState extends State<ProfilePostsScreen> {
         ),
         centerTitle: true,
       ),
+      //body: Placeholder(),
       body: CustomScrollView(
         controller: _scrollController,
         slivers: [
@@ -92,25 +92,13 @@ class _ProfilePostsScreenState extends State<ProfilePostsScreen> {
               child: Column(
                 children: [
                   ...widget.posts.map((post) {
-                    return PostComponent(post: post, isPlaying: false,);
+                    return PostComponent(post: post, isPlaying: false);
                   }),
                   const SizedBox(height: 100),
                 ],
               ),
             ),
           ),
-          // SliverList(
-          //   delegate: SliverChildBuilderDelegate(
-          //     (context, index) {
-          //       final post = widget.posts[index];
-          //       return Container(
-          //         key: _postKeys[index],
-          //         child: PostComponent(post: post),
-          //       );
-          //     },
-          //     childCount: widget.posts.length,
-          //   ),
-          // ),
         ],
       ),
     );
