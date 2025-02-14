@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_svg/svg.dart';
@@ -22,6 +23,8 @@ import 'package:larosa_block/Utils/links.dart';
 import 'package:larosa_block/Utils/svg_paths.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:shimmer/shimmer.dart';
+
+import 'Components/block_user.dart';
 
 class ProfileVisitScreen extends StatefulWidget {
   final bool isBusiness;
@@ -423,10 +426,8 @@ class _ProfileVisitScreenState extends State<ProfileVisitScreen> {
                         SvgPicture.asset(
                           SvgIconsPaths.streamlineSend,
                           height: 25,
-                          colorFilter: const ColorFilter.mode(
-                            LarosaColors.light,
-                            BlendMode.srcIn,
-                          ),
+                          colorFilter:
+                              const ColorFilter.mode(Colors.orange, BlendMode.srcIn),
                           semanticsLabel: 'A red up arrow',
                         ),
                         const SizedBox(
@@ -838,7 +839,6 @@ class _ProfileVisitScreenState extends State<ProfileVisitScreen> {
                         return <Widget>[
                           SliverToBoxAdapter(
                             child: Stack(
-                              alignment: Alignment.topLeft,
                               children: [
                                 profile!['accountTypeName'] != 'PERSONAL'
                                     ? _businessCoverAndDetails()
@@ -846,8 +846,11 @@ class _ProfileVisitScreenState extends State<ProfileVisitScreen> {
                                         isLoading: false,
                                         profile: profile,
                                       ),
-                                Padding(
-                                  padding: const EdgeInsets.only(top: 20),
+
+                                // back arrow on top left
+                                Positioned(
+                                  top: 20,
+                                  left: 10,
                                   child: IconButton(
                                     onPressed: () => context.pop(),
                                     icon: const Icon(
@@ -855,7 +858,44 @@ class _ProfileVisitScreenState extends State<ProfileVisitScreen> {
                                       color: Colors.white,
                                     ),
                                   ),
-                                )
+                                ),
+
+                                // options icon on top right
+                                Positioned(
+                                  top: 20,
+                                  right: 10,
+                                  child: IconButton(
+                                    onPressed: () {
+                                      showModalBottomSheet(
+                                        context: context,
+                                        builder: (context) => Container(
+                                          padding: const EdgeInsets.symmetric(vertical: 20),
+                                          child: Column(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              ListTile(
+                                                leading: const Icon(Icons.block),
+                                                title: const Text('Block User'),
+                                                onTap: () {
+                                                  Navigator.pop(context);
+                                                  showModalBottomSheet(
+                                                    context: context,
+                                                    builder: (context) => BlockUserComponent(profileId: widget.profileId,),
+                                                  );
+                                                },
+                                              ),
+                                              // Add more options here as needed
+                                            ],
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                    icon: const Icon(
+                                      CupertinoIcons.ellipsis,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                ),
                               ],
                             ),
                           ),

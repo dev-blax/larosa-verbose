@@ -25,14 +25,36 @@ class SettingsScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // const Text('Account Settings'),
-            // TextFormField(
-            //   decoration: const InputDecoration(hintText: 'Username'),
-            // ),
-            // const Gap(20),
-            // TextFormField(
-            //   decoration: const InputDecoration(hintText: 'Email'),
-            // ),
+            const Gap(20),
+            InkWell(
+              onTap: () => context.pushNamed('blockedList'),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.surface,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.block, color: Colors.red),
+                    const SizedBox(width: 12),
+                    const Text(
+                      'Blocked Users',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    const Spacer(),
+                    Icon(
+                      Icons.chevron_right,
+                      color: Colors.grey[600],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            
             const Gap(20),
             InkWell(
               onTap: () {},
@@ -145,6 +167,7 @@ class SettingsScreen extends StatelessWidget {
               ),
             ),
             const Gap(20),
+            
             InkWell(
               onTap: () {},
               child: Padding(

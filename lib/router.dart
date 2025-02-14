@@ -24,6 +24,7 @@ import 'package:larosa_block/Features/Settings/settings.dart';
 import 'package:larosa_block/splash_screen.dart';
 import 'package:provider/provider.dart';
 import 'Features/Feeds/Controllers/business_post_controller.dart';
+import 'Features/Profiles/Components/blocked_users.dart';
 import 'Services/log_service.dart';
 
 class RouterService {
@@ -151,6 +152,12 @@ class RouterService {
         name: 'reels',
         path: '/reels',
         builder: (context, state) => const DeReelsScreen(),
+      ),
+      
+      GoRoute(
+        name: 'blockedList',
+        path: '/blockedList',
+        builder: (context, state) => const BlockedUsersScreen(),
       ),
 
       // auth routes

@@ -199,44 +199,44 @@ class _PostComponentState extends State<PostComponent>
             postHeight: widget.post['height'],
           ),
           // Media count indicator
-          if (images.length > 1)
-            Positioned(
-              top: 16,
-              right: 16,
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                decoration: BoxDecoration(
-                  color: Colors.black.withOpacity(0.7),
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(
-                    color: Colors.white.withOpacity(0.3),
-                    width: 1,
-                  ),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    SvgPicture.asset(
-                      'assets/svg_icons/gallery.svg',
-                      colorFilter: const ColorFilter.mode(
-                        Colors.white,
-                        BlendMode.srcIn,
-                      ),
-                      height: 14,
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      '${images.length}',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
+          // if (images.length > 1)
+          //   Positioned(
+          //     top: 16,
+          //     right: 16,
+          //     child: Container(
+          //       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          //       decoration: BoxDecoration(
+          //         color: Colors.black.withOpacity(0.7),
+          //         borderRadius: BorderRadius.circular(20),
+          //         border: Border.all(
+          //           color: Colors.white.withOpacity(0.3),
+          //           width: 1,
+          //         ),
+          //       ),
+          //       child: Row(
+          //         mainAxisSize: MainAxisSize.min,
+          //         children: [
+          //           SvgPicture.asset(
+          //             'assets/svg_icons/gallery.svg',
+          //             colorFilter: const ColorFilter.mode(
+          //               Colors.white,
+          //               BlendMode.srcIn,
+          //             ),
+          //             height: 14,
+          //           ),
+          //           const SizedBox(width: 4),
+          //           Text(
+          //             '${images.length}',
+          //             style: const TextStyle(
+          //               color: Colors.white,
+          //               fontSize: 12,
+          //               fontWeight: FontWeight.bold,
+          //             ),
+          //           ),
+          //         ],
+          //       ),
+          //     ),
+          //   ),
           Positioned(
             bottom: isVideoMedia ? 10 : 0,
             left: 0,
