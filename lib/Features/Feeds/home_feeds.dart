@@ -114,19 +114,6 @@ class _HomeFeedsScreenState extends State<HomeFeedsScreen>
                   flexibleSpace: SlideTransition(
                     position: _offsetAnimation,
                     child: Container(
-                      // decoration: BoxDecoration(
-                      //   gradient: LinearGradient(
-                      //     colors: [
-                      //       LarosaColors.primary.withOpacity(.2),
-                      //       LarosaColors.purple.withOpacity(.2),
-                      //     ],
-                      //     begin: Alignment.topCenter,
-                      //     end: Alignment.bottomCenter,
-                      //   ),
-                      //   borderRadius: const BorderRadius.vertical(
-                      //     bottom: Radius.circular(20),
-                      //   ),
-                      // ),
                       child: const Column(
                         children: [
                           TopBar1(), // Your custom widget

@@ -45,7 +45,7 @@ class _PostComponentState extends State<PostComponent>
   late bool _isFavorite;
   late int _favoriteCount;
 
-  double _opacity = 0.0; 
+  double opacity = 0.0; 
   bool _showExplosion = false; 
 
   @override
@@ -72,7 +72,7 @@ class _PostComponentState extends State<PostComponent>
 
         // Show the heart icon and explosion effect only when liked
         if (_isLiked) {
-          _opacity = 1.0; // Show the heart icon with full opacity
+          opacity = 1.0; // Show the heart icon with full opacity
           _showExplosion = true; // Show explosion effect
         }
       });
@@ -84,7 +84,7 @@ class _PostComponentState extends State<PostComponent>
     if (_isLiked) {
       Future.delayed(const Duration(milliseconds: 13000), () {
         setState(() {
-          _opacity = 0.0;
+          opacity = 0.0;
           _showExplosion = false;
         });
       });

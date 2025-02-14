@@ -38,8 +38,10 @@ class _CenterSnapCarouselState extends State<CenterSnapCarousel> {
   @override
   void initState() {
     super.initState();
-    // _calculateMediaHeights();
+    //_calculateMediaHeights();
   }
+
+
 
   @override
   void dispose() {
@@ -127,12 +129,13 @@ class _CenterSnapCarouselState extends State<CenterSnapCarousel> {
 
   @override
   Widget build(BuildContext context) {
-    const offset = 0.0;
-    final logicalPostHeight = ((widget.postHeight != null
-                ? widget.postHeight! / MediaQuery.of(context).devicePixelRatio
-                : 300.0) +
-            offset)
-        .clamp(0.0, MediaQuery.of(context).size.height * 0.9);
+    // const offset = 0.0;
+    // final logicalPostHeight = ((widget.postHeight != null
+    //             ? widget.postHeight! / MediaQuery.of(context).devicePixelRatio
+    //             : 300.0) +
+    //         offset)
+    //     .clamp(0.0, MediaQuery.of(context).size.height * 0.9);
+    final logicalPostHeight = widget.postHeight != null ? widget.postHeight! / MediaQuery.of(context).devicePixelRatio : 300.0;
 
     return GestureDetector(
       onPanEnd: (_) {},
@@ -307,6 +310,13 @@ class _CenterSnapCarouselState extends State<CenterSnapCarousel> {
   }
 
   Widget _buildShimmerLoader({double? height}) {
+    if(height == null){
+      LogService.logInfo('height is null');
+    }
+    else {
+      LogService.logInfo('height is $height');
+      LogService.logFatal('height is ${widget.postHeight}');
+    }
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     return Shimmer.fromColors(
       baseColor: isDarkMode ? Colors.grey[900]! : Colors.grey[400]!,
@@ -314,6 +324,7 @@ class _CenterSnapCarouselState extends State<CenterSnapCarousel> {
       child: Container(
         width: MediaQuery.of(context).size.width,
         height: height ?? 300,
+        //height: _getLogicalHeight(widget.postHeight ?? 300.00),
         color: Colors.grey[100],
       ),
     );

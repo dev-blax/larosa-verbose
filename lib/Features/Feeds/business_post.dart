@@ -7,7 +7,6 @@ import 'package:flutter/material.dart';
 import 'package:gap/gap.dart';
 import 'package:go_router/go_router.dart';
 import 'package:iconsax/iconsax.dart';
-import 'package:intl/intl.dart';
 import 'package:ionicons/ionicons.dart';
 import 'package:larosa_block/Features/Feeds/Controllers/content_controller.dart';
 import 'package:larosa_block/Utils/colors.dart';
@@ -62,12 +61,7 @@ class _BusinessPostScreenState extends State<BusinessPostScreen>
     super.initState();
 
     _loadReservationTypes();
-    // Check if the account is a business account
     _isBusinessAccount = AuthService.isBusinessAccount();
-
-
-
-    // Set TabController length based on account type
     _tabController = TabController(
       length: _isBusinessAccount ? 2 : 1,
       vsync: this,
@@ -308,8 +302,11 @@ class _BusinessPostScreenState extends State<BusinessPostScreen>
     return Consumer<ContentController>(
       builder: (context, contentController, child) {
         return SingleChildScrollView(
-          child: Padding(
+          child: Container(
             padding: const EdgeInsets.all(8.0),
+            decoration: BoxDecoration(
+              color: Theme.of(context).scaffoldBackgroundColor,
+            ),
             child: Form(
               key: isBusinessPost ? _businessFormKey : _personalFormKey,
               child: Column(
@@ -317,13 +314,7 @@ class _BusinessPostScreenState extends State<BusinessPostScreen>
                 children: [
                   const Gap(5),
                   _buildMediaList(contentController),
-                  // if (isBusinessPost && _isBusinessAccount) ...[
-                  //   const Gap(20),
-                  //  _buildCategorySelector(),
-                  //   const Gap(5),
-                  //   _buildUnitSelector(),
-                  //   _buildPriceInputField(),
-                  // ],
+                  
                   if (isBusinessPost && _isBusinessAccount) ...[
                     // const Gap(20),
                     // _buildCategorySelector(),
@@ -346,9 +337,7 @@ class _BusinessPostScreenState extends State<BusinessPostScreen>
 
                   if (!isBusinessPost)
                   Gap(10),
-                    // SizedBox(
-                    //   height: MediaQuery.of(context).size.height * .13,
-                    // ),
+                   
                   _buildConditionalGap(isBusinessPost),
                   _buildCaptionInputField(isBusinessPost),
                   const Gap(15),
@@ -365,42 +354,6 @@ class _BusinessPostScreenState extends State<BusinessPostScreen>
   Widget _buildConditionalGap(bool isBusinessPost) {
     return isBusinessPost ? const SizedBox.shrink() : const Gap(15);
   }
-
-  // Widget _buildCategorySelector() {
-  //   return Consumer<BusinessCategoryProvider>(
-  //     builder: (context, categoryProvider, child) {
-  //       return DropdownButtonFormField<int>(
-  //         decoration: InputDecoration(
-  //           labelText: "Select Business Category",
-  //           labelStyle: const TextStyle(color: LarosaColors.mediumGray),
-  //           border: OutlineInputBorder(
-  //             borderRadius: BorderRadius.circular(12),
-  //             borderSide: const BorderSide(width: 3),
-  //           ),
-  //           focusedBorder: OutlineInputBorder(
-  //             borderRadius: BorderRadius.circular(12),
-  //             borderSide:
-  //                 const BorderSide(color: LarosaColors.secondary, width: 3),
-  //           ),
-  //         ),
-  //         items: categoryProvider.businessCategories.map((category) {
-  //           return DropdownMenuItem<int>(
-  //             value: category['id'],
-  //             child: Text(category['name']),
-  //           );
-  //         }).toList(),
-  //         onChanged: (value) {
-  //           if (value != null) {
-  //             categoryProvider.selectCategory(value);
-  //           }
-  //         },
-  //         isExpanded: true,
-  //         validator: (value) =>
-  //             value == null ? "Please select a business category" : null,
-  //       );
-  //     },
-  //   );
-  // }
 
   Widget _buildUnitSelector() {
     return Consumer<BusinessCategoryProvider>(
@@ -425,8 +378,7 @@ class _BusinessPostScreenState extends State<BusinessPostScreen>
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide:
-                      const BorderSide(color: LarosaColors.secondary, width: 3),
+                  borderSide: const BorderSide(color: LarosaColors.secondary, width: 3),
                 ),
               ),
               value: unitId,
@@ -500,16 +452,6 @@ class _BusinessPostScreenState extends State<BusinessPostScreen>
                     color: LarosaColors.primary,
                   ),
                 ),
-                // const Gap(4),
-                // Text(
-                //   type['description'] ?? '',
-                //   style: TextStyle(
-                //     fontSize: 12,
-                //     color: LarosaColors.mediumGray.withOpacity(0.8),
-                //   ),
-                //   maxLines: 2,
-                //   overflow: TextOverflow.ellipsis,
-                // ),
               ],
             ),
           );
@@ -598,8 +540,10 @@ class _BusinessPostScreenState extends State<BusinessPostScreen>
                                 child: VideoPlayer(media['controller']),
                               );
                             } else {
-                              return const Center(
-                                  child: CircularProgressIndicator());
+                              return Center(
+                                  child: CircularProgressIndicator(
+                                    color: Theme.of(context).colorScheme.primary,
+                                  ));
                             }
                           },
                         )
@@ -617,9 +561,13 @@ class _BusinessPostScreenState extends State<BusinessPostScreen>
                         padding: const EdgeInsets.all(6),
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(15),
-                          color: Colors.black.withOpacity(.5),
+                          color: Theme.of(context).colorScheme.background.withOpacity(.7),
                         ),
-                        child: const Icon(Icons.delete, size: 16),
+                        child: Icon(
+                          Icons.delete,
+                          size: 16,
+                          color: Theme.of(context).colorScheme.error,
+                        ),
                       ),
                     ),
                   ),
@@ -638,15 +586,15 @@ class _BusinessPostScreenState extends State<BusinessPostScreen>
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     colors: [
-                      LarosaColors.purple.withOpacity(0.8),
-                      LarosaColors.secondary.withOpacity(0.5)
+                      Theme.of(context).colorScheme.primary.withOpacity(0.8),
+                      Theme.of(context).colorScheme.secondary.withOpacity(0.5)
                     ],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
                   borderRadius: BorderRadius.circular(15),
                 ),
-                child: const Column(
+                child: Column(
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.center,
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -654,12 +602,14 @@ class _BusinessPostScreenState extends State<BusinessPostScreen>
                     Icon(
                       Iconsax.gallery_add,
                       size: 28,
-                      color: LarosaColors.mediumGray,
+                      color: Theme.of(context).colorScheme.onBackground,
                     ),
-                    Gap(5),
+                    const Gap(5),
                     Text(
                       'Add Media',
-                      style: TextStyle(color: LarosaColors.mediumGray),
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.onBackground,
+                      ),
                     ),
                   ],
                 ),
@@ -809,17 +759,17 @@ class _BusinessPostScreenState extends State<BusinessPostScreen>
         const Text(
           "Breakfast Included?",
           style: TextStyle(
-            color: LarosaColors.mediumGray, // Consistent label color
+            color: LarosaColors.mediumGray,
             fontWeight: FontWeight.w500,
           ),
         ),
         Switch(
           value: _breakfastIncluded,
-          activeColor: LarosaColors.mediumGray, // Active color matches inputs
+          activeColor: LarosaColors.mediumGray,
           activeTrackColor:
-              LarosaColors.mediumGray.withOpacity(0.5), // Track color
-          inactiveThumbColor: LarosaColors.mediumGray, // Inactive thumb color
-          inactiveTrackColor: LarosaColors.mediumGray.withOpacity(0.3), // Track
+              LarosaColors.mediumGray.withOpacity(0.5),
+          inactiveThumbColor: LarosaColors.mediumGray,
+          inactiveTrackColor: LarosaColors.mediumGray.withOpacity(0.3),
           onChanged: (value) {
             setState(() {
               _breakfastIncluded = value;
@@ -828,12 +778,6 @@ class _BusinessPostScreenState extends State<BusinessPostScreen>
         ),
       ],
     );
-  }
-
-  static String formatPrice(double price) {
-    final formatter =
-        NumberFormat.currency(locale: 'en_US', symbol: '', decimalDigits: 0);
-    return formatter.format(price); // Adds commas for thousands
   }
 
   Widget _buildCaptionInputField(bool isBusinessPost) {
@@ -883,16 +827,9 @@ class _BusinessPostScreenState extends State<BusinessPostScreen>
               contentController.newContentMediaStrings,
             );
 
-            // bool success = await contentController.postBusiness(
-            //   _captionController.text,
-            //   double.tryParse(_priceController.text.replaceAll(',', '')) ?? 0,
-            //   maxHeight,
-            // );
-
             bool success;
 
             if (isBusinessPost) {
-              // Use postBusiness for business accounts
               success = await contentController.postBusiness(
                 _captionController.text,
                 double.tryParse(_priceController.text.replaceAll(',', '')) ?? 0,
@@ -913,7 +850,6 @@ class _BusinessPostScreenState extends State<BusinessPostScreen>
             });
 
             if (success && context.mounted) {
-              // ignore: use_build_context_synchronously
               context.go('/');
             }
           }
@@ -931,9 +867,10 @@ class _BusinessPostScreenState extends State<BusinessPostScreen>
           child: Center(
             child: isCreatingPost
                 ? CupertinoActivityIndicator(
+                    color: Colors.white,
                     radius: 16,
                     animating: true,
-                )
+                  )
                 : const Text(
                     'CONFIRM POST',
                     style: TextStyle(
@@ -956,10 +893,10 @@ class _BusinessPostScreenState extends State<BusinessPostScreen>
         body: CustomScrollView(
           slivers: [
             SliverAppBar(
-              backgroundColor: Colors.black,
-              title: const Text(
+              backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+              title: Text(
                 "Create Post",
-                style: TextStyle(color: LarosaColors.mediumGray),
+                style: Theme.of(context).textTheme.titleLarge,
               ),
               centerTitle: true,
               floating: true,
