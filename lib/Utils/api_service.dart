@@ -14,6 +14,8 @@ class ApiService {
     ),
   );
 
+  static final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
+
   static void _handleError(DioException e, BuildContext? context) {
     String errorMessage = 'An error occurred';
 

@@ -1,7 +1,5 @@
-import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
-import '../../../Utils/colors.dart';
+import 'package:larosa_block/Utils/helpers.dart';
 
 class PostDetails extends StatefulWidget {
   final String caption;
@@ -76,7 +74,7 @@ class _PostDetailsState extends State<PostDetails> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      widget.caption,
+                      HelperFunctions.emojifyAText(widget.caption),
                       style: textTheme.bodyMedium?.copyWith(
                         fontSize: 14,
                         color: theme.colorScheme.onSurface,

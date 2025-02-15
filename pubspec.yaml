@@ -1,7 +1,7 @@
 name: larosa_block
 description: "A new Flutter project."
 publish_to: 'none'
-version: 1.36.0+36
+version: 1.37.0+37
 
 environment:
   sdk: ^3.6.0
@@ -49,6 +49,7 @@ dependencies:
   like_button: ^2.0.5
   image_picker: ^1.0.7
   geolocator: ^11.0.0
+  flutter_emoji: ^2.5.1
   flutter_polyline_points: ^2.1.0
   flutter_hooks: ^0.20.5
   dio: ^5.4.2+1
@@ -61,7 +62,6 @@ dependencies:
   share_plus: ^9.0.0
   shared_preferences: ^2.2.2
   stomp_dart_client: ^2.0.0
-  flutter_emoji: ^2.5.1
   flutter_cache_manager: ^3.4.1
   shimmer: ^3.0.0
   flutter_native_splash: ^2.4.1

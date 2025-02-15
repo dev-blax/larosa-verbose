@@ -4,6 +4,8 @@ import 'package:http/http.dart' as http;
 import 'package:larosa_block/Services/log_service.dart';
 import 'package:larosa_block/Utils/links.dart';
 
+import '../Utils/helpers.dart';
+
 class AuthService {
   static String getToken() {
     var box = Hive.box('userBox');
@@ -38,6 +40,15 @@ class AuthService {
     return box.get('profileId');
   }
 
+  static Future<bool> booleanRefreshToken() async {
+    try {
+      await refreshToken();
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
   static Future<void> refreshToken() async {
     LogService.logInfo('hello toke refresh');
     var headers = {"Content-Type": "application/json"};
@@ -61,7 +72,7 @@ class AuthService {
       return;
     } else {
       LogService.logError(response.body);
-      return;
+      throw Exception('Failed to refresh token');
     }
   }
 }

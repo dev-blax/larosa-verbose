@@ -94,9 +94,6 @@ class _HomeProfileScreenState extends State<HomeProfileScreen> {
       HelperFunctions.larosaLogger('profile Id: ${AuthService.getProfileId()}');
       final response = await http.post(
         url,
-        // body: jsonEncode({
-        //   'id': AuthService.getProfileId(),
-        // }),
         headers: headers,
       );
 
@@ -119,16 +116,14 @@ class _HomeProfileScreenState extends State<HomeProfileScreen> {
         return;
       }
 
-      if (response.statusCode == 403) {
-        HelperFunctions.larosaLogger('403 unauthorized');
-        await AuthService.refreshToken();
-        await _fetchProfile(forceRefresh: true);
+      //await AuthService.refreshToken();
+      bool isRefreshed = await AuthService.booleanRefreshToken();
+      if (!isRefreshed) {
+        HelperFunctions.logout(context);
         return;
       }
-
-      LogService.logError(
-        'neither 200 nor 403: status code is ${response.statusCode}',
-      );
+      await _fetchProfile(forceRefresh: true);
+      return;
     } catch (e) {
       LogService.logError(
         'An error occurred while loading profile: ',

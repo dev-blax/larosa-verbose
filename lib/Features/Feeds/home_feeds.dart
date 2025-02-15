@@ -140,7 +140,6 @@ class _HomeFeedsScreenState extends State<HomeFeedsScreen>
                       valueListenable: controller.isLoading,
                       builder: (context, isLoading, child) {
                         if (isLoading && controller.posts.isEmpty) {
-                          // return _buildShimmerLoading();
                           return Column(
                             children: List.generate(
                               5, // Number of times to call _buildShimmerLoading()

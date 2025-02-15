@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_emoji/flutter_emoji.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:gap/gap.dart';
@@ -13,6 +14,7 @@ import 'package:larosa_block/Utils/colors.dart';
 import 'package:larosa_block/Utils/links.dart';
 import 'package:shimmer/shimmer.dart';
 
+import '../../../Utils/helpers.dart';
 import 'carousel.dart';
 
 class CommentSection extends StatefulWidget {
@@ -37,6 +39,7 @@ class _CommentSectionState extends State<CommentSection> {
   String? replyToUsername;
   int? parentCommentId;
   bool isCommenting = false;
+  var parser = EmojiParser();
 
   Map<String, String> headers = {
     "Content-Type": "application/json",
@@ -44,6 +47,8 @@ class _CommentSectionState extends State<CommentSection> {
   };
 
   Map<int, Map<String, dynamic>> commentStatus = {};
+
+
 
   Future<bool> _sendComment(
     String comment,
@@ -53,6 +58,9 @@ class _CommentSectionState extends State<CommentSection> {
   }) async {
     String token = AuthService.getToken();
     if (token.isEmpty) return false;
+
+    // Convert emojis to shortcodes
+    String processedComment = parser.unemojify(comment);
 
     var url = Uri.https(
       LarosaLinks.nakedBaseUrl,
@@ -67,6 +75,10 @@ class _CommentSectionState extends State<CommentSection> {
         'content': comment
       };
     });
+    LogService.logInfo('Sending comment $comment');
+    LogService.logInfo('processedComment: $processedComment');
+
+    
 
     try {
       var body = isReply
@@ -74,12 +86,12 @@ class _CommentSectionState extends State<CommentSection> {
               'profileId': AuthService.getProfileId(),
               'postId': widget.postId,
               'parentId': parentCommentId,
-              'message': comment,
+              'message': processedComment,
             }
           : {
               'profileId': AuthService.getProfileId(),
               'postId': widget.postId,
-              'message': comment,
+              'message': processedComment,
             };
 
       final response = await http.post(
@@ -171,55 +183,6 @@ class _CommentSectionState extends State<CommentSection> {
     );
   }
 
-  // Widget _buildVideoPlayer(String url) {
-  //   VideoPlayerController _controller = VideoPlayerController.network(url);
-  //   return FutureBuilder(
-  //     future: _controller.initialize(),
-  //     builder: (context, snapshot) {
-  //       if (snapshot.connectionState == ConnectionState.done) {
-  //         return AspectRatio(
-  //           aspectRatio: _controller.value.aspectRatio,
-  //           child: VideoPlayer(_controller),
-  //         );
-  //       } else {
-  //         return const Center(child: CircularProgressIndicator());
-  //       }
-  //     },
-  //   );
-  // }
-
-  // Future<void> fetchComments() async {
-  //   var url = Uri.https(LarosaLinks.nakedBaseUrl, '/comments/post');
-  //   try {
-  //     LogService.logDebug('Requesting comments');
-  //     final response = await http.post(
-  //       url,
-  //       body: jsonEncode({
-  //         'postId': widget.postId.toString(),
-  //       }),
-  //       headers: headers,
-  //     );
-  //     if (response.statusCode == 200) {
-  //       final List<dynamic> data = json.decode(response.body);
-  //       setState(() {
-  //         postComments = data;
-  //         _isLoading = false;
-  //       });
-  //       return;
-  //     }
-
-  //     if (response.statusCode == 403 || response.statusCode == 302) {
-  //       await AuthService.refreshToken();
-  //       fetchComments();
-  //     } else {
-  //       //print('some problems: ${response.statusCode}');
-  //       //HelperFunctions.displaySnackbar('Failed to fetch comments');
-  //     }
-  //   } catch (e) {
-  //     // HelperFunctions.displaySnackbar('Failed to fetch comments');
-  //   }
-  // }
-
   Future<void> fetchComments() async {
     var url = Uri.https(LarosaLinks.nakedBaseUrl, '/comments/post');
     try {
@@ -236,7 +199,7 @@ class _CommentSectionState extends State<CommentSection> {
         final List<dynamic> data = json.decode(response.body);
 
         setState(() {
-          postComments = data.reversed.toList(); // Reverse the comments order
+          postComments = data.reversed.toList();
           _isLoading = false;
         });
         return;
@@ -427,62 +390,51 @@ class _CommentSectionState extends State<CommentSection> {
                   child: CustomScrollView(
                     slivers: [
                       SliverAppBar(
-                        expandedHeight:
-                            400, // Height for the media section when expanded
+                        expandedHeight: 400,
                         floating: false,
                         pinned: true,
                         backgroundColor: Colors.black,
-                        // leading: IconButton.filledTonal(
-                        //   splashColor: Colors.transparent,
-                        //   icon: const Icon(Icons.arrow_downward),
-                        //   onPressed: () {
-                        //     Navigator.pop(context);
-                        //   },
-                        // ),
                         leading: GestureDetector(
-  onTap: () {
-    Navigator.pop(context); // This will navigate back to the previous screen
-  },
-  child: Container(
-    width: 16, // Adjusted width for a smaller size
-    height: 16, // Adjusted height for a smaller size
-    decoration: BoxDecoration(
-      gradient: LinearGradient(
-        colors: [
-          LarosaColors.primary.withOpacity(.3),
-          LarosaColors.purple.withOpacity(.3),
-        ],
-        begin: Alignment.topCenter,
-        end: Alignment.bottomCenter,
-      ),
-      shape: BoxShape.circle,
-      boxShadow: [
-        BoxShadow(
-          color: Colors.black.withOpacity(0.1),
-          blurRadius: 5,
-          offset: const Offset(0, 2),
-        ),
-      ],
-    ),
-    child: Icon(
-      CupertinoIcons.down_arrow,
-      color: Colors.white,
-      size: 20,
-    ),
-  ),
-),
-
+                          onTap: () {
+                            Navigator.pop(context);
+                          },
+                          child: Container(
+                            width: 16,
+                            height: 16,
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: [
+                                  LarosaColors.primary.withOpacity(.3),
+                                  LarosaColors.purple.withOpacity(.3),
+                                ],
+                                begin: Alignment.topCenter,
+                                end: Alignment.bottomCenter,
+                              ),
+                              shape: BoxShape.circle,
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.1),
+                                  blurRadius: 5,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                            child: Icon(
+                              CupertinoIcons.down_arrow,
+                              color: Colors.white,
+                              size: 20,
+                            ),
+                          ),
+                        ),
                         flexibleSpace: LayoutBuilder(
                           builder: (BuildContext context,
                               BoxConstraints constraints) {
-                            // Calculate the percentage of collapse for the SliverAppBar
                             double percentCollapsed =
                                 ((constraints.maxHeight - kToolbarHeight) /
                                         (400 - kToolbarHeight))
                                     .clamp(0.0,
                                         1.0); // Ensure value is between 0 and 1
 
-                            // Define hasVideoFiles here
                             bool hasVideoFiles =
                                 mediaFiles.any((url) => url.endsWith('.mp4'));
 
@@ -734,6 +686,7 @@ class PostCommentTile extends StatefulWidget {
 }
 
 class _PostCommentTileState extends State<PostCommentTile> {
+
   @override
   Widget build(BuildContext context) {
     return Padding(
@@ -776,7 +729,7 @@ class _PostCommentTileState extends State<PostCommentTile> {
                 padding:
                     const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8),
                 child: Text(
-                  widget.comment['message'] ?? '',
+                  HelperFunctions.emojifyAText(widget.comment['message'] ?? ''),
                   style: const TextStyle(color: Colors.white),
                 ),
               ),
@@ -867,163 +820,3 @@ class _PostCommentTileState extends State<PostCommentTile> {
     );
   }
 }
-
-
-// class PostCommentTile extends StatefulWidget {
-//   final dynamic comment;
-//   final int postId;
-//   final bool hasFailed;
-//   final bool isSending;
-//   final VoidCallback? onRetry;
-//   final Function(String, int) onReply;
-
-//   const PostCommentTile({
-//     super.key,
-//     required this.comment,
-//     required this.onReply,
-//     required this.postId,
-//     this.hasFailed = false,
-//     this.isSending = false,
-//     this.onRetry,
-//   });
-
-//   @override
-//   State<PostCommentTile> createState() => _PostCommentTileState();
-// }
-
-// class _PostCommentTileState extends State<PostCommentTile> {
-//   Map<String, String> headers = {
-//     "Content-Type": "application/json",
-//     "Access-Control-Allow-Origin": "*",
-//   };
-
-//   Future<void> _fetchCommentReplies(int commentId) async {
-//     var url = Uri.https(LarosaLinks.nakedBaseUrl, '/comments/post/reply ');
-//     try {
-//       print('postid : ${widget.postId}, commentId: $commentId ');
-//       //return;
-//       final response = await http.post(
-//         url,
-//         body: jsonEncode({
-//           "postId": widget.postId,
-//           "Long parentId": commentId,
-//         }),
-//         headers: headers,
-//       );
-
-//       print('response code: ${response.statusCode} ');
-//     } catch (e) {
-//       print('error: $e');
-//     }
-//   }
-
-//   @override
-//   Widget build(BuildContext context) {
-//     print('comment: ${widget.comment}');
-//     return Padding(
-//       padding: const EdgeInsets.symmetric(vertical: 0.0),
-//       child: Column(
-//         crossAxisAlignment: CrossAxisAlignment.start,
-//         children: [
-//           Row(
-//             mainAxisAlignment: MainAxisAlignment.spaceBetween,
-//             children: [
-//               Row(
-//                 children: [
-//                   CircleAvatar(
-//                     radius: 12,
-//                     backgroundImage: widget.comment['profilePicture'] == null
-//                         ? const AssetImage(
-//                             'assets/images/EXPLORE.png',
-//                           )
-//                         : const AssetImage(
-//                             'assets/images/EXPLORE.png',
-//                           ),
-//                   ),
-//                   const Gap(5),
-//                   Text(
-//                     widget.comment['username'],
-//                     style: Theme.of(context).textTheme.bodySmall,
-//                   ),
-//                 ],
-//               ),
-//               // if (widget.comment['replies'] >= 1)
-//               //   TextButton(
-//               //     onPressed: () async {
-//               //       await _fetchCommentReplies(widget.comment['id']);
-//               //     },
-//               //     child:
-//               //         Text('${widget.comment['replies'].toString()} replies'),
-//               //   ),
-
-//               Text(widget.comment['duration']),
-//             ],
-//           ),
-//           const Gap(5),
-//           Container(
-//             decoration: BoxDecoration(
-//               gradient: LarosaColors.blueGradient,
-//               borderRadius: BorderRadius.circular(10),
-//             ),
-//             padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 5),
-//             child: Text(
-//               widget.comment['message'],
-//               style: const TextStyle(color: Colors.white),
-//             ),
-//           ),
-//           const Gap(0),
-//           Row(
-//             mainAxisAlignment: MainAxisAlignment.spaceBetween,
-//             children: [
-//               Row(
-//                 children: [
-//                   const Text('12.9.2024'),
-//                   TextButton(
-//                     onPressed: () {
-//                       widget.onReply(
-//                           widget.comment['username'], widget.comment['id']);
-//                     },
-//                     child: const Text('Reply'),
-//                   ),
-//                 ],
-//               ),
-//               Row(
-//                 children: [
-//                   Row(
-//                     children: [
-//                       const Icon(
-//                         Iconsax.message,
-//                         size: 18,
-//                       ),
-//                       const Gap(5),
-//                       Text(widget.comment['replies'].toString()),
-//                     ],
-//                   ),
-//                   const Gap(20),
-//                   Row(
-//                     children: [
-//                       SvgPicture.asset(
-//                         'assets/icons/SolarHeartAngleBold.svg',
-//                         width: 20,
-//                         colorFilter: const ColorFilter.mode(
-//                           Colors.red,
-//                           BlendMode.srcIn,
-//                         ),
-//                         semanticsLabel: 'Like icon',
-//                       ),
-//                       const Gap(5),
-//                       Text(widget.comment['likes'].toString()),
-//                     ],
-//                   ),
-//                 ],
-//               )
-//             ],
-//           ),
-//           const Divider(),
-//         ],
-//       ),
-//     );
-//   }
-// }
-
-

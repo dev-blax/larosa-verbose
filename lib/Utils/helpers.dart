@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter_emoji/flutter_emoji.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hive/hive.dart';
@@ -39,6 +40,11 @@ class HelperFunctions {
       title: Text(message),
       context: context,
     );
+  }
+
+  static emojifyAText(String text) {
+    final EmojiParser parser = EmojiParser();
+    return parser.emojify(text);
   }
 
   static Future<double> getMaxImageHeight(List<String> imagePaths) async {
@@ -102,7 +108,6 @@ class HelperFunctions {
   }
 
   static Future<void> logout(BuildContext context) async {
-    print('logging out');
     // Clear all Hive boxes
     await Hive.deleteFromDisk();
     

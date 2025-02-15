@@ -91,10 +91,6 @@ class HomeFeedsController extends ChangeNotifier {
       headers: headers,
     );
 
-    // Log the status code and response body
-    LogService.logInfo('Status Code: ${response.statusCode}');
-    LogService.logInfo('Response Body: ${response.body}');
-
     if (response.statusCode == 200) {
       List<dynamic> data = json.decode(response.body);
       if (isPaginated) {
@@ -107,8 +103,15 @@ class HomeFeedsController extends ChangeNotifier {
       await _savePostsToLocalStorage(posts);
       notifyListeners();
     } else if (response.statusCode == 302 || response.statusCode == 403 || response.statusCode == 401) {
-      await AuthService.refreshToken();
-      await _fetchPostsFromServer(profileId, isPaginated: isPaginated);
+      bool refreshed = await AuthService.booleanRefreshToken();
+
+      if(refreshed){
+        await _fetchPostsFromServer(profileId, isPaginated: isPaginated);
+      }else{
+        throw Exception('Failed to refresh token');
+        //await HelperFunctions.logout();
+      }
+      
     } else {
       throw Exception('Failed to load posts');
     }

@@ -166,7 +166,11 @@ class _PostComponentState extends State<PostComponent>
 
       if (response.statusCode == 200) {
       } else if (response.statusCode == 302 || response.statusCode == 403) {
-        await AuthService.refreshToken();
+        bool isRefreshed = await AuthService.booleanRefreshToken();
+        if(!isRefreshed && mounted){
+          HelperFunctions.logout(context);
+          return;
+        } 
         await _likePost();
         return;
       } else {
@@ -537,50 +541,6 @@ class _PostComponentState extends State<PostComponent>
                 ],
               ),
 
-              // Row(
-              //   children: [
-              //     IconButton(
-              //       onPressed: () {
-              //         setState(() {
-              //           _isFavorite = !_isFavorite;
-              //           if (_isFavorite) {
-              //             _favoriteCount++;
-              //           } else {
-              //             _favoriteCount--;
-              //           }
-              //         });
-
-              //         _favouritePost();
-              //       },
-              //       icon: _isFavorite
-              //           ? SvgPicture.asset(
-              //               SvgIconsPaths.starBold,
-              //               width: 25,
-              //               height: 25,
-              //               colorFilter: const ColorFilter.mode(
-              //                 LarosaColors.gold,
-              //                 BlendMode.srcIn,
-              //               ),
-              //               semanticsLabel: 'Star icon',
-              //             )
-              //           : SvgPicture.asset(
-              //               SvgIconsPaths.starOutline,
-              //               width: 25,
-              //               height: 25,
-              //               colorFilter: ColorFilter.mode(
-              //                 Theme.of(context).colorScheme.secondary,
-              //                 BlendMode.srcIn,
-              //               ),
-              //               semanticsLabel: 'Star icon',
-              //             ),
-              //     ),
-              //     Text(
-              //       _favoriteCount.toString(),
-              //       style: Theme.of(context).textTheme.bodySmall,
-              //     )
-              //   ],
-              // ),
-
               Row(
                 children: [
                   LikeButton(
@@ -588,10 +548,10 @@ class _PostComponentState extends State<PostComponent>
                     isLiked: _isFavorite,
                     likeCount: _favoriteCount,
                     animationDuration:
-                        const Duration(milliseconds: 500), // Instant effect
+                        const Duration(milliseconds: 500), 
                     bubblesColor: const BubblesColor(
                       dotPrimaryColor:
-                          Color.fromRGBO(255, 215, 0, 1), // Gold color
+                          Color.fromRGBO(255, 215, 0, 1),
                       dotSecondaryColor: Colors.orange,
                       dotThirdColor: Colors.yellow,
                       dotLastColor: Colors.red,
