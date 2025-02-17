@@ -4,8 +4,6 @@ import 'package:http/http.dart' as http;
 import 'package:larosa_block/Services/log_service.dart';
 import 'package:larosa_block/Utils/links.dart';
 
-import '../Utils/helpers.dart';
-
 class AuthService {
   static String getToken() {
     var box = Hive.box('userBox');
@@ -48,6 +46,8 @@ class AuthService {
       return false;
     }
   }
+
+
 
   static Future<void> refreshToken() async {
     LogService.logInfo('hello toke refresh');

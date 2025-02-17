@@ -91,6 +91,7 @@ dependencies:
   workmanager: ^0.5.2
   animated_text_kit: ^4.2.2
   image_cropper: ^9.0.0
+  google_sign_in: ^6.2.2
 
 dev_dependencies:
   flutter_test:

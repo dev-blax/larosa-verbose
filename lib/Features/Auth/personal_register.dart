@@ -1,15 +1,12 @@
 import 'dart:convert';
 import 'dart:ui';
-
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:gap/gap.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hive/hive.dart';
 import 'package:iconsax/iconsax.dart';
-
 import 'package:http/http.dart' as http;
 import 'package:larosa_block/Components/text_input.dart';
 import 'package:larosa_block/Features/Auth/Components/oauth_buttons.dart';

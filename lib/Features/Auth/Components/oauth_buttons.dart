@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:larosa_block/Services/google_auth_service.dart';
+import 'package:larosa_block/Services/log_service.dart';
 
 class OauthButtons extends StatelessWidget {
   const OauthButtons({
@@ -11,26 +13,33 @@ class OauthButtons extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceAround,
       children: [
-        Animate(
-          effects: const [
-            FadeEffect(
-              begin: BlurEffect.minBlur,
-              end: BlurEffect.defaultBlur,
-              duration: Duration(seconds: 5)
-            ),
+        GestureDetector(
+          onTap: () async {
+            final googleAuthService = GoogleAuthService();
+            final user = await googleAuthService.signIn();
+            LogService.logInfo('user ${user!.displayName}');
+          },
+          child: Animate(
+            effects: const [
+              FadeEffect(
+                begin: BlurEffect.minBlur,
+                end: BlurEffect.defaultBlur,
+                duration: Duration(seconds: 5)
+              ),
 
-            ScaleEffect(
-              begin: ScaleEffect.defaultValue,
-              end: ScaleEffect.neutralValue,
-              duration: Duration(seconds: 1),
-              delay: Duration(seconds: 0)
-            )
-          ],
-          child: Card(
-            color: Colors.white,
-            child: Padding(
-              padding: const EdgeInsets.all(5.0),
-              child: Image.asset('assets/icons/icons8-google-48.png'),
+              ScaleEffect(
+                begin: ScaleEffect.defaultValue,
+                end: ScaleEffect.neutralValue,
+                duration: Duration(seconds: 1),
+                delay: Duration(seconds: 0)
+              )
+            ],
+            child: Card(
+              color: Colors.white,
+              child: Padding(
+                padding: const EdgeInsets.all(5.0),
+                child: Image.asset('assets/icons/icons8-google-48.png'),
+              ),
             ),
           ),
         ),
@@ -104,26 +113,7 @@ class OauthButtons extends StatelessWidget {
             ),
           ),
         ),
-        // Container(
-        //   padding: const EdgeInsets.all(5),
-        //   decoration: BoxDecoration(
-        //       color: Colors.white, borderRadius: BorderRadius.circular(10)),
-        //   child: Image.asset('assets/icons/icons8-tiktok-48.png'),
-        // ),
-
         
-        // Container(
-        //   padding: const EdgeInsets.all(5),
-        //   decoration: BoxDecoration(
-        //       color: Colors.white, borderRadius: BorderRadius.circular(10)),
-        //   child: Image.asset('assets/icons/icons8-facebook-48.png'),
-        // ),
-        // Container(
-        //   padding: const EdgeInsets.all(5),
-        //   decoration: BoxDecoration(
-        //       color: Colors.white, borderRadius: BorderRadius.circular(10)),
-        //   child: Image.asset('assets/icons/icons8-instagram-48.png'),
-        // ),
       ],
     );
   }

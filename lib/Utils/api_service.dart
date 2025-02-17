@@ -14,6 +14,8 @@ class ApiService {
     ),
   );
 
+  static Dio get dio => _dio;
+
   static final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
   static void _handleError(DioException e, BuildContext? context) {
@@ -56,6 +58,10 @@ class ApiService {
       );
     }
   }
+
+  // send google auth token
+
+
 
   static Future<Response?> _makeRequest(
     Future<Response> Function() requestFunction,
