@@ -22,6 +22,7 @@ class LarosaLinks {
   static const String newPost = '/PostEditDelete/upload';
   static const String feedsEndpoint = '/feeds/fetch';
   static const String brandProfile = '/brand/myProfile';
+  static const String socialLogin = '/api/v1/auth/social';
 
   // chats
   static const String notifyOnline = '/app/user/addUser';

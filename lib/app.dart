@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:larosa_block/Features/Feeds/Controllers/old_home_feeds_controller.dart';
 import 'package:provider/provider.dart';
 import 'package:stomp_dart_client/stomp_dart_client.dart';
 import 'package:toastification/toastification.dart';
@@ -10,6 +11,7 @@ import 'Features/Feeds/Controllers/home_feeds_controller.dart';
 import 'Features/Onboarding/onboarding_controller.dart';
 import 'Services/auth_service.dart';
 import 'Services/log_service.dart';
+import 'Services/navigation_service.dart';
 import 'Utils/helpers.dart';
 import 'Utils/links.dart';
 import 'Utils/theme.dart';
@@ -49,7 +51,6 @@ class _AppState extends State<App> {
     stompClient.activate();
   }
   
-// Callback for handling successful connection
   void onConnect(StompFrame frame) {
     setState(() {
       connectedToSocket = true;
@@ -69,14 +70,12 @@ class _AppState extends State<App> {
         );
       },
     );
-
   }
-
 
   @override
   void initState() {
     super.initState();
-     _socketConnection2();
+    _socketConnection2();
     _setSystemUIOverlayStyle();
   }
 
@@ -95,6 +94,7 @@ class _AppState extends State<App> {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => HomeFeedsController()),
+        ChangeNotifierProvider(create: (_) => OldHomeFeedsController()),
         ChangeNotifierProvider(create: (_) => ContentController()),
         ChangeNotifierProvider(create: (_) => OnboardingProvider()),
         ChangeNotifierProvider(create: (_) => CartController()),
@@ -107,6 +107,7 @@ class _AppState extends State<App> {
           theme: LarosaAppTheme.lightTheme,
           darkTheme: LarosaAppTheme.darkTheme,
           builder: (context, child) {
+            NavigationService.setContext(context);
             Brightness brightness = Theme.of(context).brightness;
             SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
               statusBarColor: Colors.transparent,

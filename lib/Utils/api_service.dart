@@ -59,10 +59,6 @@ class ApiService {
     }
   }
 
-  // send google auth token
-
-
-
   static Future<Response?> _makeRequest(
     Future<Response> Function() requestFunction,
     BuildContext? context,

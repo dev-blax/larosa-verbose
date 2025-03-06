@@ -1,0 +1,46 @@
+{
+  "project_info": {
+    "project_number": "370358339116",
+    "project_id": "explore-larosa-bf556",
+    "storage_bucket": "explore-larosa-bf556.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:370358339116:android:7634e4f3ede70f90cff389",
+        "android_client_info": {
+          "package_name": "com.explore.larosa"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "370358339116-b4n7il0p9um91522mdoh2gn7o6hk8tuj.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAXTBlcVZwIKHP7Ob2v6S25Ffa5FImjtSs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "370358339116-b4n7il0p9um91522mdoh2gn7o6hk8tuj.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "370358339116-bqp5ltn539p3s6lsfkledqovbrpfu8lu.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.larosaBlock"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -6,7 +6,6 @@ import 'package:hive/hive.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:gap/gap.dart';
 import 'package:iconsax/iconsax.dart';
 import 'package:larosa_block/Components/text_input.dart';
@@ -133,7 +132,9 @@ class _SigninScreenState extends State<SigninScreen> {
                     key: _formKey,
                     child: Padding(
                       padding: const EdgeInsets.symmetric(
-                          vertical: 20, horizontal: 18),
+                        vertical: 20,
+                        horizontal: 18,
+                      ),
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [

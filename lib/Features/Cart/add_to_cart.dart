@@ -13,20 +13,15 @@ import 'package:flutter_typeahead/flutter_typeahead.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:larosa_block/Features/Cart/Models/product_model.dart';
-import 'package:larosa_block/Features/Cart/controllers/cart_controller.dart';
 import 'package:larosa_block/Services/log_service.dart';
-import 'dart:ui';
 import 'package:geolocator/geolocator.dart';
-import 'package:provider/provider.dart';
 import 'package:shimmer/shimmer.dart';
-
 import '../../Components/cart_button.dart';
 import '../../Components/PaymentModals/payment_method_modal.dart';
-import '../../Components/wavy_border_clipper.dart';
 import '../../Services/auth_service.dart';
 import '../../Utils/colors.dart';
 import '../../Utils/links.dart';
+import 'prepare_for_payment.dart';
 
 class AddToCartScreen extends StatefulWidget {
   final String username;
@@ -73,119 +68,15 @@ class _AddToCartScreenState extends State<AddToCartScreen> {
   String estimatedTime = 'Calculating...';
 
   double? _exchangeRate;
-  String _deliveryCostTSh = 'Calculating...';
+  String deliveryCostTSh = 'Calculating...';
 
-  int adults = 1; // Default value for adults
-  int children = 0; // Default value for children
+  int adults = 1;
+  int children = 0;
 
-  DateTime? checkInDate; // Nullable variable for the check-in date
-  DateTime? checkOutDate; // Nullable variable for the check-out date
+  DateTime? checkInDate;
+  DateTime? checkOutDate;
 
   bool get isReservation => widget.reservationType == null;
-  // bool get isReservation =>
-  // widget.reservationType != null && widget.reservationType!.isNotEmpty;
-
-  // Future<void> _getCurrentLocation() async {
-  //   bool serviceEnabled;
-  //   LocationPermission permission;
-
-  //   serviceEnabled = await Geolocator.isLocationServiceEnabled();
-  //   if (!serviceEnabled) {
-  //     return Future.error('Location services are disabled.');
-  //   }
-
-  //   permission = await Geolocator.checkPermission();
-  //   if (permission == LocationPermission.denied) {
-  //     permission = await Geolocator.requestPermission();
-  //     if (permission == LocationPermission.denied) {
-  //       return Future.error('Location permissions are denied');
-  //     }
-  //   }
-
-  //   if (permission == LocationPermission.deniedForever) {
-  //     return Future.error(
-  //         'Location permissions are permanently denied, we cannot request permissions.');
-  //   }
-
-  //   final position = await Geolocator.getCurrentPosition(
-  //       desiredAccuracy: LocationAccuracy.high);
-
-  //   setState(() {
-  //     _currentPosition = position;
-  //   });
-
-  //   // Fetch the full street name using reverse geocoding
-  //   try {
-  //     List<Placemark> placemarks = await placemarkFromCoordinates(
-  //       position.latitude,
-  //       position.longitude,
-  //     );
-  //     if (placemarks.isNotEmpty) {
-  //       Placemark place = placemarks[0];
-  //       setState(() {
-  //         currentStreetName =
-  //             '${place.street}, ${place.locality}, ${place.administrativeArea}, ${place.postalCode}';
-  //       });
-  //     }
-  //   } catch (e) {
-  //     print('Error: $e');
-  //   }
-  // }
-
-  // Future<void> _getCurrentLocation() async {
-  //   bool serviceEnabled;
-  //   LocationPermission permission;
-
-  //   serviceEnabled = await Geolocator.isLocationServiceEnabled();
-  //   if (!serviceEnabled) {
-  //     return Future.error('Location services are disabled.');
-  //   }
-
-  //   permission = await Geolocator.checkPermission();
-  //   if (permission == LocationPermission.denied) {
-  //     permission = await Geolocator.requestPermission();
-  //     if (permission == LocationPermission.denied) {
-  //       return Future.error('Location permissions are denied');
-  //     }
-  //   }
-
-  //   if (permission == LocationPermission.deniedForever) {
-  //     return Future.error(
-  //         'Location permissions are permanently denied, we cannot request permissions.');
-  //   }
-
-  //   final position = await Geolocator.getCurrentPosition(
-  //       desiredAccuracy: LocationAccuracy.high);
-
-  //   setState(() {
-  //     _currentPosition = position;
-  //     latitude = position.latitude;
-  //     longitude = position.longitude;
-  //   });
-
-  //   // Fetch the full street name using reverse geocoding
-  //   try {
-  //     List<Placemark> placemarks = await placemarkFromCoordinates(
-  //       position.latitude,
-  //       position.longitude,
-  //     );
-  //     if (placemarks.isNotEmpty) {
-  //       Placemark place = placemarks[0];
-  //       final streetName =
-  //           '${place.street}, ${place.locality}, ${place.administrativeArea}, ${place.postalCode}';
-
-  //       setState(() {
-  //         currentStreetName = streetName;
-  //         selectedStreetName = streetName;
-
-  //         // Update the destination input field
-  //         _typeAheadController.text = streetName;
-  //       });
-  //     }
-  //   } catch (e) {
-  //     print('Error: $e');
-  //   }
-  // }
 
   Future<void> _getCurrentLocation() async {
     setState(() {
@@ -313,27 +204,6 @@ class _AddToCartScreenState extends State<AddToCartScreen> {
     }
   }
 
-  // Future<List<Map<String, String>>> _getPlaceSuggestions(String input) async {
-  //   final String apiKey = dotenv.env['GOOGLE_MAPS_PLACES_API_KEY']!;
-  //   const String baseUrl =
-  //       'https://maps.googleapis.com/maps/api/place/autocomplete/json';
-  //   final url = '$baseUrl?input=$input&key=$apiKey&components=country:tz';
-
-  //   final response = await http.get(Uri.parse(url));
-  //   if (response.statusCode == 200) {
-  //     final json = jsonDecode(response.body);
-  //     final suggestions = (json['predictions'] as List)
-  //         .map((prediction) => {
-  //               'description': prediction['description'] as String,
-  //               'place_id': prediction['place_id'] as String,
-  //             })
-  //         .toList();
-  //     return suggestions;
-  //   } else {
-  //     throw Exception('Failed to load suggestions');
-  //   }
-  // }
-
   Future<List<Map<String, String>>> _getPlaceSuggestions(String input) async {
     final String apiKey = dotenv.env['GOOGLE_MAPS_PLACES_API_KEY']!;
     const String baseUrl =
@@ -423,17 +293,17 @@ class _AddToCartScreenState extends State<AddToCartScreen> {
           // _convertDeliveryCost();
         } else {
           setState(() {
-            _deliveryCostTSh = 'TZS rate unavailable';
+            deliveryCostTSh = 'TZS rate unavailable';
           });
         }
       } else {
         setState(() {
-          _deliveryCostTSh = 'Error fetching exchange rate';
+          deliveryCostTSh = 'Error fetching exchange rate';
         });
       }
     } catch (e) {
       setState(() {
-        _deliveryCostTSh = 'Error: $e';
+        deliveryCostTSh = 'Error: $e';
       });
     }
   }
@@ -442,36 +312,15 @@ class _AddToCartScreenState extends State<AddToCartScreen> {
     final int minutes =
         int.tryParse(estimatedTime.replaceAll('min', '').trim()) ?? 0;
     if (minutes >= 60) {
-      final int hours = minutes ~/ 60; // Calculate the number of full hours
-      final int remainingMinutes = minutes % 60; // Calculate remaining minutes
+      final int hours = minutes ~/ 60;
+      final int remainingMinutes = minutes % 60;
       return '${hours}h ${remainingMinutes}m';
     } else {
-      return '${minutes}min'; // Return as minutes if less than 60
+      return '${minutes}min';
     }
   }
 
-//   void _convertDeliveryCost() {
-//   if (_exchangeRate != null && double.tryParse(deliveryCost) != null) {
-//     final double parsedDeliveryCost = double.parse(deliveryCost);
-
-//     final double deliveryCostTSh = parsedDeliveryCost * _exchangeRate!;
-
-//     setState(() {
-//       _deliveryCostTSh = NumberFormat.currency(
-//         locale: 'sw_TZ',
-//         symbol: 'TSh ',
-//         decimalDigits: 2,
-//       ).format(deliveryCostTSh);
-//       print('Converted Delivery Cost: $deliveryCostTSh');
-//       print('Exchange Rate: $_exchangeRate');
-//     });
-//   } else {
-//     print('Error: Invalid deliveryCost or exchange rate');
-//   }
-// }
-
   final TextEditingController _fullNameController = TextEditingController();
-  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   String? _errorMessage;
 
   void _validateAndSetFullName(String value) {
@@ -1082,68 +931,6 @@ class _AddToCartScreenState extends State<AddToCartScreen> {
 
                 const Gap(10),
 
-                // if (latitude != null &&
-                //     longitude != null &&
-                //     selectedStreetName != null)
-                //   Table(
-                //     border: TableBorder.all(color: Colors.purple, width: 1),
-                //     children: [
-                //       const TableRow(
-                //         children: [
-                //           Padding(
-                //             padding: EdgeInsets.all(8.0),
-                //             child: Text(
-                //               'Delivery Destination',
-                //               style: TextStyle(fontWeight: FontWeight.bold),
-                //             ),
-                //           ),
-                //           Padding(
-                //             padding: EdgeInsets.all(8.0),
-                //             child: Text('Approx 2300, 12 Oct 2024'),
-                //           ),
-                //         ],
-                //       ),
-                //       TableRow(
-                //         children: [
-                //           const Padding(
-                //             padding: EdgeInsets.all(8.0),
-                //             child: Text('Latitude'),
-                //           ),
-                //           Padding(
-                //             padding: const EdgeInsets.all(8.0),
-                //             child: Text('$latitude'),
-                //           ),
-                //         ],
-                //       ),
-                //       TableRow(
-                //         children: [
-                //           const Padding(
-                //             padding: EdgeInsets.all(8.0),
-                //             child: Text('Longitude'),
-                //           ),
-                //           Padding(
-                //             padding: const EdgeInsets.all(8.0),
-                //             child: Text('$longitude'),
-                //           ),
-                //         ],
-                //       ),
-                //       TableRow(
-                //         children: [
-                //           const Padding(
-                //             padding: EdgeInsets.all(8.0),
-                //             child: Text('Street Name'),
-                //           ),
-                //           Padding(
-                //             padding: const EdgeInsets.all(8.0),
-                //             child: Text('$selectedStreetName'),
-                //           ),
-                //         ],
-                //       ),
-                //     ],
-                //   ),
-
-                // const Gap(5),
-
                 const Divider(),
                 const Gap(0),
                 if (isReservation)
@@ -1191,89 +978,7 @@ class _AddToCartScreenState extends State<AddToCartScreen> {
                       ),
                     ],
                   ),
-
                 const Gap(10),
-                // TypeAheadField<Map<String, String>>(
-                //   suggestionsCallback: _getPlaceSuggestions,
-                //   itemBuilder: (context, Map<String, String> suggestion) {
-                //     return ListTile(
-                //       title: Text(suggestion['description']!),
-                //     );
-                //   },
-                //   onSelected: (Map<String, String> suggestion) async {
-                //     // Automatically fill the form field with the selected suggestion
-                //     _typeAheadController.text = suggestion['description']!;
-                //     final placeId = suggestion['place_id']!;
-                //     await _getPlaceDetails(placeId);
-                //   },
-                //   direction: VerticalDirection.up,
-                //   builder: (context, controller, focusNode) {
-                //     return TextField(
-                //       controller: controller,
-                //       focusNode: focusNode,
-                //       decoration: const InputDecoration(
-                //         labelText: 'Enter delivery destination',
-                //         border: OutlineInputBorder(),
-                //         prefixIcon: Icon(Iconsax.location),
-                //       ),
-                //     );
-                //   },
-                //   controller:
-                //       _typeAheadController, // Make sure to assign the controller here
-                // ),
-
-                // TypeAheadField<Map<String, String>>(
-                //   suggestionsCallback: _getPlaceSuggestions,
-                //   itemBuilder: (context, Map<String, String> suggestion) {
-                //     // Display the suggestion or fallback message
-                //     if (suggestion['place_id'] == '') {
-                //       // Center the fallback error message
-                //       return Center(
-                //         child: Padding(
-                //           padding: const EdgeInsets.symmetric(vertical: 10.0),
-                //           child: Text(
-                //             suggestion['description']!,
-                //             style: const TextStyle(
-                //               fontSize: 14,
-                //               color: Colors.grey,
-                //               fontStyle: FontStyle.italic,
-                //             ),
-                //             textAlign: TextAlign.center,
-                //           ),
-                //         ),
-                //       );
-                //     }
-                //     // Display normal suggestions
-                //     return ListTile(
-                //       title: Text(suggestion['description']!),
-                //     );
-                //   },
-                //   onSelected: (Map<String, String> suggestion) async {
-                //     if (suggestion['place_id'] != '') {
-                //       // Automatically fill the form field with the selected suggestion
-                //       _typeAheadController.text = suggestion['description']!;
-                //       final placeId = suggestion['place_id']!;
-                //       await _getPlaceDetails(placeId);
-                //     } else {
-                //       // Log invalid selection or take no action
-                //       LogService.logInfo(
-                //           'Invalid selection: ${suggestion['description']}');
-                //     }
-                //   },
-                //   direction: VerticalDirection.up,
-                //   builder: (context, controller, focusNode) {
-                //     return TextField(
-                //       controller: controller,
-                //       focusNode: focusNode,
-                //       decoration: const InputDecoration(
-                //         labelText: 'Enter delivery destination',
-                //         border: OutlineInputBorder(),
-                //         prefixIcon: Icon(Iconsax.location),
-                //       ),
-                //     );
-                //   },
-                //   controller: _typeAheadController,
-                // ),
                 if (isReservation)
                   TypeAheadField<Map<String, String>>(
                     suggestionsCallback: _getPlaceSuggestions,
@@ -1352,39 +1057,6 @@ class _AddToCartScreenState extends State<AddToCartScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    // Expanded(
-                    //   child: buildWideGradientButton(
-                    //     onTap: () {
-                    //       showModalBottomSheet(
-                    //         context: context,
-                    //         shape: const RoundedRectangleBorder(
-                    //           borderRadius: BorderRadius.vertical(
-                    //             top: Radius.circular(20),
-                    //           ),
-                    //         ),
-                    //         isScrollControlled: true,
-                    //         builder: (BuildContext context) {
-                    //           return FractionallySizedBox(
-                    //             heightFactor: 0.95,
-                    //             child: PaymentMethodModal(
-                    //               currentPosition: _currentPosition,
-                    //               deliveryDestination: selectedStreetName,
-                    //               deliveryLatitude: latitude,
-                    //               deliveryLongitude: longitude,
-                    //               totalPrice: widget.price * itemCount,
-                    //               quantity: itemCount,
-                    //               postId: widget.postId,
-                    //             ),
-                    //           );
-                    //         },
-                    //       );
-                    //     },
-                    //     label: 'Buy Now',
-                    //     startColor: LarosaColors.secondary,
-                    //     endColor: LarosaColors.purple,
-                    //   ),
-                    // ),
-
                     Expanded(
                       child: deliveryCost.contains('Tsh')
                           ? buildWideGradientButton(
@@ -1484,33 +1156,9 @@ class _AddToCartScreenState extends State<AddToCartScreen> {
                               ),
                             ),
                     ),
-
                     const SizedBox(
-                        width: 70), // Add some spacing between the buttons
-                    // Expanded(
-                    //   child: buildWideGradientButton(
-                    //     onTap: () {
-                    //       // Handle add to cart
-
-                    //       Product newProduct = Product(
-                    //         id: '2',
-                    //         imageUrl: '',
-                    //         name: 'Product Name',
-                    //         price: 2500,
-                    //         shortDescription: 'Some description',
-                    //         quantity: 20,
-                    //       );
-
-                    //       cartNotifier.addProduct(newProduct);
-
-                    //       context.push('/maincart');
-                    //     },
-                    //     label: 'Add to Cart',
-                    //     startColor: LarosaColors.secondary,
-                    //     endColor: LarosaColors.purple,
-                    //   ),
-                    // ),
-
+                      width: 70,
+                    ),
                     Expanded(
                       child: deliveryCost.contains('Tsh')
                           ? buildWideGradientButton(
@@ -1551,8 +1199,9 @@ class _AddToCartScreenState extends State<AddToCartScreen> {
                                     context.push('/maincart');
                                   } else {
                                     ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(content: Text('Cannot Add Item to Cart! Please Try again'))
-                                    );
+                                        const SnackBar(
+                                            content: Text(
+                                                'Cannot Add Item to Cart! Please Try again')));
                                   }
                                 } catch (error) {
                                   LogService.logError(
@@ -1581,16 +1230,7 @@ class _AddToCartScreenState extends State<AddToCartScreen> {
 
   Widget buildQuantityAdjustmentRow() {
     return Container(
-      decoration: const BoxDecoration(
-          // gradient: LinearGradient(
-          //   colors: [
-          //     LarosaColors.secondary,
-          //     LarosaColors.secondary,
-          //   ],
-          //   begin: Alignment.topLeft,
-          //   end: Alignment.bottomRight,
-          // ),
-          ),
+      decoration: const BoxDecoration(),
       padding: const EdgeInsets.only(top: 8.0, bottom: 10),
       child: Column(
         children: [
@@ -1779,39 +1419,4 @@ class _AddToCartScreenState extends State<AddToCartScreen> {
   }
 }
 
-Widget fullNameInput({
-  required TextEditingController controller,
-  required Function(String) onChanged,
-  String? errorMessage,
-}) {
-  return Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      const Text(
-        "Full Name",
-        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-      ),
-      const SizedBox(height: 8),
-      TextField(
-        controller: controller,
-        decoration: InputDecoration(
-          hintText: "Enter your full name",
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(8),
-          ),
-          prefixIcon: const Icon(Icons.person),
-          // errorText: errorMessage,
-        ),
-        onChanged: onChanged,
-      ),
-      if (errorMessage != null)
-        Padding(
-          padding: const EdgeInsets.only(top: 8.0),
-          child: Text(
-            errorMessage,
-            style: const TextStyle(color: Colors.red, fontSize: 12),
-          ),
-        ),
-    ],
-  );
-}
+

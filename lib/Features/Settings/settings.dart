@@ -56,71 +56,105 @@ class SettingsScreen extends StatelessWidget {
             ),
             
             const Gap(20),
+
             InkWell(
               onTap: () {},
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 8.0),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.surface,
+                  borderRadius: BorderRadius.circular(8),
+                ),
                 child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text('Change Password'),
-                        Text(
-                          'A verification request will be sent to you',
-                          style: TextStyle(
-                            fontSize: 10,
-                          ),
-                        )
-                      ],
-                    ),
-                    IconButton(
-                      onPressed: () {},
-                      icon: const Icon(
-                        Iconsax.lock,
-                        color: Colors.blue,
+                    const Icon(Icons.lock, color: Colors.blue),
+                    const SizedBox(width: 12),
+                    const Text(
+                      'Change Password',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
                       ),
+                    ),
+                    const Spacer(),
+                    Icon(
+                      Icons.chevron_right,
+                      color: Colors.grey[600],
                     ),
                   ],
                 ),
               ),
             ),
+
+            
             const Gap(20),
+            // InkWell(
+            //   onTap: () {
+            //     context.push('/verification');
+            //   },
+            //   child: Padding(
+            //     padding: const EdgeInsets.symmetric(horizontal: 8.0),
+            //     child: Row(
+            //       mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            //       children: [
+            //         const Column(
+            //           crossAxisAlignment: CrossAxisAlignment.start,
+            //           children: [
+            //             Text('Request Verification'),
+            //             Text(
+            //               'Stand Out from Others with a verification badge',
+            //               style: TextStyle(
+            //                 fontSize: 10,
+            //               ),
+            //             )
+            //           ],
+            //         ),
+            //         IconButton(
+            //           onPressed: () async {
+            //             //Get.to(const BusinessVerificationScreen());
+            //           },
+            //           icon: const Icon(
+            //             Iconsax.verify5,
+            //             color: Colors.blue,
+            //           ),
+            //         ),
+            //       ],
+            //     ),
+            //   ),
+            // ),
+
             InkWell(
               onTap: () {
                 context.push('/verification');
               },
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 8.0),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.surface,
+                  borderRadius: BorderRadius.circular(8),
+                ),
                 child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text('Request Verification'),
-                        Text(
-                          'Stand Out from Others with a verification badge',
-                          style: TextStyle(
-                            fontSize: 10,
-                          ),
-                        )
-                      ],
-                    ),
-                    IconButton(
-                      onPressed: () async {
-                        //Get.to(const BusinessVerificationScreen());
-                      },
-                      icon: const Icon(
-                        Iconsax.verify5,
-                        color: Colors.blue,
+                    const Icon(Iconsax.verify5, color: Colors.blue),
+                    const SizedBox(width: 12),
+                    const Text(
+                      'Request Verification',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
                       ),
+                    ),
+                    const Spacer(),
+                    Icon(
+                      Icons.chevron_right,
+                      color: Colors.grey[600],
                     ),
                   ],
                 ),
               ),
             ),
+
+            
             const Gap(20),
             InkWell(
               onTap: () async {

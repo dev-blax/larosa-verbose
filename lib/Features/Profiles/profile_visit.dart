@@ -25,6 +25,7 @@ import 'package:share_plus/share_plus.dart';
 import 'package:shimmer/shimmer.dart';
 
 import 'Components/block_user.dart';
+import 'Components/report_user.dart';
 
 class ProfileVisitScreen extends StatefulWidget {
   final bool isBusiness;
@@ -161,19 +162,12 @@ class _ProfileVisitScreenState extends State<ProfileVisitScreen> {
           _followers = profile!['followers'];
         });
 
-        //await _isFollowingFuture();
-
         await _fetchUserPosts();
 
         return;
       }
 
       LogService.logFatal('response ${response.statusCode}');
-
-      // Get.snackbar(
-      //   'Explore Larosa',
-      //   response.statusCode.toString(),
-      // );
     } catch (e) {
       LogService.logError('some error: $e');
     }
@@ -878,9 +872,20 @@ class _ProfileVisitScreenState extends State<ProfileVisitScreen> {
                                                 title: const Text('Block User'),
                                                 onTap: () {
                                                   Navigator.pop(context);
-                                                  showModalBottomSheet(
+                                                  showDialog(
                                                     context: context,
-                                                    builder: (context) => BlockUserComponent(profileId: widget.profileId,),
+                                                    builder: (context) => Dialog(child: BlockUserComponent(profileId: widget.profileId,)),
+                                                  );
+                                                },
+                                              ),
+                                              ListTile(
+                                                leading: const Icon(Icons.report),
+                                                title: const Text('Report User'),
+                                                onTap: () {
+                                                  Navigator.pop(context);
+                                                  showDialog(
+                                                    context: context,
+                                                    builder: (context) => Dialog(child: ReportUserComponent(reportProfileId: widget.profileId,)),
                                                   );
                                                 },
                                               ),

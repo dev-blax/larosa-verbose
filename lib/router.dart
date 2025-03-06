@@ -13,6 +13,7 @@ import 'package:larosa_block/Features/Delivery/new_delivery.dart';
 import 'package:larosa_block/Features/Feeds/business_post.dart';
 import 'package:larosa_block/Features/Feeds/camera_content.dart';
 import 'package:larosa_block/Features/Feeds/home_feeds.dart';
+import 'package:larosa_block/Features/Feeds/old_home_feeds.dart';
 import 'package:larosa_block/Features/Feeds/profile_posts.dart';
 import 'package:larosa_block/Features/Onboarding/onboarding_screen.dart';
 import 'package:larosa_block/Features/Profiles/profile_edit.dart';
@@ -67,7 +68,7 @@ class RouterService {
       GoRoute(
         name: 'home',
         path: '/',
-        builder: (context, state) => const HomeFeedsScreen(),
+        builder: (context, state) => const OldHomeFeedsScreen(),
       ),
       GoRoute(
         name: 'homeprofile',

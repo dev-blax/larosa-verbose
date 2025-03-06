@@ -1,169 +1,165 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'package:larosa_block/Services/auth_service.dart';
+import 'package:larosa_block/Features/Feeds/Models/cached_post.dart';
+import 'package:larosa_block/Services/dio_service.dart';
+import 'package:larosa_block/Services/hive_service.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 import 'package:larosa_block/Services/log_service.dart';
-import 'package:larosa_block/Utils/links.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import '../../../Utils/links.dart';
 
 class HomeFeedsController extends ChangeNotifier {
-  List<dynamic> posts = [];
-  ValueNotifier<bool> isLoading = ValueNotifier(false);
-  final ScrollController scrollController = ScrollController();
-  final Map<int, bool> _postPlayStates = {}; // Track play/pause state of each post
-  bool isFetchingMore = false;
-  int currentPage = 0; // Start from 0 as you mentioned
-  final int itemsPerPage = 10;
+  final DioService _dioService = DioService();
+  final HiveService _hiveService = HiveService();
+  static const String _boxName = 'cached_posts';
+  
+  List<dynamic> _posts = [];
+  bool _isLoading = false;
+  bool _hasError = false;
+  bool _hasMore = true;
+  int _currentPage = 1;
+  final int _itemsPerPage = 3;
+  bool _isOffline = false;
+
+  List<dynamic> get posts => _posts;
+  bool get isLoading => _isLoading;
+  bool get hasError => _hasError;
+  bool get hasMore => _hasMore;
+  bool get isOffline => _isOffline;
 
   HomeFeedsController() {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _restoreScrollPosition();
-      if (posts.isEmpty) {
-        fetchPosts(false);
-      }
-    });
-
-    // Listen for scroll events to detect when the user reaches the bottom
-    scrollController.addListener(() {
-      if (scrollController.position.pixels == scrollController.position.maxScrollExtent) {
-        fetchMorePosts();
-      }
-    });
+    _initConnectivityListener();
+    _initHive();
   }
 
-  Future<void> fetchPosts(bool refresh) async {
-    if (refresh) {
-      currentPage = 0; // Reset to 0 when refreshing
-      LogService.logError('clearing');
-      posts.clear(); // Clear existing posts when refreshing
+  Future<void> _initHive() async {
+    if (!Hive.isAdapterRegistered(1)) {
+      Hive.registerAdapter(CachedPostAdapter());
     }
-    try {
-      isLoading.value = true;
-      final int? profileId = AuthService.getProfileId();
-      await _fetchPostsFromServer(profileId);
-    } catch (e) {
-      await _loadPostsFromLocalStorage();
-    } finally {
-      isLoading.value = false;
-      notifyListeners();
-    }
+    await _hiveService.openBox<CachedPost>(_boxName);
   }
 
-  Future<void> fetchMorePosts() async {
-    if (isFetchingMore) return;
-
-    try {
-      isFetchingMore = true;
-      final int? profileId = AuthService.getProfileId();
-      await _fetchPostsFromServer(profileId, isPaginated: true);
-    } catch (e) {
-      LogService.logError('Error fetching more posts: $e');
-    } finally {
-      isFetchingMore = false;
-      notifyListeners();
-    }
-  }
-
-  Future<void> _fetchPostsFromServer(int? profileId, {bool isPaginated = false}) async {
-  String token = AuthService.getToken();
-  Map<String, String> headers = {
-    "Content-Type": "application/json",
-    "Access-Control-Allow-Origin": "*",
-    'Authorization': token.isNotEmpty ? 'Bearer $token' : '',
-  };
-
-  var url = Uri.https(LarosaLinks.nakedBaseUrl, LarosaLinks.allFeeds);
-
-  Map<String, dynamic> body = {
-    'countryId': '1',
-    'page': currentPage.toString(),
-    'itemsPerPage': itemsPerPage.toString(),
-  };
-
-  if (profileId != null) {
-    body['profileId'] = profileId.toString();
-  }
-
-  try {
-    final response = await http.post(
-      url,
-      body: jsonEncode(body),
-      headers: headers,
-    );
-
-    if (response.statusCode == 200) {
-      List<dynamic> data = json.decode(response.body);
-      if (isPaginated) {
-        posts.addAll(data);
-        currentPage++;
-      } else {
-        posts = data;
-      }
-
-      await _savePostsToLocalStorage(posts);
-      notifyListeners();
-    } else if (response.statusCode == 302 || response.statusCode == 403 || response.statusCode == 401) {
-      bool refreshed = await AuthService.booleanRefreshToken();
-
-      if(refreshed){
-        await _fetchPostsFromServer(profileId, isPaginated: isPaginated);
-      }else{
-        throw Exception('Failed to refresh token');
-        //await HelperFunctions.logout();
-      }
+  void _initConnectivityListener() {
+    Connectivity().onConnectivityChanged.listen((event) async {
+      final wasOffline = _isOffline;
+      _isOffline = event == ConnectivityResult.none;
       
-    } else {
-      throw Exception('Failed to load posts');
+      // If we're coming back online and had been offline, try to fetch fresh content
+      if (wasOffline && !_isOffline) {
+        await refreshPosts();
+      }
+      notifyListeners();
+    });
+  }
+
+  Future<void> fetchPosts({bool refresh = false}) async {
+    if (_isLoading) return;
+    
+    if (refresh) {
+      _currentPage = 1;
+      _hasMore = true;
+      _posts = [];
+    } else if (!_hasMore) {
+      return;
     }
-  } catch (e) {
-    LogService.logError('Error fetching posts: $e');
-    throw Exception('Failed to load posts');
-  }
-}
 
+    _isLoading = true;
+    _hasError = false;
+    notifyListeners();
 
-  Future<void> _savePostsToLocalStorage(List<dynamic> data) async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    await prefs.setString('posts', jsonEncode(data));
-  }
+    try {
+      final connectivityResult = await Connectivity().checkConnectivity();
+      _isOffline = connectivityResult == ConnectivityResult.none;
 
-  Future<void> _loadPostsFromLocalStorage() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    String? postsString = prefs.getString('posts');
-    if (postsString != null) {
-      posts = jsonDecode(postsString);
+      if (_isOffline) {
+        LogService.logInfo('we are offline');
+        // Load from Hive cache if offline
+        final box = await _hiveService.openBox<CachedPost>(_boxName);
+        final cachedPosts = box.values
+            .skip((_currentPage - 1) * _itemsPerPage)
+            .take(_itemsPerPage)
+            .map((post) => post.toJson())
+            .toList();
+        
+        if (refresh) {
+          _posts = cachedPosts;
+        } else {
+          _posts.addAll(cachedPosts);
+        }
+        
+        _hasMore = cachedPosts.length == _itemsPerPage;
+      } else {
+        // Load from network if online
+        final response = await _dioService.dio.post(
+          '${LarosaLinks.baseurl}/feeds/fetch',
+          data: {
+            'countryId': 1,
+            'page': _currentPage,
+            'itemsPerPage': _itemsPerPage,
+          },
+        );
+
+        if (response.statusCode == 200) {
+          final newPosts = response.data as List;          
+          
+          // Cache the new posts in Hive
+          final box = await _hiveService.openBox<CachedPost>(_boxName);
+          for (var post in newPosts) {
+            final cachedPost = CachedPost.fromJson(post);
+            await box.put(cachedPost.id, cachedPost);
+          }
+          
+          if (refresh) {
+            _posts = newPosts;
+          } else {
+            _posts.addAll(newPosts);
+          }
+          
+          _hasMore = newPosts.length == _itemsPerPage;
+        } else {
+          LogService.logError('Failed to fetch posts: ${response.statusCode}');
+        }
+      }
+
+      _currentPage++;
+    } catch (e) {
+      _hasError = true;
+      // If error occurs and we're not offline, try loading from cache
+      if (!_isOffline) {
+        try {
+          final box = await _hiveService.openBox<CachedPost>(_boxName);
+          final cachedPosts = box.values
+              .skip((_currentPage - 1) * _itemsPerPage)
+              .take(_itemsPerPage)
+              .map((post) => post.toJson())
+              .toList();
+          
+          if (refresh) {
+            _posts = cachedPosts;
+          } else {
+            _posts.addAll(cachedPosts);
+          }
+          
+          _hasMore = cachedPosts.length == _itemsPerPage;
+          _hasError = false; // Clear error if we successfully loaded from cache
+        } catch (cacheError) {
+          // If both network and cache fail, keep error state
+          _hasError = true;
+        }
+      }
+    } finally {
+      _isLoading = false;
       notifyListeners();
     }
   }
 
-  Future<void> _saveScrollPosition() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    await prefs.setDouble('scrollPosition', scrollController.offset);
-  }
-
-  Future<void> _restoreScrollPosition() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    double? scrollPosition = prefs.getDouble('scrollPosition');
-    if (scrollPosition != null) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        scrollController.jumpTo(scrollPosition);
-      });
+  Future<void> refreshPosts() async {
+    // Clear old cache before refreshing
+    final box = await _hiveService.openBox<CachedPost>(_boxName);
+    final thirtyDaysAgo = DateTime.now().subtract(const Duration(days: 30)).millisecondsSinceEpoch;
+    final oldPosts = box.values.where((post) => post.timestamp < thirtyDaysAgo);
+    for (var post in oldPosts) {
+      await box.delete(post.id);
     }
-  }
-
-  void updatePostState(int postId, bool isPlaying) {
-    _postPlayStates[postId] = isPlaying;
-    notifyListeners();
-  }
-
-  // Manage the play/pause state of posts
-  bool getPostState(int postId) {
-    return _postPlayStates[postId] ?? false; // Default to paused if not set
-  }
-
-  @override
-  void dispose() {
-    _saveScrollPosition();
-    super.dispose();
+    return fetchPosts(refresh: true);
   }
 }

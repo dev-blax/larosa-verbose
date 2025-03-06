@@ -1,5 +1,9 @@
 class SvgIconsPaths {
   static const String addBold = 'assets/svg_icons/addBold.svg';
+  static const String twitterIcon = 'assets/svg_icons/HugeiconsNewTwitter.svg';
+  static const String appleIcon = 'assets/svg_icons/DeviconApple.svg';
+  static const String googleIcon = 'assets/svg_icons/DeviconGoogle.svg';
+  static const String tikTokIcon = 'assets/svg_icons/IconoirTiktokSolid.svg';
 
   static const String galleryCirle = 'assets/svg_icons/gallery_circle.svg';
 
