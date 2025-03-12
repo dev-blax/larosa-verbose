@@ -26,6 +26,7 @@ class SettingsScreen extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Gap(20),
+
             InkWell(
               onTap: () => context.pushNamed('blockedList'),
               child: Container(
@@ -67,13 +68,14 @@ class SettingsScreen extends StatelessWidget {
                 ),
                 child: Row(
                   children: [
-                    const Icon(Icons.lock, color: Colors.blue),
+                    const Icon(Icons.lock, color: Colors.grey),
                     const SizedBox(width: 12),
                     const Text(
                       'Change Password',
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w500,
+                        color: Colors.grey,
                       ),
                     ),
                     const Spacer(),
@@ -88,40 +90,6 @@ class SettingsScreen extends StatelessWidget {
 
             
             const Gap(20),
-            // InkWell(
-            //   onTap: () {
-            //     context.push('/verification');
-            //   },
-            //   child: Padding(
-            //     padding: const EdgeInsets.symmetric(horizontal: 8.0),
-            //     child: Row(
-            //       mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            //       children: [
-            //         const Column(
-            //           crossAxisAlignment: CrossAxisAlignment.start,
-            //           children: [
-            //             Text('Request Verification'),
-            //             Text(
-            //               'Stand Out from Others with a verification badge',
-            //               style: TextStyle(
-            //                 fontSize: 10,
-            //               ),
-            //             )
-            //           ],
-            //         ),
-            //         IconButton(
-            //           onPressed: () async {
-            //             //Get.to(const BusinessVerificationScreen());
-            //           },
-            //           icon: const Icon(
-            //             Iconsax.verify5,
-            //             color: Colors.blue,
-            //           ),
-            //         ),
-            //       ],
-            //     ),
-            //   ),
-            // ),
 
             InkWell(
               onTap: () {
@@ -165,36 +133,27 @@ class SettingsScreen extends StatelessWidget {
 
                 if (context.mounted) HelperFunctions.logout(context);
               },
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 8.0),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.surface,
+                  borderRadius: BorderRadius.circular(8),
+                ),
                 child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    InkWell(
-                      onTap: () {
-                        HelperFunctions.logout(context);
-                      },
-                      child: const Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text('Logout'),
-                          Text(
-                            'Current Session data will be destroyed',
-                            style: TextStyle(
-                              fontSize: 10,
-                            ),
-                          ),
-                        ],
+                    const Icon(Iconsax.logout_1, color: Colors.orange),
+                    const SizedBox(width: 12),
+                    Text(
+                      'Logout',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
                       ),
                     ),
-                    IconButton(
-                      onPressed: () async {
-                        HelperFunctions.logout(context);
-                      },
-                      icon: const Icon(
-                        Iconsax.logout_1,
-                        color: Colors.orange,
-                      ),
+                    const Spacer(),
+                    Icon(
+                      Icons.chevron_right,
+                      color: Colors.grey[600],
                     ),
                   ],
                 ),
@@ -204,29 +163,28 @@ class SettingsScreen extends StatelessWidget {
             
             InkWell(
               onTap: () {},
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 8.0),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.surface,
+                  borderRadius: BorderRadius.circular(8),
+                ),
                 child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text('Delete Account'),
-                        Text(
-                          'All of your data on our platform will be deleted',
-                          style: TextStyle(
-                            fontSize: 10,
-                          ),
-                        )
-                      ],
-                    ),
-                    IconButton(
-                      onPressed: () {},
-                      icon: const Icon(
-                        Iconsax.trash,
-                        color: Colors.red,
+                    const Icon(Iconsax.trash, color: Colors.grey),
+                    const SizedBox(width: 12),
+                    Text(
+                      'Delete Account',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
+                        color: Colors.grey,
                       ),
+                    ),
+                    const Spacer(),
+                    Icon(
+                      Icons.chevron_right,
+                      color: Colors.grey[600],
                     ),
                   ],
                 ),

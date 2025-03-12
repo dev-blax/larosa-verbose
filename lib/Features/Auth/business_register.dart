@@ -1,5 +1,7 @@
 import 'dart:convert';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter/cupertino.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:gap/gap.dart';
@@ -12,6 +14,7 @@ import 'package:larosa_block/Services/log_service.dart';
 import 'package:larosa_block/Utils/helpers.dart';
 import 'package:larosa_block/Utils/links.dart';
 import 'package:provider/provider.dart';
+import '../../Utils/colors.dart';
 import '../Feeds/Controllers/business_post_controller.dart';
 
 class BusinessRegisterScreen extends StatefulWidget {
@@ -31,6 +34,8 @@ class _BusinessRegisterScreenState extends State<BusinessRegisterScreen> {
   bool isSaving = false;
   int businessCategoryId = 0;
   List<dynamic> _countries = [];
+  bool acceptedTerms = false;
+  bool acceptedPrivacy = false;
 
   // initState
   @override
@@ -392,48 +397,159 @@ class _BusinessRegisterScreenState extends State<BusinessRegisterScreen> {
                     },
                   ),
                   const Gap(30),
-                  Container(
-                    width: MediaQuery.of(context).size.width,
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: [Color(0xff34a4f9), Color(0xff0a1282)],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
+                  Row(
+                    children: [
+                      Checkbox(
+                        value: acceptedTerms,
+                        onChanged: (value) {
+                          setState(() {
+                            acceptedTerms = value ?? false;
+                          });
+                        },
+                        checkColor: Colors.white,
+                        fillColor: MaterialStateProperty.resolveWith<Color>(
+                          (Set<MaterialState> states) {
+                            return LarosaColors.primary;
+                          },
+                        ),
                       ),
-                      borderRadius: BorderRadius.circular(25),
-                    ),
-                    height: 65,
-                    child: FilledButton(
-                      style: FilledButton.styleFrom(
-                        elevation: 0,
-                        backgroundColor: Colors.transparent,
-                      ),
-                      onPressed: () async {
-                        if (_formKey.currentState!.validate() && !isSaving) {
-                          await _saveBusinessAccount();
-                        }
-
-                        else {
-                          // snackbar
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Please fill all the fields')),
-                          );
-                        }
-                      },
-                      child: isSaving
-                          ? const SpinKitThreeBounce(
-                              color: Colors.white,
-                            )
-                          : const Text(
-                              'Create Business Account',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.w700,
-                                fontSize: 18,
-                              ),
+                      Expanded(
+                        child: GestureDetector(
+                          onTap: () {
+                            setState(() {
+                              acceptedTerms = !acceptedTerms;
+                            });
+                          },
+                          child: RichText(
+                            text: TextSpan(
+                              text: 'I accept the ',
+                              style: const TextStyle(color: Colors.white),
+                              children: [
+                                TextSpan(
+                                  text: 'Terms of Service',
+                                  style: const TextStyle(
+                                    color: Colors.blue,
+                                    decoration: TextDecoration.underline,
+                                  ),
+                                  recognizer: TapGestureRecognizer()
+                                    ..onTap = () {
+                                      HelperFunctions.launchURL(
+                                          'https://explore-larosa.serialsoftpro.com/terms',
+                                          context);
+                                    },
+                                ),
+                              ],
                             ),
-                    ),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
+                  Row(
+                    children: [
+                      Checkbox(
+                        value: acceptedPrivacy,
+                        onChanged: (value) {
+                          setState(() {
+                            acceptedPrivacy = value ?? false;
+                          });
+                        },
+                        checkColor: Colors.white,
+                        fillColor: WidgetStateProperty.resolveWith<Color>(
+                          (Set<WidgetState> states) {
+                            return LarosaColors.primary;
+                          },
+                        ),
+                      ),
+                      Expanded(
+                        child: GestureDetector(
+                          onTap: () {
+                            setState(() {
+                              acceptedPrivacy = !acceptedPrivacy;
+                            });
+                          },
+                          child: RichText(
+                            text: TextSpan(
+                              text: 'I accept the ',
+                              style: const TextStyle(color: Colors.white),
+                              children: [
+                                TextSpan(
+                                  text: 'Privacy Policy',
+                                  style: const TextStyle(
+                                    color: Colors.blue,
+                                    decoration: TextDecoration.underline,
+                                  ),
+                                  recognizer: TapGestureRecognizer()
+                                    ..onTap = () {
+                                      HelperFunctions.launchURL(
+                                          'https://explore-larosa.serialsoftpro.com/privacy',
+                                          context);
+                                    },
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const Gap(10),
+                  (acceptedTerms && acceptedPrivacy)
+                      ? (!isSaving
+                          ? Container(
+                              width: MediaQuery.of(context).size.width,
+                              decoration: BoxDecoration(
+                                gradient: const LinearGradient(
+                                  colors: [
+                                    Color(0xff34a4f9),
+                                    Color(0xff0a1282)
+                                  ],
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                ),
+                                borderRadius: BorderRadius.circular(25),
+                              ),
+                              height: 65,
+                              child: FilledButton(
+                                style: FilledButton.styleFrom(
+                                  elevation: 0,
+                                  backgroundColor: Colors.transparent,
+                                ),
+                                onPressed: () async {
+                                  if (_formKey.currentState!.validate() &&
+                                      !isSaving) {
+                                    await _saveBusinessAccount();
+                                  } else {
+                                    // snackbar
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                          content: Text(
+                                              'Please fill all the fields')),
+                                    );
+                                  }
+                                },
+                                child: isSaving
+                                    ? const SpinKitThreeBounce(
+                                        color: Colors.white,
+                                      )
+                                    : const Text(
+                                        'Create Business Account',
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.w700,
+                                          fontSize: 18,
+                                        ),
+                                      ),
+                              ),
+                            )
+                          : const CupertinoActivityIndicator(
+                              radius: 15,
+                              color: Colors.white,
+                            ))
+                      : const Text(
+                          'Please accept the terms and privacy policy to continue',
+                          style: TextStyle(color: Colors.white),
+                        ),
                 ],
               ),
             ),

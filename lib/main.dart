@@ -4,6 +4,8 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:larosa_block/Services/hive_service.dart';
 import 'package:larosa_block/app.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+
+import 'firebase_options.dart';
 bool connectedToSocket = false;
 
 Future<void> main() async {
@@ -14,7 +16,9 @@ Future<void> main() async {
     DeviceOrientation.portraitDown,
   ]);
 
-  await Firebase.initializeApp();
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
 
   // Initialize Hive for local storage
   HiveService hiveService = HiveService();

@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:carousel_slider/carousel_slider.dart';
@@ -89,20 +90,16 @@ class _PostComponentState extends State<PostComponent> {
       );
     } else {
       // Image
-      return Image.network(
-        mediaPath,
-        fit: BoxFit.cover,
-        errorBuilder: (context, error, stackTrace) {
-          return const Center(
-            child: Icon(Icons.error_outline, color: Colors.red),
-          );
-        },
-        loadingBuilder: (context, child, loadingProgress) {
-          if (loadingProgress == null) return child;
-          return Center(
-            child: CupertinoActivityIndicator(),
-          );
-        },
+      return CachedNetworkImage(
+        imageUrl: mediaPath,
+        fit: BoxFit.contain,
+        width: double.infinity,
+        errorWidget: (context, error, stackTrace) => const Center(
+          child: Icon(Icons.error_outline, color: Colors.red),
+        ),
+        placeholder: (context, url) => const Center(
+          child: CupertinoActivityIndicator(),
+        ),
       );
     }
   }

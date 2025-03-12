@@ -84,10 +84,14 @@ class _OauthButtonsState extends State<OauthButtons> {
               color: Colors.white,
               child: Padding(
                 padding: const EdgeInsets.all(5.0),
-                child: SvgPicture.asset(SvgIconsPaths.tikTokIcon,
-                    height: 40,
-                    colorFilter:
-                        const ColorFilter.mode(Colors.grey, BlendMode.srcIn)),
+                child: SvgPicture.asset(
+                  SvgIconsPaths.tikTokIcon,
+                  height: 40,
+                  colorFilter: const ColorFilter.mode(
+                    Colors.grey,
+                    BlendMode.srcIn,
+                  ),
+                ),
               ),
             ),
           ),
@@ -113,10 +117,14 @@ class _OauthButtonsState extends State<OauthButtons> {
               color: Colors.white,
               child: Padding(
                 padding: const EdgeInsets.all(5.0),
-                child: SvgPicture.asset(SvgIconsPaths.appleIcon,
-                    height: 40,
-                    colorFilter:
-                        const ColorFilter.mode(Colors.grey, BlendMode.srcIn)),
+                child: SvgPicture.asset(
+                  SvgIconsPaths.appleIcon,
+                  height: 40,
+                  colorFilter: const ColorFilter.mode(
+                    Colors.grey,
+                    BlendMode.srcIn,
+                  ),
+                ),
               ),
             ),
           ),
@@ -124,35 +132,43 @@ class _OauthButtonsState extends State<OauthButtons> {
         Animate(
           effects: const [
             FadeEffect(
-                begin: BlurEffect.minBlur,
-                end: BlurEffect.defaultBlur,
-                duration: Duration(seconds: 5)),
+              begin: BlurEffect.minBlur,
+              end: BlurEffect.defaultBlur,
+              duration: Duration(seconds: 5),
+            ),
             ScaleEffect(
-                begin: ScaleEffect.defaultValue,
-                end: ScaleEffect.neutralValue,
-                duration: Duration(seconds: 1),
-                delay: Duration(milliseconds: 500))
+              begin: ScaleEffect.defaultValue,
+              end: ScaleEffect.neutralValue,
+              duration: Duration(seconds: 1),
+              delay: Duration(milliseconds: 500),
+            )
           ],
           child: InkWell(
             onTap: () async {
-              UserCredential? credential =
-                  await _googleAuthService.signInWithTwitter();
+              NavigationService.showErrorSnackBar(
+                  'Not Available! We are working on this!');
+              // UserCredential? credential =
+              //     await _googleAuthService.signInWithTwitter();
 
-              if (credential != null) {
-                LogService.logInfo(
-                    'Twitter Sign-In Successful as  ${credential.user!.displayName}');
-                context.goNamed('home');
-              } else {
-                LogService.logError('Twitter Sign-In Failed');
-              }
+              // if (credential != null) {
+              //   LogService.logInfo(
+              //       'Twitter Sign-In Successful as  ${credential.user!.displayName}');
+              //   context.goNamed('home');
+              // } else {
+              //   LogService.logError('Twitter Sign-In Failed');
+              // }
             },
             child: Card(
               color: Colors.white,
               child: Padding(
                 padding: const EdgeInsets.all(5.0),
                 child: SvgPicture.asset(
-                  SvgIconsPaths.twitterIcon,
+                  SvgIconsPaths.facebookIcon,
                   height: 40,
+                  colorFilter: const ColorFilter.mode(
+                    Colors.grey,
+                    BlendMode.srcIn,
+                  ),
                 ),
               ),
             ),

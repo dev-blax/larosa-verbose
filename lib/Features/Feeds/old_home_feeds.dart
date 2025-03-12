@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:larosa_block/Components/bottom_navigation.dart';
 import 'package:larosa_block/Features/Feeds/Components/old_post_component.dart';
-import 'package:larosa_block/Features/Feeds/Components/post_component.dart';
 import 'package:larosa_block/Features/Feeds/Controllers/old_home_feeds_controller.dart';
 import 'package:larosa_block/Utils/colors.dart';
 import 'package:provider/provider.dart';
@@ -44,7 +43,7 @@ class _OldHomeFeedsScreenState extends State<OldHomeFeedsScreen> with SingleTick
       if (_isVisible) {
         setState(() {
           _isVisible = false;
-          _animationController.reverse(); // Trigger hide animation
+          _animationController.reverse(); 
         });
       }
     } else if (controller.scrollController.position.userScrollDirection ==
@@ -52,7 +51,7 @@ class _OldHomeFeedsScreenState extends State<OldHomeFeedsScreen> with SingleTick
       if (!_isVisible) {
         setState(() {
           _isVisible = true;
-          _animationController.forward(); // Trigger show animation
+          _animationController.forward(); 
         });
       }
     }

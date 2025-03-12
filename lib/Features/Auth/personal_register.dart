@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:ui';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:gap/gap.dart';
@@ -15,6 +16,7 @@ import 'package:larosa_block/Utils/colors.dart';
 import 'package:larosa_block/Utils/helpers.dart';
 import 'package:larosa_block/Utils/links.dart';
 import 'package:larosa_block/Utils/validation_helpers.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class PersonalRegisterScreen extends StatefulWidget {
   const PersonalRegisterScreen({super.key});
@@ -26,6 +28,8 @@ class PersonalRegisterScreen extends StatefulWidget {
 class _PersonalRegisterScreenState extends State<PersonalRegisterScreen> {
   final _formKey = GlobalKey<FormState>();
   bool isLoading = false;
+  bool acceptedTerms = false;
+  bool acceptedPrivacy = false;
   final TextEditingController _fullnameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _usernameController = TextEditingController();
@@ -83,6 +87,24 @@ class _PersonalRegisterScreenState extends State<PersonalRegisterScreen> {
       context.goNamed('home');
     } catch (e) {
       LogService.logError('Error $e');
+    }
+  }
+
+  Future<void> _launchURL(String url) async {
+    final uri = Uri.parse(url);
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(
+        uri,
+        mode: LaunchMode.externalApplication,
+      );
+    } else {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Could not launch $url'),
+          ),
+        );
+      }
     }
   }
 
@@ -245,53 +267,153 @@ class _PersonalRegisterScreenState extends State<PersonalRegisterScreen> {
                           ),
                           const Gap(10),
 
-                          !isLoading
-                              ? Container(
-                                  width: double.infinity,
-                                  decoration: BoxDecoration(
-                                    gradient: const LinearGradient(
-                                      colors: [
-                                        Color(0xff34a4f9),
-                                        Color(0xff0a1282)
-                                      ],
-                                      begin: Alignment.topLeft,
-                                      end: Alignment.bottomRight,
-                                    ),
-                                    borderRadius: BorderRadius.circular(
-                                      20,
-                                    ),
-                                  ),
-                                  child: ElevatedButton(
-                                    style: ElevatedButton.styleFrom(
-                                      elevation: 0.0,
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(10),
-                                      ),
-                                      padding: const EdgeInsets.all(16.0),
-                                      backgroundColor: Colors.transparent,
-                                    ),
-                                    onPressed: () async {
-                                      if (_formKey.currentState!.validate()) {
-                                        setState(() {
-                                          isLoading = true;
-                                        });
-                                        await _savePersonalUser();
-
-                                        setState(() {
-                                          isLoading = false;
-                                        });
-                                      }
-                                    },
-                                    child: const Text(
-                                      'Register',
-                                      style: TextStyle(color: Colors.white),
-                                    ),
-                                  ),
-                                )
-                              : CupertinoActivityIndicator(
-                                  radius: 15,
-                                  color: LarosaColors.light,
+                          // Terms and Privacy Policy checkboxes
+                          Row(
+                            children: [
+                              Checkbox(
+                                value: acceptedTerms,
+                                onChanged: (value) {
+                                  setState(() {
+                                    acceptedTerms = value ?? false;
+                                  });
+                                },
+                                checkColor: Colors.white,
+                                fillColor: WidgetStateProperty.resolveWith<Color>(
+                                  (Set<WidgetState> states) {
+                                    return LarosaColors.primary;
+                                  },
+                                ),
                               ),
+                              Expanded(
+                                child: GestureDetector(
+                                  onTap: () {
+                                    setState(() {
+                                      acceptedTerms = !acceptedTerms;
+                                    });
+                                  },
+                                  child: RichText(
+                                    text: TextSpan(
+                                      text: 'I accept the ',
+                                      style: const TextStyle(color: Colors.white),
+                                      children: [
+                                        TextSpan(
+                                          text: 'Terms of Service',
+                                          style: const TextStyle(
+                                            color: Colors.blue,
+                                            decoration: TextDecoration.underline,
+                                          ),
+                                          recognizer: TapGestureRecognizer()
+                                            ..onTap = () {
+                                              _launchURL('https://explore-larosa.serialsoftpro.com/terms');
+                                            },
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          Row(
+                            children: [
+                              Checkbox(
+                                value: acceptedPrivacy,
+                                onChanged: (value) {
+                                  setState(() {
+                                    acceptedPrivacy = value ?? false;
+                                  });
+                                },
+                                checkColor: Colors.white,
+                                fillColor: MaterialStateProperty.resolveWith<Color>(
+                                  (Set<MaterialState> states) {
+                                    return LarosaColors.primary;
+                                  },
+                                ),
+                              ),
+                              Expanded(
+                                child: GestureDetector(
+                                  onTap: () {
+                                    setState(() {
+                                      acceptedPrivacy = !acceptedPrivacy;
+                                    });
+                                  },
+                                  child: RichText(
+                                    text: TextSpan(
+                                      text: 'I accept the ',
+                                      style: const TextStyle(color: Colors.white),
+                                      children: [
+                                        TextSpan(
+                                          text: 'Privacy Policy',
+                                          style: const TextStyle(
+                                            color: Colors.blue,
+                                            decoration: TextDecoration.underline,
+                                          ),
+                                          recognizer: TapGestureRecognizer()
+                                            ..onTap = () {
+                                              _launchURL('https://explore-larosa.serialsoftpro.com/privacy');
+                                            },
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const Gap(10),
+
+                          (acceptedTerms && acceptedPrivacy)
+                              ? (!isLoading
+                                  ? Container(
+                                      width: double.infinity,
+                                      decoration: BoxDecoration(
+                                        gradient: const LinearGradient(
+                                          colors: [
+                                            Color(0xff34a4f9),
+                                            Color(0xff0a1282)
+                                          ],
+                                          begin: Alignment.topLeft,
+                                          end: Alignment.bottomRight,
+                                        ),
+                                        borderRadius: BorderRadius.circular(
+                                          20,
+                                        ),
+                                      ),
+                                      child: ElevatedButton(
+                                        style: ElevatedButton.styleFrom(
+                                          elevation: 0.0,
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(10),
+                                          ),
+                                          padding: const EdgeInsets.all(16.0),
+                                          backgroundColor: Colors.transparent,
+                                        ),
+                                        onPressed: () async {
+                                          if (_formKey.currentState!.validate()) {
+                                            setState(() {
+                                              isLoading = true;
+                                            });
+                                            await _savePersonalUser();
+
+                                            setState(() {
+                                              isLoading = false;
+                                            });
+                                          }
+                                        },
+                                        child: const Text(
+                                          'Register',
+                                          style: TextStyle(color: Colors.white),
+                                        ),
+                                      ),
+                                    )
+                                  : CupertinoActivityIndicator(
+                                      radius: 15,
+                                      color: LarosaColors.light,
+                                    ))
+                              : const Text(
+                                  'Please accept the terms and privacy policy to continue',
+                                  style: TextStyle(color: Colors.white),
+                                ),
                           const Gap(10),
 
                           TextButton(

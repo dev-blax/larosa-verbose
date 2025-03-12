@@ -17,13 +17,19 @@ import 'package:flutter/foundation.dart'
 class DefaultFirebaseOptions {
   static FirebaseOptions get currentPlatform {
     if (kIsWeb) {
-      return web;
+      throw UnsupportedError(
+        'DefaultFirebaseOptions have not been configured for web - '
+        'you can reconfigure this by running the FlutterFire CLI again.',
+      );
     }
     switch (defaultTargetPlatform) {
       case TargetPlatform.android:
         return android;
       case TargetPlatform.iOS:
-        return ios;
+        throw UnsupportedError(
+          'DefaultFirebaseOptions have not been configured for ios - '
+          'you can reconfigure this by running the FlutterFire CLI again.',
+        );
       case TargetPlatform.macOS:
         throw UnsupportedError(
           'DefaultFirebaseOptions have not been configured for macos - '
@@ -46,30 +52,11 @@ class DefaultFirebaseOptions {
     }
   }
 
-  static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'AIzaSyCDmdyqTA9D7rUAy-iWc2VD1P6bdUU5AZA',
-    appId: '1:370358339116:web:c711d6148a9363cccff389',
-    messagingSenderId: '370358339116',
-    projectId: 'explore-larosa-bf556',
-    authDomain: 'explore-larosa-bf556.firebaseapp.com',
-    storageBucket: 'explore-larosa-bf556.firebasestorage.app',
-    measurementId: 'G-9Z6HQVHB2Z',
-  );
-
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyAXTBlcVZwIKHP7Ob2v6S25Ffa5FImjtSs',
-    appId: '1:370358339116:android:7634e4f3ede70f90cff389',
-    messagingSenderId: '370358339116',
-    projectId: 'explore-larosa-bf556',
-    storageBucket: 'explore-larosa-bf556.firebasestorage.app',
-  );
-
-  static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'AIzaSyCX8HeVUUBuMVwPyXKPS-W2O3SSrVHrO9E',
-    appId: '1:370358339116:ios:61de597233ce4546cff389',
-    messagingSenderId: '370358339116',
-    projectId: 'explore-larosa-bf556',
-    storageBucket: 'explore-larosa-bf556.firebasestorage.app',
-    iosBundleId: 'com.example.larosaBlock',
+    apiKey: 'AIzaSyCgkIiZdQGGd4ik6hXOZB5RxZqqIfjBERg',
+    appId: '1:707034006516:android:bdea0d8df382223a722fa1',
+    messagingSenderId: '707034006516',
+    projectId: 'explore-larosa-cd042',
+    storageBucket: 'explore-larosa-cd042.firebasestorage.app',
   );
 }

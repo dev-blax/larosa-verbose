@@ -69,11 +69,7 @@ class _SigninScreenState extends State<SigninScreen> {
       box.put('accountId', data['accountType']['id']);
       box.put('accountName', data['accountType']['name']);
       box.put('reservation', data['reservation']);
-//       if (data['categories'] != null && data['categories'].isNotEmpty && data['categories'][0] != null) {
-//   box.put('categories', data['categories'][0]);
-// } else {
-//   print('No valid categories to add.');
-// }
+
 
       box.put('token', data['jwtAuthenticationResponse']['token']);
       LogService.logInfo(

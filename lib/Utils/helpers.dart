@@ -10,6 +10,7 @@ import 'package:mime/mime.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:toastification/toastification.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../Services/google_auth_service.dart';
 
@@ -36,7 +37,8 @@ class HelperFunctions {
     );
   }
 
-  static void displaySnackbar(String message, BuildContext context, bool success) {
+  static void displaySnackbar(
+      String message, BuildContext context, bool success) {
     toastification.show(
       type: success ? ToastificationType.info : ToastificationType.error,
       title: Text(message),
@@ -109,10 +111,26 @@ class HelperFunctions {
     );
   }
 
+  static Future<void> launchURL(String url, BuildContext context) async {
+    final uri = Uri.parse(url);
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(
+        uri,
+        mode: LaunchMode.externalApplication,
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Could not launch $url'),
+        ),
+      );
+    }
+  }
+
   static Future<void> logout(BuildContext context) async {
     // Clear all Hive boxes
     await Hive.deleteFromDisk();
-    
+
     // Clear SharedPreferences
     final prefs = await SharedPreferences.getInstance();
     await prefs.clear();

@@ -12,7 +12,6 @@ import 'package:larosa_block/Features/Chat/conversation.dart';
 import 'package:larosa_block/Features/Delivery/new_delivery.dart';
 import 'package:larosa_block/Features/Feeds/business_post.dart';
 import 'package:larosa_block/Features/Feeds/camera_content.dart';
-import 'package:larosa_block/Features/Feeds/home_feeds.dart';
 import 'package:larosa_block/Features/Feeds/old_home_feeds.dart';
 import 'package:larosa_block/Features/Feeds/profile_posts.dart';
 import 'package:larosa_block/Features/Onboarding/onboarding_screen.dart';
@@ -44,12 +43,6 @@ class RouterService {
         path: '/business-post',
         builder: (context, state) => const BusinessPostScreen(),
       ),
-
-      // GoRoute(
-      //   name: 'add-to-cart',
-      //   path: '/add-to-cart',
-      //   builder: (context, state) => const AddToCartScreen(),
-      // ),
 
       // verification routes
       GoRoute(
