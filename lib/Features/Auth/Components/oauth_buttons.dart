@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
-import 'package:larosa_block/Services/log_service.dart';
 import 'package:larosa_block/Services/navigation_service.dart';
 import 'package:larosa_block/Services/oath_service.dart';
 import 'package:larosa_block/Utils/svg_paths.dart';
@@ -17,7 +16,6 @@ class OauthButtons extends StatefulWidget {
 }
 
 class _OauthButtonsState extends State<OauthButtons> {
-  //final GoogleAuthService _googleAuthService = GoogleAuthService();
   final OauthService _oauthService = OauthService();
 
   @override
@@ -29,12 +27,9 @@ class _OauthButtonsState extends State<OauthButtons> {
           onTap: () async {
             final googleUser = await _oauthService.signinWithGoogle();
             if (googleUser != null && mounted) {
-              // LogService.logInfo('signed in as ${googleUser.email}');
-              // LogService.logInfo('Display Name: ${googleUser.displayName}');
-              // LogService.logInfo('id ${googleUser.id}');
-              //context.goNamed('home');
+              context.goNamed('home');
             } else {
-              LogService.logError('Google Sign-In Failed');
+              NavigationService.showErrorSnackBar('Google Sign-In Failed');
             }
           },
           child: Animate(
@@ -75,9 +70,13 @@ class _OauthButtonsState extends State<OauthButtons> {
             )
           ],
           child: InkWell(
-            onTap: () {
-              NavigationService.showErrorSnackBar(
-                  'Not Available! We are working on this!');
+            onTap: () async {
+              final userData = await _oauthService.signinWithTikTok();
+              if (userData != null && mounted) {
+                context.goNamed('home');
+              } else {
+                NavigationService.showErrorSnackBar('TikTok Sign-In Failed');
+              }
             },
             child: Card(
               color: Colors.white,
@@ -108,7 +107,13 @@ class _OauthButtonsState extends State<OauthButtons> {
                 delay: Duration(milliseconds: 500))
           ],
           child: InkWell(
-            onTap: () {
+            onTap: () async {
+              // final userData = await _oauthService.signinWithApple();
+              // if (userData != null && mounted) {
+              //   context.goNamed('home');
+              // } else {
+              //   NavigationService.showErrorSnackBar('Apple Sign-In Failed');
+              // }
               NavigationService.showErrorSnackBar(
                   'Not Available! We are working on this!');
             },
@@ -120,7 +125,7 @@ class _OauthButtonsState extends State<OauthButtons> {
                   SvgIconsPaths.appleIcon,
                   height: 40,
                   colorFilter: const ColorFilter.mode(
-                    Colors.grey,
+                    Colors.black,
                     BlendMode.srcIn,
                   ),
                 ),

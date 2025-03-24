@@ -37,6 +37,23 @@
                     android:scheme="twitterauth"
                     android:host="callback" />
             </intent-filter>
+
+            <!-- TikTok auth intent-filter -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="larosa" />
+            </intent-filter>
+
+            <!-- Apple Sign In intent-filter -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="signinwithapple" />
+                <data android:path="callback" />
+            </intent-filter>
         </activity>
 
         <activity
