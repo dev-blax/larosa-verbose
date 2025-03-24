@@ -1,0 +1,54 @@
+{
+  "project_info": {
+    "project_number": "493360937456",
+    "project_id": "burnished-core-439210-f6",
+    "storage_bucket": "burnished-core-439210-f6.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:493360937456:android:b89ec1e669853e5139c535",
+        "android_client_info": {
+          "package_name": "com.explore.larosa"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "493360937456-177eg997h9qg8e4oq29qj72f0bn5n5of.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.explore.larosa",
+            "certificate_hash": "270b3c3b5d285eddb80c04ef62fa34970ce090ca"
+          }
+        },
+        {
+          "client_id": "493360937456-v5qiq5n2lftu805a69ll1ij8ifnvifp4.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBU6lV6h6zKZvMqh0mOK3kYgbIwXycT1-M"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "493360937456-v5qiq5n2lftu805a69ll1ij8ifnvifp4.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "493360937456-jl746eineakluc6m58so0f1ts9a3dn5g.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.larosaBlock"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

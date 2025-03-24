@@ -43,6 +43,10 @@ subprojects {
                 }
             }
         }
+        
+        if (project.plugins.hasPlugin('com.google.gms.google-services')) {
+            apply plugin: 'com.google.gms.google-services'
+        }
     }
 }
 

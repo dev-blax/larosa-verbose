@@ -2,6 +2,7 @@ plugins {
     id "com.android.application"
     id "kotlin-android"
     //id "com.google.gms.google-services"
+    id 'com.google.gms.google-services' apply false
     id "dev.flutter.flutter-gradle-plugin"
 }
 
@@ -68,7 +69,7 @@ dependencies {
     implementation "androidx.emoji2:emoji2:$emoji2_version"
     implementation "androidx.emoji2:emoji2-views:$emoji2_version"
     implementation "androidx.emoji2:emoji2-views-helper:$emoji2_version"
-    // implementation "com.google.android.gms:play-services-base:18.1.0"
+    implementation "com.google.android.gms:play-services-base:18.1.0"
     // implementation platform('com.google.firebase:firebase-bom:33.10.0')
     // implementation 'com.google.firebase:firebase-analytics'
 }

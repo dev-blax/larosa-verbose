@@ -29,7 +29,9 @@ class _OauthButtonsState extends State<OauthButtons> {
           onTap: () async {
             final googleUser = await _oauthService.signinWithGoogle();
             if (googleUser != null && mounted) {
-              LogService.logInfo('signed in as ${googleUser.email}');
+              // LogService.logInfo('signed in as ${googleUser.email}');
+              // LogService.logInfo('Display Name: ${googleUser.displayName}');
+              // LogService.logInfo('id ${googleUser.id}');
               //context.goNamed('home');
             } else {
               LogService.logError('Google Sign-In Failed');
