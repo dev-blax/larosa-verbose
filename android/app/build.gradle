@@ -1,7 +1,7 @@
 plugins {
     id "com.android.application"
     id "kotlin-android"
-    id "com.google.gms.google-services"
+    //id "com.google.gms.google-services"
     id "dev.flutter.flutter-gradle-plugin"
 }
 
@@ -14,15 +14,15 @@ if (keystorePropertiesFile.exists()) {
 android {
     namespace = "com.explore.larosa"
     compileSdk = flutter.compileSdkVersion
-    ndkVersion = flutter.ndkVersion
+    ndkVersion = '29.0.13113456'
 
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_1_8
-        targetCompatibility = JavaVersion.VERSION_1_8
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
 
     kotlinOptions {
-        jvmTarget = JavaVersion.VERSION_1_8
+        jvmTarget = '17'
     }
 
     defaultConfig {
@@ -30,7 +30,7 @@ android {
         applicationId = "com.explore.larosa"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
-        minSdk = 23
+        minSdk = 24
         targetSdk = 34
         versionCode = flutter.versionCode
         versionName = flutter.versionName
@@ -68,9 +68,9 @@ dependencies {
     implementation "androidx.emoji2:emoji2:$emoji2_version"
     implementation "androidx.emoji2:emoji2-views:$emoji2_version"
     implementation "androidx.emoji2:emoji2-views-helper:$emoji2_version"
-    implementation "com.google.android.gms:play-services-base:18.1.0"
-    implementation platform('com.google.firebase:firebase-bom:33.10.0')
-    implementation 'com.google.firebase:firebase-analytics'
+    // implementation "com.google.android.gms:play-services-base:18.1.0"
+    // implementation platform('com.google.firebase:firebase-bom:33.10.0')
+    // implementation 'com.google.firebase:firebase-analytics'
 }
 
 flutter {

@@ -4,7 +4,6 @@ import 'package:larosa_block/Services/dio_service.dart';
 import 'package:larosa_block/Services/geo_service.dart';
 import 'package:larosa_block/Services/log_service.dart';
 import 'package:larosa_block/Utils/links.dart';
-import 'package:twitter_login/twitter_login.dart';
 
 class GoogleAuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -59,47 +58,4 @@ class GoogleAuthService {
     }
   }
 
-
-  Future<UserCredential?> signInWithTwitter() async {
-    try {
-      final twitterLogin = TwitterLogin(
-        apiKey: 'ADpEjmtFIuxMmjCi37PDfgotM',
-        apiSecretKey: 'ZEivFa1pk4Ei8LV4TRU0Ce2doW7rIuao248iMoHZXZqocOKs3R',
-        redirectURI: 'https://explore-larosa-bf556.firebaseapp.com/__/auth/handler',
-      );
-
-      final authResult = await twitterLogin.login();
-
-      switch (authResult.status) {
-        case TwitterLoginStatus.loggedIn:
-          // Create Firebase credential
-          final twitterAuthCredential = TwitterAuthProvider.credential(
-            accessToken: authResult.authToken!,
-            secret: authResult.authTokenSecret!,
-          );
-
-          // Sign in with Firebase
-          final userCredential =
-              await _auth.signInWithCredential(twitterAuthCredential);
-          LogService.logInfo('Logged in: ${userCredential.user?.displayName}');
-
-          return userCredential;
-        case TwitterLoginStatus.cancelledByUser:
-          LogService.logInfo('Login cancelled by user');
-          break;
-        case TwitterLoginStatus.error:
-          LogService.logInfo('Login error: ${authResult.errorMessage}');
-          break;
-        default:
-          LogService.logInfo('Unknown status');
-      }
-
-      return null;
-
-    } catch(e){
-
-      LogService.logError('Error signing in with Twitter: $e');
-      return null;
-    }
-  }
 }

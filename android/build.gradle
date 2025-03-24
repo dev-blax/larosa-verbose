@@ -1,10 +1,15 @@
 buildscript {
+    ext {
+        kotlin_version = '1.9.22'
+        java_version = JavaVersion.VERSION_17
+    }
     repositories {
         google()
         mavenCentral()
     }
     dependencies {
-        classpath 'com.google.gms:google-services:4.4.2'
+        classpath 'com.android.tools.build:gradle:8.1.0'
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
     }
 }
 
@@ -13,14 +18,28 @@ allprojects {
         google()
         mavenCentral()
     }
+}
 
-    subprojects {
-        afterEvaluate { project ->
-            if (project.hasProperty('android')) {
-                project.android {
-                    if (namespace == null) {
-                        namespace project.group
-                    }
+subprojects {
+    afterEvaluate { project ->
+        if (project.hasProperty('android')) {
+            android {
+                // Restore namespace configuration
+                if (namespace == null) {
+                    namespace = project.group ?: project.name
+                }
+                
+                compileOptions {
+                    sourceCompatibility java_version
+                    targetCompatibility java_version
+                }
+            }
+        }
+        
+        if (project.plugins.hasPlugin('kotlin-android')) {
+            tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).configureEach {
+                kotlinOptions {
+                    jvmTarget = java_version.toString()
                 }
             }
         }

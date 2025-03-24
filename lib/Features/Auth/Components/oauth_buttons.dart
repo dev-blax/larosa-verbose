@@ -1,12 +1,10 @@
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
-import 'package:larosa_block/Services/google_auth_service.dart';
 import 'package:larosa_block/Services/log_service.dart';
 import 'package:larosa_block/Services/navigation_service.dart';
+import 'package:larosa_block/Services/oath_service.dart';
 import 'package:larosa_block/Utils/svg_paths.dart';
 
 class OauthButtons extends StatefulWidget {
@@ -19,7 +17,8 @@ class OauthButtons extends StatefulWidget {
 }
 
 class _OauthButtonsState extends State<OauthButtons> {
-  final GoogleAuthService _googleAuthService = GoogleAuthService();
+  //final GoogleAuthService _googleAuthService = GoogleAuthService();
+  final OauthService _oauthService = OauthService();
 
   @override
   Widget build(BuildContext context) {
@@ -28,12 +27,10 @@ class _OauthButtonsState extends State<OauthButtons> {
       children: [
         GestureDetector(
           onTap: () async {
-            UserCredential? credential =
-                await _googleAuthService.signInWithGoogle();
-            if (credential != null) {
-              LogService.logInfo(
-                  'Google Sign-In Successful as  ${credential.user!.displayName}');
-              context.goNamed('home');
+            final googleUser = await _oauthService.signinWithGoogle();
+            if (googleUser != null && mounted) {
+              LogService.logInfo('signed in as ${googleUser.email}');
+              //context.goNamed('home');
             } else {
               LogService.logError('Google Sign-In Failed');
             }

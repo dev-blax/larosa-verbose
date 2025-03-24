@@ -16,7 +16,6 @@ import 'package:larosa_block/Utils/colors.dart';
 import 'package:larosa_block/Utils/helpers.dart';
 import 'package:larosa_block/Utils/links.dart';
 import 'package:larosa_block/Utils/validation_helpers.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 class PersonalRegisterScreen extends StatefulWidget {
   const PersonalRegisterScreen({super.key});
@@ -90,23 +89,6 @@ class _PersonalRegisterScreenState extends State<PersonalRegisterScreen> {
     }
   }
 
-  Future<void> _launchURL(String url) async {
-    final uri = Uri.parse(url);
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(
-        uri,
-        mode: LaunchMode.externalApplication,
-      );
-    } else {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Could not launch $url'),
-          ),
-        );
-      }
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -304,7 +286,7 @@ class _PersonalRegisterScreenState extends State<PersonalRegisterScreen> {
                                           ),
                                           recognizer: TapGestureRecognizer()
                                             ..onTap = () {
-                                              _launchURL('https://explore-larosa.serialsoftpro.com/terms');
+                                              HelperFunctions.launchURL('https://explore-larosa.serialsoftpro.com/terms', context);
                                             },
                                         ),
                                       ],
@@ -324,8 +306,8 @@ class _PersonalRegisterScreenState extends State<PersonalRegisterScreen> {
                                   });
                                 },
                                 checkColor: Colors.white,
-                                fillColor: MaterialStateProperty.resolveWith<Color>(
-                                  (Set<MaterialState> states) {
+                                fillColor: WidgetStateProperty.resolveWith<Color>(
+                                  (Set<WidgetState> states) {
                                     return LarosaColors.primary;
                                   },
                                 ),
@@ -350,7 +332,7 @@ class _PersonalRegisterScreenState extends State<PersonalRegisterScreen> {
                                           ),
                                           recognizer: TapGestureRecognizer()
                                             ..onTap = () {
-                                              _launchURL('https://explore-larosa.serialsoftpro.com/privacy');
+                                              HelperFunctions.launchURL('https://explore-larosa.serialsoftpro.com/privacy', context);
                                             },
                                         ),
                                       ],
