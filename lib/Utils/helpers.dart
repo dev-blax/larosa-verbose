@@ -12,7 +12,6 @@ import 'package:toastification/toastification.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-import '../Services/google_auth_service.dart';
 
 final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
     FlutterLocalNotificationsPlugin();
@@ -135,8 +134,8 @@ class HelperFunctions {
     final prefs = await SharedPreferences.getInstance();
     await prefs.clear();
 
-    final GoogleAuthService googleAuthService = GoogleAuthService();
-    await googleAuthService.signOut();
+    // final GoogleAuthService googleAuthService = GoogleAuthService();
+    // await googleAuthService.signOut();
 
     // Navigate to login
     if (context.mounted) {
