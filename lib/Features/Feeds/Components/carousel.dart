@@ -1,8 +1,3 @@
-//SMOOTHLY SLIDING SLIDER
-//BY DEFAULT CONTROLLERS TO HIDE UNTILL GENSTURE DETECTURE
-//REDUCE THE WIDTH OF THE SLIDER
-//SMOOTHLY SLIDING OF SLIDER ON TOUCH
-
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';

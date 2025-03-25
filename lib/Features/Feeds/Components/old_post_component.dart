@@ -7,7 +7,6 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:like_button/like_button.dart';
-import 'package:mime/mime.dart';
 import 'package:gap/gap.dart';
 import 'package:hugeicons/hugeicons.dart';
 import 'package:iconsax/iconsax.dart';
@@ -51,11 +50,6 @@ class _OldPostCompoentState extends State<OldPostCompoent> with SingleTickerProv
     _isFavorite = widget.post['favorite'];
     _favoriteCount = widget.post['favorites'];
     super.initState();
-  }
-
-  static bool isVideo(String url) {
-    final mimeType = lookupMimeType(url);
-    return mimeType != null && mimeType.startsWith('video/');
   }
 
   void _toggleLike() {
@@ -119,10 +113,6 @@ class _OldPostCompoentState extends State<OldPostCompoent> with SingleTickerProv
       }
 
       if (response.statusCode != 200) {
-        // Get.snackbar(
-        //   'Explore Larosa',
-        //   response.body,
-        // );
         return;
       }
     } catch (e) {
@@ -179,9 +169,6 @@ class _OldPostCompoentState extends State<OldPostCompoent> with SingleTickerProv
       images.add(image);
     }
 
-    // Check if the media URL is a video
-    bool isVideoMedia = isVideo(widget.post['names'].split(',')[0]);
-
     return GestureDetector(
       onDoubleTap: () async {
         _toggleLike();
@@ -194,47 +181,8 @@ class _OldPostCompoentState extends State<OldPostCompoent> with SingleTickerProv
             isPlayingState: widget.isPlaying,
             postHeight: widget.post['height'],
           ),
-          // Media count indicator
-          // if (images.length > 1)
-          //   Positioned(
-          //     top: 16,
-          //     right: 16,
-          //     child: Container(
-          //       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-          //       decoration: BoxDecoration(
-          //         color: Colors.black.withOpacity(0.7),
-          //         borderRadius: BorderRadius.circular(20),
-          //         border: Border.all(
-          //           color: Colors.white.withOpacity(0.3),
-          //           width: 1,
-          //         ),
-          //       ),
-          //       child: Row(
-          //         mainAxisSize: MainAxisSize.min,
-          //         children: [
-          //           SvgPicture.asset(
-          //             'assets/svg_icons/gallery.svg',
-          //             colorFilter: const ColorFilter.mode(
-          //               Colors.white,
-          //               BlendMode.srcIn,
-          //             ),
-          //             height: 14,
-          //           ),
-          //           const SizedBox(width: 4),
-          //           Text(
-          //             '${images.length}',
-          //             style: const TextStyle(
-          //               color: Colors.white,
-          //               fontSize: 12,
-          //               fontWeight: FontWeight.bold,
-          //             ),
-          //           ),
-          //         ],
-          //       ),
-          //     ),
-          //   ),
           Positioned(
-            bottom: isVideoMedia ? 10 : 0,
+            bottom: 0,
             left: 0,
             height: 50,
             width: MediaQuery.of(context).size.width,
@@ -271,7 +219,7 @@ class _OldPostCompoentState extends State<OldPostCompoent> with SingleTickerProv
             ),
           ),
           Positioned(
-            bottom: isVideoMedia ? 14 : 4,
+            bottom: 8,
             left: 5,
             right: 5,
             child: Row(

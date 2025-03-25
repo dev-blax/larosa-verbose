@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:iconsax/iconsax.dart';
-import 'package:larosa_block/Features/Feeds/Components/post_component.dart';
-import 'package:larosa_block/Services/log_service.dart';
+import 'package:larosa_block/Features/Feeds/Components/old_post_component.dart';
 
 class ProfilePostsScreen extends StatefulWidget {
   final List<dynamic> posts;
@@ -92,7 +91,7 @@ class _ProfilePostsScreenState extends State<ProfilePostsScreen> {
               child: Column(
                 children: [
                   ...widget.posts.map((post) {
-                    return PostComponent(post: post, isPlaying: false);
+                    return OldPostCompoent(post: post, isPlaying: false);
                   }),
                   const SizedBox(height: 100),
                 ],
