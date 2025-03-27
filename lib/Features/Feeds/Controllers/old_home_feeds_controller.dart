@@ -7,25 +7,29 @@ import 'package:larosa_block/Utils/links.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class OldHomeFeedsController extends ChangeNotifier {
-  List<dynamic> posts = [];
+  List<dynamic> _posts = [];
+  List<dynamic> get posts => _posts;
   ValueNotifier<bool> isLoading = ValueNotifier(false);
   final ScrollController scrollController = ScrollController();
-  final Map<int, bool> _postPlayStates = {}; // Track play/pause state of each post
+  final Map<int, bool> _postPlayStates = {};
   bool isFetchingMore = false;
-  int currentPage = 0; // Start from 0 as you mentioned
+  int currentPage = 0; 
   final int itemsPerPage = 10;
 
   OldHomeFeedsController() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _restoreScrollPosition();
-      if (posts.isEmpty) {
+      if (_posts.isEmpty) {
         fetchPosts(false);
       }
     });
 
-    // Listen for scroll events to detect when the user reaches the bottom
     scrollController.addListener(() {
-      if (scrollController.position.pixels == scrollController.position.maxScrollExtent) {
+      final maxScroll = scrollController.position.maxScrollExtent;
+      final currentScroll = scrollController.position.pixels;
+      final twoPostsHeight = 800.0;
+      
+      if (maxScroll - currentScroll <= twoPostsHeight) {
         fetchMorePosts();
       }
     });
@@ -33,9 +37,9 @@ class OldHomeFeedsController extends ChangeNotifier {
 
   Future<void> fetchPosts(bool refresh) async {
     if (refresh) {
-      currentPage = 0; // Reset to 0 when refreshing
+      currentPage = 0; 
       LogService.logError('clearing');
-      posts.clear(); // Clear existing posts when refreshing
+      _posts.clear(); 
     }
     try {
       isLoading.value = true;
@@ -94,13 +98,13 @@ class OldHomeFeedsController extends ChangeNotifier {
     if (response.statusCode == 200) {
       List<dynamic> data = json.decode(response.body);
       if (isPaginated) {
-        posts.addAll(data);
+        _posts.addAll(data);
         currentPage++;
       } else {
-        posts = data;
+        _posts = data;
       }
 
-      await _savePostsToLocalStorage(posts);
+      await _savePostsToLocalStorage(_posts);
       notifyListeners();
     } else if (response.statusCode == 302 || response.statusCode == 403 || response.statusCode == 401) {
       bool refreshed = await AuthService.booleanRefreshToken();
@@ -131,7 +135,7 @@ class OldHomeFeedsController extends ChangeNotifier {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String? postsString = prefs.getString('posts');
     if (postsString != null) {
-      posts = jsonDecode(postsString);
+      _posts = jsonDecode(postsString);
       notifyListeners();
     }
   }

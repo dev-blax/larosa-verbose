@@ -3,13 +3,13 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:larosa_block/Components/bottom_navigation.dart';
+import 'package:larosa_block/Components/loading_shimmer.dart';
 import 'package:larosa_block/Features/Feeds/Components/old_post_component.dart';
 import 'package:larosa_block/Features/Feeds/Controllers/old_home_feeds_controller.dart';
 import 'package:larosa_block/Utils/colors.dart';
 import 'package:provider/provider.dart';
 import 'package:larosa_block/Features/Feeds/Components/topbar.dart';
 import 'package:larosa_block/Features/Feeds/Components/topbar_two.dart';
-import 'package:shimmer/shimmer.dart';
 import 'package:visibility_detector/visibility_detector.dart';
 
 class OldHomeFeedsScreen extends StatefulWidget {
@@ -63,15 +63,14 @@ class _OldHomeFeedsScreenState extends State<OldHomeFeedsScreen> with SingleTick
     final controller = Provider.of<OldHomeFeedsController>(context, listen: false);
     controller.scrollController.addListener(_onScroll);
 
-    // Initialize animation controller and animation
     _animationController = AnimationController(
       duration: const Duration(milliseconds: 700),
       vsync: this,
     );
 
     _offsetAnimation = Tween<Offset>(
-      begin: Offset(0, -.7), // Hidden position
-      end: Offset(0, 0), // Visible position
+      begin: Offset(0, -.7),
+      end: Offset(0, 0),
     ).animate(CurvedAnimation(
       parent: _animationController,
       curve: Curves.easeInOut,
@@ -111,13 +110,11 @@ class _OldHomeFeedsScreenState extends State<OldHomeFeedsScreen> with SingleTick
                   backgroundColor: Colors.transparent,
                   flexibleSpace: SlideTransition(
                     position: _offsetAnimation,
-                    child: Container(
-                      child: const Column(
-                        children: [
-                          TopBar1(),
-                          TopBar2(), 
-                        ],
-                      ),
+                    child: const Column(
+                      children: [
+                        TopBar1(),
+                        TopBar2(), 
+                      ],
                     ),
                   ),
                   bottom: PreferredSize(
@@ -140,7 +137,7 @@ class _OldHomeFeedsScreenState extends State<OldHomeFeedsScreen> with SingleTick
                           return Column(
                             children: List.generate(
                               5,
-                              (index) => _buildShimmerLoading(),
+                              (index) => const LoadingShimmer(),
                             ),
                           );
                         } else if (controller.posts.isEmpty) {
@@ -160,11 +157,10 @@ class _OldHomeFeedsScreenState extends State<OldHomeFeedsScreen> with SingleTick
                             child: ListView.builder(
                               itemCount: controller.posts.length +
                                   (controller.isFetchingMore ? 1 : 0) +
-                                  1, // +1 for "Hello world"
+                                  1,
                               shrinkWrap: true,
                               physics: const NeverScrollableScrollPhysics(),
                               itemBuilder: (context, index) {
-                                // Check if we are at the last item for "Hello world"
                                 if (index == controller.posts.length) {
                                   return const Padding(
                                     padding:
@@ -178,7 +174,6 @@ class _OldHomeFeedsScreenState extends State<OldHomeFeedsScreen> with SingleTick
                                     ),
                                   );
                                 }
-                                // Check if it's loading more data
                                 else if (index == controller.posts.length + 1 &&
                                     controller.isFetchingMore) {
                                   return const Padding(
@@ -189,7 +184,6 @@ class _OldHomeFeedsScreenState extends State<OldHomeFeedsScreen> with SingleTick
                                     ),
                                   );
                                 }
-                                // Regular post item
                                 else {
                                   final post = controller.posts[index];
 
@@ -242,184 +236,6 @@ class _OldHomeFeedsScreenState extends State<OldHomeFeedsScreen> with SingleTick
             ),
           ],
         ),
-      ),
-    );
-  }
-
-// Shimmer loading widget definition
-  Widget _buildShimmerLoading() {
-    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
-
-    return SingleChildScrollView(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // const SizedBox(
-          //   height: 10,
-          // ),
-          Shimmer.fromColors(
-            baseColor: isDarkMode ? Colors.grey[900]! : Colors.grey[400]!,
-            highlightColor: isDarkMode ? Colors.grey[700]! : Colors.grey[100]!,
-            child: Padding(
-              padding: const EdgeInsets.all(4.0),
-              child: Row(
-                children: [
-                  Container(
-                    width: 40,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: Colors.grey[300],
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Container(
-                        width: 120,
-                        height: 10,
-                        color: Colors.grey[300],
-                      ),
-                      const SizedBox(height: 5),
-                      Container(
-                        width: 80,
-                        height: 10,
-                        color: Colors.grey[300],
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(height: 10),
-          Shimmer.fromColors(
-            baseColor: isDarkMode ? Colors.grey[900]! : Colors.grey[400]!,
-            highlightColor: isDarkMode ? Colors.grey[700]! : Colors.grey[100]!,
-            child: Container(
-              height: 300,
-              margin: const EdgeInsets.symmetric(horizontal: 16.0),
-              decoration: BoxDecoration(
-                color: Colors.grey[300],
-                borderRadius: BorderRadius.circular(10),
-              ),
-            ),
-          ),
-          const SizedBox(height: 10),
-          Shimmer.fromColors(
-            baseColor: isDarkMode ? Colors.grey[900]! : Colors.grey[400]!,
-            highlightColor: isDarkMode ? Colors.grey[700]! : Colors.grey[100]!,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Container(
-                    height: 10,
-                    width: double.infinity,
-                    color: Colors.grey[300],
-                  ),
-                  const SizedBox(height: 5),
-                  Container(
-                    height: 10,
-                    width: double.infinity,
-                    color: Colors.grey[300],
-                  ),
-                  const SizedBox(height: 5),
-                  Container(
-                    height: 10,
-                    width: 150,
-                    color: Colors.grey[300],
-                  ),
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(height: 20),
-          Shimmer.fromColors(
-            baseColor: isDarkMode ? Colors.grey[900]! : Colors.grey[400]!,
-            highlightColor: isDarkMode ? Colors.grey[700]! : Colors.grey[100]!,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Icon(Icons.favorite_border,
-                      color: Colors.grey[300], size: 25),
-                  // const SizedBox(width: 10),
-                  Icon(Icons.star_border, color: Colors.grey[300], size: 25),
-                  // const SizedBox(width: 10),
-                  Icon(Icons.chat_bubble_outline,
-                      color: Colors.grey[300], size: 25),
-                  Icon(Icons.share_outlined, color: Colors.grey[300], size: 25),
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(height: 20),
-          Shimmer.fromColors(
-            baseColor: isDarkMode ? Colors.grey[900]! : Colors.grey[400]!,
-            highlightColor: isDarkMode ? Colors.grey[700]! : Colors.grey[100]!,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Row(
-                    children: [
-                      Container(
-                        height: 15,
-                        width: 80,
-                        color: Colors.grey[300],
-                      ),
-                      const SizedBox(width: 10),
-                      Icon(Icons.star, color: Colors.grey[300], size: 20),
-                    ],
-                  ),
-                  Container(
-                    height: 40,
-                    width: 40,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: Colors.grey[300],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(height: 20),
-          Shimmer.fromColors(
-            baseColor: isDarkMode ? Colors.grey[900]! : Colors.grey[400]!,
-            highlightColor: isDarkMode ? Colors.grey[700]! : Colors.grey[100]!,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Container(
-                    height: 10,
-                    width: double.infinity,
-                    color: Colors.grey[300],
-                  ),
-                  const SizedBox(height: 5),
-                  Container(
-                    height: 10,
-                    width: double.infinity,
-                    color: Colors.grey[300],
-                  ),
-                  const SizedBox(height: 5),
-                  Container(
-                    height: 10,
-                    width: 150,
-                    color: Colors.grey[300],
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
       ),
     );
   }
