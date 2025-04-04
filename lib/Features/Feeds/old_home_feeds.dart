@@ -128,8 +128,7 @@ class _OldHomeFeedsScreenState extends State<OldHomeFeedsScreen> with SingleTick
                   child: Transform.translate(
                     offset: Platform.isIOS
                         ? const Offset(0, -210) 
-                        : const Offset(
-                            0, -23),
+                        : const Offset(0, -23),
                     child: ValueListenableBuilder<bool>(
                       valueListenable: controller.isLoading,
                       builder: (context, isLoading, child) {
@@ -151,78 +150,71 @@ class _OldHomeFeedsScreenState extends State<OldHomeFeedsScreen> with SingleTick
                             ),
                           );
                         } else {
-                          return Padding(
-                            padding:
-                                const EdgeInsets.only(bottom: 20.0, top: 0),
-                            child: ListView.builder(
-                              itemCount: controller.posts.length +
-                                  (controller.isFetchingMore ? 1 : 0) +
-                                  1,
-                              shrinkWrap: true,
-                              physics: const NeverScrollableScrollPhysics(),
-                              itemBuilder: (context, index) {
-                                if (index == controller.posts.length) {
-                                  return const Padding(
-                                    padding:
-                                        EdgeInsets.only(bottom: 0.0, top: 20),
-                                    child: Center(
-                                      child: CupertinoActivityIndicator(
-                                        radius:
-                                            12.0,
-                                            color: LarosaColors.primary,
-                                      ),
-                                    ),
-                                  );
-                                }
-                                else if (index == controller.posts.length + 1 &&
-                                    controller.isFetchingMore) {
-                                  return const Padding(
-                                    padding: EdgeInsets.only(bottom: 70.0),
-                                    child: CupertinoActivityIndicator(
-                                      radius: 25.0,
-                                      color: LarosaColors.primary
-                                    ),
-                                  );
-                                }
-                                else {
-                                  final post = controller.posts[index];
-
-                                  if (_postPlayStates[post['id']] == null) {
-                                    _postPlayStates[post['id']] =
-                                        ValueNotifier(false);
-                                  }
-                                  if (_postPlayStates[post['id']] == null) {
-                                    _postPlayStates[post['id']] =
-                                        ValueNotifier(false);
-                                  }
-
-                                  return VisibilityDetector(
-                                    key: Key('post-${post['id']}-$index'),
-                                    onVisibilityChanged: (info) {
-                                      bool isPlaying =
-                                          info.visibleFraction > 0.5;
-                                      _updatePostState(post['id'], isPlaying);
-                                    },
-                                    child: ValueListenableBuilder<bool>(
-                                      valueListenable:
-                                          _postPlayStates[post['id']]!,
-                                      builder: (context, isPlaying, child) {
-                                        return OldPostCompoent(
-                                          post: post,
-                                          isPlaying: isPlaying,
-                                        );
-                                      },
-                                    ),
-                                  );
-                                }
-                              },
-                            ),
-                          );
+                          return const SizedBox.shrink();
                         }
                       },
                     ),
                   ),
                 ),
+
+                if (
+                  //!controller.isLoading && 
+                controller.posts.isNotEmpty)
+                  SliverPadding(
+                    padding: const EdgeInsets.only(bottom: 20.0, top: 0),
+                    sliver: SliverList(
+                      delegate: SliverChildBuilderDelegate(
+                        (context, index) {
+                          if (index == controller.posts.length) {
+                            return const Padding(
+                              padding: EdgeInsets.only(bottom: 0.0, top: 20),
+                              child: Center(
+                                child: CupertinoActivityIndicator(
+                                  radius: 12.0,
+                                  color: LarosaColors.primary,
+                                ),
+                              ),
+                            );
+                          } else if (index == controller.posts.length + 1 &&
+                              controller.isFetchingMore) {
+                            return const Padding(
+                              padding: EdgeInsets.only(bottom: 70.0),
+                              child: CupertinoActivityIndicator(
+                                radius: 25.0,
+                                color: LarosaColors.primary
+                              ),
+                            );
+                          } else {
+                            final post = controller.posts[index];
+
+                            if (_postPlayStates[post['id']] == null) {
+                              _postPlayStates[post['id']] = ValueNotifier(false);
+                            }
+
+                            return VisibilityDetector(
+                              key: Key('post-${post['id']}-$index'),
+                              onVisibilityChanged: (info) {
+                                bool isPlaying = info.visibleFraction > 0.5;
+                                _updatePostState(post['id'], isPlaying);
+                              },
+                              child: ValueListenableBuilder<bool>(
+                                valueListenable: _postPlayStates[post['id']]!,
+                                builder: (context, isPlaying, child) {
+                                  return OldPostCompoent(
+                                    post: post,
+                                    isPlaying: isPlaying,
+                                  );
+                                },
+                              ),
+                            );
+                          }
+                        },
+                        childCount: controller.posts.length +
+                            (controller.isFetchingMore ? 1 : 0) +
+                            1,
+                      ),
+                    ),
+                  ),
               ],
             ),
             Positioned(

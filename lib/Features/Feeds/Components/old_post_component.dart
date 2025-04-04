@@ -34,13 +34,14 @@ class OldPostCompoent extends StatefulWidget {
   State<OldPostCompoent> createState() => _OldPostCompoentState();
 }
 
-class _OldPostCompoentState extends State<OldPostCompoent> with SingleTickerProviderStateMixin {
+class _OldPostCompoentState extends State<OldPostCompoent>
+    with SingleTickerProviderStateMixin {
   late bool _isLiked;
   late int _likesCount;
   late bool _isFavorite;
   late int _favoriteCount;
 
-  double opacity = 0.0; 
+  double opacity = 0.0;
   bool _showExplosion = false;
 
   @override
@@ -149,10 +150,10 @@ class _OldPostCompoentState extends State<OldPostCompoent> with SingleTickerProv
       if (response.statusCode == 200) {
       } else if (response.statusCode == 302 || response.statusCode == 403) {
         bool isRefreshed = await AuthService.booleanRefreshToken();
-        if(!isRefreshed && mounted){
+        if (!isRefreshed && mounted) {
           HelperFunctions.logout(context);
           return;
-        } 
+        }
         await _likePost();
         return;
       } else {
@@ -370,31 +371,40 @@ class _OldPostCompoentState extends State<OldPostCompoent> with SingleTickerProv
                         ),
                         child: IconButton(
                           onPressed: () {
-                            String username = widget.post['username'];
-                            double price =
-                                double.parse(widget.post['price'].toString());
-                            String names = widget.post['names'];
-                            int postId = widget.post['id'];
-                            String? reservationType =
-                                widget.post['reservation_type'];
-                            int? adults = widget.post['adults'];
-                            bool? breakfastIncluded =
-                                widget.post['breakfast_included'];
+                            if (AuthService.getToken().isNotEmpty) {
+                              String username = widget.post['username'];
+                              double price =
+                                  double.parse(widget.post['price'].toString());
+                              String names = widget.post['names'];
+                              int postId = widget.post['id'];
+                              String? reservationType =
+                                  widget.post['reservation_type'];
+                              int? adults = widget.post['adults'];
+                              bool? breakfastIncluded =
+                                  widget.post['breakfast_included'];
 
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => AddToCartScreen(
-                                  username: username,
-                                  price: price,
-                                  names: names,
-                                  postId: postId,
-                                  reservationType: reservationType,
-                                  adults: adults,
-                                  breakfastIncluded: breakfastIncluded,
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => AddToCartScreen(
+                                    username: username,
+                                    price: price,
+                                    names: names,
+                                    postId: postId,
+                                    reservationType: reservationType,
+                                    adults: adults,
+                                    breakfastIncluded: breakfastIncluded,
+                                  ),
                                 ),
-                              ),
-                            );
+                              );
+                            } else {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('Please login to add to cart'),
+                                ),
+                              );
+                              context.pushNamed('login');
+                            }
                           },
                           icon: const HugeIcon(
                             icon: HugeIcons.strokeRoundedShoppingCartCheckIn01,
@@ -422,195 +432,193 @@ class _OldPostCompoentState extends State<OldPostCompoent> with SingleTickerProv
 
   Widget _postInteracts() {
     return Padding(
-        padding: const EdgeInsets.only(left: 9.0, right: 0.0),
-        child: Container(
-          decoration: BoxDecoration(
-            color: Theme.of(context).scaffoldBackgroundColor,
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              // Like Section
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  // Second LikeButton (small)
-                  LikeButton(
-                    size: 23.0,
-                    isLiked: _isLiked,
-                    likeCount: _likesCount,
-                    animationDuration: const Duration(milliseconds: 500),
-                    bubblesColor: const BubblesColor(
-                      dotPrimaryColor: Color.fromRGBO(180, 23, 12, 1),
-                      dotSecondaryColor: Colors.orange,
-                      dotThirdColor: Colors.yellow,
-                      dotLastColor: Colors.red,
-                    ),
-                    circleColor: const CircleColor(
-                      start: Color.fromRGBO(255, 204, 0, 1),
-                      end: Color.fromRGBO(180, 23, 12, 1),
-                    ),
-                    likeBuilder: (bool isLiked) {
-                      return SvgPicture.asset(
-                        isLiked
-                            ? 'assets/icons/SolarHeartAngleBold.svg'
-                            : 'assets/icons/SolarHeartAngleLinear.svg',
-                        // width: 25,
-                        // height: 25,
-                        colorFilter: ColorFilter.mode(
-                          isLiked
-                              ? const Color.fromRGBO(180, 23, 12, 1)
-                              : Theme.of(context).colorScheme.secondary,
-                          BlendMode.srcIn,
-                        ),
-                        semanticsLabel: 'Like icon',
-                      );
-                    },
-                    likeCountPadding: const EdgeInsets.only(left: 8.0),
-                    countBuilder: (int? count, bool isLiked, String text) {
-                      return Text(
-                        text,
-                        style: Theme.of(context).textTheme.bodySmall,
-                      );
-                    },
-                    onTap: (bool isLiked) {
-                      _toggleLike();
-                      return Future.value(_isLiked);
-                    },
-                  ),
-                ],
-              ),
-
-              Row(
-                children: [
-                  LikeButton(
-                    size: 23.0,
-                    isLiked: _isFavorite,
-                    likeCount: _favoriteCount,
-                    animationDuration:
-                        const Duration(milliseconds: 500), 
-                    bubblesColor: const BubblesColor(
-                      dotPrimaryColor:
-                          Color.fromRGBO(255, 215, 0, 1),
-                      dotSecondaryColor: Colors.orange,
-                      dotThirdColor: Colors.yellow,
-                      dotLastColor: Colors.red,
-                    ),
-                    circleColor: const CircleColor(
-                      start: Color.fromRGBO(255, 223, 0, 1),
-                      end: Color.fromRGBO(255, 215, 0, 1),
-                    ),
-                    likeBuilder: (bool isLiked) {
-                      return SvgPicture.asset(
-                        isLiked
-                            ? SvgIconsPaths.starBold
-                            : SvgIconsPaths.starOutline,
-                        // width: 25,
-                        // height: 25,
-                        colorFilter: ColorFilter.mode(
-                          isLiked
-                              ? LarosaColors.gold
-                              : Theme.of(context).colorScheme.secondary,
-                          BlendMode.srcIn,
-                        ),
-                        semanticsLabel: 'Star icon',
-                      );
-                    },
-                    likeCountPadding: const EdgeInsets.only(left: 8.0),
-                    countBuilder: (int? count, bool isLiked, String text) {
-                      return Text(
-                        text,
-                        style: Theme.of(context).textTheme.bodySmall,
-                      );
-                    },
-                    onTap: (bool isLiked) {
-                      _isFavorite = !isLiked;
-                      _favoriteCount =
-                          _isFavorite ? _favoriteCount + 1 : _favoriteCount - 1;
-                      setState(() {});
-                      Future.microtask(() => _favouritePost());
-                      return Future.value(_isFavorite);
-                    },
-                  ),
-                ],
-              ),
-              // comment icon
-              Row(
-                children: [
-                  IconButton(
-                    onPressed: () {
-                      showMaterialModalBottomSheet(
-                        context: context,
-                        builder: (BuildContext context) => Container(
-                          constraints: const BoxConstraints(minHeight: 200),
-                          child: CommentSection(
-                            postId: widget.post['id'],
-                            names: widget.post['names'],
-                          ),
-                        ),
-                      );
-                    },
-                    icon: Icon(
-                      CupertinoIcons.chat_bubble,
-                      color: Theme.of(context).colorScheme.secondary,
-                      size: 23,
-                    ),
-                  ),
-                  Text(
-                    widget.post['comments'].toString(),
-                    style: Theme.of(context).textTheme.bodySmall,
-                  )
-                ],
-              ),
-
-              // Share
-              IconButton(
-                onPressed: () {
-                  showModalBottomSheet(
-                    context: context,
-                    builder: (context) => Container(
-                      padding: const EdgeInsets.symmetric(vertical: 20),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          ListTile(
-                            leading: const Icon(Icons.share),
-                            title: const Text('Share Post'),
-                            onTap: () {
-                              Navigator.pop(context);
-                              HelperFunctions.shareLink(
-                                widget.post['id'].toString(),
-                              );
-                            },
-                          ),
-                          ListTile(
-                            leading: const Icon(Icons.report),
-                            title: const Text('Report Post'),
-                            onTap: () {
-                              Navigator.pop(context);
-                              showDialog(
-                                context: context,
-                                builder: (context) => ReportPostComponent(
-                                  postId: widget.post['id'].toString(),
-                                ),
-                              );
-                            },
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
-                },
-                icon: Icon(
-                  Icons.more_vert,
-                  color: Theme.of(context).colorScheme.secondary,
-                  size: 23,
-                ),
-              ),
-            ],
-          ),
+      padding: const EdgeInsets.only(left: 9.0, right: 0.0),
+      child: Container(
+        decoration: BoxDecoration(
+          color: Theme.of(context).scaffoldBackgroundColor,
         ),
-      );
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            // Like Section
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                // Second LikeButton (small)
+                LikeButton(
+                  size: 23.0,
+                  isLiked: _isLiked,
+                  likeCount: _likesCount,
+                  animationDuration: const Duration(milliseconds: 500),
+                  bubblesColor: const BubblesColor(
+                    dotPrimaryColor: Color.fromRGBO(180, 23, 12, 1),
+                    dotSecondaryColor: Colors.orange,
+                    dotThirdColor: Colors.yellow,
+                    dotLastColor: Colors.red,
+                  ),
+                  circleColor: const CircleColor(
+                    start: Color.fromRGBO(255, 204, 0, 1),
+                    end: Color.fromRGBO(180, 23, 12, 1),
+                  ),
+                  likeBuilder: (bool isLiked) {
+                    return SvgPicture.asset(
+                      isLiked
+                          ? 'assets/icons/SolarHeartAngleBold.svg'
+                          : 'assets/icons/SolarHeartAngleLinear.svg',
+                      // width: 25,
+                      // height: 25,
+                      colorFilter: ColorFilter.mode(
+                        isLiked
+                            ? const Color.fromRGBO(180, 23, 12, 1)
+                            : Theme.of(context).colorScheme.secondary,
+                        BlendMode.srcIn,
+                      ),
+                      semanticsLabel: 'Like icon',
+                    );
+                  },
+                  likeCountPadding: const EdgeInsets.only(left: 8.0),
+                  countBuilder: (int? count, bool isLiked, String text) {
+                    return Text(
+                      text,
+                      style: Theme.of(context).textTheme.bodySmall,
+                    );
+                  },
+                  onTap: (bool isLiked) {
+                    _toggleLike();
+                    return Future.value(_isLiked);
+                  },
+                ),
+              ],
+            ),
+
+            Row(
+              children: [
+                LikeButton(
+                  size: 23.0,
+                  isLiked: _isFavorite,
+                  likeCount: _favoriteCount,
+                  animationDuration: const Duration(milliseconds: 500),
+                  bubblesColor: const BubblesColor(
+                    dotPrimaryColor: Color.fromRGBO(255, 215, 0, 1),
+                    dotSecondaryColor: Colors.orange,
+                    dotThirdColor: Colors.yellow,
+                    dotLastColor: Colors.red,
+                  ),
+                  circleColor: const CircleColor(
+                    start: Color.fromRGBO(255, 223, 0, 1),
+                    end: Color.fromRGBO(255, 215, 0, 1),
+                  ),
+                  likeBuilder: (bool isLiked) {
+                    return SvgPicture.asset(
+                      isLiked
+                          ? SvgIconsPaths.starBold
+                          : SvgIconsPaths.starOutline,
+                      // width: 25,
+                      // height: 25,
+                      colorFilter: ColorFilter.mode(
+                        isLiked
+                            ? LarosaColors.gold
+                            : Theme.of(context).colorScheme.secondary,
+                        BlendMode.srcIn,
+                      ),
+                      semanticsLabel: 'Star icon',
+                    );
+                  },
+                  likeCountPadding: const EdgeInsets.only(left: 8.0),
+                  countBuilder: (int? count, bool isLiked, String text) {
+                    return Text(
+                      text,
+                      style: Theme.of(context).textTheme.bodySmall,
+                    );
+                  },
+                  onTap: (bool isLiked) {
+                    _isFavorite = !isLiked;
+                    _favoriteCount =
+                        _isFavorite ? _favoriteCount + 1 : _favoriteCount - 1;
+                    setState(() {});
+                    Future.microtask(() => _favouritePost());
+                    return Future.value(_isFavorite);
+                  },
+                ),
+              ],
+            ),
+            // comment icon
+            Row(
+              children: [
+                IconButton(
+                  onPressed: () {
+                    showMaterialModalBottomSheet(
+                      context: context,
+                      builder: (BuildContext context) => Container(
+                        constraints: const BoxConstraints(minHeight: 200),
+                        child: CommentSection(
+                          postId: widget.post['id'],
+                          names: widget.post['names'],
+                        ),
+                      ),
+                    );
+                  },
+                  icon: Icon(
+                    CupertinoIcons.chat_bubble,
+                    color: Theme.of(context).colorScheme.secondary,
+                    size: 23,
+                  ),
+                ),
+                Text(
+                  widget.post['comments'].toString(),
+                  style: Theme.of(context).textTheme.bodySmall,
+                )
+              ],
+            ),
+
+            // Share
+            IconButton(
+              onPressed: () {
+                showModalBottomSheet(
+                  context: context,
+                  builder: (context) => Container(
+                    padding: const EdgeInsets.symmetric(vertical: 20),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        ListTile(
+                          leading: const Icon(Icons.share),
+                          title: const Text('Share Post'),
+                          onTap: () {
+                            Navigator.pop(context);
+                            HelperFunctions.shareLink(
+                              widget.post['id'].toString(),
+                            );
+                          },
+                        ),
+                        ListTile(
+                          leading: const Icon(Icons.report),
+                          title: const Text('Report Post'),
+                          onTap: () {
+                            Navigator.pop(context);
+                            showDialog(
+                              context: context,
+                              builder: (context) => ReportPostComponent(
+                                postId: widget.post['id'].toString(),
+                              ),
+                            );
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+              icon: Icon(
+                Icons.more_vert,
+                color: Theme.of(context).colorScheme.secondary,
+                size: 23,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   @override
@@ -630,7 +638,7 @@ class _OldPostCompoentState extends State<OldPostCompoent> with SingleTickerProv
           padding: EdgeInsets.only(top: 1, bottom: 0), // Eliminates all padding
           child: Divider(
             height: 1,
-            thickness: 1, 
+            thickness: 1,
           ),
         )
       ],

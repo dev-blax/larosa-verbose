@@ -17,15 +17,26 @@ class OauthService {
   );
   final DioService _dioService = DioService();
   final GeoService _geoService = GeoService();
+
   Future<GoogleSignInAccount?> signinWithGoogle() async {
     try {
       final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
       if (googleUser != null) {
-        LogService.logInfo('signed in as ${googleUser.email}');
-        LogService.logInfo('Display Name: ${googleUser.displayName}');
-        LogService.logInfo('id ${googleUser.id}');
+        //LogService.logInfo('signed in as ${googleUser.email}');
+        // LogService.logInfo('Display Name: ${googleUser.displayName}');
+        //LogService.logInfo('id ${googleUser.id}');
         final GoogleSignInAuthentication auth = await googleUser.authentication;
-        LogService.logInfo('id token ${auth.idToken}');
+        
+        // LogService.logInfo('id token ${auth.idToken}');
+        String token = auth.idToken!;
+
+        while(token.isNotEmpty){
+          int initLength = (token.length >= 500 ? 500 : token.length);
+          LogService.logInfo('id token ${token.substring(0, initLength)}');
+          int endLength = token.length;
+          token = token.substring(initLength, endLength);
+        }
+
         LogService.logInfo('access token ${auth.accessToken}');
 
         // Get current location
@@ -49,6 +60,9 @@ class OauthService {
       }
     } catch (e) {
       LogService.logError('Error signing in with Google: $e');
+      // google logout
+      _googleSignIn.signOut();
+      LogService.logInfo('Signed out from Google');
       return null;
     }
   }

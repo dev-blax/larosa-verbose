@@ -92,9 +92,19 @@ class _SigninScreenState extends State<SigninScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        elevation: 0,
+
+        leading: IconButton(
+          onPressed: () => context.pop(),
+          icon: const Icon(CupertinoIcons.back, color: Colors.white),
+        ),
+        backgroundColor: LarosaColors.primary,
+        title: const Text('Explore Larosa', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w500)),
+        centerTitle: true,
+      ),
       body: SingleChildScrollView(
         child: Container(
-          //height: Helpers.screenHeight(),
           constraints: BoxConstraints(
             minHeight: MediaQuery.of(context).size.height,
           ),
@@ -188,7 +198,7 @@ class _SigninScreenState extends State<SigninScreen> {
                             child: TextInputComponent(
                               iconData: Iconsax.happyemoji,
                               label: 'Username',
-                              inputType: TextInputType.name,
+                              inputType: TextInputType.emailAddress,
                               controller: _usernameController,
                               validator:
                                   ValidationHelpers.validateRequiredField,

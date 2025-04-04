@@ -71,7 +71,6 @@ class _TextInputComponentState extends State<TextInputComponent> {
     return TextFormField(
       controller: _controller,
       decoration: InputDecoration(
-        
         hintText: widget.label,
         hintStyle: const TextStyle(color: Colors.white),
         suffixIcon: widget.isPassword
@@ -83,6 +82,7 @@ class _TextInputComponentState extends State<TextInputComponent> {
                 },
                 icon: Icon(
                   hideText ? CupertinoIcons.eye_slash_fill : CupertinoIcons.eye_fill,
+                  color: Colors.white,
                 ))
             : null,
         prefixIcon: Icon(
@@ -98,7 +98,32 @@ class _TextInputComponentState extends State<TextInputComponent> {
             color: Colors.white,
           ),
         ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(20),
+          borderSide: const BorderSide(
+            color: Colors.white,
+          ),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(20),
+          borderSide: const BorderSide(
+            color: Colors.white,
+          ),
+        ),
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(20),
+          borderSide: const BorderSide(
+            color: Colors.white,
+          ),
+        ),
+        focusedErrorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(20),
+          borderSide: const BorderSide(
+            color: Colors.white,
+          ),
+        ),
       ),
+      style: TextStyle(color: Colors.white, fontSize: 16),
       keyboardType: widget.inputType,
       obscureText: hideText,
       validator: widget.validator,
