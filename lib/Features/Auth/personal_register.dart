@@ -8,9 +8,9 @@ import 'package:gap/gap.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hive/hive.dart';
 import 'package:iconsax/iconsax.dart';
-import 'package:http/http.dart' as http;
 import 'package:larosa_block/Components/text_input.dart';
 import 'package:larosa_block/Features/Auth/Components/oauth_buttons.dart';
+import 'package:larosa_block/Services/dio_service.dart';
 import 'package:larosa_block/Services/log_service.dart';
 import 'package:larosa_block/Utils/colors.dart';
 import 'package:larosa_block/Utils/helpers.dart';
@@ -33,40 +33,33 @@ class _PersonalRegisterScreenState extends State<PersonalRegisterScreen> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _usernameController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
+  final DioService _dioService = DioService();
 
   Future<void> _savePersonalUser() async {
-    Map<String, String> headers = {
-      "Content-Type": "application/json",
-      "Access-Control-Allow-Origin": "*",
-    };
-
-    var uri = Uri.https(
-      LarosaLinks.nakedBaseUrl,
-      LarosaLinks.registrationEndpoint,
-    );
-
     try {
-      var response = await http.post(
-        uri,
-        headers: headers,
-        body: jsonEncode({
+      setState(() {
+        isLoading = true;
+      });
+      var response = await _dioService.dio.post(
+        '${LarosaLinks.baseurl}/api/v1/accounts/register',
+        data: jsonEncode({
+          "name": _fullnameController.text,
           "accountTypeId": 1,
           "username": _usernameController.text,
           "email": _emailController.text,
           "password": _passwordController.text,
-          "name": _fullnameController.text,
           "cityId": 1,
           "countryId": 2,
         }),
       );
 
       if (response.statusCode != 201) {
-        LogService.logError('Error ${response.body}');
-        HelperFunctions.showToast(response.body, false);
+        LogService.logError('Error ${response.data}');
+        HelperFunctions.showToast(response.data, false);
         return;
       }
 
-      final data = jsonDecode(response.body);
+      final data = jsonDecode(response.data);
 
       var box = Hive.box('userBox');
 
@@ -86,6 +79,10 @@ class _PersonalRegisterScreenState extends State<PersonalRegisterScreen> {
       context.goNamed('home');
     } catch (e) {
       LogService.logError('Error $e');
+    } finally {
+      setState(() {
+        isLoading = false;
+      });
     }
   }
 
@@ -420,5 +417,15 @@ class _PersonalRegisterScreenState extends State<PersonalRegisterScreen> {
         ),
       ),
     );
+  }
+
+
+  @override
+  void dispose() {
+    _fullnameController.dispose();
+    _emailController.dispose();
+    _usernameController.dispose();
+    _passwordController.dispose();
+    super.dispose();
   }
 }

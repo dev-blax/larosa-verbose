@@ -2,12 +2,15 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:larosa_block/Services/auth_service.dart';
+import 'package:larosa_block/Services/log_service.dart';
 import 'package:larosa_block/Utils/links.dart';
 import 'package:larosa_block/Utils/helpers.dart';
+import 'package:larosa_block/Services/dio_service.dart';
 
 class BusinessCategoryProvider with ChangeNotifier {
   List<Map<String, dynamic>> _businessCategories = [];
   List<Map<String, dynamic>> _units = [];
+  final DioService _dioService = DioService();
   bool _isLoadingUnits = true;
   String? _errorUnits;
   bool _isLoading = true;
@@ -71,19 +74,13 @@ class BusinessCategoryProvider with ChangeNotifier {
       _error = null;
       notifyListeners();
 
-      final headers = {
-        "Content-Type": "application/json",
-        "Access-Control-Allow-Origin": "*",
-      };
-
-      var url = Uri.https(
-          LarosaLinks.nakedBaseUrl, '/api/v1/business-categories/all');
-      final response = await http.post(url, headers: headers);
+      final response = await _dioService.dio.post(
+        '${LarosaLinks.baseurl}/api/v1/business-categories/all',
+      );
 
       if (response.statusCode == 200) {
-        final List<dynamic> data = json.decode(response.body);
+        final List<dynamic> data = response.data;
         _businessCategories = data.map((category) {
-          // Convert each category to include units if they don't exist
           return {
             'id': category['id'],
             'name': category['name'],
@@ -95,8 +92,7 @@ class BusinessCategoryProvider with ChangeNotifier {
       }
     } catch (e) {
       _error = 'An error occurred while loading categories';
-      HelperFunctions.showToast(
-          'An error occurred while loading categories', false);
+      LogService.logError('An error occurred while loading categories: $e');
     } finally {
       _isLoading = false;
       notifyListeners();

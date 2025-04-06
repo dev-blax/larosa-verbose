@@ -3,10 +3,10 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:go_router/go_router.dart';
-import 'package:http/http.dart' as http;
 import 'package:larosa_block/Services/log_service.dart';
 import 'package:larosa_block/Utils/helpers.dart';
 import 'package:larosa_block/Utils/links.dart';
+import 'package:larosa_block/Services/dio_service.dart';
 
 class ForgotPasswordScreen extends StatefulWidget {
   const ForgotPasswordScreen({super.key});
@@ -37,6 +37,8 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
     parent: _animationController,
     curve: Curves.elasticOut,
   ));
+
+  final DioService _dioService = DioService();
 
   @override
   void initState() {
@@ -148,64 +150,28 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
   void handleForgotPassword() async {
     if (emailController.text == '' ||
         !HelperFunctions.isValidEmail(emailController.text)) {
-      // Get.snackbar(
-      //   'Error',
-      //   'Enter a valid email',
-      //   backgroundColor: Colors.red[200],
-      //   colorText: LarosaColors.light,
-      // );
     } else {
       try {
         setState(() {
           isLoading = true;
         });
 
-        Map<String, String> headers = {
-          "Content-Type": "application/json",
-          "Access-Control-Allow-Origin": "*"
-        };
-
         LogService.logInfo('sending forgot password ');
 
-        var uri = Uri.http('192.168.1.46:8081', LarosaLinks.forgetPassword);
-
-        var response = await http.post(
-          uri,
-          headers: headers,
-          body: jsonEncode(
+        await _dioService.dio.post(
+          LarosaLinks.forgetPassword,
+          data: jsonEncode(
             {
               "email": emailController.text,
             },
           ),
         );
-
-        if (response.statusCode == 200) {
-          setState(() {
-            isLoading = false;
-          });
-          // Get.snackbar(
-          //   'Success',
-          //   'A password reset link has been sent to your inbox',
-          // );
-        } else {
-          setState(() {
-            isLoading = false;
-          });
-          LogService.logFatal(response.body.toString());
-          // Get.snackbar(
-          //   'An error occured',
-          //   'Check your internet connection',
-          // );
-        }
       } catch (e) {
+        LogService.logError('Error $e');
+      } finally {
         setState(() {
           isLoading = false;
         });
-        // Get.snackbar(
-        //   'Explore Larosa',
-        //   'An error occured. Please try again later',
-        // );
-        LogService.logError('Error $e');
       }
     }
   }

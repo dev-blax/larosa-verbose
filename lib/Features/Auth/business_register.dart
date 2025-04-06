@@ -8,8 +8,7 @@ import 'package:gap/gap.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hive/hive.dart';
 import 'package:iconsax/iconsax.dart';
-import 'package:http/http.dart' as http;
-import 'package:larosa_block/Services/auth_service.dart';
+import 'package:larosa_block/Services/dio_service.dart';
 import 'package:larosa_block/Services/log_service.dart';
 import 'package:larosa_block/Utils/helpers.dart';
 import 'package:larosa_block/Utils/links.dart';
@@ -26,6 +25,7 @@ class BusinessRegisterScreen extends StatefulWidget {
 
 class _BusinessRegisterScreenState extends State<BusinessRegisterScreen> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+  final DioService _dioService = DioService();
   int? _selectedCountry;
   String _businessName = '';
   String _userName = '';
@@ -45,78 +45,43 @@ class _BusinessRegisterScreenState extends State<BusinessRegisterScreen> {
   }
 
   Future<void> fetchCountries() async {
-    var uri = Uri.https(
-      LarosaLinks.nakedBaseUrl,
-      '/countries/all',
-    );
 
     try {
-      var response = await http.post(uri);
-      if (response.statusCode == 200) {
-        var jsonResponse = json.decode(response.body);
-        //LogService.logDebug('response: $jsonResponse');
-        setState(() {
-          _countries = jsonResponse;
-        });
-
-        //LogService.logDebug('countries: $_countries');
-      } else {
-        //HelperFunctions.showToast('Failed to fetch countries', false);
-        LogService.logError(
-            'Failed to fetch countries: ${response.statusCode}');
-      }
+      var response = await _dioService.dio.post('${LarosaLinks.baseurl}/countries/all');
+      var jsonResponse = response.data;
+      setState(() {
+        _countries = jsonResponse;
+      });
     } catch (e) {
-      //HelperFunctions.showToast('Failed to fetch countries', false);
       LogService.logError(e.toString());
     }
   }
 
   Future<void> _saveBusinessAccount() async {
-    Map<String, String> headers = {
-      "Content-Type": "application/json",
-      "Access-Control-Allow-Origin": "*",
-      'Authorization': 'Bearer ${AuthService.getToken()}',
-    };
-
-    var uri = Uri.https(
-      LarosaLinks.nakedBaseUrl,
-      LarosaLinks.registrationEndpoint,
-    );
 
     try {
       setState(() {
         isSaving = true;
       });
-      var response = await http.post(uri,
-          headers: headers,
-          body: jsonEncode({
-            "name": _businessName,
-            "accountTypeId": 2,
-            "username": _userName.toLowerCase().trim(),
-            "email": _email,
-            "password": _password,
-            "businessCategoryIds": [businessCategoryId],
-            "cityId": 1,
-            "countryId": 1,
-            "street": "123 Main Street",
-            "latitude": 37.7749,
-            "longitude": -122.4194
-          }));
 
-      if (response.statusCode != 201) {
-        // HelperFunctions.showToast(
-        //   'Failed to Register Business: ${response.statusCode}',
-        //   false,
-        // );
+      var response = await _dioService.dio.post(
+        '${LarosaLinks.baseurl}/api/v1/accounts/register',
+        data: jsonEncode({
+          "name": _businessName,
+          "accountTypeId": 2,
+          "username": _userName.toLowerCase().trim(),
+          "email": _email,
+          "password": _password,
+          "businessCategoryIds": [businessCategoryId],
+          "cityId": 1,
+          "countryId": 1,
+          "street": "123 Main Street",
+          "latitude": 37.7749,
+          "longitude": -122.4194
+        }),
+      );
 
-        LogService.logError(response.statusCode.toString());
-        LogService.logFatal('error: ${response.body} ');
-        return;
-      }
-
-      LogService.logError(response.statusCode.toString());
-
-      final data = jsonDecode(response.body);
+      final data = response.data;
       var box = Hive.box('userBox');
       await box.clear();
       box.put('profileId', data['profileId']);
@@ -237,35 +202,6 @@ class _BusinessRegisterScreenState extends State<BusinessRegisterScreen> {
                       );
                     },
                   ),
-                  // DropdownButtonFormField<String>(
-                  //   icon: const Icon(Iconsax.arrow_circle_down),
-                  //   decoration: InputDecoration(
-                  //     border: const OutlineInputBorder(
-                  //       borderRadius: BorderRadius.all(Radius.circular(20)),
-                  //       borderSide: BorderSide.none,
-                  //     ),
-                  //     fillColor: Theme.of(context).colorScheme.onPrimary,
-                  //     filled: true,
-                  //   ),
-                  //   value: _selectedCategory,
-                  //   items: _businessCategories.map((String category) {
-                  //     return DropdownMenuItem<String>(
-                  //       value: category,
-                  //       child: Text(category),
-                  //     );
-                  //   }).toList(),
-                  //   onChanged: (newValue) {
-                  //     setState(() {
-                  //       _selectedCategory = newValue;
-                  //     });
-                  //   },
-                  //   validator: (value) {
-                  //     if (value == null || value.isEmpty) {
-                  //       return 'Please select a business category';
-                  //     }
-                  //     return null;
-                  //   },
-                  // ),
                   const Gap(20),
                   const Text('Business Name'),
                   TextFormField(
@@ -542,10 +478,12 @@ class _BusinessRegisterScreenState extends State<BusinessRegisterScreen> {
                                       ),
                               ),
                             )
-                          : const CupertinoActivityIndicator(
-                              radius: 15,
-                              color: Colors.white,
-                            ))
+                          : Center(
+                            child: const CupertinoActivityIndicator(
+                                radius: 15,
+                                color: Colors.white,
+                              ),
+                          ))
                       : const Text(
                           'Please accept the terms and privacy policy to continue',
                           style: TextStyle(color: Colors.white),

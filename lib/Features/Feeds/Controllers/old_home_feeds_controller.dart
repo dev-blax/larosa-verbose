@@ -1,8 +1,8 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
 import 'package:larosa_block/Services/auth_service.dart';
 import 'package:larosa_block/Services/log_service.dart';
+import 'package:larosa_block/Services/dio_service.dart';
 import 'package:larosa_block/Utils/links.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -12,6 +12,7 @@ class OldHomeFeedsController extends ChangeNotifier {
   ValueNotifier<bool> isLoading = ValueNotifier(false);
   final ScrollController scrollController = ScrollController();
   final Map<int, bool> _postPlayStates = {};
+  final DioService _dioService = DioService();
   bool isFetchingMore = false;
   int currentPage = 0; 
   final int itemsPerPage = 10;
@@ -69,15 +70,6 @@ class OldHomeFeedsController extends ChangeNotifier {
   }
 
   Future<void> _fetchPostsFromServer(int? profileId, {bool isPaginated = false}) async {
-  String token = AuthService.getToken();
-  Map<String, String> headers = {
-    "Content-Type": "application/json",
-    "Access-Control-Allow-Origin": "*",
-    'Authorization': token.isNotEmpty ? 'Bearer $token' : '',
-  };
-
-  var url = Uri.https(LarosaLinks.nakedBaseUrl, LarosaLinks.allFeeds);
-
   Map<String, dynamic> body = {
     'countryId': '1',
     'page': currentPage.toString(),
@@ -89,14 +81,15 @@ class OldHomeFeedsController extends ChangeNotifier {
   }
 
   try {
-    final response = await http.post(
-      url,
-      body: jsonEncode(body),
-      headers: headers,
+
+
+    final response = await _dioService.dio.post(
+      LarosaLinks.allFeeds,
+      data: jsonEncode(body),
     );
 
     if (response.statusCode == 200) {
-      List<dynamic> data = json.decode(response.body);
+      List<dynamic> data = response.data;
       if (isPaginated) {
         _posts.addAll(data);
         currentPage++;

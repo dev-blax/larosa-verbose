@@ -21,7 +21,6 @@ class DioService {
     dio.interceptors.add(
       InterceptorsWrapper(
         onRequest: (options, handler) {
-          // Add auth token to all requests
           final token = AuthService.getToken();
           if (token.isNotEmpty) {
             options.headers['Authorization'] = 'Bearer $token';
@@ -29,8 +28,6 @@ class DioService {
           return handler.next(options);
         },
         onResponse: (response, handler) {
-          // If we get a successful response and previously had a connection error,
-          // hide the error snackbar as connection is restored
           if (_hasConnectionError) {
             _hasConnectionError = false;
             NavigationService.hideErrorSnackBar();
@@ -56,22 +53,27 @@ class DioService {
               switch (error.response?.statusCode) {
                 case 401:
                   // Try to refresh token
-                  if (await _handleTokenRefresh(error.requestOptions)) {
-                    return handler.resolve(await _retry(error.requestOptions));
+                  if (await handleTokenRefresh(error.requestOptions)) {
+                    return handler.resolve(await retry(error.requestOptions));
                   }
-                  message = 'Auth attempt failed. Please login again.';
+                  LogService.logInfo('error ${error.response}');
+
+                  message = error.response?.data ?? 'Auth attempt failed. Please login again.';
+                  break;
+                case 400:
+                  message = error.response?.data ?? 'Wrong credentials.';
                   break;
                 case 403:
-                  message = 'Access denied.';
+                  message = error.response?.data ?? 'Access denied.';
                   break;
                 case 404:
-                  message = 'Resource not found.';
+                  message = error.response?.data ?? 'Resource not found.';
                   break;
                 case 500:
-                  message = 'Server error. Please try again later.';
+                  message = error.response?.data ?? 'Server error. Please try again later.';
                   break;
                 default:
-                  message = 'Something went wrong. Please try again.';
+                  message = error.response?.data ?? 'Something went wrong. Please try again.';
               }
               break;
             default:
@@ -81,14 +83,13 @@ class DioService {
           _hasConnectionError = isConnectionError;
           LogService.logError('Dio Error: $error');
           NavigationService.showErrorSnackBar(message);
-          
           return handler.next(error);
         },
       ),
     );
   }
 
-  Future<bool> _handleTokenRefresh(RequestOptions requestOptions) async {
+  Future<bool> handleTokenRefresh(RequestOptions requestOptions) async {
     try {
       bool refreshed = await AuthService.booleanRefreshToken();
       if (refreshed) {
@@ -102,7 +103,7 @@ class DioService {
     return false;
   }
 
-  Future<Response<dynamic>> _retry(RequestOptions requestOptions) async {
+  Future<Response<dynamic>> retry(RequestOptions requestOptions) async {
     final options = Options(
       method: requestOptions.method,
       headers: requestOptions.headers,
