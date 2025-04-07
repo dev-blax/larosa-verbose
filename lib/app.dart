@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:larosa_block/Features/Feeds/Controllers/old_home_feeds_controller.dart';
+import 'package:larosa_block/Features/Stories/providers/story_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:stomp_dart_client/stomp_dart_client.dart';
 import 'package:toastification/toastification.dart';
@@ -99,6 +100,7 @@ class _AppState extends State<App> {
         ChangeNotifierProvider(create: (_) => OnboardingProvider()),
         ChangeNotifierProvider(create: (_) => CartController()),
         ChangeNotifierProvider(create: (_) => BusinessCategoryProvider()),
+        ChangeNotifierProvider(create: (_) => StoryProvider()),
       ],
       child: ToastificationWrapper(
         child: MaterialApp.router(

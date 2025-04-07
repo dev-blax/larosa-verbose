@@ -334,7 +334,7 @@ class AddToCartTable extends StatelessWidget {
   }
 
   Widget _buildQuantitySelector(BuildContext context, int quantity, Color? primaryColor) {
-    final quickAddValues = [-20, -50, -100, 20, 50, 100];
+    final quickAddValues = [ 5, 10, 20, 50, 100];
     
     return Column(
       children: [

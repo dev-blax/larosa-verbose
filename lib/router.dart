@@ -25,6 +25,8 @@ import 'package:larosa_block/splash_screen.dart';
 import 'package:provider/provider.dart';
 import 'Features/Feeds/Controllers/business_post_controller.dart';
 import 'Features/Profiles/Components/blocked_users.dart';
+import 'Features/Stories/screens/create_story_screen.dart';
+import 'Features/Stories/screens/stories_page.dart';
 import 'Services/log_service.dart';
 
 class RouterService {
@@ -72,6 +74,18 @@ class RouterService {
         name: 'search',
         path: '/search',
         builder: (context, state) => const SearchScreen(),
+      ),
+
+      // stories routes
+      GoRoute(
+        name: 'stories',
+        path: '/stories',
+        builder: (context, state) => const StoriesPage(),
+      ),
+      GoRoute(
+        name: 'create_story',
+        path: '/stories/create',
+        builder: (context, state) => const CreateStoryScreen(),
       ),
       GoRoute(
         name: 'maindelivery',

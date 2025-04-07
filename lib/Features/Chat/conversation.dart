@@ -392,6 +392,14 @@ class _LarosaConversationState extends State<LarosaConversation> {
       );
     }
 
+
+    setState(() {
+      pickedFile = null;
+      audioData = null;
+      _videoController?.dispose();
+      _videoController = null;
+    });
+
     // Send message in background
     _dioService.dio
         .post('${LarosaLinks.baseurl}/message/send', data: formData)
@@ -717,7 +725,7 @@ class _LarosaConversationState extends State<LarosaConversation> {
 
                     _sendMessage();
 
-                    pickedFile = null;
+                    //pickedFile = null;
 
                     messageController.clear();
 

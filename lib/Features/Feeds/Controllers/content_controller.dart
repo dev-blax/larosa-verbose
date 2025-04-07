@@ -53,11 +53,9 @@ class ContentController extends ChangeNotifier {
       LogService.logInfo('response code ${response.statusCode}');
 
       if (response.statusCode == 201) {
-        //HelperFunctions.showToast('Success', true);
         return true;
       } else {
         LogService.logError('non 200 ${response.data}');
-       // HelperFunctions.showToast('Failed to upload post', false);
         return false;
       }
     } on Dio.DioException catch (e) {

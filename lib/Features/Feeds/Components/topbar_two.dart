@@ -84,15 +84,13 @@ class TopBar2 extends StatelessWidget {
           _buildIconWithBackground(
             context,
             iconPath: 'assets/svg_icons/NotoV1Fire.svg',
-            onPressed: () {},
+            onPressed: () => context.pushNamed('stories'),
             semanticsLabel: 'Fire icon',
           ),
           _buildIconWithBackground(
             context,
             iconPath: 'assets/svg_icons/reels.svg',
-            onPressed: () {
-              context.pushNamed('reels');
-            },
+            onPressed: () => context.pushNamed('reels'),
             semanticsLabel: 'Reels icon',
           ),
         ],
