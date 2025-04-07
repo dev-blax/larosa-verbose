@@ -53,7 +53,6 @@ class AddToCartTable extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final primaryColor = isDark ? CupertinoColors.white : CupertinoColors.black;
-    //final secondaryColor = isDark ? CupertinoColors.systemGrey : CupertinoColors.systemGrey;
 
     return Container(
       decoration: BoxDecoration(
@@ -88,7 +87,7 @@ class AddToCartTable extends StatelessWidget {
               '$itemCount @${HelperFunctions.formatPrice(price)}/=',
               icon: isReservation ? CupertinoIcons.number : CupertinoIcons.bed_double,
               primaryColor: primaryColor,
-              //customWidget: _buildQuantitySelector(context, itemCount, primaryColor),
+              customWidget: _buildQuantitySelector(context, itemCount, primaryColor),
             ),
             if (!isReservation) ...[
               _buildDivider(),
@@ -335,7 +334,7 @@ class AddToCartTable extends StatelessWidget {
   }
 
   Widget _buildQuantitySelector(BuildContext context, int quantity, Color? primaryColor) {
-    final quickAddValues = [20, 50, 100];
+    final quickAddValues = [-20, -50, -100, 20, 50, 100];
     
     return Column(
       children: [
@@ -406,11 +405,12 @@ class AddToCartTable extends StatelessWidget {
                     color: primaryColor?.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(16),
                     onPressed: () {
+                      if(value < 0 && quantity + value < 1) return;
                       onQuantityChanged(quantity + value);
                       HapticFeedback.mediumImpact();
                     },
                     child: Text(
-                      '+$value',
+                      value < 0 ? '$value' : '+$value',
                       style: TextStyle(
                         color: primaryColor,
                         fontSize: 14,
@@ -429,7 +429,7 @@ class AddToCartTable extends StatelessWidget {
   void _showQuantityPicker(BuildContext context, int currentQuantity) {
     final textController = TextEditingController(text: currentQuantity.toString());
     
-    showCupertinoModalPopup<void>(
+    showModalBottomSheet<void>(
       context: context,
       builder: (BuildContext context) => Container(
         height: 200,
@@ -438,13 +438,11 @@ class AddToCartTable extends StatelessWidget {
           bottom: MediaQuery.of(context).viewInsets.bottom,
         ),
         decoration: BoxDecoration(
-          color: CupertinoColors.systemBackground,
           borderRadius: const BorderRadius.vertical(
             top: Radius.circular(20),
           ),
         ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
+        child: ListView(
           children: [
             const Text(
               'Enter Quantity',
@@ -454,7 +452,8 @@ class AddToCartTable extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 16),
-            CupertinoTextField(
+            TextField(
+
               controller: textController,
               keyboardType: TextInputType.number,
               textAlign: TextAlign.center,

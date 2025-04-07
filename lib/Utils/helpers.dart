@@ -181,6 +181,17 @@ class HelperFunctions {
     );
   }
 
+
+  static String encodeEmoji(String text) {
+    final EmojiParser parser = EmojiParser();
+    return parser.unemojify(text);
+  }
+
+  static String decodeEmoji(String text) {
+    final EmojiParser parser = EmojiParser();
+    return parser.emojify(text);
+  }
+
   static Future<void> showNotificationForChannelMessage({
     required String title,
     required String body,

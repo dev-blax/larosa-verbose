@@ -28,6 +28,8 @@ import 'package:timeago/timeago.dart' as timeago;
 import 'package:go_router/go_router.dart';
 import 'package:video_player/video_player.dart';
 
+import '../../Services/dio_service.dart';
+
 class TimeBubble extends StatelessWidget {
   final String duration;
   const TimeBubble({super.key, required this.duration});
@@ -73,6 +75,7 @@ class _LarosaConversationState extends State<LarosaConversation> {
   bool isLoadingProfile = true;
   List<Widget> messageWidgets = [];
   List<String> timeBubbleTexts = [];
+  final DioService _dioService = DioService();
 
   // Generate a unique ID for each message
   String generateMessageId() {
@@ -98,34 +101,26 @@ class _LarosaConversationState extends State<LarosaConversation> {
   }
 
   Future<void> _fetchUserDetails() async {
-    String token = AuthService.getToken();
-    Map<String, String> headers = {
-      "Content-Type": "application/json",
-      "Access-Control-Allow-Origin": "*",
-      'Authorization': 'Bearer $token',
-    };
 
-    var url = Uri.https(
-      LarosaLinks.nakedBaseUrl,
-      widget.isBusiness ? '/brand/visit' : '/personal/visit',
-    );
+    String personalLink = '${LarosaLinks.baseurl}/personal/visit';
+    String brandLink = '${LarosaLinks.baseurl}/brand/visit';
 
     try {
       LogService.logDebug('fetching user details for ${widget.profileId}');
-      final response = await http.post(
-        url,
-        body: jsonEncode({
+
+      final response = await _dioService.dio.post(
+        widget.isBusiness ? brandLink : personalLink,
+        data: jsonEncode({
           'ownerId': widget.profileId,
         }),
-        headers: headers,
       );
 
       if (response.statusCode != 200) {
-        LogService.logError('Non 200: ${response.body}');
+        LogService.logError('Non 200: ${response.data}');
         return;
       }
 
-      final Map<String, dynamic> data = json.decode(response.body);
+      final Map<String, dynamic> data = response.data;
 
       LogService.logInfo('profile data: $data');
 
@@ -195,28 +190,24 @@ class _LarosaConversationState extends State<LarosaConversation> {
 
       setState(() {
         messageWidgets =
-            bubbles.reversed.toList(); // Reverse messages for latest-first view
+            bubbles.reversed.toList();
       });
     }
 
     // Fetch messages from API and apply the same grouping logic
     try {
       LogService.logInfo('Requesting chats...');
-      final response = await http.get(
-        Uri.https(LarosaLinks.nakedBaseUrl,
-            '/messages/${AuthService.getProfileId()}/$chatId'),
-        headers: {
-          'Authorization': 'Bearer ${AuthService.getToken()}',
-          "Content-Type": "application/json",
-        },
+
+      final response = await _dioService.dio.get(
+        '${LarosaLinks.baseurl}/messages/${AuthService.getProfileId()}/$chatId',
       );
 
       if (response.statusCode != 200) {
-        LogService.logError('Error: ${response.body}');
+        LogService.logError('Error: ${response.data}');
         return;
       }
 
-      List<dynamic> data = json.decode(response.body);
+      List<dynamic> data = response.data;
       bubbles = [];
       timeBubbleTexts.clear();
 

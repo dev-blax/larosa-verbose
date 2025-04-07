@@ -3,11 +3,12 @@ import 'package:dio/dio.dart' as Dio;
 import 'package:http_parser/http_parser.dart' as parser;
 import 'package:larosa_block/Services/auth_service.dart';
 import 'package:larosa_block/Services/log_service.dart';
+import 'package:larosa_block/Services/dio_service.dart';
 import 'package:larosa_block/Utils/helpers.dart';
 import 'package:larosa_block/Utils/links.dart';
 
 class ContentController extends ChangeNotifier {
-  final client = Dio.Dio();
+  final DioService _dioService = DioService();
   List<String> newContentMediaStrings = [];
   List<Map<String, dynamic>> posts = [];
   String snippetPath = '';
@@ -24,7 +25,7 @@ class ContentController extends ChangeNotifier {
 
   Future<bool> uploadPost(String caption, double height) async {
     Dio.FormData formData = Dio.FormData.fromMap({
-      "caption": caption,
+      "caption": HelperFunctions.encodeEmoji(caption),
       "profileId": AuthService.getProfileId(),
       "countryId": 1,
       'height': height,
@@ -42,36 +43,21 @@ class ContentController extends ChangeNotifier {
       );
     }
 
-    Dio.Options myOptions = Dio.Options(
-      headers: {
-        'content-type': 'multipart/form-data',
-        'Authorization': 'Bearer ${AuthService.getToken()}',
-      },
-    );
-
-    LogService.logInfo('token ${AuthService.getToken()}');
-
     try {
       LogService.logInfo('Files: ${formData.files.length} ');
-      Dio.Response response = await client.post(
-        'https://${LarosaLinks.nakedBaseUrl}/api/v1/post/create',
+      Dio.Response response = await _dioService.dio.post(
+        '${LarosaLinks.baseurl}/api/v1/post/create',
         data: formData,
-        options: myOptions,
       );
 
       LogService.logInfo('response code ${response.statusCode}');
 
-      if (response.statusCode == 403) {
-        LogService.logDebug('refreshing');
-        await AuthService.refreshToken();
-        LogService.logDebug('uploading again');
-        return uploadPost(caption, height);
-      } else if (response.statusCode == 201) {
-        HelperFunctions.showToast('Success', true);
+      if (response.statusCode == 201) {
+        //HelperFunctions.showToast('Success', true);
         return true;
       } else {
         LogService.logError('non 200 ${response.data}');
-        HelperFunctions.showToast('Failed to upload post', false);
+       // HelperFunctions.showToast('Failed to upload post', false);
         return false;
       }
     } on Dio.DioException catch (e) {
@@ -101,18 +87,16 @@ class ContentController extends ChangeNotifier {
       }
       
       LogService.logError('DioError: ${e.message}');
-      HelperFunctions.showToast(errorMessage, false);
       return false;
     } catch (e) {
       LogService.logError('Error: $e');
-      HelperFunctions.showToast('An unexpected error occurred', false);
       return false;
     }
   }
 
-  Future<bool> postBusiness(String caption, double price, double height,int unitId) async {
+  Future<bool> postBusiness(String caption, double price, double height, int unitId) async {
     Dio.FormData formData = Dio.FormData.fromMap({
-      "caption": caption,
+      "caption": HelperFunctions.encodeEmoji(caption),
       "countryId": 1,
       "price": price,
       'height': height,
@@ -136,42 +120,22 @@ class ContentController extends ChangeNotifier {
       );
     }
 
-    Dio.Options myOptions = Dio.Options(
-      headers: {
-        'content-type': 'multipart/form-data',
-        'Authorization': 'Bearer ${AuthService.getToken()}',
-      },
-    );
-
     try {
       LogService.logInfo('Files: ${formData.files.length} ');
-
       LogService.logFatal('sending request');
-      Dio.Response response = await client.post(
+      
+      Dio.Response response = await _dioService.dio.post(
         '${LarosaLinks.baseurl}/api/v1/business-post/create',
         data: formData,
-        options: myOptions,
       );
 
       LogService.logInfo('response code ${response.statusCode}');
 
-      if (response.statusCode == 403) {
-        LogService.logDebug('refreshing');
-        await AuthService.refreshToken();
-        LogService.logDebug('uploading again');
-        return await postBusiness(
-          caption,
-          price,
-          height,
-          unitId,
-        );
-      } else if (response.statusCode == 201 || response.statusCode == 200) {
-        HelperFunctions.showToast('Success', true);
+      if (response.statusCode == 201 || response.statusCode == 200) {
         LogService.logInfo('success');
         return true;
       } else {
         LogService.logError('non 200 ${response.data}');
-
         return false;
       }
     } on Dio.DioException catch (e) {
@@ -202,11 +166,9 @@ class ContentController extends ChangeNotifier {
       }
       
       LogService.logError('DioError: ${e.message}');
-      HelperFunctions.showToast(errorMessage, false);
       return false;
     } catch (e) {
       LogService.logError('Error: $e');
-      HelperFunctions.showToast('An unexpected error occurred', false);
       return false;
     }
   }

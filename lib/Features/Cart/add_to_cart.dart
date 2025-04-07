@@ -688,14 +688,14 @@ class _AddToCartScreenState extends State<AddToCartScreen> {
                 if (!isReservation) const Divider(),
 
                 // buildQuantityAdjustmentRow(),
-                QuantityAdjustementRow(
-                  itemCount: itemCount,
-                  onQuantityChanged: (int newQuantity) {
-                    setState(() {
-                      itemCount = newQuantity;
-                    });
-                  },
-                ),
+                // QuantityAdjustementRow(
+                //   itemCount: itemCount,
+                //   onQuantityChanged: (int newQuantity) {
+                //     setState(() {
+                //       itemCount = newQuantity;
+                //     });
+                //   },
+                // ),
 
                 const Divider(),
                 const Gap(5),
@@ -829,7 +829,7 @@ class _AddToCartScreenState extends State<AddToCartScreen> {
                                     );
 
                                     // Navigate to the cart screen
-                                    context.push('/maincart');
+                                    context.pushReplacement('/maincart');
                                   } else {
                                     ScaffoldMessenger.of(context).showSnackBar(
                                         const SnackBar(
