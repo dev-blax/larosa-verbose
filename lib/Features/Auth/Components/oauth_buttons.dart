@@ -85,10 +85,7 @@ class _OauthButtonsState extends State<OauthButtons> {
                 child: SvgPicture.asset(
                   SvgIconsPaths.tikTokIcon,
                   height: 40,
-                  colorFilter: const ColorFilter.mode(
-                    Colors.grey,
-                    BlendMode.srcIn,
-                  ),
+                  //colorFilter: const ColorFilter.mode(Colors.red, BlendMode.srcIn),
                 ),
               ),
             ),
@@ -108,14 +105,12 @@ class _OauthButtonsState extends State<OauthButtons> {
           ],
           child: InkWell(
             onTap: () async {
-              // final userData = await _oauthService.signinWithApple();
-              // if (userData != null && mounted) {
-              //   context.goNamed('home');
-              // } else {
-              //   NavigationService.showErrorSnackBar('Apple Sign-In Failed');
-              // }
-              NavigationService.showErrorSnackBar(
-                  'Not Available! We are working on this!');
+              final userData = await _oauthService.signinWithApple();
+              if (userData != null && mounted) {
+                context.goNamed('home');
+              } else {
+                NavigationService.showErrorSnackBar('Apple Sign-In Failed');
+              }
             },
             child: Card(
               color: Colors.white,
@@ -169,10 +164,10 @@ class _OauthButtonsState extends State<OauthButtons> {
                 child: SvgPicture.asset(
                   SvgIconsPaths.facebookIcon,
                   height: 40,
-                  colorFilter: const ColorFilter.mode(
-                    Colors.grey,
-                    BlendMode.srcIn,
-                  ),
+                  // colorFilter: const ColorFilter.mode(
+                  //   Colors.grey,
+                  //   BlendMode.srcIn,
+                  // ),
                 ),
               ),
             ),

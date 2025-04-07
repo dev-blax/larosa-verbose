@@ -3,6 +3,7 @@ import 'dart:io';
 import 'dart:typed_data';
 import 'package:avatar_glow/avatar_glow.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:dio/dio.dart' as Dio;
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_sound/flutter_sound.dart';
@@ -13,14 +14,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:http_parser/http_parser.dart';
 import 'package:iconsax/iconsax.dart';
-import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
-import 'package:larosa_block/Features/Chat/Components/chat_bubble.dart';
-import 'package:larosa_block/Services/auth_service.dart';
-import 'package:larosa_block/Services/log_service.dart';
-import 'package:larosa_block/Utils/colors.dart';
-import 'package:larosa_block/Utils/helpers.dart';
-import 'package:larosa_block/Utils/links.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:stomp_dart_client/stomp_dart_client.dart';
@@ -28,7 +22,13 @@ import 'package:timeago/timeago.dart' as timeago;
 import 'package:go_router/go_router.dart';
 import 'package:video_player/video_player.dart';
 
+import '../../Services/auth_service.dart';
 import '../../Services/dio_service.dart';
+import '../../Services/log_service.dart';
+import '../../Utils/colors.dart';
+import '../../Utils/helpers.dart';
+import '../../Utils/links.dart';
+import 'Components/chat_bubble.dart';
 
 class TimeBubble extends StatelessWidget {
   final String duration;
@@ -64,6 +64,7 @@ class LarosaConversation extends StatefulWidget {
 }
 
 class _LarosaConversationState extends State<LarosaConversation> {
+  final DioService _dioService = DioService();
   final TextEditingController messageController = TextEditingController();
   String currentUserUid = '';
   final String socketChannel = '${LarosaLinks.baseurl}/ws';
@@ -75,7 +76,6 @@ class _LarosaConversationState extends State<LarosaConversation> {
   bool isLoadingProfile = true;
   List<Widget> messageWidgets = [];
   List<String> timeBubbleTexts = [];
-  final DioService _dioService = DioService();
 
   // Generate a unique ID for each message
   String generateMessageId() {
@@ -101,7 +101,6 @@ class _LarosaConversationState extends State<LarosaConversation> {
   }
 
   Future<void> _fetchUserDetails() async {
-
     String personalLink = '${LarosaLinks.baseurl}/personal/visit';
     String brandLink = '${LarosaLinks.baseurl}/brand/visit';
 
@@ -151,7 +150,6 @@ class _LarosaConversationState extends State<LarosaConversation> {
       for (var chat in localMessages) {
         bool isSentByMe = chat['senderId'] == AuthService.getProfileId();
 
-        // Determine the message type based on mediaUrl or mediaType
         MessageType messageType;
         if (chat['mediaUrl'] != null && chat['mediaUrl'] != '') {
           if (chat['mediaUrl'].endsWith('.mp4')) {
@@ -167,7 +165,6 @@ class _LarosaConversationState extends State<LarosaConversation> {
           messageType = MessageType.text;
         }
 
-        // Format and group messages by time
         String timeBubbleText = formatTime(chat['duration']);
         if (!timeBubbleTexts.contains(timeBubbleText)) {
           timeBubbleTexts.add(timeBubbleText);
@@ -189,8 +186,7 @@ class _LarosaConversationState extends State<LarosaConversation> {
       }
 
       setState(() {
-        messageWidgets =
-            bubbles.reversed.toList();
+        messageWidgets = bubbles.reversed.toList();
       });
     }
 
@@ -304,7 +300,6 @@ class _LarosaConversationState extends State<LarosaConversation> {
   }
 
   void _onMessageReceived(StompFrame frame) {
-    //Get.snackbar('Message Received', frame.body!);
     _fetchChatMessages();
   }
 
@@ -314,7 +309,6 @@ class _LarosaConversationState extends State<LarosaConversation> {
     _stompController();
     _fetchUserDetails();
     _fetchChatMessages();
-
     messageController.addListener(_onMessageChanged);
   }
 
@@ -330,17 +324,12 @@ class _LarosaConversationState extends State<LarosaConversation> {
     setState(() {});
   }
 
-  // Define sendingMessages with dynamic value types to store both bool and String
   Map<String, Map<String, dynamic>> sendingMessages = {};
 
-// Your sendMessage function
   Future<void> _sendMessage(
       {String? retryMessageId, String? messageContent}) async {
-    String token = AuthService.getToken();
-    String messageId =
-        retryMessageId ?? generateMessageId(); // Use retry ID if retrying
-    String message = messageContent ??
-        messageController.text; // Use passed content if retrying
+    String messageId = retryMessageId ?? generateMessageId(); 
+    String message = messageContent ?? messageController.text; 
 
     // Determine the message type
     MessageType messageType;
@@ -352,12 +341,12 @@ class _LarosaConversationState extends State<LarosaConversation> {
       messageType = MessageType.text;
     }
 
+    // Update UI immediately
     setState(() {
-      // Track message with both isSending and hasFailed flags
       sendingMessages[messageId] = {
         'isSending': true,
         'hasFailed': false,
-        'content': message, 
+        'content': message,
       };
       messageWidgets.insert(
         0,
@@ -366,86 +355,79 @@ class _LarosaConversationState extends State<LarosaConversation> {
           isSentByMe: true,
           messageType: messageType,
           comment: {'duration': 0},
-          isSending: sendingMessages[messageId]?['isSending'] ?? false,
-          hasFailed: sendingMessages[messageId]?['hasFailed'] ?? false,
-          onRetry: () => _retryMessage(messageId), 
+          isSending: true,
+          hasFailed: false,
+          onRetry: () => _retryMessage(messageId),
         ),
       );
     });
 
-    try {
-      messageController.clear();
+    // Clear input immediately
+    messageController.clear();
 
-      var request = http.MultipartRequest(
-        'POST',
-        Uri.https(LarosaLinks.nakedBaseUrl, '/message/send'),
-      )
-        ..headers.addAll({
-          'Authorization': 'Bearer $token',
-          "Access-Control-Allow-Origin": "*",
-        })
-        ..fields['recipientId'] = widget.profileId.toString()
-        ..fields['content'] = message;
+    // Prepare form data
+    final formData = Dio.FormData.fromMap({
+      'recipientId': widget.profileId.toString(),
+      'content': message,
+    });
 
-      if (audioData != null) {
-        request.files.add(http.MultipartFile.fromBytes(
+    // Add media file if present
+    if (audioData != null) {
+      formData.files.add(
+        MapEntry(
           'mediaFile',
-          audioData!,
-          filename: 'recording.aac',
-          contentType: MediaType('audio', 'aac'),
-        ));
-      }
-
-      if (pickedFile != null) {
-        request.files.add(await http.MultipartFile.fromPath(
+          Dio.MultipartFile.fromBytes(
+            audioData!,
+            filename: 'recording.aac',
+            contentType: MediaType('audio', 'aac'),
+          ),
+        ),
+      );
+    } else if (pickedFile != null) {
+      formData.files.add(
+        MapEntry(
           'mediaFile',
-          pickedFile!.path,
-        ));
-      }
+          await Dio.MultipartFile.fromFile(pickedFile!.path),
+        ),
+      );
+    }
 
-      final response = await request.send();
-
+    // Send message in background
+    _dioService.dio
+        .post('${LarosaLinks.baseurl}/message/send', data: formData)
+        .then((response) {
       if (response.statusCode == 200) {
-        // Update message status to sent successfully
         setState(() {
           sendingMessages[messageId] = {'isSending': false, 'hasFailed': false};
-          _fetchChatMessages(); // Reload chat to fetch the new message state
+          _fetchChatMessages();
 
-
-          // Clear the input file and reset video controller
-        pickedFile = null;
-        audioData = null;
-        _videoController?.dispose();
-        _videoController = null;
-
+          pickedFile = null;
+          audioData = null;
+          _videoController?.dispose();
+          _videoController = null;
         });
-      } else {
-        throw Exception('Failed to send message');
       }
-    } catch (e) {
-      LogService.logError('Error sending message: $e');
+    }).catchError((error) {
+      LogService.logError('Error sending message: $error');
       setState(() {
-        // Set hasFailed to true in case of failure
         sendingMessages[messageId] = {
           'isSending': false,
           'hasFailed': true,
-          'content': message, // Keep content for retries
+          'content': message,
         };
-        // Re-render the message with failed state
         messageWidgets[0] = ChatBubbleComponent(
           message: message,
           isSentByMe: true,
           messageType: messageType,
           comment: {'duration': 0},
-          isSending: sendingMessages[messageId]?['isSending'] ?? false,
-          hasFailed: sendingMessages[messageId]?['hasFailed'] ?? true,
-          onRetry: () => _retryMessage(messageId), // Retry callback
+          isSending: false,
+          hasFailed: true,
+          onRetry: () => _retryMessage(messageId),
         );
       });
-    }
+    });
   }
 
-// Retry function with message content retrieval
   void _retryMessage(String messageId) {
     String? originalMessageContent = sendingMessages[messageId]
         ?['content']; // Get the original message content
@@ -463,7 +445,6 @@ class _LarosaConversationState extends State<LarosaConversation> {
     });
   }
 
-// Initialize FlutterSoundRecorder and FlutterSoundPlayer for recording and playback
   final FlutterSoundRecorder _recorder = FlutterSoundRecorder();
   final FlutterSoundPlayer _player = FlutterSoundPlayer();
   bool isRecording = false;
@@ -659,8 +640,7 @@ class _LarosaConversationState extends State<LarosaConversation> {
                     decoration: InputDecoration(
                       prefixIcon: isRecording
                           ? AvatarGlow(
-                              glowRadiusFactor:
-                                  1.0, // Adjust for desired glow effect
+                              glowRadiusFactor: 1.0,
                               glowColor: Colors.white,
                               child: IconButton(
                                 onPressed: () async {
@@ -721,14 +701,7 @@ class _LarosaConversationState extends State<LarosaConversation> {
               ),
               const Gap(8),
               GestureDetector(
-                // onTap: () async {
-                //   if (messageController.text.isNotEmpty) {
-                //     await _sendMessage();
-                //     messageController.clear();
-                //   }
-                // },
                 onTap: () async {
-                  // Unfocus the TextField to ensure the button tap registers
                   FocusScope.of(context).unfocus();
 
                   HelperFunctions.larosaLogger('Send button pressed');
@@ -737,22 +710,22 @@ class _LarosaConversationState extends State<LarosaConversation> {
                       pickedFile != null ||
                       audioData != null) {
                     HelperFunctions.larosaLogger(
-                        'Message content: "${messageController.text}"');
+                      'Message content: "${messageController.text}"',
+                    );
 
-                    // Send the message asynchronously
-                    await _sendMessage();
+                    _sendMessage();
 
-                    // Clear the input field after appending the message
                     messageController.clear();
 
                     HelperFunctions.larosaLogger(
-                        'Message, media file, or audio data sent');
+                      'Message, media file, or audio data sent',
+                    );
                   } else {
                     HelperFunctions.larosaLogger(
-                        'Nothing to send: message, media file, and audio data are all empty');
+                      'Nothing to send: message, media file, and audio data are all empty',
+                    );
                   }
                 },
-
                 child: Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
@@ -782,31 +755,32 @@ class _LarosaConversationState extends State<LarosaConversation> {
     );
   }
 
-Widget _previewMedia() {
-  if (pickedFile == null) return Container();
+  Widget _previewMedia() {
+    if (pickedFile == null) return Container();
 
-  if (_videoController != null && pickedFile!.path.endsWith('.mp4')) {
-    if (!_videoController!.value.isInitialized) {
-      return const Center(child: CircularProgressIndicator());
+    if (_videoController != null && pickedFile!.path.endsWith('.mp4')) {
+      if (!_videoController!.value.isInitialized) {
+        return const Center(child: CircularProgressIndicator());
+      }
+
+      return SizedBox(
+        height:
+            MediaQuery.of(context).size.height * 0.7, // Adjust height as needed
+        child: AspectRatio(
+          aspectRatio: _videoController!.value.aspectRatio,
+          child: VideoPlayer(_videoController!),
+        ),
+      );
     }
 
     return SizedBox(
-      height: MediaQuery.of(context).size.height * 0.7, // Adjust height as needed
-      child: AspectRatio(
-        aspectRatio: _videoController!.value.aspectRatio,
-        child: VideoPlayer(_videoController!),
+      height: MediaQuery.of(context).size.height * 0.7,
+      child: Image.file(
+        pickedFile!,
+        fit: BoxFit.cover,
       ),
     );
   }
-
-  return SizedBox(
-    height: MediaQuery.of(context).size.height * 0.7,
-    child: Image.file(
-      pickedFile!,
-      fit: BoxFit.cover,
-    ),
-  );
-}
 
   @override
   Widget build(BuildContext context) {
@@ -881,8 +855,6 @@ Widget _previewMedia() {
                         ],
                       ),
                     ),
-
-                    
                   ],
                 ),
               ],
