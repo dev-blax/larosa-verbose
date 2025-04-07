@@ -706,6 +706,8 @@ class _LarosaConversationState extends State<LarosaConversation> {
 
                   HelperFunctions.larosaLogger('Send button pressed');
 
+
+
                   if (messageController.text.isNotEmpty ||
                       pickedFile != null ||
                       audioData != null) {
@@ -714,6 +716,8 @@ class _LarosaConversationState extends State<LarosaConversation> {
                     );
 
                     _sendMessage();
+
+                    pickedFile = null;
 
                     messageController.clear();
 
@@ -773,11 +777,13 @@ class _LarosaConversationState extends State<LarosaConversation> {
       );
     }
 
-    return SizedBox(
-      height: MediaQuery.of(context).size.height * 0.7,
-      child: Image.file(
-        pickedFile!,
-        fit: BoxFit.cover,
+    return Expanded(
+      child: SizedBox(
+        width: MediaQuery.of(context).size.width,
+        child: Image.file(
+          pickedFile!,
+          fit: BoxFit.cover,
+        ),
       ),
     );
   }

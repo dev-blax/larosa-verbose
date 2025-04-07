@@ -97,7 +97,7 @@ class HelperFunctions {
     } else if (messageTime.year == now.year) {
       return DateFormat('MMM d at h:mm a').format(messageTime);
     } else {
-      return DateFormat('MMM d, yyyy at h:mm a').format(messageTime);
+      return DateFormat('MMM d, yyyy').format(messageTime);
     }
   }
 

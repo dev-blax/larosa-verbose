@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
@@ -9,7 +10,6 @@ import 'package:hive/hive.dart';
 import 'package:http/http.dart' as http;
 import 'package:iconsax/iconsax.dart';
 import 'package:larosa_block/Services/auth_service.dart';
-import 'package:larosa_block/Services/log_service.dart';
 import 'package:larosa_block/Utils/colors.dart';
 import 'package:larosa_block/Utils/helpers.dart';
 import 'package:larosa_block/Utils/links.dart';
@@ -83,6 +83,7 @@ class _ChatsLandState extends State<ChatsLand> {
             return durationA.compareTo(durationB);
           });
         });
+        
         box.put(
           'chatList',
           data,
@@ -107,7 +108,6 @@ class _ChatsLandState extends State<ChatsLand> {
     return RefreshIndicator(
       onRefresh: _fetchChats,
       child: Scaffold(
-        // backgroundColor: Colors.black,
         appBar: AppBar(
           centerTitle: true,
           leading: IconButton(
@@ -143,9 +143,9 @@ class _ChatsLandState extends State<ChatsLand> {
                       itemBuilder: (context, index) {
                         int duration =
                             chatList[index]['lastMessage']['duration'];
-                        LogService.logInfo(
-                          ' ${chatList[index]['lastMessage']['duration']}',
-                        );
+                        // LogService.logInfo(
+                        //   ' ${chatList[index]['lastMessage']['duration']}',
+                        // );
                         return Animate(
                           effects: [
                             SlideEffect(
@@ -161,6 +161,7 @@ class _ChatsLandState extends State<ChatsLand> {
                               duration: Duration(seconds: 3),
                             )
                           ],
+                          
                           child: _chat(
                             chatList[index]['username'],
                             chatList[index]['name'],
@@ -178,6 +179,12 @@ class _ChatsLandState extends State<ChatsLand> {
         ),
       ),
     );
+  }
+
+
+  @override
+  void dispose() {
+    super.dispose();
   }
 
   Widget _chat(
@@ -204,18 +211,30 @@ class _ChatsLandState extends State<ChatsLand> {
         child: Row(
           children: <Widget>[
             profileString == null
-                ? ClipOval(
-                    child: Image.asset(
-                      'assets/images/EXPLORE.png',
-                      height: 60,
-                      width: 60,
-                      fit: BoxFit.cover,
+                ? 
+                // ClipOval(
+                //     child: Image.asset(
+                //       'assets/images/EXPLORE.png',
+                //       height: 60,
+                //       width: 60,
+                //       fit: BoxFit.cover,
+                //     ),
+                //   )
+                Icon(CupertinoIcons.person_circle_fill, size: 60)
+                : ClipOval(
+                  child: CircleAvatar(
+                      radius: 30,
+                      //backgroundImage: CachedNetworkImageProvider(profileString, ),
+                      child: CachedNetworkImage(
+                        imageUrl: profileString,
+                        height: 60,
+                        width: 60,
+                        fit: BoxFit.cover,
+                        errorWidget: (context, url, error) =>
+                            Icon(CupertinoIcons.person_circle_fill, size: 60),
+                      ),
                     ),
-                  )
-                : CircleAvatar(
-                    radius: 30,
-                    backgroundImage: CachedNetworkImageProvider(profileString),
-                  ),
+                ),
             const Gap(10),
             Expanded(
               child: Row(
