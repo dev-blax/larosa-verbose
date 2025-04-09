@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 import 'dart:ui';
 import 'package:flutter/cupertino.dart';
 import 'package:go_router/go_router.dart';
@@ -136,35 +137,35 @@ class _SigninScreenState extends State<SigninScreen> {
                                       ),
                                 ),
                               ),
-                              const Gap(10),
-                              const OauthButtons(),
-                              const Gap(10),
+                              // const Gap(10),
+                              // const OauthButtons(),
+                              // const Gap(10),
                               // Divider
-                              const Row(
-                                children: [
-                                  Flexible(
-                                    child: Divider(
-                                      color: Colors.white,
-                                      thickness: 3,
-                                      indent: 10,
-                                      endIndent: 5,
-                                    ),
-                                  ),
-                                  Text(
-                                    'OR',
-                                    style: TextStyle(
-                                        fontWeight: FontWeight.w700,
-                                        color: Colors.white),
-                                  ),
-                                  Flexible(
-                                      child: Divider(
-                                    color: Colors.white,
-                                    thickness: 3,
-                                    indent: 5,
-                                    endIndent: 10,
-                                  )),
-                                ],
-                              ),
+                              // const Row(
+                              //   children: [
+                              //     Flexible(
+                              //       child: Divider(
+                              //         color: Colors.white,
+                              //         thickness: 3,
+                              //         indent: 10,
+                              //         endIndent: 5,
+                              //       ),
+                              //     ),
+                              //     Text(
+                              //       'OR',
+                              //       style: TextStyle(
+                              //           fontWeight: FontWeight.w700,
+                              //           color: Colors.white),
+                              //     ),
+                              //     Flexible(
+                              //         child: Divider(
+                              //       color: Colors.white,
+                              //       thickness: 3,
+                              //       indent: 5,
+                              //       endIndent: 10,
+                              //     )),
+                              //   ],
+                              // ),
           
                               const Gap(10),
                               Animate(
@@ -275,6 +276,19 @@ class _SigninScreenState extends State<SigninScreen> {
                                   ),
                                 ),
                               ),
+          
+                              Platform.isIOS ? TextButton(
+                                onPressed: () {
+                                  context.pushNamed('home');
+                                },
+                                child: const Text(
+                                  'Go to App',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 14
+                                  ),
+                                ),
+                              ) : const SizedBox(height: 0,),
                             ],
                           ),
                         ),
@@ -287,7 +301,7 @@ class _SigninScreenState extends State<SigninScreen> {
           ),
 
           Positioned(
-            top: 20,
+            top: Platform.isIOS? 50 : 20,
             left: 20,
             child: ClipOval(
               child: BackdropFilter(

@@ -143,6 +143,26 @@ class HelperFunctions {
     }
   }
 
+
+
+   static Future<void> simulateLogout(BuildContext context) async {
+    // Clear all Hive boxes
+    await Hive.deleteFromDisk();
+    
+    // Clear SharedPreferences
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.clear();
+
+    // final GoogleAuthService googleAuthService = GoogleAuthService();
+    // await googleAuthService.signOut();
+
+    // Navigate to login
+    if (context.mounted) {
+      context.go('/accountType');
+    }
+  }
+
+
   static bool isVideo(String url) {
     final mimeType = lookupMimeType(url);
     return mimeType != null && mimeType.startsWith('video/');

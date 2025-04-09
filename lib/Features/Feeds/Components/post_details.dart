@@ -75,6 +75,7 @@ class _PostDetailsState extends State<PostDetails> {
                   children: [
                     Text(
                       HelperFunctions.emojifyAText(widget.caption),
+                      // widget.caption,
                       style: textTheme.bodyMedium?.copyWith(
                         fontSize: 14,
                         color: theme.colorScheme.onSurface,
