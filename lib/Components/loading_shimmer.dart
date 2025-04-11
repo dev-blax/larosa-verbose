@@ -15,7 +15,7 @@ class LoadingShimmer extends StatelessWidget {
             baseColor: isDarkMode ? Colors.grey[900]! : Colors.grey[400]!,
             highlightColor: isDarkMode ? Colors.grey[700]! : Colors.grey[100]!,
             child: Padding(
-              padding: const EdgeInsets.all(4.0),
+              padding: const EdgeInsets.all(12.0),
               child: Row(
                 children: [
                   Container(
@@ -111,38 +111,38 @@ class LoadingShimmer extends StatelessWidget {
               ),
             ),
           ),
-          const SizedBox(height: 20),
-          Shimmer.fromColors(
-            baseColor: isDarkMode ? Colors.grey[900]! : Colors.grey[400]!,
-            highlightColor: isDarkMode ? Colors.grey[700]! : Colors.grey[100]!,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Row(
-                    children: [
-                      Container(
-                        height: 15,
-                        width: 80,
-                        color: Colors.grey[300],
-                      ),
-                      const SizedBox(width: 10),
-                      Icon(Icons.star, color: Colors.grey[300], size: 20),
-                    ],
-                  ),
-                  Container(
-                    height: 40,
-                    width: 40,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: Colors.grey[300],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
+          // const SizedBox(height: 20),
+          // Shimmer.fromColors(
+          //   baseColor: isDarkMode ? Colors.grey[900]! : Colors.grey[400]!,
+          //   highlightColor: isDarkMode ? Colors.grey[700]! : Colors.grey[100]!,
+          //   child: Padding(
+          //     padding: const EdgeInsets.symmetric(horizontal: 16.0),
+          //     child: Row(
+          //       mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          //       children: [
+          //         Row(
+          //           children: [
+          //             Container(
+          //               height: 15,
+          //               width: 80,
+          //               color: Colors.grey[300],
+          //             ),
+          //             const SizedBox(width: 10),
+          //             Icon(Icons.star, color: Colors.grey[300], size: 20),
+          //           ],
+          //         ),
+          //         Container(
+          //           height: 40,
+          //           width: 40,
+          //           decoration: BoxDecoration(
+          //             shape: BoxShape.circle,
+          //             color: Colors.grey[300],
+          //           ),
+          //         ),
+          //       ],
+          //     ),
+          //   ),
+          // ),
           const SizedBox(height: 20),
           Shimmer.fromColors(
             baseColor: isDarkMode ? Colors.grey[900]! : Colors.grey[400]!,

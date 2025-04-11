@@ -306,7 +306,7 @@ class _OldPostCompoentState extends State<OldPostCompoent>
                         Row(
                           children: [
                             const Icon(
-                              Iconsax.location5,
+                              CupertinoIcons.location,
                               color: Colors.white,
                               size: 15,
                             ),

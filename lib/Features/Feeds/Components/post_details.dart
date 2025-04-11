@@ -25,7 +25,8 @@ class _PostDetailsState extends State<PostDetails> {
     final textTheme = theme.textTheme;
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
+      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+      margin: const EdgeInsets.only(bottom: 2, left: 4, right: 4),
       decoration: BoxDecoration(
         color: Colors.transparent,
         borderRadius: BorderRadius.circular(12),
@@ -38,12 +39,20 @@ class _PostDetailsState extends State<PostDetails> {
           Row(
             children: [
               Container(
-                width: 4,
-                height: 4,
-                margin: const EdgeInsets.only(right: 6),
-                decoration: BoxDecoration(
-                    color: theme.colorScheme.primary, shape: BoxShape.circle),
-              ),
+  width: 22,
+  height: 22,
+  margin: const EdgeInsets.only(right: 8),
+  decoration: BoxDecoration(
+    shape: BoxShape.circle,
+    color: theme.colorScheme.primary.withOpacity(0.15),
+  ),
+  child: Icon(
+    Icons.person,
+    size: 14,
+    color: theme.colorScheme.primary,
+  ),
+)
+,
               Expanded(
                 child: Text(
                   widget.username,
