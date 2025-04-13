@@ -403,8 +403,8 @@ class _CenterSnapCarouselState extends State<CenterSnapCarousel> {
       setState(() {
         _muteStates[index] = !_muteStates[index]!;
         controller.setVolume(_muteStates[index]! ? 0 : 1);
-        LogService.logInfo(
-            "Toggled mute for video at index $index. Mute state: ${_muteStates[index]}");
+        // LogService.logInfo(
+        //     "Toggled mute for video at index $index. Mute state: ${_muteStates[index]}");
       });
     }
   }
@@ -420,10 +420,11 @@ class _CenterSnapCarouselState extends State<CenterSnapCarousel> {
         .clamp(0.0, MediaQuery.of(context).size.height * 0.9);
 
     // Debug: log key dimensions
-    LogService.logInfo(
-        "Screen size: ${MediaQuery.of(context).size}, devicePixelRatio: ${MediaQuery.of(context).devicePixelRatio}");
-    LogService.logInfo(
-        "widget.postHeight: ${widget.postHeight}, computed logicalPostHeight for shimmers: $logicalPostHeight");
+    
+    // LogService.logInfo(
+    //     "Screen size: ${MediaQuery.of(context).size}, devicePixelRatio: ${MediaQuery.of(context).devicePixelRatio}");
+    // LogService.logInfo(
+    //     "widget.postHeight: ${widget.postHeight}, computed logicalPostHeight for shimmers: $logicalPostHeight");
 
     return GestureDetector(
       onPanEnd: (_) {},
@@ -535,7 +536,7 @@ class _CenterSnapCarouselState extends State<CenterSnapCarousel> {
                   );
                 } else {
                   // Log that an image URL is being processed
-                  LogService.logInfo("Processing image at index $index with URL: $url");
+                  // LogService.logInfo("Processing image at index $index with URL: $url");
                   return ConstrainedBox(
                     constraints: const BoxConstraints(),
                     child: CachedNetworkImage(
@@ -545,7 +546,7 @@ class _CenterSnapCarouselState extends State<CenterSnapCarousel> {
                       placeholder: (context, url) =>
                           _buildShimmerLoader(height: logicalPostHeight),
                       errorWidget: (context, url, error) {
-                        LogService.logError("Error loading image at index $index: $error");
+                        // LogService.logError("Error loading image at index $index: $error");
                         return const Icon(Icons.error);
                       },
                     ),
@@ -582,9 +583,9 @@ class _CenterSnapCarouselState extends State<CenterSnapCarousel> {
 
   Widget _buildShimmerLoader({double? height}) {
     if (height == null) {
-      LogService.logInfo('Shimmer loader: provided height is null.');
+      // LogService.logInfo('Shimmer loader: provided height is null.');
     } else {
-      LogService.logInfo('Shimmer loader: building with height = $height');
+      // LogService.logInfo('Shimmer loader: building with height = $height');
     }
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     return Shimmer.fromColors(
