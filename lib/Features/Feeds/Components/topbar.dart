@@ -16,7 +16,7 @@ class TopBar1 extends StatelessWidget {
       padding: EdgeInsets.only(
         left: 0,
         right: 0,
-        top: Platform.isIOS ? 50 : 18,
+        top: Platform.isIOS ? 43 : 18,
         bottom: 0,
       ),
       child: Row(
@@ -64,6 +64,8 @@ class TopBar1 extends StatelessWidget {
       onTap: onPressed,
       borderRadius: BorderRadius.circular(30),
       child: Container(
+        height: Platform.isIOS ? 45 : null,
+        width: Platform.isIOS ? 45 : null,
         padding: const EdgeInsets.all(8.0),
         decoration: BoxDecoration(
           gradient: LinearGradient(

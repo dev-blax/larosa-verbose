@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -399,7 +400,7 @@ class _HomeProfileScreenState extends State<HomeProfileScreen> {
   Widget profileShimmer(BuildContext context) {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: Platform.isIOS ? null : Colors.black,
       body: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -409,8 +410,7 @@ class _HomeProfileScreenState extends State<HomeProfileScreen> {
               children: [
                 Shimmer.fromColors(
                   baseColor: isDarkMode ? Colors.grey[900]! : Colors.grey[400]!,
-                  highlightColor:
-                      isDarkMode ? Colors.grey[700]! : Colors.grey[100]!,
+            highlightColor: isDarkMode ? Colors.grey[700]! : Colors.grey[100]!,
                   child: Container(
                     height: 180, // Adjust height to match your cover image
                     width: double.infinity,
@@ -422,10 +422,8 @@ class _HomeProfileScreenState extends State<HomeProfileScreen> {
                   bottom: 10,
                   right: 16,
                   child: Shimmer.fromColors(
-                    baseColor:
-                        isDarkMode ? Colors.grey[900]! : Colors.grey[400]!,
-                    highlightColor:
-                        isDarkMode ? Colors.grey[700]! : Colors.grey[100]!,
+                    baseColor: isDarkMode ? Colors.grey[900]! : Colors.grey[400]!,
+            highlightColor: isDarkMode ? Colors.grey[700]! : Colors.grey[100]!,
                     child: Container(
                       width: 80,
                       height: 80,
@@ -451,10 +449,8 @@ class _HomeProfileScreenState extends State<HomeProfileScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Shimmer.fromColors(
-                        baseColor:
-                            isDarkMode ? Colors.grey[900]! : Colors.grey[400]!,
-                        highlightColor:
-                            isDarkMode ? Colors.grey[700]! : Colors.grey[100]!,
+                        baseColor: isDarkMode ? Colors.grey[900]! : Colors.grey[400]!,
+            highlightColor: isDarkMode ? Colors.grey[700]! : Colors.grey[100]!,
                         child: Container(
                           width: 150,
                           height: 15,
@@ -463,10 +459,8 @@ class _HomeProfileScreenState extends State<HomeProfileScreen> {
                       ),
                       const SizedBox(height: 5),
                       Shimmer.fromColors(
-                        baseColor:
-                            isDarkMode ? Colors.grey[900]! : Colors.grey[400]!,
-                        highlightColor:
-                            isDarkMode ? Colors.grey[700]! : Colors.grey[100]!,
+                        baseColor: isDarkMode ? Colors.grey[900]! : Colors.grey[400]!,
+            highlightColor: isDarkMode ? Colors.grey[700]! : Colors.grey[100]!,
                         child: Container(
                           width: 100,
                           height: 10,
@@ -475,10 +469,8 @@ class _HomeProfileScreenState extends State<HomeProfileScreen> {
                       ),
                       const SizedBox(height: 5),
                       Shimmer.fromColors(
-                        baseColor:
-                            isDarkMode ? Colors.grey[900]! : Colors.grey[400]!,
-                        highlightColor:
-                            isDarkMode ? Colors.grey[700]! : Colors.grey[100]!,
+                        baseColor: isDarkMode ? Colors.grey[900]! : Colors.grey[400]!,
+            highlightColor: isDarkMode ? Colors.grey[700]! : Colors.grey[100]!,
                         child: Container(
                           width: 200,
                           height: 10,
@@ -500,10 +492,8 @@ class _HomeProfileScreenState extends State<HomeProfileScreen> {
                   return Column(
                     children: [
                       Shimmer.fromColors(
-                        baseColor:
-                            isDarkMode ? Colors.grey[900]! : Colors.grey[400]!,
-                        highlightColor:
-                            isDarkMode ? Colors.grey[700]! : Colors.grey[100]!,
+                        baseColor: isDarkMode ? Colors.grey[900]! : Colors.grey[400]!,
+            highlightColor: isDarkMode ? Colors.grey[700]! : Colors.grey[100]!,
                         child: Container(
                           width: 60,
                           height: 10,
@@ -512,10 +502,8 @@ class _HomeProfileScreenState extends State<HomeProfileScreen> {
                       ),
                       const SizedBox(height: 5),
                       Shimmer.fromColors(
-                        baseColor:
-                            isDarkMode ? Colors.grey[900]! : Colors.grey[400]!,
-                        highlightColor:
-                            isDarkMode ? Colors.grey[700]! : Colors.grey[100]!,
+                        baseColor: isDarkMode ? Colors.grey[900]! : Colors.grey[400]!,
+            highlightColor: isDarkMode ? Colors.grey[700]! : Colors.grey[100]!,
                         child: Container(
                           width: 40,
                           height: 10,
@@ -535,10 +523,8 @@ class _HomeProfileScreenState extends State<HomeProfileScreen> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Shimmer.fromColors(
-                    baseColor:
-                        isDarkMode ? Colors.grey[900]! : Colors.grey[400]!,
-                    highlightColor:
-                        isDarkMode ? Colors.grey[700]! : Colors.grey[100]!,
+                    baseColor: isDarkMode ? Colors.grey[900]! : Colors.grey[400]!,
+            highlightColor: isDarkMode ? Colors.grey[700]! : Colors.grey[100]!,
                     child: Container(
                       width: 100,
                       height: 35,
@@ -549,10 +535,8 @@ class _HomeProfileScreenState extends State<HomeProfileScreen> {
                     ),
                   ),
                   Shimmer.fromColors(
-                    baseColor:
-                        isDarkMode ? Colors.grey[900]! : Colors.grey[400]!,
-                    highlightColor:
-                        isDarkMode ? Colors.grey[700]! : Colors.grey[100]!,
+                    baseColor: isDarkMode ? Colors.grey[900]! : Colors.grey[400]!,
+            highlightColor: isDarkMode ? Colors.grey[700]! : Colors.grey[100]!,
                     child: Container(
                       width: 100,
                       height: 35,
@@ -563,10 +547,8 @@ class _HomeProfileScreenState extends State<HomeProfileScreen> {
                     ),
                   ),
                   Shimmer.fromColors(
-                    baseColor:
-                        isDarkMode ? Colors.grey[900]! : Colors.grey[400]!,
-                    highlightColor:
-                        isDarkMode ? Colors.grey[700]! : Colors.grey[100]!,
+                    baseColor: isDarkMode ? Colors.grey[900]! : Colors.grey[400]!,
+            highlightColor: isDarkMode ? Colors.grey[700]! : Colors.grey[100]!,
                     child: Container(
                       width: 100,
                       height: 35,
@@ -585,12 +567,10 @@ class _HomeProfileScreenState extends State<HomeProfileScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 16.0),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: List.generate(10, (index) {
+                children: List.generate(4, (index) {
                   return Shimmer.fromColors(
-                    baseColor:
-                        isDarkMode ? Colors.grey[900]! : Colors.grey[400]!,
-                    highlightColor:
-                        isDarkMode ? Colors.grey[700]! : Colors.grey[100]!,
+                    baseColor: isDarkMode ? Colors.grey[900]! : Colors.grey[400]!,
+            highlightColor: isDarkMode ? Colors.grey[700]! : Colors.grey[100]!,
                     child: Container(
                       width: 40,
                       height: 40,
@@ -606,8 +586,9 @@ class _HomeProfileScreenState extends State<HomeProfileScreen> {
 
             // Grid Items Placeholder
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+              padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 12),
               child: GridView.builder(
+                padding: Platform.isIOS ? EdgeInsets.zero : null,
                 physics: const NeverScrollableScrollPhysics(),
                 shrinkWrap: true,
                 gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
@@ -617,13 +598,11 @@ class _HomeProfileScreenState extends State<HomeProfileScreen> {
                   mainAxisSpacing: 10,
                   childAspectRatio: 1,
                 ),
-                itemCount: 4, // Placeholder count for grid items
+                itemCount: Platform.isIOS ? 8 : 4, // Placeholder count for grid items
                 itemBuilder: (context, index) {
                   return Shimmer.fromColors(
-                    baseColor:
-                        isDarkMode ? Colors.grey[900]! : Colors.grey[400]!,
-                    highlightColor:
-                        isDarkMode ? Colors.grey[700]! : Colors.grey[100]!,
+                    baseColor: isDarkMode ? Colors.grey[900]! : Colors.grey[400]!,
+            highlightColor: isDarkMode ? Colors.grey[700]! : Colors.grey[100]!,
                     child: Container(
                       decoration: BoxDecoration(
                         color: Colors.grey[300],
@@ -786,61 +765,68 @@ class _HomeProfileScreenState extends State<HomeProfileScreen> {
                             ],
                           ),
                           Expanded(
-                            child: TabBarView(
-                              children: <Widget>[
-                                Animate(
-                                  effects: const [
-                                    SlideEffect(
-                                      begin: Offset(.2, 0),
-                                      end: Offset(0, 0),
-                                      curve: Curves.elasticOut,
-                                      duration: Duration(seconds: 4),
+                            child: MediaQuery.removePadding(
+                              context: context,
+    removeTop: Platform.isIOS,
+                              child: Padding(
+                                padding: EdgeInsets.all(Platform.isIOS ? 8.0 : 0),
+                                child: TabBarView(
+                                  children: <Widget>[
+                                    Animate(
+                                      effects: const [
+                                        SlideEffect(
+                                          begin: Offset(.2, 0),
+                                          end: Offset(0, 0),
+                                          curve: Curves.elasticOut,
+                                          duration: Duration(seconds: 4),
+                                        ),
+                                      ],
+                                      child: SelfAllPosts(
+                                        profileId: AuthService.getProfileId()!,
+                                      ),
+                                    ),
+                                    Animate(
+                                      effects: const [
+                                        SlideEffect(
+                                          begin: Offset(.2, 0),
+                                          end: Offset(0, 0),
+                                          curve: Curves.elasticOut,
+                                          duration: Duration(seconds: 4),
+                                        ),
+                                      ],
+                                      child: SelfImagePostsComponent(
+                                        profileId: AuthService.getProfileId()!,
+                                      ),
+                                    ),
+                                    Animate(
+                                      effects: const [
+                                        SlideEffect(
+                                          begin: Offset(.2, 0),
+                                          end: Offset(0, 0),
+                                          curve: Curves.elasticOut,
+                                          duration: Duration(seconds: 4),
+                                        ),
+                                      ],
+                                      child: SelfLikedStringsComponent(
+                                        profileId: AuthService.getProfileId()!,
+                                      ),
+                                    ),
+                                    Animate(
+                                      effects: const [
+                                        SlideEffect(
+                                          begin: Offset(.2, 0),
+                                          end: Offset(0, 0),
+                                          curve: Curves.elasticOut,
+                                          duration: Duration(seconds: 4),
+                                        ),
+                                      ],
+                                      child: FavouritesComponent(
+                                        profileId: AuthService.getProfileId()!,
+                                      ),
                                     ),
                                   ],
-                                  child: SelfAllPosts(
-                                    profileId: AuthService.getProfileId()!,
-                                  ),
                                 ),
-                                Animate(
-                                  effects: const [
-                                    SlideEffect(
-                                      begin: Offset(.2, 0),
-                                      end: Offset(0, 0),
-                                      curve: Curves.elasticOut,
-                                      duration: Duration(seconds: 4),
-                                    ),
-                                  ],
-                                  child: SelfImagePostsComponent(
-                                    profileId: AuthService.getProfileId()!,
-                                  ),
-                                ),
-                                Animate(
-                                  effects: const [
-                                    SlideEffect(
-                                      begin: Offset(.2, 0),
-                                      end: Offset(0, 0),
-                                      curve: Curves.elasticOut,
-                                      duration: Duration(seconds: 4),
-                                    ),
-                                  ],
-                                  child: SelfLikedStringsComponent(
-                                    profileId: AuthService.getProfileId()!,
-                                  ),
-                                ),
-                                Animate(
-                                  effects: const [
-                                    SlideEffect(
-                                      begin: Offset(.2, 0),
-                                      end: Offset(0, 0),
-                                      curve: Curves.elasticOut,
-                                      duration: Duration(seconds: 4),
-                                    ),
-                                  ],
-                                  child: FavouritesComponent(
-                                    profileId: AuthService.getProfileId()!,
-                                  ),
-                                ),
-                              ],
+                              ),
                             ),
                           ),
                         ],

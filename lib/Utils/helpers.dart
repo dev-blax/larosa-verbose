@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_emoji/flutter_emoji.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
@@ -12,6 +13,8 @@ import 'package:share_plus/share_plus.dart';
 import 'package:toastification/toastification.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
+
+import 'colors.dart';
 
 
 final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
@@ -147,6 +150,26 @@ class HelperFunctions {
     }
   }
 
+
+
+   static Future<void> simulateLogout(BuildContext context) async {
+    // Clear all Hive boxes
+    await Hive.deleteFromDisk();
+    
+    // Clear SharedPreferences
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.clear();
+
+    // final GoogleAuthService googleAuthService = GoogleAuthService();
+    // await googleAuthService.signOut();
+
+    // Navigate to login
+    if (context.mounted) {
+      context.go('/accountType');
+    }
+  }
+
+
   static bool isVideo(String url) {
     final mimeType = lookupMimeType(url);
     return mimeType != null && mimeType.startsWith('video/');
@@ -195,6 +218,102 @@ class HelperFunctions {
     final EmojiParser parser = EmojiParser();
     return parser.emojify(text);
   }
+
+  static void displayInfo(BuildContext context, String message) {
+  final List<String> creativePrefixes = [
+    "🌟 Explore Larosa Insight",
+    "🚀 Explore Larosa Update",
+    "🎉 Explore Larosa Announcement",
+    "✨ Explore Larosa Spotlight",
+    "🔥 Explore Larosa Alert",
+  ];
+
+  final random = Random();
+  final prefix = creativePrefixes[random.nextInt(creativePrefixes.length)];
+
+  showDialog(
+    context: context,
+    builder: (BuildContext ctx) {
+      return AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+        ),
+        backgroundColor: LarosaColors.light,
+        title: Row(
+          children: [
+            Icon(
+              Icons.info_outline,
+              color: LarosaColors.secondary,
+              size: 28,
+            ),
+            const SizedBox(width: 8),
+            Text(
+              "Notification",
+              style: TextStyle(
+                color: LarosaColors.secondary,
+                fontWeight: FontWeight.bold,
+                fontSize: 20,
+              ),
+            ),
+          ],
+        ),
+        content: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                LarosaColors.secondary.withOpacity(0.9),
+                LarosaColors.purple.withOpacity(0.9),
+              ],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          padding: const EdgeInsets.all(12),
+          child: Text(
+            "$prefix\n\n$message",
+            style: const TextStyle(
+              fontSize: 16,
+              color: Colors.white,
+              height: 1.4,
+            ),
+          ),
+        ),
+        actions: <Widget>[
+          Padding(
+            padding: const EdgeInsets.only(bottom: 4.0, right: 4.0),
+            child: InkWell(
+              onTap: () {
+                Navigator.of(ctx).pop();
+              },
+              child: Container(
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [LarosaColors.secondary, LarosaColors.purple],
+                    begin: Alignment.centerLeft,
+                    end: Alignment.centerRight,
+                  ),
+                  borderRadius: BorderRadius.circular(30),
+                ),
+                padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+                child: const Text(
+                  "Got It!",
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: LarosaColors.light,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      );
+    },
+  );
+}
+
+
 
   static Future<void> showNotificationForChannelMessage({
     required String title,
