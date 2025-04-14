@@ -542,6 +542,7 @@ class _CommentSectionState extends State<CommentSection> {
                           height: 50,
                           child: TextField(
                             controller: _commentController,
+                            style: const TextStyle(color: Colors.white),
                             decoration: InputDecoration(
                               enabledBorder: const OutlineInputBorder(
                                 borderSide: BorderSide.none,

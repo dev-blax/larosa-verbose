@@ -9,6 +9,7 @@ import 'package:gap/gap.dart';
 import 'package:iconsax/iconsax.dart';
 import 'package:larosa_block/Components/text_input.dart';
 import 'package:larosa_block/Features/Auth/Components/oauth_buttons.dart';
+import 'package:larosa_block/Services/hive_service.dart';
 import 'package:larosa_block/Services/log_service.dart';
 import 'package:larosa_block/Utils/colors.dart';
 import 'package:larosa_block/Utils/links.dart';
@@ -31,8 +32,21 @@ class _SigninScreenState extends State<SigninScreen> {
   final TextEditingController _passwordController = TextEditingController();
   final DioService _dioService = DioService();
 
-  Future<void> signin() async {
+  asyncInit() async {
+    HiveService hiveService = HiveService();
+    await hiveService.init();
+    await hiveService.openBox('userBox');
+    await hiveService.openBox('onboardingBox');
+    await hiveService.openBox('profileBox');
+  }
 
+  @override
+  void initState() {
+    super.initState();
+    asyncInit();
+  }
+
+  Future<void> signin() async {
     try {
       LogService.logDebug('Sending login request');
 
@@ -52,7 +66,6 @@ class _SigninScreenState extends State<SigninScreen> {
       box.put('accountId', data['accountType']['id']);
       box.put('accountName', data['accountType']['name']);
       box.put('reservation', data['reservation']);
-
 
       box.put('token', data['jwtAuthenticationResponse']['token']);
       LogService.logInfo(
@@ -165,7 +178,7 @@ class _SigninScreenState extends State<SigninScreen> {
                                   )),
                                 ],
                               ),
-          
+
                               const Gap(10),
                               Animate(
                                 effects: const [
@@ -207,15 +220,16 @@ class _SigninScreenState extends State<SigninScreen> {
                                       ValidationHelpers.validateRequiredField,
                                 ),
                               ),
-          
+
                               TextButton(
-                                onPressed: () => context.push('/forgot-password'),
+                                onPressed: () =>
+                                    context.push('/forgot-password'),
                                 child: const Text(
                                   'Forgot Password',
                                   style: TextStyle(color: Colors.white),
                                 ),
                               ),
-          
+
                               !isLoading
                                   ? Container(
                                       width: double.infinity,
@@ -235,18 +249,20 @@ class _SigninScreenState extends State<SigninScreen> {
                                         style: ElevatedButton.styleFrom(
                                           elevation: 0.0,
                                           shape: RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.circular(10),
+                                            borderRadius:
+                                                BorderRadius.circular(10),
                                           ),
                                           padding: const EdgeInsets.all(16.0),
                                           backgroundColor: Colors.transparent,
                                         ),
                                         onPressed: () async {
-                                          if (_formKey.currentState!.validate()) {
+                                          if (_formKey.currentState!
+                                              .validate()) {
                                             setState(() {
                                               isLoading = true;
                                             });
                                             await signin();
-          
+
                                             setState(() {
                                               isLoading = false;
                                             });
@@ -263,7 +279,7 @@ class _SigninScreenState extends State<SigninScreen> {
                                       color: LarosaColors.white,
                                     ),
                               const Gap(10),
-          
+
                               TextButton(
                                 onPressed: () {
                                   context.pushNamed('accountType');
@@ -285,7 +301,6 @@ class _SigninScreenState extends State<SigninScreen> {
               ),
             ),
           ),
-
           Positioned(
             top: 20,
             left: 20,

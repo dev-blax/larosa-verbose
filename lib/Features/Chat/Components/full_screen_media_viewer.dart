@@ -8,9 +8,9 @@ class FullScreenMediaViewer extends StatefulWidget {
   final String mediaUrl;
 
   const FullScreenMediaViewer({
-    Key? key,
+    super.key,
     required this.mediaUrl,
-  }) : super(key: key);
+  });
 
   @override
   _FullScreenMediaViewerState createState() => _FullScreenMediaViewerState();
@@ -27,7 +27,8 @@ class _FullScreenMediaViewerState extends State<FullScreenMediaViewer> {
     super.initState();
 
     // Determine if media is video based on file extension
-    isVideo = widget.mediaUrl.endsWith('.mp4') || widget.mediaUrl.endsWith('.mov');
+    isVideo =
+        widget.mediaUrl.endsWith('.mp4') || widget.mediaUrl.endsWith('.mov');
 
     if (isVideo) {
       _videoController = VideoPlayerController.network(widget.mediaUrl)
@@ -43,7 +44,9 @@ class _FullScreenMediaViewerState extends State<FullScreenMediaViewer> {
 
   void _startProgressTimer() {
     _timer = Timer.periodic(const Duration(milliseconds: 500), (_) {
-      if (mounted && _videoController != null && _videoController!.value.isInitialized) {
+      if (mounted &&
+          _videoController != null &&
+          _videoController!.value.isInitialized) {
         setState(() {}); // Update the slider position every 500ms
       }
     });
@@ -64,7 +67,9 @@ class _FullScreenMediaViewerState extends State<FullScreenMediaViewer> {
           children: [
             IconButton(
               icon: Icon(
-                _videoController!.value.volume > 0 ? Icons.volume_up : Icons.volume_off,
+                _videoController!.value.volume > 0
+                    ? Icons.volume_up
+                    : Icons.volume_off,
                 // color: Colors.white,
               ),
               onPressed: () {
@@ -74,38 +79,42 @@ class _FullScreenMediaViewerState extends State<FullScreenMediaViewer> {
                 });
               },
             ),
-            
             Expanded(
-  child: SliderTheme(
-    data: SliderTheme.of(context).copyWith(
-      activeTrackColor: LarosaColors.primary, // Color for the filled part of the slider
-      inactiveTrackColor: LarosaColors.secondary, // Color for the unfilled part
-      thumbColor: LarosaColors.primary, // Color for the slider thumb (circular control)
-      overlayColor: LarosaColors.primary.withOpacity(0.2), // Color when the thumb is pressed
-    ),
-    child: Slider(
-      value: _videoController!.value.position.inSeconds.toDouble(),
-      max: _videoController!.value.duration.inSeconds.toDouble(),
-      onChanged: (value) {
-        _videoController!.seekTo(Duration(seconds: value.toInt()));
-      },
-    ),
-  ),
-),
-
-
+              child: SliderTheme(
+                data: SliderTheme.of(context).copyWith(
+                  activeTrackColor: LarosaColors
+                      .primary, // Color for the filled part of the slider
+                  inactiveTrackColor:
+                      LarosaColors.secondary, // Color for the unfilled part
+                  thumbColor: LarosaColors
+                      .primary, // Color for the slider thumb (circular control)
+                  overlayColor: LarosaColors.primary
+                      .withOpacity(0.2), // Color when the thumb is pressed
+                ),
+                child: Slider(
+                  value: _videoController!.value.position.inSeconds.toDouble(),
+                  max: _videoController!.value.duration.inSeconds.toDouble(),
+                  onChanged: (value) {
+                    _videoController!.seekTo(Duration(seconds: value.toInt()));
+                  },
+                ),
+              ),
+            ),
             IconButton(
               icon: Icon(
-                _videoController!.value.isPlaying ? Icons.pause : Icons.play_arrow,
+                _videoController!.value.isPlaying
+                    ? Icons.pause
+                    : Icons.play_arrow,
                 // color: Colors.white,
               ),
               onPressed: () {
                 setState(() {
-                  _videoController!.value.isPlaying ? _videoController!.pause() : _videoController!.play();
+                  _videoController!.value.isPlaying
+                      ? _videoController!.pause()
+                      : _videoController!.play();
                 });
               },
             ),
-            
           ],
         ),
         Padding(
@@ -143,9 +152,10 @@ class _FullScreenMediaViewerState extends State<FullScreenMediaViewer> {
           minScale: 1.0,
           maxScale: 5.0,
           child: AspectRatio(
-            aspectRatio: isVideo && _videoController?.value.isInitialized == true
-                ? _videoController!.value.aspectRatio
-                : 1.0, // Use 1.0 for images to keep original aspect ratio
+            aspectRatio:
+                isVideo && _videoController?.value.isInitialized == true
+                    ? _videoController!.value.aspectRatio
+                    : 1.0, // Use 1.0 for images to keep original aspect ratio
             child: isVideo
                 ? _videoController?.value.isInitialized == true
                     ? Column(

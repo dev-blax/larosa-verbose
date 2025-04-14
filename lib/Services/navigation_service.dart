@@ -51,4 +51,33 @@ class NavigationService {
       );
     }
   }
+
+
+  static void showSnackBar(String message) {
+    if (_context != null) {
+      // Hide any existing snackbar first
+      hideErrorSnackBar();
+      
+      // Show new snackbar and store reference
+      _currentSnackBar = ScaffoldMessenger.of(_context!).showSnackBar(
+        SnackBar(
+          content: Row(
+            children: [
+              const Icon(Icons.error_outline, color: Colors.white),
+              const SizedBox(width: 12.0),
+              Expanded(
+                child: Text(message),
+              ),
+            ],
+          ),
+          backgroundColor: Colors.blue.shade800,
+          behavior: SnackBarBehavior.floating,
+          margin: const EdgeInsets.all(16),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8),
+          ),
+        ),
+      );
+    }
+  }
 }
