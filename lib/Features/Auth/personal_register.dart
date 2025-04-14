@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:ui';
+import 'package:dio/dio.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
@@ -40,8 +41,9 @@ class _PersonalRegisterScreenState extends State<PersonalRegisterScreen> {
       setState(() {
         isLoading = true;
       });
-      var response = await _dioService.dio.post(
-        '${LarosaLinks.baseurl}/api/v1/accounts/register',
+      
+      final response = await _dioService.dio.post(
+        '${LarosaLinks.baseurl}/api/v1/auth/register',
         data: jsonEncode({
           "name": _fullnameController.text,
           "accountTypeId": 1,
@@ -53,36 +55,88 @@ class _PersonalRegisterScreenState extends State<PersonalRegisterScreen> {
         }),
       );
 
+      // Parse response data first to catch any JSON decode errors
+      LogService.logInfo('Registration response: ${response.data}');
+      final data = response.data;
+
+      LogService.logInfo('Registration data: ${data}');
+
+      // Check for successful status code
       if (response.statusCode != 201) {
-        LogService.logError('Error ${response.data}');
-        HelperFunctions.showToast(response.data, false);
+        
+        LogService.logError('Registration failed with status ${response.statusCode}: ${response.data}');
+        HelperFunctions.showToast(
+          data['message'] ?? 'Registration failed. Please try again.',
+          false
+        );
         return;
       }
 
-      final data = jsonDecode(response.data);
+      LogService.logInfo('Registration successful: ${data}');
 
-      var box = Hive.box('userBox');
+      // Store user data in Hive
+      var box =  Hive.box('userBox');
+      await box.clear();
+      
+      try {
+        box.put('profileId', data['profileId']);
+        box.put('accountId', data['accountType']['id']);
+        box.put('isBusiness', false);
+        box.put('accountName', data['accountType']['name']);
+        box.put('token', data['jwtAuthenticationResponse']['token']);
+        box.put(
+          'refreshToken',
+          data['jwtAuthenticationResponse']['refreshToken'],
+        );
 
-      box.put('profileId', data['profileId']);
-      box.put('accountId', data['accountType']['id']);
-      box.put('isBusiness', false);
-      box.put('accountName', data['accountType']['name']);
-      box.put('token', data['jwtAuthenticationResponse']['token']);
-      box.put(
-        'refreshToken',
-        data['jwtAuthenticationResponse']['refreshToken'],
-      );
-      // Get.offAll(
-      //   const HomeFeedsScreen(),
-      // );
-
-      context.goNamed('home');
+        if (mounted) {
+          context.goNamed('home');
+        }
+      } catch (storageError) {
+        LogService.logError('Failed to store user data: $storageError');
+        HelperFunctions.showToast(
+          'Registration successful but failed to save user data. Please try logging in.',
+          false
+        );
+        return;
+      }
+      
     } catch (e) {
-      LogService.logError('Error $e');
+      LogService.logError('Registration error');
+      print(e);
+      String errorMessage = 'Registration failed. ';
+      
+      if (e is DioException) {
+        switch (e.type) {
+          case DioExceptionType.connectionTimeout:
+          case DioExceptionType.sendTimeout:
+          case DioExceptionType.receiveTimeout:
+            errorMessage += 'Please check your internet connection.';
+            break;
+          case DioExceptionType.badResponse:
+            final responseData = e.response?.data;
+            if (responseData != null) {
+              try {
+                final parsedData = jsonDecode(responseData);
+                LogService.logError('Registration failed with message: ${parsedData}');
+                errorMessage = parsedData['message'] ?? 'Please try again.';
+              } catch (_) {
+                errorMessage += responseData.toString();
+              }
+            }
+            break;
+          default:
+            errorMessage += 'Please try again.';
+        }
+      }
+      
+      HelperFunctions.showToast(errorMessage, false);
     } finally {
-      setState(() {
-        isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          isLoading = false;
+        });
+      }
     }
   }
 
@@ -141,34 +195,34 @@ class _PersonalRegisterScreenState extends State<PersonalRegisterScreen> {
                             ),
                           ),
                           const Gap(10),
-                          // const OauthButtons(),
-                          // const Gap(10),
-                          // Divider
-                          // const Row(
-                          //   children: [
-                          //     Flexible(
-                          //       child: Divider(
-                          //         color: Colors.white,
-                          //         thickness: 3,
-                          //         indent: 10,
-                          //         endIndent: 5,
-                          //       ),
-                          //     ),
-                          //     Text(
-                          //       'OR',
-                          //       style: TextStyle(
-                          //           fontWeight: FontWeight.w700,
-                          //           color: Colors.white),
-                          //     ),
-                          //     Flexible(
-                          //         child: Divider(
-                          //       color: Colors.white,
-                          //       thickness: 3,
-                          //       indent: 5,
-                          //       endIndent: 10,
-                          //     )),
-                          //   ],
-                          // ),
+                          const OauthButtons(),
+                          const Gap(10),
+                          const Divider(),
+                          const Row(
+                            children: [
+                              Flexible(
+                                child: Divider(
+                                  color: Colors.white,
+                                  thickness: 3,
+                                  indent: 10,
+                                  endIndent: 5,
+                                ),
+                              ),
+                              Text(
+                                'OR',
+                                style: TextStyle(
+                                    fontWeight: FontWeight.w700,
+                                    color: Colors.white),
+                              ),
+                              Flexible(
+                                  child: Divider(
+                                color: Colors.white,
+                                thickness: 3,
+                                indent: 5,
+                                endIndent: 10,
+                              )),
+                            ],
+                          ),
                           const Gap(10),
 
                           Animate(

@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -135,8 +136,13 @@ class _StoryViewerState extends State<StoryViewer>
                   fit: StackFit.expand,
                   children: [
                     
-                    Image.network(
-                      story.names[0],
+                    // Image.network(
+                    //   story.names[0],
+                    // ),
+                    CachedNetworkImage(
+                      imageUrl: story.names[0],
+                      placeholder: (context, url) => const CupertinoActivityIndicator(),
+                      errorWidget: (context, url, error) => const Icon(Icons.error),
                     ),
                     Positioned(
                       bottom: 0,

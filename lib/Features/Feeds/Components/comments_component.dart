@@ -10,6 +10,7 @@ import 'package:iconsax/iconsax.dart';
 import 'package:http/http.dart' as http;
 import 'package:larosa_block/Services/auth_service.dart';
 import 'package:larosa_block/Services/log_service.dart';
+import 'package:larosa_block/Services/navigation_service.dart';
 import 'package:larosa_block/Utils/colors.dart';
 import 'package:larosa_block/Utils/links.dart';
 import 'package:shimmer/shimmer.dart';
@@ -113,6 +114,8 @@ class _CommentSectionState extends State<CommentSection> {
             'hasFailed': false
           };
         });
+
+        NavigationService.showSnackBar('Comment sent successfully');
         await fetchComments();
         return true;
       } else {
@@ -558,10 +561,6 @@ class _CommentSectionState extends State<CommentSection> {
                             ),
                             onSubmitted: (value) async {
                               if (value.isEmpty) {
-                                // Get.snackbar(
-                                //   'Explore Larosa',
-                                //   'You can not post an empty comment',
-                                // );
                                 return;
                               }
                               await _sendComment(
