@@ -222,10 +222,10 @@ class _BusinessPostScreenState extends State<BusinessPostScreen>
 
   @override
   void dispose() {
-    // Dispose each video controller when the screen is closed
     for (var media in _mediaControllers) {
       media['controller']?.dispose();
     }
+    _tabController.dispose();
     super.dispose();
   }
 
@@ -293,7 +293,6 @@ class _BusinessPostScreenState extends State<BusinessPostScreen>
       });
     });
 
-    // Add to ContentController for persistence or other usage
     Provider.of<ContentController>(context, listen: false)
         .addToNewContentMediaStrings(imageFile.path);
   }
@@ -947,4 +946,7 @@ class _BusinessPostScreenState extends State<BusinessPostScreen>
       ),
     );
   }
+
+
+  
 }

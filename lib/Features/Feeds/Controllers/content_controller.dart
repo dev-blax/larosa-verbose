@@ -53,6 +53,7 @@ class ContentController extends ChangeNotifier {
       LogService.logInfo('response code ${response.statusCode}');
 
       if (response.statusCode == 201) {
+        newContentMediaStrings.clear();
         return true;
       } else {
         LogService.logError('non 200 ${response.data}');
@@ -131,6 +132,7 @@ class ContentController extends ChangeNotifier {
 
       if (response.statusCode == 201 || response.statusCode == 200) {
         LogService.logInfo('success');
+        newContentMediaStrings.clear();
         return true;
       } else {
         LogService.logError('non 200 ${response.data}');
