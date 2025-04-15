@@ -21,4 +21,7 @@ class LarosaLinks {
   static const String reelsFetch = '$baseurl/reels/fetch';
   static const String reelsFavourite = '$baseurl/favorites/update';
   static const String reelsLike = '$baseurl/like/save';
+
+  // discover
+  static const String discover = '$baseurl/search/discover';
 }

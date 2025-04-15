@@ -22,7 +22,7 @@ class DioService {
       InterceptorsWrapper(
         onRequest: (options, handler) {
           final token = AuthService.getToken();
-          // LogService.logInfo('Token: $token');
+          LogService.logInfo('Token: $token');
           if (token.isNotEmpty) {
             options.headers['Authorization'] = 'Bearer $token';
           }
