@@ -186,10 +186,10 @@ class _HomeProfileScreenState extends State<HomeProfileScreen> {
                     width: 140,
                     filterQuality: FilterQuality.low,
                   )
-                : const Icon(
-                    Iconsax.user4,
-                    color: Colors.red,
-                    size: 140,
+                : Image.asset(
+                    'assets/images/EXPLORE.png',
+                    height: 140,
+                    width: 140,
                   ),
           ),
         ),

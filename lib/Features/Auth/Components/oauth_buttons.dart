@@ -17,7 +17,7 @@ class OauthButtons extends StatefulWidget {
 
 class _OauthButtonsState extends State<OauthButtons> {
   final OauthService _oauthService = OauthService();
-  bool _isGoogleLoading = false;
+  bool isGoogleLoading = false;
 
   @override
   Widget build(BuildContext context) {
@@ -27,7 +27,7 @@ class _OauthButtonsState extends State<OauthButtons> {
         GestureDetector(
           onTap: () async {
             setState(() {
-              _isGoogleLoading = true;
+              isGoogleLoading = true;
             });
             try {
               final googleUser = await _oauthService.signinWithGoogle(context: context);
@@ -40,7 +40,7 @@ class _OauthButtonsState extends State<OauthButtons> {
               }
             } finally {
               setState(() {
-                _isGoogleLoading = false;
+                isGoogleLoading = false;
               });
             }
           },

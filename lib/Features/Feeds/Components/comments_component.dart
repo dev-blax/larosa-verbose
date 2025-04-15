@@ -4,7 +4,6 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_emoji/flutter_emoji.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
-import 'package:flutter_svg/svg.dart';
 import 'package:gap/gap.dart';
 import 'package:iconsax/iconsax.dart';
 import 'package:http/http.dart' as http;
@@ -14,9 +13,8 @@ import 'package:larosa_block/Services/navigation_service.dart';
 import 'package:larosa_block/Utils/colors.dart';
 import 'package:larosa_block/Utils/links.dart';
 import 'package:shimmer/shimmer.dart';
-
-import '../../../Utils/helpers.dart';
 import 'carousel.dart';
+import 'post_comment_tile.dart';
 
 class CommentSection extends StatefulWidget {
   final int postId;
@@ -34,7 +32,7 @@ class CommentSection extends StatefulWidget {
 class _CommentSectionState extends State<CommentSection> {
   final TextEditingController _commentController = TextEditingController();
   List<dynamic> postComments = [];
-  List<String> mediaFiles = []; // List to hold media files (URLs)
+  List<String> mediaFiles = [];
 
   bool _isLoading = true;
   String? replyToUsername;
@@ -49,8 +47,6 @@ class _CommentSectionState extends State<CommentSection> {
 
   Map<int, Map<String, dynamic>> commentStatus = {};
 
-
-
   Future<bool> _sendComment(
     String comment,
     bool isReply,
@@ -60,7 +56,6 @@ class _CommentSectionState extends State<CommentSection> {
     String token = AuthService.getToken();
     if (token.isEmpty) return false;
 
-    // Convert emojis to shortcodes
     String processedComment = parser.unemojify(comment);
 
     var url = Uri.https(
@@ -78,8 +73,6 @@ class _CommentSectionState extends State<CommentSection> {
     });
     LogService.logInfo('Sending comment $comment');
     LogService.logInfo('processedComment: $processedComment');
-
-    
 
     try {
       var body = isReply
@@ -133,22 +126,14 @@ class _CommentSectionState extends State<CommentSection> {
     }
   }
 
-  void _retryComment(int commentId) {
-    String commentContent = commentStatus[commentId]?['content'] ?? '';
-    if (commentContent.isNotEmpty) {
-      _sendComment(
-          commentContent, replyToUsername != null, parentCommentId ?? 0,
-          commentId: commentId);
-    }
-  }
 
   @override
   void initState() {
+    LogService.logInfo('Initializing comments component');
+    LogService.logInfo('names: ${widget.names}');
+    LogService.logInfo('Post ID: ${widget.postId}');
     fetchComments();
-    mediaFiles = widget.names
-        .split(',')
-        .map((e) => e.trim())
-        .toList(); // Split and trim the URLs
+    mediaFiles = widget.names.split(',').map((e) => e.trim()).toList();
     super.initState();
   }
 
@@ -156,7 +141,7 @@ class _CommentSectionState extends State<CommentSection> {
     return CenterSnapCarousel(
       mediaUrls: [url],
       isPlayingState: false,
-    ); // Ensure VideoPlayerWidget is a widget class
+    );
   }
 
   Widget _buildMediaFile(String url) {
@@ -660,163 +645,5 @@ class _CommentSectionState extends State<CommentSection> {
               ],
             ),
           );
-  }
-}
-
-class PostCommentTile extends StatefulWidget {
-  final dynamic comment;
-  final int postId;
-  final bool hasFailed;
-  final bool isSending;
-  final VoidCallback? onRetry;
-  final Function(String, int) onReply;
-
-  const PostCommentTile({
-    super.key,
-    required this.comment,
-    required this.onReply,
-    required this.postId,
-    this.hasFailed = false,
-    this.isSending = false,
-    this.onRetry,
-  });
-
-  @override
-  State<PostCommentTile> createState() => _PostCommentTileState();
-}
-
-class _PostCommentTileState extends State<PostCommentTile> {
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 0.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Row(
-                children: [
-                  CircleAvatar(
-                    radius: 12,
-                    backgroundImage: widget.comment['profilePicture'] == null
-                        ? const AssetImage('assets/images/EXPLORE.png')
-                        : CachedNetworkImageProvider(
-                            widget.comment['profilePicture']),
-                  ),
-                  const Gap(5),
-                  Text(
-                    widget.comment['username'] ?? '',
-                    style: Theme.of(context).textTheme.bodySmall,
-                  ),
-                ],
-              ),
-              Text(widget.comment['duration'] ?? ''),
-            ],
-          ),
-          const Gap(5),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Comment message container
-              Container(
-                decoration: BoxDecoration(
-                  gradient: LarosaColors.blueGradient,
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8),
-                child: Text(
-                  HelperFunctions.emojifyAText(widget.comment['message'] ?? ''),
-                  style: const TextStyle(color: Colors.white),
-                ),
-              ),
-              SizedBox(
-                  height: widget.isSending || widget.hasFailed
-                      ? 4
-                      : 0), // Spacing between message and indicators
-
-              if (widget.isSending || widget.hasFailed)
-                // Retry and isSending indicators
-                Padding(
-                  padding: const EdgeInsets.only(
-                      left: 30.0, top: 10), // Add left padding
-                  child: Row(
-                    children: [
-                      if (widget.isSending)
-                        const SizedBox(
-                          width: 16,
-                          height: 16,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 1.5,
-                            color: Colors.green,
-                          ),
-                        ),
-                      if (widget.hasFailed && widget.onRetry != null)
-                        SizedBox(
-                          height: 15,
-                          width: 10,
-                          child: IconButton(
-                            icon: const Icon(Icons.refresh,
-                                color: Colors.red, size: 16),
-                            onPressed: widget.onRetry,
-                          ),
-                        ),
-                    ],
-                  ),
-                )
-            ],
-          ),
-          Gap(widget.isSending || widget.hasFailed ? 8 : 0),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Row(
-                children: [
-                  const Text('12.9.2024'), // Placeholder date, adjust as needed
-                  TextButton(
-                    onPressed: () {
-                      widget.onReply(widget.comment['username'] ?? '',
-                          widget.comment['id']);
-                    },
-                    child: const Text('Reply'),
-                  ),
-                ],
-              ),
-              Row(
-                children: [
-                  Row(
-                    children: [
-                      const Icon(Iconsax.message, size: 18),
-                      const Gap(5),
-                      Text(widget.comment['replies'].toString()),
-                    ],
-                  ),
-                  const Gap(20),
-                  Row(
-                    children: [
-                      SvgPicture.asset(
-                        'assets/icons/SolarHeartAngleBold.svg',
-                        width: 20,
-                        colorFilter: const ColorFilter.mode(
-                          Colors.red,
-                          BlendMode.srcIn,
-                        ),
-                        semanticsLabel: 'Like icon',
-                      ),
-                      const Gap(5),
-                      Text(widget.comment['likes'].toString()),
-                    ],
-                  ),
-                ],
-              )
-            ],
-          ),
-          const Divider(),
-        ],
-      ),
-    );
   }
 }
