@@ -23,13 +23,13 @@ import '../../Utils/colors.dart';
 import '../../Utils/links.dart';
 import 'prepare_for_payment.dart';
 import 'widgets/add_to_cart_table.dart';
-import 'widgets/quantity_adjustement_row.dart';
 
 class AddToCartScreen extends StatefulWidget {
   final String username;
   final double price;
   final String names;
   final int postId;
+  final int? productId; // Add this line
 
   final String? reservationType;
   final int? adults;
@@ -41,6 +41,7 @@ class AddToCartScreen extends StatefulWidget {
     required this.price,
     required this.names,
     required this.postId,
+    this.productId, // Add this line
     this.reservationType,
     this.adults,
     this.breakfastIncluded,
@@ -156,7 +157,6 @@ class _AddToCartScreenState extends State<AddToCartScreen> {
     };
 
     try {
-
       LogService.logInfo('Fetching transport cost...');
 
       final response = await _dioService.dio.post(
@@ -493,7 +493,7 @@ class _AddToCartScreenState extends State<AddToCartScreen> {
         leading: IconButton(
           onPressed: () => context.pop(),
           icon: const Icon(
-            Iconsax.arrow_left_2,
+            CupertinoIcons.back,
           ),
         ),
         title: const Text(
@@ -563,6 +563,7 @@ class _AddToCartScreenState extends State<AddToCartScreen> {
                     pickCheckOutDate: _pickCheckOutDate,
                     getFormattedDate: getFormattedDate,
                     getFormattedTime: formatEstimatedTime,
+                    productId: widget.postId, // Add this line
                   ),
                 const Gap(10),
 
@@ -686,16 +687,6 @@ class _AddToCartScreenState extends State<AddToCartScreen> {
                     ),
                   ),
                 if (!isReservation) const Divider(),
-
-                // buildQuantityAdjustmentRow(),
-                // QuantityAdjustementRow(
-                //   itemCount: itemCount,
-                //   onQuantityChanged: (int newQuantity) {
-                //     setState(() {
-                //       itemCount = newQuantity;
-                //     });
-                //   },
-                // ),
 
                 const Divider(),
                 const Gap(5),
@@ -832,9 +823,12 @@ class _AddToCartScreenState extends State<AddToCartScreen> {
                                     context.pushReplacement('/maincart');
                                   } else {
                                     ScaffoldMessenger.of(context).showSnackBar(
-                                        const SnackBar(
-                                            content: Text(
-                                                'Cannot Add Item to Cart! Please Try again')));
+                                      const SnackBar(
+                                        content: Text(
+                                          'Cannot Add Item to Cart! Please Try again',
+                                        ),
+                                      ),
+                                    );
                                   }
                                 } catch (error) {
                                   LogService.logError(

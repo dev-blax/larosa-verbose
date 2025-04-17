@@ -24,4 +24,8 @@ class LarosaLinks {
 
   // discover
   static const String discover = '$baseurl/search/discover';
+
+  // Cart
+  static const String cartList = '$baseurl/cart/list';
+  static const String cartRemoveItem = '$baseurl/cart/remove-item';
 }

@@ -1,31 +1,31 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_typeahead/flutter_typeahead.dart';
 import 'package:gap/gap.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:iconsax/iconsax.dart';
 import 'package:intl/intl.dart';
-import 'package:flutter_typeahead/flutter_typeahead.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'dart:ui';  
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:larosa_block/Features/Cart/controllers/cart_controller.dart';
 import 'package:larosa_block/Services/log_service.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:provider/provider.dart';
-import 'package:shimmer/shimmer.dart';
 
 import '../../Components/cart_button.dart';
 import '../../Components/PaymentModals/payment_method_modal.dart';
 import '../../Services/auth_service.dart';
 import '../../Utils/colors.dart';
+import 'widgets/media_gallery_view.dart';
+import 'widgets/payment_shimmer.dart';
 
 class PrepareForPayment extends StatefulWidget {
-  final List<int> productIds; // Array of product IDs
-  final double totalPrice; // Total price of all items
-  final String combinedNames; // Combined names as a single string
+  final List<int> productIds;
+  final double totalPrice;
+  final String combinedNames;
   final int totalQuantity;
   final bool reservationType;
   final List<Map<String, dynamic>> items;
@@ -56,23 +56,22 @@ class _PrepareForPaymentState extends State<PrepareForPayment> {
   double? latitude;
   double? longitude;
 
-  bool _isLoadingLocation = true; // Add a state to track loading
+  bool _isLoadingLocation = true; 
 
   String? transportCost;
   String? deliveryDuration;
-  // bool _isFetchingTransportCost = false;
 
   String deliveryCost = 'Calculating...';
   String estimatedTime = 'Calculating...';
 
   double? _exchangeRate;
-  String _deliveryCostTSh = 'Calculating...';
+  String deliveryCostTSh = 'Calculating...';
 
-  int adults = 1; // Default value for adults
-  int children = 0; // Default value for children
+  int adults = 1; 
+  int children = 0; 
 
-  DateTime? checkInDate; // Nullable variable for the check-in date
-  DateTime? checkOutDate; // Nullable variable for the check-out date
+  DateTime? checkInDate; 
+  DateTime? checkOutDate;
 
   bool get isReservation => !widget.reservationType;
 
@@ -142,25 +141,20 @@ class _PrepareForPaymentState extends State<PrepareForPayment> {
       return;
     }
 
-    // Fixed pickup location
     const double pickupLat = -6.125649;
     const double pickupLng = 35.79266299999999;
 
-    // Request body with fixed pickup location
     final Map<String, dynamic> requestBody = {
       "startLat": pickupLat,
       "startLng": pickupLng,
       "endLat": latitude!,
       "endLng": longitude!,
       "country": "Tanzania",
+      "cityName": "Dodoma"
     };
 
     try {
       String token = AuthService.getToken();
-
-      if (token == null) {
-        throw Exception('Token is missing. Please log in again.');
-      }
 
       final http.Response response = await http.post(
         uri,
@@ -171,14 +165,14 @@ class _PrepareForPaymentState extends State<PrepareForPayment> {
         body: jsonEncode(requestBody),
       );
 
-      // print('${response.body}');
+      LogService.logFatal('Transport Cost: ${response.body}');
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body) as Map<String, dynamic>;
 
         final double distance = (data['distance'] as num?)?.toDouble() ?? 0.0;
         final double motorcycleCost =
-            (data['motorcycleCost'] as num?)?.toDouble() ?? 0.0;
+            (data["vehicleEstimations"][0]["cost"] as num?)?.toDouble() ?? 0.0;
 
         setState(() {
           deliveryCost = motorcycleCost > 0
@@ -275,33 +269,31 @@ class _PrepareForPaymentState extends State<PrepareForPayment> {
   Future<void> _fetchExchangeRate() async {
     try {
       final response = await http.get(Uri.parse(
-          'https://api.exchangerate-api.com/v4/latest/USD')); // API for exchange rates
+        'https://api.exchangerate-api.com/v4/latest/USD',
+      ));
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
 
-        // Check if TZS rate is available
         if (data['rates'] != null && data['rates']['TZS'] != null) {
           setState(() {
             _exchangeRate = data['rates']['TZS']; // Extract TZS rate
             print('exchange rate $_exchangeRate');
           });
 
-          // Convert delivery cost to TZS after fetching the rate
-          // _convertDeliveryCost();
         } else {
           setState(() {
-            _deliveryCostTSh = 'TZS rate unavailable';
+            deliveryCostTSh = 'TZS rate unavailable';
           });
         }
       } else {
         setState(() {
-          _deliveryCostTSh = 'Error fetching exchange rate';
+          deliveryCostTSh = 'Error fetching exchange rate';
         });
       }
     } catch (e) {
       setState(() {
-        _deliveryCostTSh = 'Error: $e';
+        deliveryCostTSh = 'Error: $e';
       });
     }
   }
@@ -319,7 +311,6 @@ class _PrepareForPaymentState extends State<PrepareForPayment> {
   }
 
   final TextEditingController _fullNameController = TextEditingController();
-  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   String? _errorMessage;
 
   void _validateAndSetFullName(String value) {
@@ -487,16 +478,13 @@ class _PrepareForPaymentState extends State<PrepareForPayment> {
 
   @override
   Widget build(BuildContext context) {
-    final cartNotifier = Provider.of<CartController>(context);
-    List<String> imageUrls = widget.combinedNames.split(',');
-    // double totalPrice = widget.price * itemCount;
 
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
           onPressed: () => context.pop(),
           icon: const Icon(
-            Iconsax.arrow_left_2,
+            CupertinoIcons.back,
           ),
         ),
         title: const Text(
@@ -507,108 +495,146 @@ class _PrepareForPaymentState extends State<PrepareForPayment> {
       ),
       body: ListView(
         children: [
-          // SingleChildScrollView(
-          //   scrollDirection: Axis.horizontal,
-          //   child: Row(
-          //     children: imageUrls.map((imageUrl) {
-          //       return CachedNetworkImage(
-          //         imageUrl: imageUrl.trim(),
-          //         height: 500,
-          //         progressIndicatorBuilder: (context, url, downloadProgress) =>
-          //             const SpinKitCircle(
-          //           color: Colors.blue,
-          //         ),
-          //         errorWidget: (context, url, error) => const Icon(Icons.error),
-          //       );
-          //     }).toList(),
-          //   ),
-          // ),
-
           SingleChildScrollView(
-  child: Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      // Other widgets above the ListView.builder
-      SizedBox(
-        height: 300, // Specify the height as per your requirement
-        child: ListView.builder(
-          itemCount: widget.itemsToDisplay.length,
-          itemBuilder: (context, index) {
-            final item = widget.itemsToDisplay[index];
-            final imageUrls = (item['names'] ?? '').split(',');
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                SizedBox(
+                  height: 300,
+                  child: ListView.builder(
+                    itemCount: widget.itemsToDisplay.length,
+                    itemBuilder: (context, index) {
+                      final item = widget.itemsToDisplay[index];
+                      final imageUrls = (item['names'] ?? '').split(',');
 
-            return Card(
-              color: Theme.of(context).brightness == Brightness.dark
-      ? Colors.black
-      : Colors.white,
-              margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 8.0, vertical: 4),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    SizedBox(
-                      height: 100, // Height for the image row
-                      child: ListView.separated(
-                        scrollDirection: Axis.horizontal,
-                        itemCount: imageUrls.length,
-                        itemBuilder: (context, imgIndex) {
-                          return ClipRRect(
-                            borderRadius: BorderRadius.circular(8),
-                            child: Image.network(
-                              imageUrls[imgIndex],
-                              width: 100,
-                              height: 100,
-                              fit: BoxFit.cover,
-                              errorBuilder: (context, error, stackTrace) =>
-                                  const Icon(Icons.broken_image, size: 100),
+                      return Container(
+                        margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).brightness == Brightness.dark
+                              ? Colors.black.withOpacity(0.8)
+                              : Colors.white,
+                          borderRadius: BorderRadius.circular(16),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.05),
+                              blurRadius: 10,
+                              offset: const Offset(0, 4),
                             ),
-                          );
-                        },
-                        separatorBuilder: (context, _) =>
-                            const SizedBox(width: 8),
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          'Quantity: ${item['quantity']}',
-                          style: const TextStyle(
-                            color: Colors.grey,
-                            fontSize: 14,
-                            fontWeight: FontWeight.bold,
+                          ],
+                        ),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(16),
+                          child: BackdropFilter(
+                            filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                            child: Padding(
+                              padding: const EdgeInsets.all(16),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  AspectRatio(
+                                    aspectRatio: 16 / 9,
+                                    child: ClipRRect(
+                                      borderRadius: BorderRadius.circular(12),
+                                      child: Stack(
+                                        children: [
+                                          PageView.builder(
+                                            itemCount: imageUrls.length,
+                                            itemBuilder: (context, imgIndex) {
+                                              return GestureDetector(
+                                                onTap: () {
+                                                  Navigator.push(
+                                                    context,
+                                                    MaterialPageRoute(
+                                                      builder: (context) => MediaGalleryView(
+                                                        urls: imageUrls,
+                                                        initialIndex: imgIndex,
+                                                      ),
+                                                    ),
+                                                  );
+                                                },
+                                                child: Hero(
+                                                  tag: '${item['productId']}_$imgIndex',
+                                                  child: Image.network(
+                                                    imageUrls[imgIndex],
+                                                    width: double.infinity,
+                                                    fit: BoxFit.cover,
+                                                    errorBuilder: (context, error, stackTrace) =>
+                                                        Container(
+                                                      color: Colors.grey[200],
+                                                      child: const Center(
+                                                        child: Icon(CupertinoIcons.photo,
+                                                            size: 40, color: Colors.grey),
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ),
+                                              );
+                                            },
+                                          ),
+                                          Positioned(
+                                            bottom: 8,
+                                            right: 8,
+                                            child: Container(
+                                              padding: const EdgeInsets.symmetric(
+                                                  horizontal: 12, vertical: 6),
+                                              decoration: BoxDecoration(
+                                                color: Colors.black.withOpacity(0.7),
+                                                borderRadius: BorderRadius.circular(20),
+                                              ),
+                                              child: Text(
+                                                'Quantity ${item['quantity']} @ Tsh ${NumberFormat('#,##0', 'en_US').format(item['price'])} ',
+                                                style: const TextStyle(
+                                                  color: Colors.white,
+                                                  fontSize: 14,
+                                                  fontWeight: FontWeight.w500,
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 16),
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Text(
+                                        'Item ${index + 1}',
+                                        style: TextStyle(
+                                          color: Theme.of(context).brightness == Brightness.dark
+                                              ? Colors.grey[300]
+                                              : Colors.grey[700],
+                                          fontSize: 15,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                                      Text(
+                                        'Tsh ${NumberFormat('#,##0', 'en_US').format(item['price'] * item['quantity'])}',
+                                        style: TextStyle(
+                                          color: Theme.of(context).brightness == Brightness.dark
+                                              ? CupertinoColors.activeBlue
+                                              : Colors.green[700],
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.w600,
+                                          letterSpacing: 0.5,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ),
                           ),
                         ),
-                    Text(
-                      'Price: Tsh ${NumberFormat('#,##0', 'en_US').format(item['price'])}',
-                      style: const TextStyle(
-                        color: Colors.green,
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                      ],
-                    ),
-                  ],
+                      );
+                    },
+                  ),
                 ),
-              ),
-            );
-          },
-        ),
-      ),
-    ],
-  ),
-)
-,
-
-const Divider(),
-    
+              ],
+            ),
+          ),
+          const Divider(),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 8.0),
             child: Column(
@@ -619,7 +645,7 @@ const Divider(),
                 // Table for Current Location
 
                 if (_isLoadingLocation)
-                  _buildLoadingShimmer(context)
+                  const PaymentShimmer()
                 else if (_currentPosition != null)
                   Table(
                     border: TableBorder.all(
@@ -787,7 +813,6 @@ const Divider(),
                                   children: [
                                     const Icon(
                                       Icons.calendar_today_outlined,
-                                      // color: checkInDate == null ? Colors.blue : Colors.black,
                                       size: 18,
                                     ),
                                     const SizedBox(width: 8),
@@ -796,12 +821,7 @@ const Divider(),
                                           ? 'Tap to Set'
                                           : getFormattedDate(checkInDate),
                                       style: const TextStyle(
-                                        // color: checkInDate == null ? Colors.blue : Colors.black,
                                         fontSize: 14,
-                                        // fontWeight: checkInDate == null ? FontWeight.bold : FontWeight.normal,
-                                        // decoration: checkInDate == null
-                                        //     ? TextDecoration.underline
-                                        //     : TextDecoration.none,
                                       ),
                                     ),
                                   ],
@@ -828,7 +848,6 @@ const Divider(),
                                   children: [
                                     const Icon(
                                       Icons.calendar_today_outlined,
-                                      // color: checkOutDate == null ? Colors.white : Colors.black,
                                       size: 18,
                                     ),
                                     const SizedBox(width: 8),
@@ -837,12 +856,7 @@ const Divider(),
                                           ? 'Tap to Set'
                                           : getFormattedDate(checkOutDate),
                                       style: const TextStyle(
-                                        // color: checkOutDate == null ? Colors.white : Colors.black,
                                         fontSize: 14,
-                                        // fontWeight: checkOutDate == null ? FontWeight.bold : FontWeight.normal,
-                                        // decoration: checkOutDate == null
-                                        //     ? TextDecoration.underline
-                                        //     : TextDecoration.none,
                                       ),
                                     ),
                                   ],
@@ -975,111 +989,6 @@ const Divider(),
                 const Gap(10),
                 const Divider(),
                 const Gap(0),
-                if (isReservation)
-                  // Delivery Destination TextField
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text(
-                        'Delivery Destination',
-                        style: TextStyle(
-                            fontSize: 15, fontWeight: FontWeight.bold),
-                      ),
-                      IconButton(
-                        icon:
-                            const Icon(Icons.info_outline, color: Colors.grey),
-                        onPressed: () {
-                          showDialog(
-                            context: context,
-                            builder: (BuildContext context) {
-                              return AlertDialog(
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(15.0),
-                                ),
-                                title: const Text('Location Information'),
-                                content: const Text(
-                                  'When location permission is granted:\n\n'
-                                  '1. If no delivery destination is selected, your current location will be used automatically.\n'
-                                  '2. If both a delivery destination and your current location are available, the delivery destination will be used.\n'
-                                  '3. If your current location is not available, you will need to search for and select a delivery destination manually.\n\n'
-                                  'By allowing location permission, the app can auto-fill your location for a seamless experience.',
-                                  style: TextStyle(fontSize: 14),
-                                ),
-                                actions: [
-                                  TextButton(
-                                    onPressed: () {
-                                      Navigator.of(context).pop();
-                                    },
-                                    child: const Text('OK'),
-                                  ),
-                                ],
-                              );
-                            },
-                          );
-                        },
-                      ),
-                    ],
-                  ),
-
-                const Gap(10),
-                if (isReservation)
-                  TypeAheadField<Map<String, String>>(
-                    suggestionsCallback: _getPlaceSuggestions,
-                    itemBuilder: (context, Map<String, String> suggestion) {
-                      if (suggestion['place_id'] == '') {
-                        return Center(
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 10.0),
-                            child: Text(
-                              suggestion['description']!,
-                              style: const TextStyle(
-                                fontSize: 14,
-                                color: Colors.grey,
-                                fontStyle: FontStyle.italic,
-                              ),
-                              textAlign: TextAlign.center,
-                            ),
-                          ),
-                        );
-                      }
-                      return ListTile(
-                        title: Text(suggestion['description']!),
-                      );
-                    },
-                    onSelected: (Map<String, String> suggestion) async {
-                      if (suggestion['place_id'] != '') {
-                        _typeAheadController.text = suggestion['description']!;
-                        final placeId = suggestion['place_id']!;
-                        await _getPlaceDetails(placeId);
-
-                        setState(() {
-                          currentStreetName = suggestion['description'];
-                          selectedStreetName = suggestion['description'];
-                        });
-
-                        fetchTransportCost(); // Fetch transport cost for the new destination
-                      } else {
-                        LogService.logInfo(
-                            'Invalid selection: ${suggestion['description']}');
-                      }
-                    },
-                    direction: VerticalDirection.up,
-                    builder: (context, controller, focusNode) {
-                      return TextField(
-                        controller: controller,
-                        focusNode: focusNode,
-                        decoration: const InputDecoration(
-                          labelText: 'Enter delivery destination',
-                          border: OutlineInputBorder(),
-                          prefixIcon: Icon(Iconsax.location),
-                        ),
-                      );
-                    },
-                    controller: _typeAheadController,
-                  ),
-                if (isReservation) const Gap(10),
-                if (isReservation) const Divider(),
-                if (isReservation) const Gap(5),
                 if (!isReservation)
                   Padding(
                     padding: const EdgeInsets.all(8.0),
@@ -1126,11 +1035,10 @@ const Divider(),
                                       ),
                                     );
 
-                                    return; // Exit the function if validation fails
+                                    return;
                                   } else {
                                     setState(() {
-                                      _errorMessage =
-                                          null; // Clear error message if validation passes
+                                      _errorMessage = null;
                                     });
                                   }
                                 }
@@ -1140,10 +1048,6 @@ const Divider(),
                                         double.parse(deliveryCost
                                             .replaceAll('Tsh ', '')
                                             .trim());
-                                // double.parse(deliveryCost
-                                //         .replaceAll('Tsh ', ''));
-                                //     .trim()) *
-                                // _exchangeRate!; // Total price calculation
 
                                 showModalBottomSheet(
                                   context: context,
@@ -1168,12 +1072,16 @@ const Divider(),
                                           quantity: widget.totalQuantity,
                                           postId: widget.productIds,
                                           items: widget.items,
-                                          adults: adults, // Pass adults
-                                          children: children, // Pass children
-                                          fullName: _fullNameController.text
-                                              .trim(), // Pass full name
-                                              checkInDate: isReservation ? checkInDate : null, // Conditionally include checkInDate
-      checkOutDate: isReservation ? checkOutDate : null, // Conditionally include checkOutDate
+                                          adults: adults,
+                                          children: children,
+                                          fullName:
+                                              _fullNameController.text.trim(),
+                                          checkInDate: isReservation
+                                              ? checkInDate
+                                              : null,
+                                          checkOutDate: isReservation
+                                              ? checkOutDate
+                                              : null,
                                           isReservation: !isReservation),
                                     );
                                   },
@@ -1190,45 +1098,6 @@ const Divider(),
                               ),
                             ),
                     ),
-
-                    // const SizedBox(
-                    //     width: 70), // Add some spacing between the buttons
-
-                    // Expanded(
-                    //   child: buildWideGradientButton(
-                    //     onTap: () async {
-                    //       try {
-                    //         // Fetch the user's profile ID dynamically
-                    //         int? profileId = AuthService
-                    //             .getProfileId(); // Ensure this returns an actual int value
-                    //         if (profileId == null) {
-                    //           throw Exception(
-                    //               'Profile ID is null. Please log in again.');
-                    //         }
-
-                    //         // Replace `itemCount` and `widget.postId` with actual dynamic values
-                    //         List<Map<String, dynamic>> items = [
-                    //           {
-                    //             "postId": widget
-                    //                 .productIds, // Ensure `widget.postId` is a valid int
-                    //             "quantity":
-                    //                 itemCount, // Ensure `itemCount` is a valid int
-                    //           }
-                    //         ];
-
-                    //         await addItemToCart(profileId, items);
-
-                    //         // Navigate to the cart screen
-                    //         // context.push('/maincart');
-                    //       } catch (error) {
-                    //         LogService.logError('Error in Add to Cart: $error');
-                    //       }
-                    //     },
-                    //     label: 'Add to Cart',
-                    //     startColor: LarosaColors.secondary,
-                    //     endColor: LarosaColors.purple,
-                    //   ),
-                    // ),
                   ],
                 )
               ],
@@ -1239,195 +1108,7 @@ const Divider(),
     );
   }
 
-  // Widget buildQuantityAdjustmentRow() {
-  //   return Container(
-  //     decoration: const BoxDecoration(),
-  //     padding: const EdgeInsets.only(top: 8.0, bottom: 10),
-  //     child: Column(
-  //       children: [
-  //         // const Gap(10),
-  //         // Decrease Buttons
-  //         SingleChildScrollView(
-  //           scrollDirection: Axis.horizontal,
-  //           child: Row(
-  //             mainAxisAlignment: MainAxisAlignment.center,
-  //             children: [
-  //               buildGradientButton(
-  //                 onTap: () {
-  //                   setState(() {
-  //                     itemCount = (itemCount - 1 < 1) ? 1 : itemCount - 1;
-  //                   });
-  //                 },
-  //                 label: '-1',
-  //                 startColor: LarosaColors.primary.withOpacity(1),
-  //                 endColor: LarosaColors.purple.withOpacity(1),
-  //               ),
-  //               const Gap(6),
-  //               buildGradientButton(
-  //                 onTap: () {
-  //                   setState(() {
-  //                     itemCount = (itemCount - 5 < 1) ? 1 : itemCount - 5;
-  //                   });
-  //                 },
-  //                 label: '-5',
-  //                 startColor: LarosaColors.primary.withOpacity(1),
-  //                 endColor: LarosaColors.purple.withOpacity(1),
-  //               ),
-  //               const Gap(6),
-  //               buildGradientButton(
-  //                 onTap: () {
-  //                   setState(() {
-  //                     itemCount = (itemCount - 10 < 1) ? 1 : itemCount - 10;
-  //                   });
-  //                 },
-  //                 label: '-10',
-  //                 startColor: LarosaColors.primary.withOpacity(1),
-  //                 endColor: LarosaColors.purple.withOpacity(1),
-  //               ),
-  //               const Gap(6),
-  //               buildGradientButton(
-  //                 onTap: () {
-  //                   setState(() {
-  //                     itemCount = (itemCount - 20 < 1) ? 1 : itemCount - 20;
-  //                   });
-  //                 },
-  //                 label: '-20',
-  //                 startColor: LarosaColors.primary.withOpacity(1),
-  //                 endColor: LarosaColors.purple.withOpacity(1),
-  //               ),
-  //               const Gap(6),
-  //               buildGradientButton(
-  //                 onTap: () {
-  //                   setState(() {
-  //                     itemCount = (itemCount - 50 < 1) ? 1 : itemCount - 50;
-  //                   });
-  //                 },
-  //                 label: '-50',
-  //                 startColor: LarosaColors.primary.withOpacity(1),
-  //                 endColor: LarosaColors.purple.withOpacity(1),
-  //               ),
-  //               const Gap(6),
-  //               buildGradientButton(
-  //                 onTap: () {
-  //                   setState(() {
-  //                     itemCount = (itemCount - 100 < 1) ? 1 : itemCount - 100;
-  //                   });
-  //                 },
-  //                 label: '-100',
-  //                 startColor: LarosaColors.primary.withOpacity(1),
-  //                 endColor: LarosaColors.purple.withOpacity(1),
-  //               ),
-  //             ],
-  //           ),
-  //         ),
-  //         const Gap(5),
-  //         // Increase Buttons
-  //         SingleChildScrollView(
-  //           scrollDirection: Axis.horizontal,
-  //           child: Row(
-  //             mainAxisAlignment: MainAxisAlignment.center,
-  //             children: [
-  //               buildGradientButton(
-  //                 onTap: () {
-  //                   setState(() {
-  //                     itemCount++;
-  //                   });
-  //                 },
-  //                 label: '+1',
-  //                 startColor: LarosaColors.primary.withOpacity(1),
-  //                 endColor: LarosaColors.purple.withOpacity(1),
-  //               ),
-  //               const Gap(6),
-  //               buildGradientButton(
-  //                 onTap: () {
-  //                   setState(() {
-  //                     itemCount += 5;
-  //                   });
-  //                 },
-  //                 label: '+5',
-  //                 startColor: LarosaColors.primary.withOpacity(1),
-  //                 endColor: LarosaColors.purple.withOpacity(1),
-  //               ),
-  //               const Gap(6),
-  //               buildGradientButton(
-  //                 onTap: () {
-  //                   setState(() {
-  //                     itemCount += 10;
-  //                   });
-  //                 },
-  //                 label: '+10',
-  //                 startColor: LarosaColors.primary.withOpacity(1),
-  //                 endColor: LarosaColors.purple.withOpacity(1),
-  //               ),
-  //               const Gap(6),
-  //               buildGradientButton(
-  //                 onTap: () {
-  //                   setState(() {
-  //                     itemCount += 20;
-  //                   });
-  //                 },
-  //                 label: '+20',
-  //                 startColor: LarosaColors.primary.withOpacity(1),
-  //                 endColor: LarosaColors.purple.withOpacity(1),
-  //               ),
-  //               const Gap(6),
-  //               buildGradientButton(
-  //                 onTap: () {
-  //                   setState(() {
-  //                     itemCount += 50;
-  //                   });
-  //                 },
-  //                 label: '+50',
-  //                 startColor: LarosaColors.primary.withOpacity(1),
-  //                 endColor: LarosaColors.purple.withOpacity(1),
-  //               ),
-  //               const Gap(6),
-  //               buildGradientButton(
-  //                 onTap: () {
-  //                   setState(() {
-  //                     itemCount += 100;
-  //                   });
-  //                 },
-  //                 label: '+100',
-  //                 startColor: LarosaColors.primary.withOpacity(1),
-  //                 endColor: LarosaColors.purple.withOpacity(1),
-  //               ),
-  //             ],
-  //           ),
-  //         ),
-  //         // const Gap(10),
-  //       ],
-  //     ),
-  //   );
-  // }
 
-  Widget _buildLoadingShimmer(BuildContext context) {
-    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
-
-    return Padding(
-      padding: const EdgeInsets.all(2.0),
-      child: Column(
-        children: List.generate(3, (index) {
-          return Padding(
-            padding: const EdgeInsets.only(bottom: 8.0),
-            child: Shimmer.fromColors(
-              baseColor: isDarkMode ? Colors.grey[900]! : Colors.grey[300]!,
-              highlightColor:
-                  isDarkMode ? Colors.grey[700]! : Colors.grey[100]!,
-              child: Container(
-                width: double.infinity,
-                height: 48,
-                decoration: BoxDecoration(
-                  color: Colors.grey[300],
-                  borderRadius: BorderRadius.circular(8),
-                ),
-              ),
-            ),
-          );
-        }),
-      ),
-    );
-  }
 }
 
 Widget fullNameInput({
