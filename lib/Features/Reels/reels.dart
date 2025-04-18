@@ -444,6 +444,12 @@ class _DeReelsScreenState extends State<DeReelsScreen> {
                         child: CommentSection(
                           postId: postId,
                           names: snippet['names'],
+                          onCommentAdded: (int newCommentCount) {
+                            // Update the comment count in the UI
+                            setState(() {
+                              snippet['comments'] = newCommentCount;
+                            });
+                          },
                         ),
                       ),
                     );

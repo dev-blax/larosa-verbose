@@ -29,10 +29,11 @@ class AddToCartScreen extends StatefulWidget {
   final double price;
   final String names;
   final int postId;
-  final int? productId; // Add this line
+  final int? productId;
 
   final String? reservationType;
   final int? adults;
+  final int? children;
   final bool? breakfastIncluded;
 
   const AddToCartScreen({
@@ -41,9 +42,10 @@ class AddToCartScreen extends StatefulWidget {
     required this.price,
     required this.names,
     required this.postId,
-    this.productId, // Add this line
+    this.productId,
     this.reservationType,
     this.adults,
+    this.children,
     this.breakfastIncluded,
   });
 
@@ -335,6 +337,8 @@ class _AddToCartScreenState extends State<AddToCartScreen> {
   @override
   void initState() {
     super.initState();
+    LogService.logError('initState, adults: ${widget.adults}, children: ${widget.children}');
+
     _fetchExchangeRate();
     _getCurrentLocation().then((_) => fetchTransportCost());
 

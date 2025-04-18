@@ -371,6 +371,7 @@ class _OldPostCompoentState extends State<OldPostCompoent>
                         child: IconButton(
                           onPressed: () {
                             if (AuthService.getToken().isNotEmpty) {
+                              LogService.logTrace('post details, post: ${widget.post}');
                               String username = widget.post['username'];
                               double price =
                                   double.parse(widget.post['price'].toString());

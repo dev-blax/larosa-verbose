@@ -19,13 +19,13 @@ import 'post_comment_tile.dart';
 class CommentSection extends StatefulWidget {
   final int postId;
   final String names;
-  final Function(int newCommentCount)? onCommentAdded;
+  final Function(int newCommentCount) onCommentAdded;
 
   const CommentSection({
     super.key,
     required this.postId,
     required this.names,
-    this.onCommentAdded,
+    required this.onCommentAdded,
   });
 
   @override
@@ -113,7 +113,7 @@ class _CommentSectionState extends State<CommentSection> {
 
         NavigationService.showSnackBar('Comment sent successfully');
         await fetchComments();
-        widget.onCommentAdded?.call(postComments.length);
+        widget.onCommentAdded(postComments.length);
         return true;
       } else {
         throw Exception('Failed to send comment');
@@ -191,6 +191,8 @@ class _CommentSectionState extends State<CommentSection> {
         setState(() {
           postComments = data.reversed.toList();
           _isLoading = false;
+          widget.onCommentAdded(postComments.length);
+
         });
         return;
       }
@@ -199,7 +201,7 @@ class _CommentSectionState extends State<CommentSection> {
         await AuthService.refreshToken();
         fetchComments();
       } else {
-        // Optionally handle other status codes here
+        LogService.logError('Failed to fetch comments: ${response.statusCode}');
       }
     } catch (e) {
       // Optionally handle the error here

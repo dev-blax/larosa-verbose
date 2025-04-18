@@ -121,7 +121,10 @@ class ContentController extends ChangeNotifier {
 
     try {
       LogService.logInfo('Files: ${formData.files.length} ');
-      LogService.logFatal('sending request');
+      LogService.logFatal('formdata');
+      print(formData.fields);
+
+
       
       Dio.Response response = await _dioService.dio.post(
         '${LarosaLinks.baseurl}/api/v1/business-post/create',

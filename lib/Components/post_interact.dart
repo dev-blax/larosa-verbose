@@ -148,6 +148,11 @@ class _PostInteractState extends State<PostInteract> {
                         child: CommentSection(
                           postId: widget.post['id'],
                           names: widget.post['names'],
+                          onCommentAdded: (int newCommentCount) {
+                            setState(() {
+                              widget.post['comments'] = newCommentCount;
+                            });
+                          },
                         ),
                       ),
                     );
