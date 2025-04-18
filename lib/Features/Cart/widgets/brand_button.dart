@@ -9,13 +9,13 @@ class BrandButton extends StatelessWidget {
   final EdgeInsetsGeometry? margin;
 
   const BrandButton({
-    Key? key,
+    super.key,
     required this.text,
     required this.onPressed,
     this.isEnabled = true,
     this.isLoading = false,
     this.margin,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

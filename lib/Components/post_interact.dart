@@ -4,14 +4,22 @@ import 'package:flutter_svg/svg.dart';
 import 'package:larosa_block/Utils/svg_paths.dart';
 import 'package:like_button/like_button.dart';
 import 'package:modal_bottom_sheet/modal_bottom_sheet.dart';
+import 'package:larosa_block/Services/dio_service.dart';
+import 'package:larosa_block/Services/auth_service.dart';
 
 import '../Features/Feeds/Components/comments_component.dart';
 import '../Utils/colors.dart';
 import '../Utils/helpers.dart';
+import '../Utils/links.dart';
 
 class PostInteract extends StatefulWidget {
   final dynamic post;
-  const PostInteract({super.key, required this.post});
+  final Function(dynamic updatedPost)? onPostUpdated;
+  const PostInteract({
+    super.key, 
+    required this.post,
+    this.onPostUpdated,
+  });
 
   @override
   State<PostInteract> createState() => _PostInteractState();
@@ -23,21 +31,30 @@ class _PostInteractState extends State<PostInteract> {
     return Padding(
       padding: const EdgeInsets.only(left: 9.0, right: 0.0),
       child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10.0),
         decoration: BoxDecoration(
-          color: Theme.of(context).scaffoldBackgroundColor,
+          color: Theme.of(context).scaffoldBackgroundColor.withOpacity(0.7),
+          borderRadius: BorderRadius.circular(10),
+          backgroundBlendMode: BlendMode.srcOver,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 10,
+              spreadRadius: 0,
+            )
+          ],
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            // Like Section
+            
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                // Second LikeButton (small)
                 LikeButton(
                   size: 23.0,
-                  //isLiked: _isLiked,
                   likeCount: widget.post['likes'],
+                  isLiked: widget.post['isLiked'] ?? false,
                   animationDuration: const Duration(milliseconds: 500),
                   bubblesColor: const BubblesColor(
                     dotPrimaryColor: Color.fromRGBO(180, 23, 12, 1),
@@ -54,15 +71,13 @@ class _PostInteractState extends State<PostInteract> {
                       isLiked
                           ? 'assets/icons/SolarHeartAngleBold.svg'
                           : 'assets/icons/SolarHeartAngleLinear.svg',
-                      // width: 25,
-                      // height: 25,
                       colorFilter: ColorFilter.mode(
                         isLiked
                             ? const Color.fromRGBO(180, 23, 12, 1)
                             : Theme.of(context).colorScheme.secondary,
                         BlendMode.srcIn,
                       ),
-                      semanticsLabel: 'Like icon',
+                      semanticsLabel: 'LikeIcon',
                     );
                   },
                   likeCountPadding: const EdgeInsets.only(left: 8.0),
@@ -72,10 +87,7 @@ class _PostInteractState extends State<PostInteract> {
                       style: Theme.of(context).textTheme.bodySmall,
                     );
                   },
-                  onTap: (bool isLiked) {
-                    // _toggleLike();
-                    return Future.value(!isLiked);
-                  },
+                  onTap: _likePost,
                 ),
               ],
             ),
@@ -84,13 +96,13 @@ class _PostInteractState extends State<PostInteract> {
               children: [
                 LikeButton(
                   size: 23.0,
-                  // isLiked: _isFavorite,
                   likeCount: widget.post['favorites'],
+                  isLiked: widget.post['isFavorited'] ?? false,
                   animationDuration:
-                      const Duration(milliseconds: 500), // Instant effect
+                      const Duration(milliseconds: 500),
                   bubblesColor: const BubblesColor(
                     dotPrimaryColor:
-                        Color.fromRGBO(255, 215, 0, 1), // Gold color
+                        Color.fromRGBO(255, 215, 0, 1), 
                     dotSecondaryColor: Colors.orange,
                     dotThirdColor: Colors.yellow,
                     dotLastColor: Colors.red,
@@ -104,8 +116,6 @@ class _PostInteractState extends State<PostInteract> {
                       isLiked
                           ? SvgIconsPaths.starBold
                           : SvgIconsPaths.starOutline,
-                      // width: 25,
-                      // height: 25,
                       colorFilter: ColorFilter.mode(
                         isLiked
                             ? LarosaColors.gold
@@ -122,21 +132,7 @@ class _PostInteractState extends State<PostInteract> {
                       style: Theme.of(context).textTheme.bodySmall,
                     );
                   },
-                  onTap: (bool isLiked) {
-                    // Toggle the favorite state and count immediately
-                    // _isFavorite = !isLiked;
-                    // _favoriteCount =
-                    //     _isFavorite ? _favoriteCount + 1 : _favoriteCount - 1;
-
-                    // // Trigger UI update
-                    // setState(() {});
-
-                    // // Run _favouritePost in the background
-                    // Future.microtask(() => _favouritePost());
-
-                    // Return the new state to `LikeButton`
-                    return Future.value(!isLiked);
-                  },
+                  onTap: _favoritePost,
                 ),
               ],
             ),
@@ -189,5 +185,53 @@ class _PostInteractState extends State<PostInteract> {
         ),
       ),
     );
+  }
+
+  Future<bool> _likePost(bool isLiked) async {
+    try {
+      final response = await DioService().dio.post(
+        'https://${LarosaLinks.nakedBaseUrl}/like/save',
+        data: {
+          "likerId": AuthService.getProfileId(),
+          "postId": widget.post['id'].toString(),
+        },
+      );
+
+      if (response.statusCode == 200) {
+        // Update the post data after successful API call
+        widget.post['likes'] = isLiked ? widget.post['likes'] - 1 : widget.post['likes'] + 1;
+        widget.post['isLiked'] = !isLiked;
+        // Notify parent of the update
+        widget.onPostUpdated?.call(widget.post);
+        return !isLiked;
+      }
+      return isLiked;
+    } catch (e) {
+      return isLiked;
+    }
+  }
+
+  Future<bool> _favoritePost(bool isFavorited) async {
+    try {
+      final response = await DioService().dio.post(
+        'https://${LarosaLinks.nakedBaseUrl}/favorites/update',
+        data: {
+          "profileId": AuthService.getProfileId(),
+          "postId": widget.post['id'].toString(),
+        },
+      );
+
+      if (response.statusCode == 200) {
+        // Update the post data after successful API call
+        widget.post['favorites'] = isFavorited ? widget.post['favorites'] - 1 : widget.post['favorites'] + 1;
+        widget.post['isFavorited'] = !isFavorited;
+        // Notify parent of the update
+        widget.onPostUpdated?.call(widget.post);
+        return !isFavorited;
+      }
+      return isFavorited;
+    } catch (e) {
+      return isFavorited;
+    }
   }
 }

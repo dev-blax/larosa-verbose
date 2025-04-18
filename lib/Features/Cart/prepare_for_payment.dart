@@ -1,12 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/services.dart';
-import 'package:flutter_typeahead/flutter_typeahead.dart';
 import 'package:gap/gap.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:iconsax/iconsax.dart';
 import 'package:intl/intl.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -16,11 +13,13 @@ import 'package:larosa_block/Services/log_service.dart';
 import 'package:geolocator/geolocator.dart';
 
 import '../../Components/cart_button.dart';
-import '../../Components/PaymentModals/payment_method_modal.dart';
 import '../../Services/auth_service.dart';
 import '../../Utils/colors.dart';
 import 'widgets/media_gallery_view.dart';
+import 'widgets/payment_proceed_table.dart';
 import 'widgets/payment_shimmer.dart';
+import 'widgets/payment_summary_card.dart';
+import 'screens/payment_method_screen.dart';
 
 class PrepareForPayment extends StatefulWidget {
   final List<int> productIds;
@@ -445,10 +444,6 @@ class _PrepareForPaymentState extends State<PrepareForPayment> {
     try {
       String token = AuthService.getToken();
 
-      if (token == null) {
-        throw Exception('Token is missing. Please log in again.');
-      }
-
       final Map<String, dynamic> requestBody = {
         "profileId": profileId,
         "items": items,
@@ -614,7 +609,7 @@ class _PrepareForPaymentState extends State<PrepareForPayment> {
                                         style: TextStyle(
                                           color: Theme.of(context).brightness == Brightness.dark
                                               ? CupertinoColors.activeBlue
-                                              : Colors.green[700],
+                                              : CupertinoColors.systemBlue,
                                           fontSize: 16,
                                           fontWeight: FontWeight.w600,
                                           letterSpacing: 0.5,
@@ -635,357 +630,109 @@ class _PrepareForPaymentState extends State<PrepareForPayment> {
             ),
           ),
           const Divider(),
+
+
+
+
+
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 8.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Gap(8),
-                // Display current location if available
-                // Table for Current Location
-
                 if (_isLoadingLocation)
                   const PaymentShimmer()
                 else if (_currentPosition != null)
-                  Table(
-                    border: TableBorder.all(
-                      width: 1,
-                      color: Theme.of(context).brightness == Brightness.dark
-                          ? Colors.grey[600]!
-                          : Colors.grey[400]!,
-                    ),
-                    children: [
-                      if (isReservation)
-                        TableRow(
-                          children: [
-                            const Padding(
-                              padding: EdgeInsets.all(8.0),
-                              child: Text(
-                                'Delivery Location',
-                                style: TextStyle(fontWeight: FontWeight.bold),
+                  PaymentSummaryCard(
+                    isReservation: isReservation,
+                    totalPrice: widget.totalPrice,
+                    itemCount: itemCount,
+                    deliveryCost: deliveryCost,
+                    onViewDetails: () {
+                      showModalBottomSheet(
+                        context: context,
+                        isScrollControlled: true,
+                        backgroundColor: Colors.transparent,
+                        builder: (context) => DraggableScrollableSheet(
+                          initialChildSize: 0.7,
+                          minChildSize: 0.5,
+                          maxChildSize: 0.95,
+                          builder: (_, controller) => Container(
+                            decoration: BoxDecoration(
+                              color: Theme.of(context).scaffoldBackgroundColor,
+                              borderRadius: const BorderRadius.vertical(
+                                top: Radius.circular(20),
                               ),
                             ),
-                            Padding(
-                              padding: const EdgeInsets.all(8.0),
-                              child: Text(currentStreetName ?? 'N/A'),
-                            ),
-                          ],
-                        ),
-                      TableRow(
-                        children: [
-                          Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: Text(
-                              isReservation ? 'Quantity' : 'Rooms',
-                              style:
-                                  const TextStyle(fontWeight: FontWeight.bold),
-                            ),
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: Text('${widget.totalQuantity}'),
-                          ),
-                        ],
-                      ),
-                      if (!isReservation)
-                        // Adults
-                        TableRow(
-                          children: [
-                            const Padding(
-                              padding: EdgeInsets.all(8.0),
-                              child: Text(
-                                'Adults',
-                                style: TextStyle(fontWeight: FontWeight.bold),
-                              ),
-                            ),
-                            Row(
+                            child: Column(
                               children: [
-                                Expanded(
-                                  child: Slider(
-                                    value: adults.toDouble(),
-                                    min: 1,
-                                    max: 20,
-                                    divisions: 20,
-                                    label: adults.toString(),
-                                    activeColor: Theme.of(context).brightness ==
-                                            Brightness.dark
-                                        ? Colors.white
-                                        : Colors
-                                            .black, // Set active color based on theme
-                                    inactiveColor: Theme.of(context)
-                                                .brightness ==
-                                            Brightness.dark
-                                        ? Colors.white.withOpacity(0.5)
-                                        : Colors.black.withOpacity(
-                                            0.5), // Set inactive color based on theme
-                                    thumbColor: Theme.of(context).brightness ==
-                                            Brightness.dark
-                                        ? Colors.white
-                                        : Colors
-                                            .black, // Set thumb color based on theme
-                                    onChanged: (value) {
-                                      setState(() {
-                                        adults = value.toInt();
-                                      });
-
-                                      // Trigger haptic feedback on value change
-                                      HapticFeedback.vibrate();
-                                    },
+                                Container(
+                                  margin: const EdgeInsets.only(top: 8),
+                                  height: 4,
+                                  width: 40,
+                                  decoration: BoxDecoration(
+                                    color: Theme.of(context).brightness == Brightness.dark
+                                        ? Colors.grey[600]
+                                        : Colors.grey[300],
+                                    borderRadius: BorderRadius.circular(2),
                                   ),
                                 ),
-                                Padding(
-                                  padding: const EdgeInsets.only(right: 8.0),
-                                  child: Text('$adults'),
+                                Expanded(
+                                  child: ListView(
+                                    controller: controller,
+                                    padding: const EdgeInsets.all(16),
+                                    children: [
+                                      Row(
+                                        children: [
+                                          Text(
+                                            'Payment Details',
+                                            style: Theme.of(context).textTheme.titleLarge,
+                                          ),
+                                          const Spacer(),
+                                          IconButton(
+                                            icon: const Icon(Icons.close),
+                                            onPressed: () => Navigator.pop(context),
+                                          ),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 16),
+                                      PaymentProceedTable(
+                                        isReservation: isReservation,
+                                        currentStreetName: currentStreetName,
+                                        totalQuantity: widget.totalQuantity,
+                                        adults: adults,
+                                        children: children,
+                                        checkInDate: checkInDate,
+                                        checkOutDate: checkOutDate,
+                                        estimatedTime: estimatedTime,
+                                        deliveryCost: deliveryCost,
+                                        totalPrice: widget.totalPrice,
+                                        itemCount: itemCount,
+                                        exchangeRate: _exchangeRate,
+                                        pickCheckInDate: _pickCheckInDate,
+                                        pickCheckOutDate: _pickCheckOutDate,
+                                        onAdultsChanged: (value) {
+                                          setState(() {
+                                            adults = value;
+                                          });
+                                        },
+                                        onChildrenChanged: (value) {
+                                          setState(() {
+                                            children = value;
+                                          });
+                                        },
+                                      ),
+                                    ],
+                                  ),
                                 ),
                               ],
                             ),
-                          ],
-                        ),
-                      if (!isReservation)
-                        // Children
-                        TableRow(
-                          children: [
-                            const Padding(
-                              padding: EdgeInsets.all(8.0),
-                              child: Text(
-                                'Children',
-                                style: TextStyle(fontWeight: FontWeight.bold),
-                              ),
-                            ),
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: Slider(
-                                    value: children.toDouble(),
-                                    min: 0,
-                                    max: 20,
-                                    divisions: 20,
-                                    label: children.toString(),
-                                    activeColor: Theme.of(context).brightness ==
-                                            Brightness.dark
-                                        ? Colors.white
-                                        : Colors
-                                            .black, // Active color based on theme
-                                    inactiveColor: Theme.of(context)
-                                                .brightness ==
-                                            Brightness.dark
-                                        ? Colors.white.withOpacity(0.5)
-                                        : Colors.black.withOpacity(
-                                            0.5), // Inactive color based on theme
-                                    thumbColor: Theme.of(context).brightness ==
-                                            Brightness.dark
-                                        ? Colors.white
-                                        : Colors
-                                            .black, // Thumb color based on theme
-                                    onChanged: (value) {
-                                      setState(() {
-                                        children = value.toInt();
-                                      });
-
-                                      // Trigger haptic feedback on value change
-                                      HapticFeedback.vibrate();
-                                    },
-                                  ),
-                                ),
-                                Padding(
-                                  padding: const EdgeInsets.only(right: 8.0),
-                                  child: Text('$children'),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      if (!isReservation)
-                        TableRow(
-                          children: [
-                            const Padding(
-                              padding: EdgeInsets.all(8.0),
-                              child: Text(
-                                'Check-In Date',
-                                style: TextStyle(fontWeight: FontWeight.bold),
-                              ),
-                            ),
-                            Padding(
-                              padding: const EdgeInsets.all(8.0),
-                              child: InkWell(
-                                onTap: () => _pickCheckInDate(context),
-                                child: Row(
-                                  children: [
-                                    const Icon(
-                                      Icons.calendar_today_outlined,
-                                      size: 18,
-                                    ),
-                                    const SizedBox(width: 8),
-                                    Text(
-                                      checkInDate == null
-                                          ? 'Tap to Set'
-                                          : getFormattedDate(checkInDate),
-                                      style: const TextStyle(
-                                        fontSize: 14,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      if (!isReservation)
-                        TableRow(
-                          children: [
-                            const Padding(
-                              padding: EdgeInsets.all(8.0),
-                              child: Text(
-                                'Check-Out Date',
-                                style: TextStyle(fontWeight: FontWeight.bold),
-                              ),
-                            ),
-                            Padding(
-                              padding: const EdgeInsets.all(8.0),
-                              child: InkWell(
-                                onTap: () => _pickCheckOutDate(context),
-                                child: Row(
-                                  children: [
-                                    const Icon(
-                                      Icons.calendar_today_outlined,
-                                      size: 18,
-                                    ),
-                                    const SizedBox(width: 8),
-                                    Text(
-                                      checkOutDate == null
-                                          ? 'Tap to Set'
-                                          : getFormattedDate(checkOutDate),
-                                      style: const TextStyle(
-                                        fontSize: 14,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      if (isReservation)
-                        TableRow(
-                          children: [
-                            const Padding(
-                              padding: EdgeInsets.all(8.0),
-                              child: Text(
-                                'Estimated Time',
-                                style: TextStyle(fontWeight: FontWeight.bold),
-                              ),
-                            ),
-                            Padding(
-                              padding: const EdgeInsets.all(8.0),
-                              child: Text(
-                                estimatedTime.contains('min')
-                                    ? formatEstimatedTime(estimatedTime)
-                                    : 'Calculating...',
-                              ),
-                            ),
-                          ],
-                        ),
-                      if (isReservation)
-                        TableRow(
-                          children: [
-                            const Padding(
-                              padding: EdgeInsets.all(8.0),
-                              child: Text(
-                                'Delivery Cost (Tsh)',
-                                style: TextStyle(fontWeight: FontWeight.bold),
-                              ),
-                            ),
-                            Padding(
-                              padding: const EdgeInsets.symmetric(
-                                  vertical: 8.0, horizontal: 4),
-                              // child: Text(
-                              //   // Display the converted delivery cost
-                              //   (deliveryCost.contains('Tsh') &&
-                              //           _exchangeRate != null)
-                              //       ? 'Tsh ${(double.parse(deliveryCost.replaceAll('Tsh ', '').trim()) * _exchangeRate!).toStringAsFixed(2)}'
-                              //       : 'Calculating...',
-                              // ),
-                              child: Text(
-                                // Display the formatted delivery cost
-                                (deliveryCost.contains('Tsh') &&
-                                        _exchangeRate != null)
-                                    ? NumberFormat.currency(
-                                        locale: 'sw_TZ',
-                                        symbol: '',
-                                        decimalDigits: 2, // No decimal points
-                                      ).format(double.parse(deliveryCost
-                                            .replaceAll('Tsh ', '')
-                                            .trim())
-                                        //     *
-                                        // _exchangeRate!,
-                                        )
-                                    : 'Calculating...',
-                              ),
-                            ),
-                          ],
-                        ),
-                      TableRow(
-                        children: [
-                          const Padding(
-                            padding: EdgeInsets.all(8.0),
-                            child: Text(
-                              'Item Price (Tsh)',
-                              style: TextStyle(fontWeight: FontWeight.bold),
-                            ),
                           ),
-                          Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: Text(
-                              NumberFormat.currency(
-                                      locale: 'en_US',
-                                      symbol: '',
-                                      decimalDigits: 2)
-                                  .format(widget.totalPrice * itemCount),
-                            ),
-                          ),
-                        ],
-                      ),
-                      if (isReservation)
-                        TableRow(
-                          children: [
-                            const Padding(
-                              padding: EdgeInsets.all(8.0),
-                              child: Text(
-                                'Total Price (Tsh)',
-                                style: TextStyle(fontWeight: FontWeight.bold),
-                              ),
-                            ),
-                            Padding(
-                              padding: const EdgeInsets.symmetric(
-                                  vertical: 8.0, horizontal: 4),
-                              child: Text(
-                                deliveryCost.contains('Tsh') &&
-                                        _exchangeRate != null
-                                    ? NumberFormat.currency(
-                                        locale: 'sw_TZ',
-                                        symbol:
-                                            '', // Omit the symbol here to manually add "TSh"
-                                        decimalDigits:
-                                            2, // Two decimal points for formatting
-                                      ).format(widget.totalPrice * itemCount +
-                                            double.parse(deliveryCost
-                                                .replaceAll('Tsh ', '')
-                                                .trim()) // Add base delivery cost
-                                        // double.parse(deliveryCost
-                                        //         .replaceAll('Tsh ', '')
-                                        // .trim())
-                                        //     *
-                                        // _exchangeRate!, // Add exchange-rate-adjusted delivery cost
-                                        )
-                                    : 'Calculating...',
-                                style: const TextStyle(fontSize: 15),
-                              ),
-                            ),
-                          ],
                         ),
-                    ],
+                      );
+                    },
                   ),
-
                 const Gap(10),
                 const Divider(),
                 const Gap(0),
@@ -999,8 +746,6 @@ class _PrepareForPaymentState extends State<PrepareForPayment> {
                     ),
                   ),
                 if (!isReservation) const Divider(),
-
-                // buildQuantityAdjustmentRow(),
 
                 if (!isReservation) const Divider(),
                 const Gap(5),
@@ -1049,46 +794,30 @@ class _PrepareForPaymentState extends State<PrepareForPayment> {
                                             .replaceAll('Tsh ', '')
                                             .trim());
 
-                                showModalBottomSheet(
-                                  context: context,
-                                  shape: const RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.vertical(
-                                      top: Radius.circular(20),
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => PaymentMethodScreen(
+                                      totalPrice: isReservation
+                                          ? totalPrice
+                                          : widget.totalPrice * itemCount,
+                                      postId: widget.productIds,
+                                      items: widget.items,
+                                      quantity: widget.totalQuantity,
+                                      deliveryDestination: selectedStreetName,
+                                      deliveryLatitude: latitude,
+                                      deliveryLongitude: longitude,
+                                      adults: adults,
+                                      children: children,
+                                      fullName: _fullNameController.text.trim(),
+                                      checkInDate: isReservation ? checkInDate : null,
+                                      checkOutDate: isReservation ? checkOutDate : null,
+                                      isReservation: !isReservation,
                                     ),
                                   ),
-                                  isScrollControlled: true,
-                                  builder: (BuildContext context) {
-                                    return FractionallySizedBox(
-                                      heightFactor: 0.95,
-                                      child: PaymentMethodModal(
-                                          currentPosition: _currentPosition,
-                                          deliveryDestination:
-                                              selectedStreetName,
-                                          deliveryLatitude: latitude,
-                                          deliveryLongitude: longitude,
-                                          totalPrice: isReservation
-                                              ? totalPrice
-                                              : widget.totalPrice * itemCount,
-                                          quantity: widget.totalQuantity,
-                                          postId: widget.productIds,
-                                          items: widget.items,
-                                          adults: adults,
-                                          children: children,
-                                          fullName:
-                                              _fullNameController.text.trim(),
-                                          checkInDate: isReservation
-                                              ? checkInDate
-                                              : null,
-                                          checkOutDate: isReservation
-                                              ? checkOutDate
-                                              : null,
-                                          isReservation: !isReservation),
-                                    );
-                                  },
                                 );
                               },
-                              label:
-                                  'Pay Now', // Show label when deliveryCost is loaded
+                              label: 'Pay Now',
                               startColor: LarosaColors.secondary,
                               endColor: LarosaColors.purple,
                             )

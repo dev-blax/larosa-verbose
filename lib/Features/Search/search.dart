@@ -410,6 +410,12 @@ class _SearchScreenState extends State<SearchScreen> {
                                   initialIndex: index,
                                   displayName: name,
                                   postDetails: suggestions[index],
+                                  onPostUpdated: (updatedPost) {
+                                    setState(() {
+                                      // Update the post in suggestions list
+                                      suggestions[index] = updatedPost;
+                                    });
+                                  },
                                 ),
                               ),
                             );

@@ -108,7 +108,6 @@ class _OldPostCompoentState extends State<OldPostCompoent>
       );
 
       if (response.statusCode == 302) {
-        print('response: ${response.statusCode}');
         await AuthService.refreshToken();
         _favouritePost();
       }
@@ -554,6 +553,11 @@ class _OldPostCompoentState extends State<OldPostCompoent>
                         child: CommentSection(
                           postId: widget.post['id'],
                           names: widget.post['names'],
+                          onCommentAdded: (newCommentCount) {
+                            setState(() {
+                              widget.post['comments'] = newCommentCount;
+                            });
+                          },
                         ),
                       ),
                     );

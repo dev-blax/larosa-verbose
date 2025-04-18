@@ -7,22 +7,25 @@ import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:gap/gap.dart';
 import 'package:iconsax/iconsax.dart';
 import 'package:http/http.dart' as http;
+import 'package:larosa_block/Features/Feeds/Components/comments_shimmer.dart';
 import 'package:larosa_block/Services/auth_service.dart';
 import 'package:larosa_block/Services/log_service.dart';
 import 'package:larosa_block/Services/navigation_service.dart';
 import 'package:larosa_block/Utils/colors.dart';
 import 'package:larosa_block/Utils/links.dart';
-import 'package:shimmer/shimmer.dart';
 import 'carousel.dart';
 import 'post_comment_tile.dart';
 
 class CommentSection extends StatefulWidget {
   final int postId;
   final String names;
+  final Function(int newCommentCount)? onCommentAdded;
+
   const CommentSection({
     super.key,
     required this.postId,
     required this.names,
+    this.onCommentAdded,
   });
 
   @override
@@ -110,6 +113,7 @@ class _CommentSectionState extends State<CommentSection> {
 
         NavigationService.showSnackBar('Comment sent successfully');
         await fetchComments();
+        widget.onCommentAdded?.call(postComments.length);
         return true;
       } else {
         throw Exception('Failed to send comment');
@@ -129,9 +133,6 @@ class _CommentSectionState extends State<CommentSection> {
 
   @override
   void initState() {
-    LogService.logInfo('Initializing comments component');
-    LogService.logInfo('names: ${widget.names}');
-    LogService.logInfo('Post ID: ${widget.postId}');
     fetchComments();
     mediaFiles = widget.names.split(',').map((e) => e.trim()).toList();
     super.initState();
@@ -185,6 +186,7 @@ class _CommentSectionState extends State<CommentSection> {
 
       if (response.statusCode == 200) {
         final List<dynamic> data = json.decode(response.body);
+        LogService.logFatal('Got comments ${data.length}');
 
         setState(() {
           postComments = data.reversed.toList();
@@ -204,173 +206,10 @@ class _CommentSectionState extends State<CommentSection> {
     }
   }
 
-  Widget commentsShimmer(BuildContext context) {
-    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
-    return Scaffold(
-      // backgroundColor: Colors.black,
-      body: Column(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Expanded(
-            child: SingleChildScrollView(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Post Image Placeholder
-                  Shimmer.fromColors(
-                    baseColor:
-                        isDarkMode ? Colors.grey[900]! : Colors.grey[400]!,
-                    highlightColor:
-                        isDarkMode ? Colors.grey[700]! : Colors.grey[100]!,
-                    child: Container(
-                      height: 200, // Height for the image
-                      width: double.infinity,
-                      color: Colors.grey[300],
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                  // Comment List Placeholder
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                    child: Column(
-                      children: List.generate(10, (index) {
-                        return Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            // Profile Picture and Username Shimmer
-                            Row(
-                              children: [
-                                Shimmer.fromColors(
-                                  baseColor: isDarkMode
-                                      ? Colors.grey[900]!
-                                      : Colors.grey[400]!,
-                                  highlightColor: isDarkMode
-                                      ? Colors.grey[700]!
-                                      : Colors.grey[100]!,
-                                  child: Container(
-                                    width: 40,
-                                    height: 40,
-                                    decoration: BoxDecoration(
-                                      shape: BoxShape.circle,
-                                      color: Colors.grey[300],
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(width: 10),
-                                Shimmer.fromColors(
-                                  baseColor: isDarkMode
-                                      ? Colors.grey[900]!
-                                      : Colors.grey[400]!,
-                                  highlightColor: isDarkMode
-                                      ? Colors.grey[700]!
-                                      : Colors.grey[100]!,
-                                  child: Container(
-                                    width: 100,
-                                    height: 10,
-                                    color: Colors.grey[300],
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 10),
-                            // Comment Text Shimmer
-                            Shimmer.fromColors(
-                              baseColor: isDarkMode
-                                  ? Colors.grey[900]!
-                                  : Colors.grey[400]!,
-                              highlightColor: isDarkMode
-                                  ? Colors.grey[700]!
-                                  : Colors.grey[100]!,
-                              child: Container(
-                                width: double.infinity,
-                                height: 15,
-                                margin: const EdgeInsets.only(left: 50),
-                                color: Colors.grey[300],
-                              ),
-                            ),
-                            const SizedBox(height: 5),
-                            Shimmer.fromColors(
-                              baseColor: isDarkMode
-                                  ? Colors.grey[900]!
-                                  : Colors.grey[400]!,
-                              highlightColor: isDarkMode
-                                  ? Colors.grey[700]!
-                                  : Colors.grey[100]!,
-                              child: Container(
-                                width: MediaQuery.of(context).size.width * 0.8,
-                                height: 10,
-                                margin: const EdgeInsets.only(left: 50),
-                                color: Colors.grey[300],
-                              ),
-                            ),
-                            const SizedBox(height: 5),
-                            // Date and Reply Shimmer
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Shimmer.fromColors(
-                                  baseColor: isDarkMode
-                                      ? Colors.grey[900]!
-                                      : Colors.grey[400]!,
-                                  highlightColor: isDarkMode
-                                      ? Colors.grey[700]!
-                                      : Colors.grey[100]!,
-                                  child: Container(
-                                    width: 80,
-                                    height: 10,
-                                    color: Colors.grey[300],
-                                  ),
-                                ),
-                                Shimmer.fromColors(
-                                  baseColor: isDarkMode
-                                      ? Colors.grey[900]!
-                                      : Colors.grey[400]!,
-                                  highlightColor: isDarkMode
-                                      ? Colors.grey[700]!
-                                      : Colors.grey[100]!,
-                                  child: Container(
-                                    width: 50,
-                                    height: 10,
-                                    color: Colors.grey[300],
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 20),
-                          ],
-                        );
-                      }),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          // Comment Input Shimmer
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Shimmer.fromColors(
-              baseColor: isDarkMode ? Colors.grey[900]! : Colors.grey[400]!,
-              highlightColor:
-                  isDarkMode ? Colors.grey[700]! : Colors.grey[100]!,
-              child: Container(
-                height: 50,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(10),
-                  color: Colors.grey[300],
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return _isLoading
-        ? commentsShimmer(context)
+        ? CommentsShimmer()
         : Scaffold(
             body: Column(
               children: [
