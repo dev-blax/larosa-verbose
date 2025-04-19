@@ -630,11 +630,6 @@ class _PrepareForPaymentState extends State<PrepareForPayment> {
             ),
           ),
           const Divider(),
-
-
-
-
-
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 8.0),
             child: Column(
@@ -796,11 +791,12 @@ class _PrepareForPaymentState extends State<PrepareForPayment> {
 
                                 Navigator.push(
                                   context,
-                                  MaterialPageRoute(
+                                  CupertinoPageRoute(
                                     builder: (context) => PaymentMethodScreen(
                                       totalPrice: isReservation
                                           ? totalPrice
                                           : widget.totalPrice * itemCount,
+                                      //paymentMethod: widget.paymentMethod,
                                       postId: widget.productIds,
                                       items: widget.items,
                                       quantity: widget.totalQuantity,

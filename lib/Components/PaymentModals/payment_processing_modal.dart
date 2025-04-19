@@ -1,12 +1,8 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:gap/gap.dart';
 import 'package:http/http.dart' as http;
 import 'package:iconsax/iconsax.dart';
 import 'package:intl/intl.dart';
-import 'package:larosa_block/Utils/helpers.dart';
-import 'package:lottie/lottie.dart';
-import 'package:stomp_dart_client/stomp_dart_client.dart';
 import 'dart:convert';
 import '../../Services/auth_service.dart';
 import '../../Services/log_service.dart';
@@ -16,7 +12,7 @@ import '../cart_button.dart';
 
 class PaymentProcessingModal extends StatefulWidget {
   final String paymentMethod;
-  final String paymentType; // Either 'Bank' or 'Mobile'
+  final String paymentType;
   final double totalPrice;
   final int quantity;
   final List<int> postId;
@@ -79,233 +75,139 @@ class _PaymentProcessingModalState extends State<PaymentProcessingModal> {
 
   bool _isLoading = false;
 
-  // Format the dates
   String formatDate(DateTime? date) {
     if (date == null) return '';
     return DateFormat('yyyy-MM-dd').format(date);
   }
 
-  // Future<void> _submitOrder() async {
-  //   setState(() {
-  //     _isLoading = true;
-  //   });
-
-  //   String token = AuthService.getToken();
-  //   Map<String, String> headers = {
-  //     "Content-Type": "application/json",
-  //     "Access-Control-Allow-Origin": "*",
-  //     'Authorization': token.isNotEmpty ? 'Bearer $token' : '',
-  //   };
-
-  //   var url = Uri.https(
-  //       LarosaLinks.nakedBaseUrl,
-  //       widget.isReservation
-  //           ? '/api/v1/reservations/new'
-  //           : '/api/v1/orders/new');
-
-  //   Map<String, dynamic> body = {
-  //     "items": widget.items,
-  //     "provider": widget.paymentMethod,
-  //     "paymentMethod": widget.paymentType.toUpperCase(),
-  //     "accountNumber": _accountNumberController.text,
-  //     "amount": widget.totalPrice,
-  //     "latitude": widget.deliveryLatitude ?? widget.currentLatitude,
-  //     "longitude": widget.deliveryLongitude ?? widget.currentLongitude,
-  //     "city": "Dodoma",
-  //     "country": "Tanzania",
-  //   };
-
-  //   // Add reservation-specific data if isReservation is true
-  //   if (widget.isReservation) {
-  //     body.addAll({
-  //       "adults": widget.adults,
-  //       "children": widget.children,
-  //       "fullName": widget.fullName,
-  //       // "checkInDate": widget.checkInDate?.toIso8601String(),
-  //       // "checkOutDate": widget.checkOutDate?.toIso8601String(),
-  //       "checkInDate": formatDate(widget.checkInDate),
-  //       "checkOutDate": formatDate(widget.checkOutDate),
-  //       // "isReservation": widget.isReservation,
-  //     });
-  //   }
-
-  //   if (widget.paymentType == 'Bank') {
-  //     body.addAll({
-  //       "merchantMobileNumber": _merchantMobileNumberController.text,
-  //       "merchantName": _merchantNameController.text,
-  //       "otp": _otpController.text,
-  //     });
-  //   }
-
-  //   LogService.logInfo('Request Body: $body');
-  //   LogService.logInfo('Request items: ${widget.items}');
-
-  //   try {
-  //     final response = await http.post(
-  //       url,
-  //       body: jsonEncode(body),
-  //       headers: headers,
-  //     );
-
-  //     LogService.logInfo('Status Code: ${response.statusCode}');
-  //     LogService.logInfo('Response Body: ${response.body}');
-
-  //     _showSuccessDialog(r'esponse.body');
-
-  //     if (response.statusCode == 200) {
-  //       // _showSuccessDialog(response.body);
-  //     } else if (response.statusCode == 302 ||
-  //         response.statusCode == 403 ||
-  //         response.statusCode == 401) {
-  //       await AuthService.refreshToken();
-  //       await _submitOrder();
-  //     } else {
-  //       throw Exception('Failed to place order');
-  //     }
-  //   } catch (e) {
-  //     LogService.logError('Error placing order: $e');
-  //     ScaffoldMessenger.of(context).showSnackBar(
-  //       const SnackBar(
-  //         content: Text('An error occurred. Please try again.'),
-  //       ),
-  //     );
-  //   } finally {
-  //     setState(() {
-  //       _isLoading = false;
-  //     });
-  //   }
-  // }
-
-
   Future<void> _submitOrder() async {
-  setState(() {
-    _isLoading = true;
-  });
-
-  String token = AuthService.getToken();
-  Map<String, String> headers = {
-    "Content-Type": "application/json",
-    "Access-Control-Allow-Origin": "*",
-    'Authorization': token.isNotEmpty ? 'Bearer $token' : '',
-  };
-
-  var url = Uri.https(
-      LarosaLinks.nakedBaseUrl,
-      widget.isReservation
-          ? '/api/v1/reservations/new'
-          : '/api/v1/orders/new');
-
-  Map<String, dynamic> body = {
-    "items": widget.items,
-    "provider": widget.paymentMethod,
-    "paymentMethod": widget.paymentType.toUpperCase(),
-    "accountNumber": _accountNumberController.text,
-    "amount": widget.totalPrice,
-    "latitude": widget.deliveryLatitude ?? widget.currentLatitude,
-    "longitude": widget.deliveryLongitude ?? widget.currentLongitude,
-    "city": "Dodoma",
-    "country": "Tanzania",
-  };
-
-  if (widget.isReservation) {
-    body.addAll({
-      "adults": widget.adults,
-      "children": widget.children,
-      "fullName": widget.fullName,
-      "checkInDate": formatDate(widget.checkInDate),
-      "checkOutDate": formatDate(widget.checkOutDate),
-    });
-  }
-
-  if (widget.paymentType == 'Bank') {
-    body.addAll({
-      "merchantMobileNumber": _merchantMobileNumberController.text,
-      "merchantName": _merchantNameController.text,
-      "otp": _otpController.text,
-    });
-  }
-
-  LogService.logInfo('Request Body: $body');
-
-  try {
-    final response = await http.post(
-      url,
-      body: jsonEncode(body),
-      headers: headers,
-    );
-
-    LogService.logInfo('Status Code: ${response.statusCode}');
-    LogService.logInfo('Response Body: ${response.body}');
-
-    if (response.statusCode == 200) {
-      _showSuccessDialog('Reservation is under processing.');
-    } else if (response.statusCode == 409) {
-      // Handle date conflict (already booked)
-      _showConflictDialog(response.body);
-    } else if ([302, 403, 401].contains(response.statusCode)) {
-      await AuthService.refreshToken();
-      await _submitOrder();
-    } else {
-      throw Exception('Failed to place order');
-    }
-  } catch (e) {
-    LogService.logError('Error placing order: $e');
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('An error occurred. Please try again.'),
-      ),
-    );
-  } finally {
     setState(() {
-      _isLoading = false;
+      _isLoading = true;
     });
-  }
-}
 
-void _showConflictDialog(String responseBody) {
-  List<String> unavailableDates = [];
-  try {
-    final parsedBody = jsonDecode(responseBody);
-    unavailableDates = List<String>.from(parsedBody['unavailableDates']);
-  } catch (e) {
-    LogService.logError('Error parsing response: $e');
+    String token = AuthService.getToken();
+    Map<String, String> headers = {
+      "Content-Type": "application/json",
+      "Access-Control-Allow-Origin": "*",
+      'Authorization': token.isNotEmpty ? 'Bearer $token' : '',
+    };
+
+    var url = Uri.https(
+        LarosaLinks.nakedBaseUrl,
+        widget.isReservation
+            ? '/api/v1/reservations/new'
+            : '/api/v1/orders/new');
+
+    Map<String, dynamic> body = {
+      "items": widget.items,
+      "provider": widget.paymentMethod,
+      "paymentMethod": widget.paymentType.toUpperCase(),
+      "accountNumber": _accountNumberController.text,
+      "amount": widget.totalPrice,
+      "latitude": widget.deliveryLatitude ?? widget.currentLatitude,
+      "longitude": widget.deliveryLongitude ?? widget.currentLongitude,
+      "city": "Dodoma",
+      "country": "Tanzania",
+    };
+
+    if (widget.isReservation) {
+      body.addAll({
+        "adults": widget.adults,
+        "children": widget.children,
+        "fullName": widget.fullName,
+        "checkInDate": formatDate(widget.checkInDate),
+        "checkOutDate": formatDate(widget.checkOutDate),
+      });
+    }
+
+    if (widget.paymentType == 'Bank') {
+      body.addAll({
+        "merchantMobileNumber": _merchantMobileNumberController.text,
+        "merchantName": _merchantNameController.text,
+        "otp": _otpController.text,
+      });
+    }
+
+    LogService.logInfo('Request Body: $body');
+
+    try {
+      final response = await http.post(
+        url,
+        body: jsonEncode(body),
+        headers: headers,
+      );
+
+      LogService.logInfo('Status Code: ${response.statusCode}');
+      LogService.logInfo('Response Body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        _showSuccessDialog('Reservation is under processing.');
+      } else if (response.statusCode == 409) {
+        // Handle date conflict (already booked)
+        _showConflictDialog(response.body);
+      } else if ([302, 403, 401].contains(response.statusCode)) {
+        await AuthService.refreshToken();
+        await _submitOrder();
+      } else {
+        throw Exception('Failed to place order');
+      }
+    } catch (e) {
+      LogService.logError('Error placing order: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('An error occurred. Please try again.'),
+        ),
+      );
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
+    }
   }
 
-  showDialog(
-    context: context,
-    builder: (context) {
-      return AlertDialog(
-        title: const Text('Dates Unavailable'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text(
-              'The selected dates are already booked. Please choose different dates.',
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 10),
-            if (unavailableDates.isNotEmpty)
-              Text(
-                'Unavailable dates:\n${unavailableDates.join(", ")}',
-                style: const TextStyle(
-                  color: Colors.redAccent,
-                  fontWeight: FontWeight.bold,
-                ),
+  void _showConflictDialog(String responseBody) {
+    List<String> unavailableDates = [];
+    try {
+      final parsedBody = jsonDecode(responseBody);
+      unavailableDates = List<String>.from(parsedBody['unavailableDates']);
+    } catch (e) {
+      LogService.logError('Error parsing response: $e');
+    }
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Dates Unavailable'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text(
+                'The selected dates are already booked. Please choose different dates.',
                 textAlign: TextAlign.center,
               ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('OK'),
+              const SizedBox(height: 10),
+              if (unavailableDates.isNotEmpty)
+                Text(
+                  'Unavailable dates:\n${unavailableDates.join(", ")}',
+                  style: const TextStyle(
+                    color: Colors.redAccent,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+            ],
           ),
-        ],
-      );
-    },
-  );
-}
-
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('OK'),
+            ),
+          ],
+        );
+      },
+    );
+  }
 
   @override
   void initState() {
@@ -535,85 +437,88 @@ void _showConflictDialog(String responseBody) {
   // }
 
   void _showSuccessDialog(String responseBody) {
-  showDialog(
-    context: context,
-    builder: (BuildContext context) {
-      final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        final isDarkMode = Theme.of(context).brightness == Brightness.dark;
 
-      return AlertDialog(
-        backgroundColor: isDarkMode ? Colors.black : Colors.white,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(15.0),
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Green checkmark icon
-            Icon(
-              Icons.check_circle,
-              color: isDarkMode
-                  ? const Color.fromARGB(255, 50, 205, 50) // Light green in dark mode
-                  : const Color.fromARGB(255, 13, 72, 15), // Darker green in light mode
-              size: 80,
-            ),
-            const SizedBox(height: 20),
-            Text(
-              'Payment Successful!',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.bold,
+        return AlertDialog(
+          backgroundColor: isDarkMode ? Colors.black : Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(15.0),
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Green checkmark icon
+              Icon(
+                Icons.check_circle,
                 color: isDarkMode
-                    ? const Color.fromARGB(255, 144, 238, 144) // Light green text
-                    : const Color.fromARGB(255, 15, 106, 18), // Dark green text
+                    ? const Color.fromARGB(
+                        255, 50, 205, 50) // Light green in dark mode
+                    : const Color.fromARGB(
+                        255, 13, 72, 15), // Darker green in light mode
+                size: 80,
               ),
-            ),
-            const SizedBox(height: 12),
-            Text(
-              "Your payment is being processed. We'll notify you with an update soon.",
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 16,
-                height: 1.5,
-                color: isDarkMode ? Colors.grey[300] : Colors.grey[800],
+              const SizedBox(height: 20),
+              Text(
+                'Payment Successful!',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                  color: isDarkMode
+                      ? const Color.fromARGB(
+                          255, 144, 238, 144) // Light green text
+                      : const Color.fromARGB(
+                          255, 15, 106, 18), // Dark green text
+                ),
               ),
-            ),
-            const SizedBox(height: 12),
-            Text(
-              'Thank you for choosing LAROSA EXPLORE!',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 16,
-                fontStyle: FontStyle.italic,
-                fontWeight: FontWeight.bold,
-                letterSpacing: 1.2,
-                color: isDarkMode ? Colors.grey[400] : Colors.grey[600],
+              const SizedBox(height: 12),
+              Text(
+                "Your payment is being processed. We'll notify you with an update soon.",
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 16,
+                  height: 1.5,
+                  color: isDarkMode ? Colors.grey[300] : Colors.grey[800],
+                ),
               ),
-            ),
-            const SizedBox(height: 20),
-            buildWideGradientButton(
-              onTap: () {
-                Navigator.of(context).pop(); // Close the dialog
-                Navigator.pop(context); // Navigate back
-              },
-              label: 'OK',
-              startColor: isDarkMode
-                  ? const Color.fromARGB(255, 50, 205, 50)
-                  : const Color.fromARGB(255, 13, 72, 15),
-              endColor: Colors.purple,
-            ),
-          ],
-        ),
-      );
-    },
-  );
-}
-
+              const SizedBox(height: 12),
+              Text(
+                'Thank you for choosing LAROSA EXPLORE!',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 16,
+                  fontStyle: FontStyle.italic,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 1.2,
+                  color: isDarkMode ? Colors.grey[400] : Colors.grey[600],
+                ),
+              ),
+              const SizedBox(height: 20),
+              buildWideGradientButton(
+                onTap: () {
+                  Navigator.of(context).pop(); // Close the dialog
+                  Navigator.pop(context); // Navigate back
+                },
+                label: 'OK',
+                startColor: isDarkMode
+                    ? const Color.fromARGB(255, 50, 205, 50)
+                    : const Color.fromARGB(255, 13, 72, 15),
+                endColor: Colors.purple,
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
-final isIOS = Theme.of(context).platform == TargetPlatform.iOS;
+    final isIOS = Theme.of(context).platform == TargetPlatform.iOS;
 
     return Padding(
       padding: EdgeInsets.only(
@@ -679,8 +584,8 @@ final isIOS = Theme.of(context).platform == TargetPlatform.iOS;
                       padding: EdgeInsets.only(
                         left: 5,
                         right: 5,
-                      bottom: isIOS ? 40.0 : 0.0, // Add extra padding for iOS
-                    ),
+                        bottom: isIOS ? 40.0 : 0.0, // Add extra padding for iOS
+                      ),
                       child: buildWideGradientButton(
                         onTap: _submitOrder,
                         label: 'Confirm Payment',

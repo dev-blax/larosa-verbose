@@ -1,7 +1,14 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:go_router/go_router.dart';
+import 'package:larosa_block/Utils/helpers.dart';
+import '../../../Services/dio_service.dart';
+import '../../../Services/log_service.dart';
 import '../../../Utils/colors.dart';
+import 'package:intl/intl.dart';
+
+import '../../../Utils/links.dart'; // Import intl for formatDate
 
 class PaymentMethodScreen extends StatefulWidget {
   final double totalPrice;
@@ -40,45 +47,59 @@ class PaymentMethodScreen extends StatefulWidget {
 }
 
 class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
-  final _accountController = TextEditingController();
+  final TextEditingController _accountController = TextEditingController();
   String? _selectedMethod;
   bool _isProcessing = false;
 
-  final _paymentMethods = [
+  final List<Map<String, dynamic>> paymentMethods = [
     {
-      'name': 'M-Pesa',
-      'icon': 'assets/icons/mpesa.jpg',
-      'color': Color(0xFF00A0D1),
-    },
-    {
-      'name': 'Tigo Pesa',
-      'icon': 'assets/icons/mixx.jpg',
-      'color': Color(0xFF0066B1),
-    },
-    {
-      'name': 'Airtel Money',
-      'icon': 'assets/icons/airtel.jpg',
-      'color': Color(0xFFEE1C24),
-    },
-    {
-      'name': 'Halo Pesa',
-      'icon': 'assets/icons/halotel.jpg',
-      'color': Color(0xFF7CB82F),
-    },
-    {
-      'name': 'AzamPesa',
-      'icon': 'assets/icons/azampesa.jpg',
-      'color': Color(0xFFFE0000),
-    },
-    {
+      'type': 'Bank',
       'name': 'CRDB Bank',
+      'value': 'CRDB',
       'icon': 'assets/icons/crdb.png',
       'color': Color(0xFF00A651),
     },
     {
+      'type': 'Bank',
       'name': 'NMB Bank',
+      'value': 'NMB',
       'icon': 'assets/icons/nmb.png',
       'color': Color(0xFF00A551),
+    },
+    {
+      'type': 'Mobile',
+      'name': 'M-Pesa',
+      'value': 'Mpesa',
+      'icon': 'assets/icons/mpesa.jpg',
+      'color': Color(0xFF00A0D1),
+    },
+    {
+      'type': 'Mobile',
+      'name': 'Tigo Pesa',
+      'value': 'Tigo',
+      'icon': 'assets/icons/mixx.jpg',
+      'color': Color(0xFF0066B1),
+    },
+    {
+      'type': 'Mobile',
+      'name': 'Airtel Money',
+      'value': 'Airtel',
+      'icon': 'assets/icons/airtel.jpg',
+      'color': Color(0xFFEE1C24),
+    },
+    {
+      'type': 'Mobile',
+      'name': 'Halopesa',
+      'value': 'Halopesa',
+      'icon': 'assets/icons/halotel.jpg',
+      'color': Color(0xFF7CB82F),
+    },
+    {
+      'type': 'Mobile',
+      'name': 'Azampesa',
+      'value': 'Azampesa',
+      'icon': 'assets/icons/azampesa.jpg',
+      'color': Color(0xFFFE0000),
     },
   ];
 
@@ -88,29 +109,7 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
     super.dispose();
   }
 
-  void _processPayment() async {
-    if (_selectedMethod == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please select a payment method'),
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
-      return;
-    }
-
-    if (_accountController.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please enter your account number'),
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
-      return;
-    }
-
-    setState(() => _isProcessing = true);
-
+  Future<void> _processPayment() async {
     try {
       // Show loading dialog
       showDialog(
@@ -125,7 +124,9 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const CircularProgressIndicator(),
+                const CupertinoActivityIndicator(
+                  radius: 20,
+                ),
                 const SizedBox(height: 24),
                 Text(
                   'Initiating Payment',
@@ -146,78 +147,69 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
         ),
       );
 
-      // Simulate server request
-      final response = await Future.delayed(
-        const Duration(seconds: 2),
-        () => {
-          'status': 'success',
-          'message': 'Payment initiated successfully',
-          'data': {
-            'reference': 'TX${DateTime.now().millisecondsSinceEpoch}',
-            'amount': widget.totalPrice,
-            'phone': _accountController.text,
-            'payment_method': _selectedMethod,
-          }
-        },
-      );
+      final dio = DioService().dio;
 
-      // Close loading dialog
-      if (!mounted) return;
+      String url = LarosaLinks.baseurl + (widget.isReservation
+          ? '/api/v1/reservations/new'
+          : '/api/v1/orders/new');
+
+      LogService.logInfo('Payment URL: $url');
+
+      Map<String, dynamic> body = {
+        "items": widget.items,
+        "provider": _selectedMethod,
+        "paymentMethod": (paymentMethods.firstWhere((method) => method['value'] == _selectedMethod)['type'] ?? '').toUpperCase(),
+        "accountNumber": _accountController.text,
+        "amount": widget.totalPrice,
+        "latitude": widget.deliveryLatitude ?? 0,
+        "longitude": widget.deliveryLongitude ?? 0,
+        "city": "Dodoma",
+        "country": "Tanzania",
+      };
+
+      if (widget.isReservation) {
+        body.addAll({
+          "adults": widget.adults,
+          "children": widget.children,
+          "fullName": widget.fullName,
+          "checkInDate": DateFormat('yyyy-MM-dd').format(widget.checkInDate!),
+          "checkOutDate": DateFormat('yyyy-MM-dd').format(widget.checkOutDate!),
+        });
+      }
+
+      final response = await dio.post(url, data: body);
+      
+      LogService.logDebug('got response');
+      // Pop loading dialog
       Navigator.of(context).pop();
 
-      if (response['status'] == 'success') {
-        // Show USSD notification dialog
-        showDialog(
+      if (response.statusCode == 200) {
+        if (mounted) {
+          showDialog(
           context: context,
           builder: (context) => CupertinoAlertDialog(
-            title: const Text('USSD Prompt'),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(
-                  Icons.mobile_friendly_rounded,
-                  size: 48,
-                  color: LarosaColors.secondary,
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  'You will receive a USSD prompt on ${_accountController.text} to enter your PIN and complete the payment of Tsh ${widget.totalPrice.toStringAsFixed(2)}',
-                  textAlign: TextAlign.center,
-                ),
-              ],
-            ),
+            title: const Text('Payment Initiated'),
+            content: Text('Your Order is Being Processed!'),
             actions: [
-              TextButton(
+              CupertinoDialogAction(
                 onPressed: () {
                   Navigator.of(context).pop();
-                  Navigator.of(context).pop(); // Return to previous screen
+                  context.go('/maindelivery');
                 },
-                child: const Text('Close'),
+                child: const Text('OK'),
               ),
             ],
           ),
         );
-      } else {
-        throw 'Payment initiation failed';
+        }
       }
-    } catch (e) {
-      // Close loading dialog if open
-      if (!mounted) return;
-      if (Navigator.of(context).canPop()) {
-        Navigator.of(context).pop();
-      }
-
-      // Show error
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error: ${e.toString()}'),
-          behavior: SnackBarBehavior.floating,
-          backgroundColor: Colors.red,
-        ),
-      );
+    } catch (error) {
+      // Pop loading dialog if still showing
+      if (context.mounted) Navigator.of(context).pop();
+      
+      // DioService will handle error messages through its interceptors
+      LogService.logError('Payment processing error: $error');
     }
-
-    setState(() => _isProcessing = false);
   }
 
   @override
@@ -252,13 +244,13 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
                     crossAxisSpacing: 12,
                     mainAxisSpacing: 12,
                   ),
-                  itemCount: _paymentMethods.length,
+                  itemCount: paymentMethods.length,
                   itemBuilder: (context, index) {
-                    final method = _paymentMethods[index];
-                    final isSelected = _selectedMethod == method['name'];
+                    final method = paymentMethods[index];
+                    final isSelected = _selectedMethod == method['value'];
 
                     return InkWell(
-                      onTap: () => setState(() => _selectedMethod = method['name'] as String),
+                      onTap: () => setState(() => _selectedMethod = method['value'] as String),
                       borderRadius: BorderRadius.circular(12),
                       child: Container(
                         decoration: BoxDecoration(
@@ -287,7 +279,6 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
                             Text(
                               method['name'] as String,
                               style: TextStyle(
-                                fontSize: 12,
                                 fontWeight: isSelected
                                     ? FontWeight.w600
                                     : FontWeight.normal,
@@ -304,10 +295,32 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
                 ),
                 const SizedBox(height: 24),
                 if (_selectedMethod != null) ...[
-                  Text(
-                    'Enter Account Number',
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      color: Colors.grey,
+                  RichText(
+                    text: TextSpan(
+                      style: Theme.of(context).textTheme.titleMedium,
+                      children: [
+                        const TextSpan(
+                          text: 'Enter ',
+                          style: TextStyle(color: Colors.grey),
+                        ),
+                        TextSpan(
+                          text: paymentMethods
+                              .firstWhere((method) => method['value'] == _selectedMethod)['value']
+                              .toString()
+                              .toUpperCase(),
+                          style: TextStyle(
+                            color: paymentMethods
+                                .firstWhere((method) => method['value'] == _selectedMethod)['color'] as Color,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        TextSpan(
+                          text: paymentMethods.firstWhere((method) => method['value'] == _selectedMethod)['type'] == 'Bank'
+                              ? ' account number'
+                              : ' phone number',
+                          style: const TextStyle(color: Colors.grey),
+                        ),
+                      ],
                     ),
                   ),
                   const SizedBox(height: 12),
@@ -321,12 +334,9 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
                     // 
                     child: TextField(
                       controller: _accountController,
-                      keyboardType: TextInputType.number,
+                      keyboardType: TextInputType.phone,
                       inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                       decoration: InputDecoration(
-                        hintText: _selectedMethod?.contains('Bank') == true
-                            ? 'Enter account number'
-                            : 'Enter phone number',
                         border: InputBorder.none,
                         hintStyle: TextStyle(
                           color: isDark ? Colors.grey[400] : Colors.grey[600],
@@ -358,7 +368,7 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
                         ),
                       ),
                       Text(
-                        'Tsh ${widget.totalPrice.toStringAsFixed(2)}',
+                        'Tsh ${HelperFunctions.formatPrice(widget.totalPrice)}',
                         style: const TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.w600,
@@ -374,7 +384,7 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
                   child: ElevatedButton(
                     onPressed: _isProcessing ? null : _processPayment,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: LarosaColors.secondary,
+                      backgroundColor: LarosaColors.primary,
                       foregroundColor: Colors.white,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),

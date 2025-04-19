@@ -16,12 +16,12 @@ import 'package:larosa_block/Services/log_service.dart';
 import 'package:larosa_block/Services/dio_service.dart';
 import 'package:geolocator/geolocator.dart';
 import '../../Components/cart_button.dart';
-import '../../Components/PaymentModals/payment_method_modal.dart';
 import '../../Components/loading_shimmer.dart';
 import '../../Services/auth_service.dart';
 import '../../Utils/colors.dart';
 import '../../Utils/links.dart';
 import 'prepare_for_payment.dart';
+import 'screens/payment_method_screen.dart';
 import 'widgets/add_to_cart_table.dart';
 
 class AddToCartScreen extends StatefulWidget {
@@ -75,7 +75,7 @@ class _AddToCartScreenState extends State<AddToCartScreen> {
   double? _exchangeRate;
   String deliveryCostTSh = 'Calculating...';
 
-  int adults = 1;
+  int adults = 0;
   int children = 0;
 
   DateTime? checkInDate;
@@ -337,7 +337,11 @@ class _AddToCartScreenState extends State<AddToCartScreen> {
   @override
   void initState() {
     super.initState();
-    LogService.logError('initState, adults: ${widget.adults}, children: ${widget.children}');
+    LogService.logError(
+        'initState, adults: ${widget.adults}, children: ${widget.children}');
+
+    adults = widget.adults ?? 0;
+    children = widget.children ?? 0;
 
     _fetchExchangeRate();
     _getCurrentLocation().then((_) => fetchTransportCost());
@@ -437,7 +441,6 @@ class _AddToCartScreenState extends State<AddToCartScreen> {
         throw Exception('Failed to fetch distance and duration');
       }
     } catch (e) {
-      print('Error calculating distance and duration: $e');
       return {
         'distance': 'N/A',
         'duration': 'N/A',
@@ -731,6 +734,9 @@ class _AddToCartScreenState extends State<AddToCartScreen> {
                                   }
                                 }
 
+
+                                LogService.logInfo('Marathon Continues');
+
                                 final totalPrice = widget.price * itemCount +
                                     double.parse(deliveryCost
                                         .replaceAll('Tsh ', '')
@@ -742,42 +748,63 @@ class _AddToCartScreenState extends State<AddToCartScreen> {
                                   }
                                 ];
 
-                                showModalBottomSheet(
-                                  context: context,
-                                  shape: const RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.vertical(
-                                      top: Radius.circular(20),
-                                    ),
+                                // showModalBottomSheet(
+                                //   context: context,
+                                //   shape: const RoundedRectangleBorder(
+                                //     borderRadius: BorderRadius.vertical(
+                                //       top: Radius.circular(20),
+                                //     ),
+                                //   ),
+                                //   isScrollControlled: true,
+                                //   builder: (BuildContext context) {
+                                //     return FractionallySizedBox(
+                                //       heightFactor: 0.90,
+                                //       child: PaymentMethodModal(
+                                //         currentPosition: _currentPosition,
+                                //         deliveryDestination: selectedStreetName,
+                                //         deliveryLatitude: latitude,
+                                //         deliveryLongitude: longitude,
+                                //         totalPrice: isReservation
+                                //             ? totalPrice
+                                //             : widget.price * itemCount,
+                                //         quantity: itemCount,
+                                //         postId: [widget.postId],
+                                //         adults: adults, // Pass adults
+                                //         children: children, // Pass children
+                                //         fullName: _fullNameController.text
+                                //             .trim(), // Pass full name
+                                //         checkInDate: checkInDate,
+                                //         checkOutDate: checkOutDate,
+                                //         isReservation: !isReservation,
+                                //         items: items,
+                                //       ),
+                                //     );
+                                //   },
+                                // );
+
+                                // take to payment method screen
+                                Navigator.of(context).push(
+                                CupertinoPageRoute(
+                                  builder: (context) => PaymentMethodScreen(
+                                    totalPrice: totalPrice,
+                                    postId: [widget.postId],
+                                    items: items,
+                                    quantity: itemCount,
+                                    deliveryDestination: selectedStreetName,
+                                    deliveryLatitude: latitude,
+                                    deliveryLongitude: longitude,
+                                    adults: adults,
+                                    children: children,
+                                    fullName: _fullNameController.text.trim(),
+                                    checkInDate: checkInDate,
+                                    checkOutDate: checkOutDate,
+                                    isReservation: !isReservation,
                                   ),
-                                  isScrollControlled: true,
-                                  builder: (BuildContext context) {
-                                    return FractionallySizedBox(
-                                      heightFactor: 0.90,
-                                      child: PaymentMethodModal(
-                                        currentPosition: _currentPosition,
-                                        deliveryDestination: selectedStreetName,
-                                        deliveryLatitude: latitude,
-                                        deliveryLongitude: longitude,
-                                        totalPrice: isReservation
-                                            ? totalPrice
-                                            : widget.price * itemCount,
-                                        quantity: itemCount,
-                                        postId: [widget.postId],
-                                        adults: adults, // Pass adults
-                                        children: children, // Pass children
-                                        fullName: _fullNameController.text
-                                            .trim(), // Pass full name
-                                        checkInDate: checkInDate,
-                                        checkOutDate: checkOutDate,
-                                        isReservation: !isReservation,
-                                        items: items,
-                                      ),
-                                    );
-                                  },
-                                );
+                                ),
+                              );
+
                               },
-                              label:
-                                  'Pay Now', // Show label when deliveryCost is loaded
+                              label: 'Pay Now',
                               startColor: LarosaColors.secondary,
                               endColor: LarosaColors.purple,
                             )

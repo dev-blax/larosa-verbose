@@ -61,6 +61,8 @@ class _SigninScreenState extends State<SigninScreen> {
 
       final data = response.data;
 
+      LogService.logDebug('Login response: $data');
+
       var box = await Hive.openBox('userBox');
       await box.clear();
       box.put('profileId', data['profileId']);

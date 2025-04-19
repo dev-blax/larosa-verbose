@@ -67,7 +67,7 @@ class _BusinessPostScreenState extends State<BusinessPostScreen>
     );
     WidgetsBinding.instance.addPostFrameCallback((_) {
       Provider.of<SecondBusinessCategoryProvider>(context, listen: false)
-          .fetchCategories();
+          .fetchBrandCategories();
     });
   }
 
@@ -851,8 +851,6 @@ class _BusinessPostScreenState extends State<BusinessPostScreen>
       ),
       maxLines: 5,
       style: const TextStyle(color: LarosaColors.primary),
-      // validator: (value) =>
-      //     value == null || value.isEmpty ? "Caption cannot be empty" : null,
     );
   }
 
@@ -903,7 +901,6 @@ class _BusinessPostScreenState extends State<BusinessPostScreen>
 
               if (success && context.mounted) {
                 context.go('/');
-                // scafold message
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
                     content: Text('Post created successfully'),

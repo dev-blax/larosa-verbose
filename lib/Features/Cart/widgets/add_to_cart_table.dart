@@ -59,11 +59,15 @@ class AddToCartTable extends StatefulWidget {
 
 class _AddToCartTableState extends State<AddToCartTable> {
   int? _existingCartQuantity;
+  late final int? initialAdults;
+  late final int? initialChildren;
 
   @override
   void initState() {
     super.initState();
     _checkExistingCartItem();
+    initialAdults = widget.adults;
+    initialChildren = widget.children;
   }
 
   Future<void> _checkExistingCartItem() async {
@@ -131,18 +135,18 @@ class _AddToCartTableState extends State<AddToCartTable> {
               _buildDivider(),
               _buildSliderRow(
                 context,
-                'Adults',
+                'Adults (Max Capacity: ${initialAdults ?? 20})',
                 widget.adults,
-                1,
+                0,
                 20,
                 widget.onAdultQuantityChanged,
-                icon: CupertinoIcons.person_2,
+                icon: CupertinoIcons.person_3,
                 primaryColor: primaryColor,
               ),
               _buildDivider(),
               _buildSliderRow(
                 context,
-                'Children',
+                'Children (Max Capacity: ${initialChildren ?? 20})',
                 widget.children,
                 0,
                 20,
@@ -289,6 +293,10 @@ class _AddToCartTableState extends State<AddToCartTable> {
     IconData? icon,
     Color? primaryColor,
   }) {
+    // Get the initial maximum from the label
+    final maxCapacity = label.contains('Adults') ? initialAdults : initialChildren;
+    final isExceeded = maxCapacity != null && value > maxCapacity;
+    
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Column(
@@ -312,7 +320,7 @@ class _AddToCartTableState extends State<AddToCartTable> {
                 value.toString(),
                 style: TextStyle(
                   fontSize: 15,
-                  color: primaryColor,
+                  color: isExceeded ? CupertinoColors.systemRed : primaryColor,
                   fontWeight: FontWeight.w600,
                 ),
               ),

@@ -104,6 +104,31 @@ class SecondBusinessCategoryProvider extends ChangeNotifier {
     }
   }
 
+
+  Future<void> fetchBrandCategories() async {
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+
+    try {
+      final response = await _dioService.dio.get(
+        '${LarosaLinks.baseurl}/api/v1/business-categories/brand',
+      );
+
+      _categories = (response.data as List)
+          .map((json) => BusinessCategory.fromJson(json))
+          .toList();
+
+      LogService.logDebug('categories: $_categories');
+      notifyListeners();
+    } on DioException catch (e) {
+      _error = e.message ?? 'An error occurred while loading brand categories';
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
   void selectSubcategory(Subcategory subcategory) {
     _selectedSubcategory = subcategory;
     notifyListeners();
