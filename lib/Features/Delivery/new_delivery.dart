@@ -1180,6 +1180,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:larosa_block/Components/bottom_navigation.dart';
+import 'package:larosa_block/Features/Delivery/widgets/orders_widget.dart';
 import 'package:larosa_block/Services/auth_service.dart';
 import 'package:larosa_block/Services/log_service.dart';
 import 'package:larosa_block/Utils/helpers.dart';
@@ -1225,7 +1226,6 @@ class _NewDeliveryState extends State<NewDelivery> {
   bool isLoadingDriverOffer = false;
 
   Future<void> _asyncInit() async {
-    // Uncomment or add any additional asynchronous initialization as needed.
     _loadOrders();
   }
 
@@ -1234,7 +1234,6 @@ class _NewDeliveryState extends State<NewDelivery> {
     super.initState();
     _asyncInit();
     _loadRideHistory();
-    // Delay driver offer loading until after the pickup location is set.
     _loadDriverOffer();
     if (destinationLatitude != null && destinationLongitude != null) {
       _updateDestinationMarker(destinationLatitude!, destinationLongitude!);
@@ -1287,7 +1286,36 @@ class _NewDeliveryState extends State<NewDelivery> {
       "Access-Control-Allow-Origin": "*",
       'Authorization': 'Bearer ${AuthService.getToken()}',
     };
+    final String endpoint =
+        '${LarosaLinks.baseurl}/api/v1/ride-offers/ustomer/best-offer?cityName=Dodoma';
+    Map<String, String> headers = {
+      "Content-Type": "application/json",
+      "Access-Control-Allow-Origin": "*",
+      'Authorization': 'Bearer ${AuthService.getToken()}',
+    };
 
+    try {
+      final response = await http.get(Uri.parse(endpoint), headers: headers);
+      print('frs : ${response.body}');
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        setState(() {
+          driverOffer = jsonDecode(response.body);
+          isLoadingDriverOffer = false;
+        });
+      } else {
+        LogService.logError(
+            "Failed to fetch driver offer: ${response.statusCode}");
+        setState(() {
+          isLoadingDriverOffer = false;
+        });
+      }
+    } catch (e) {
+      LogService.logError("Error fetching driver offer: $e");
+      setState(() {
+        isLoadingDriverOffer = false;
+      });
+    }
+  }
     try {
       final response = await http.get(Uri.parse(endpoint), headers: headers);
       print('frs : ${response.body}');
@@ -1325,6 +1353,8 @@ class _NewDeliveryState extends State<NewDelivery> {
 
   void _updateMarker(double latitude, double longitude) {
     setState(() {
+      _markers
+          .removeWhere((marker) => marker.markerId.value == 'dynamic_marker');
       _markers
           .removeWhere((marker) => marker.markerId.value == 'dynamic_marker');
       _markers.add(
@@ -1398,6 +1428,8 @@ class _NewDeliveryState extends State<NewDelivery> {
               final terms = prediction['terms'] as List;
               final region =
                   terms.length > 1 ? terms[1]['value'] as String : '';
+              final region =
+                  terms.length > 1 ? terms[1]['value'] as String : '';
               return {
                 'description': prediction['description'] as String,
                 'place_id': prediction['place_id'] as String,
@@ -1409,6 +1441,11 @@ class _NewDeliveryState extends State<NewDelivery> {
         return suggestions.isNotEmpty
             ? suggestions
             : [
+                {
+                  'description': 'No results found.',
+                  'place_id': '',
+                  'region': ''
+                }
                 {
                   'description': 'No results found.',
                   'place_id': '',
@@ -1447,6 +1484,8 @@ class _NewDeliveryState extends State<NewDelivery> {
       final response = await http.get(Uri.parse(url));
       if (response.statusCode == 200) {
         final jsonData = jsonDecode(response.body);
+        if (jsonData['result'] != null &&
+            jsonData['result']['geometry'] != null) {
         if (jsonData['result'] != null &&
             jsonData['result']['geometry'] != null) {
           final location = jsonData['result']['geometry']['location'];
@@ -1493,11 +1532,13 @@ class _NewDeliveryState extends State<NewDelivery> {
       final response = await http.get(url, headers: headers);
       if (response.statusCode == 200 || response.statusCode == 201) {
         LogService.logFatal('Orders fetch successful');
-        LogService.logInfo(response.body);
+        //LogService.logInfo(response.body);
         setState(() {
           orders = jsonDecode(response.body);
           orders = orders.reversed.toList();
         });
+
+        LogService.logInfo('Orders loaded: ${orders}');
       } else {
         LogService.logError('Error fetching orders: ${response.statusCode}');
       }
@@ -1530,6 +1571,8 @@ class _NewDeliveryState extends State<NewDelivery> {
       } else {
         LogService.logError(
             'Error fetching ride history: ${response.statusCode}');
+        LogService.logError(
+            'Error fetching ride history: ${response.statusCode}');
       }
     } catch (e) {
       LogService.logError('Failed to fetch ride history: $e');
@@ -1538,7 +1581,11 @@ class _NewDeliveryState extends State<NewDelivery> {
 
   Future<Map<String, String>> getCountryAndCity(
       double latitude, double longitude) async {
+  Future<Map<String, String>> getCountryAndCity(
+      double latitude, double longitude) async {
     try {
+      List<Placemark> placemarks =
+          await placemarkFromCoordinates(latitude, longitude);
       List<Placemark> placemarks =
           await placemarkFromCoordinates(latitude, longitude);
       if (placemarks.isNotEmpty) {
@@ -1714,9 +1761,13 @@ class _NewDeliveryState extends State<NewDelivery> {
       LogService.logError("Error calculating transport cost: $e");
       HelperFunctions.showToast(
           "An error occurred while calculating transport cost", true);
+      HelperFunctions.showToast(
+          "An error occurred while calculating transport cost", true);
     }
   }
 
+  void showTimeEstimationsModal(
+      BuildContext context, Map<String, dynamic> estimations) {
   void showTimeEstimationsModal(
       BuildContext context, Map<String, dynamic> estimations) {
     showModalBottomSheet(
@@ -1746,12 +1797,16 @@ class _NewDeliveryState extends State<NewDelivery> {
       LocationPermission permission = await Geolocator.requestPermission();
       if (permission == LocationPermission.denied ||
           permission == LocationPermission.deniedForever) {
+      if (permission == LocationPermission.denied ||
+          permission == LocationPermission.deniedForever) {
         setState(() {
           isLoadingSource = false;
           isLoadingDestination = false;
         });
         return;
       }
+      Position position = await Geolocator.getCurrentPosition(
+          desiredAccuracy: LocationAccuracy.high);
       Position position = await Geolocator.getCurrentPosition(
           desiredAccuracy: LocationAccuracy.high);
       List<Placemark> placemarks =
@@ -1808,6 +1863,8 @@ class _NewDeliveryState extends State<NewDelivery> {
         const curve = Curves.easeInOut;
         var tween =
             Tween(begin: begin, end: end).chain(CurveTween(curve: curve));
+        var tween =
+            Tween(begin: begin, end: end).chain(CurveTween(curve: curve));
         var offsetAnimation = animation.drive(tween);
         return SlideTransition(position: offsetAnimation, child: child);
       },
@@ -1815,214 +1872,104 @@ class _NewDeliveryState extends State<NewDelivery> {
   }
 
   Widget creativeOrderCard(Map order) {
-    final deliveryLocation = order['deliveryLocation'];
-    final driver = order['driver'];
-    String formatAmount(num amount) {
-      return amount.toStringAsFixed(0).replaceAllMapped(
-          RegExp(r'(\d)(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]},');
-    }
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    LogService.logFatal('Order Passed: $order');
 
     return Container(
-      margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 0),
+      margin: const EdgeInsets.symmetric(vertical: 8),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            LarosaColors.primary.withOpacity(0.4),
-            LarosaColors.purple.withOpacity(0.4)
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(20),
+        color: isDark ? LarosaColors.dark : Colors.white,
+        borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: LarosaColors.dark.withOpacity(0.1),
+            color: isDark
+                ? Colors.black.withOpacity(0.2)
+                : Colors.black.withOpacity(0.05),
             blurRadius: 10,
-            offset: const Offset(0, 4),
+            offset: const Offset(0, 2),
           )
         ],
       ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(20),
-        child: Container(
-          color: LarosaColors.light,
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                width: double.infinity,
-                padding:
-                    const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [LarosaColors.secondary, LarosaColors.purple],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Text(
-                  'Order ID: ${order['id']}',
-                  style: const TextStyle(
-                    fontSize: 17,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
+      child: Column(
+        children: [
+          // Header with ID and Status
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: BoxDecoration(
+              color: isDark
+                  ? LarosaColors.primary.withOpacity(0.15)
+                  : LarosaColors.primary.withOpacity(0.1),
+              borderRadius:
+                  const BorderRadius.vertical(top: Radius.circular(16)),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Order #${order['id']}',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: isDark ? Colors.white : Colors.black87,
                   ),
                 ),
-              ),
-              const SizedBox(height: 12),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'Total Amount:',
-                        style: TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                      Text(
-                        'Tsh ${formatAmount(order['totalAmount'])}',
-                        style: TextStyle(color: LarosaColors.primary),
-                      ),
-                    ],
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: isDark
+                        ? LarosaColors.primary.withOpacity(0.8)
+                        : LarosaColors.primary,
+                    borderRadius: BorderRadius.circular(20),
                   ),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      const Text(
-                        'Order Amount:',
-                        style: TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                      Text(
-                        'Tsh ${formatAmount(order['orderAmount'])}',
-                        style: TextStyle(color: LarosaColors.primary),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'Delivery Amount:',
-                        style: TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                      Text(
-                        'Tsh ${formatAmount(order['deliveryAmount'])}',
-                        style: TextStyle(color: LarosaColors.primary),
-                      ),
-                    ],
-                  ),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      const Text(
-                        'Status:',
-                        style: TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                      Text(
-                        '${order['status']}',
-                        style: TextStyle(
-                          color: order['status'] == 'PENDING'
-                              ? Colors.orange
-                              : Colors.green,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              if (deliveryLocation != null)
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'City:',
-                          style: TextStyle(fontWeight: FontWeight.bold),
-                        ),
-                        Text(
-                          '${deliveryLocation['city']}',
-                          style: const TextStyle(fontSize: 15),
-                        ),
-                      ],
-                    ),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        const Text(
-                          'Zip Code:',
-                          style: TextStyle(fontWeight: FontWeight.bold),
-                        ),
-                        Text(
-                          '${deliveryLocation['zipCode']}',
-                          style: const TextStyle(fontSize: 15),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              const SizedBox(height: 12),
-              if (driver != null && driver['name'] != null)
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        'Driver: ${driver['name']}',
-                        style: const TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                    ),
-                    IconButton(
-                      icon: Icon(
-                        Icons.location_on,
-                        color: LarosaColors.primary,
-                      ),
-                      onPressed: () {
-                        if (deliveryLocation != null) {
-                          showModalBottomSheet(
-                            context: context,
-                            isScrollControlled: true,
-                            backgroundColor: Colors.transparent,
-                            builder: (BuildContext context) {
-                              return StatefulBuilder(
-                                builder: (BuildContext context,
-                                    StateSetter setState) {
-                                  return MapModal(
-                                    latitude:
-                                        deliveryLocation['latitude'] ?? 0.0,
-                                    longitude:
-                                        deliveryLocation['longitude'] ?? 0.0,
-                                  );
-                                },
-                              );
-                            },
-                          );
-                        }
-                      },
-                    ),
-                  ],
-                )
-              else
-                const Padding(
-                  padding: EdgeInsets.only(top: 8.0),
                   child: Text(
-                    'Driver: Not assigned',
-                    style: TextStyle(fontWeight: FontWeight.bold),
+                    order['status'] ?? 'PENDING',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
                 ),
-            ],
+              ],
+            ),
           ),
-        ),
+          // Content with Location and Amount
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              children: [
+                Icon(CupertinoIcons.location,
+                    color: isDark
+                        ? LarosaColors.primary.withOpacity(0.9)
+                        : LarosaColors.primary.withOpacity(0.7),
+                    size: 20),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    (order['deliveryLocation'] as Map?)?['city'] ??
+                        'Unknown Location',
+                    style: TextStyle(
+                      color: isDark ? Colors.grey[300] : Colors.grey[700],
+                      fontSize: 14,
+                    ),
+                  ),
+                ),
+                Text(
+                  'Tsh ${HelperFunctions.formatPrice(order['totalAmount'] ?? 0.0)}',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: isDark
+                        ? LarosaColors.primary.withOpacity(0.9)
+                        : LarosaColors.primary,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -2070,7 +2017,6 @@ class _NewDeliveryState extends State<NewDelivery> {
         children: [
           ListView(
             children: [
-              // Pickup location input.
               Padding(
                 padding: const EdgeInsets.all(8.0),
                 child: TypeAheadField<Map<String, String>>(
@@ -2269,15 +2215,30 @@ class _NewDeliveryState extends State<NewDelivery> {
                               color: Colors.white),
                         ),
                         const SizedBox(height: 8),
-                        // Adjust these keys based on your actual API response.
-                        Text("Offer ID: ${driverOffer!['offerId']}",
-                            style: const TextStyle(color: Colors.white)),
-                        Text("Driver: ${driverOffer!['driverName']}",
-                            style: const TextStyle(color: Colors.white)),
-                        Text("Amount: Tsh ${driverOffer!['offerAmount']}",
-                            style: const TextStyle(color: Colors.white)),
-                        Text("City: ${driverOffer!['cityName']}",
-                            style: const TextStyle(color: Colors.white)),
+                        Text(
+                          "Offer ID: ${driverOffer!['offerId']}",
+                          style: const TextStyle(
+                            color: Colors.white,
+                          ),
+                        ),
+                        Text(
+                          "Driver: ${driverOffer!['driverName']}",
+                          style: const TextStyle(
+                            color: Colors.white,
+                          ),
+                        ),
+                        Text(
+                          "Amount: Tsh ${driverOffer!['offerAmount']}",
+                          style: const TextStyle(
+                            color: Colors.white,
+                          ),
+                        ),
+                        Text(
+                          "City: ${driverOffer!['cityName']}",
+                          style: const TextStyle(
+                            color: Colors.white,
+                          ),
+                        ),
                       ],
                     ),
                   ),
@@ -2285,177 +2246,7 @@ class _NewDeliveryState extends State<NewDelivery> {
               const Gap(10),
               const Divider(),
               const Gap(10),
-              // Orders section.
-              Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 10.0, vertical: 4.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        ShaderMask(
-                          shaderCallback: (bounds) => const LinearGradient(
-                            colors: [
-                              LarosaColors.secondary,
-                              LarosaColors.purple
-                            ],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                          ).createShader(bounds),
-                          child: const Text(
-                            'Your Orders',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
-                            ),
-                          ),
-                        ),
-                        Container(
-                          decoration: BoxDecoration(
-                            gradient: const LinearGradient(
-                              colors: [
-                                LarosaColors.secondary,
-                                LarosaColors.purple
-                              ],
-                              begin: Alignment.centerLeft,
-                              end: Alignment.centerRight,
-                            ),
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: TextButton(
-                            onPressed: () {
-                              showModalBottomSheet(
-                                context: context,
-                                isScrollControlled: true,
-                                backgroundColor: Colors.transparent,
-                                builder: (BuildContext context) {
-                                  return Container(
-                                    decoration: BoxDecoration(
-                                      gradient: LinearGradient(
-                                        colors: [
-                                          LarosaColors.secondary
-                                              .withOpacity(0.55),
-                                          LarosaColors.purple.withOpacity(0.4),
-                                        ],
-                                        begin: Alignment.topLeft,
-                                        end: Alignment.bottomRight,
-                                      ),
-                                      borderRadius: const BorderRadius.only(
-                                        topLeft: Radius.circular(20),
-                                        topRight: Radius.circular(20),
-                                      ),
-                                    ),
-                                    padding: const EdgeInsets.all(8),
-                                    child: ClipRRect(
-                                      borderRadius: const BorderRadius.only(
-                                        topLeft: Radius.circular(20),
-                                        topRight: Radius.circular(20),
-                                      ),
-                                      child: RideHistoryModal(
-                                          rideHistory: rideHistory),
-                                    ),
-                                  );
-                                },
-                              );
-                            },
-                            style: TextButton.styleFrom(
-                              backgroundColor: Colors.transparent,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(20),
-                              ),
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 12, vertical: 8),
-                            ),
-                            child: Text(
-                              'Ride History',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                                color: Theme.of(context).brightness ==
-                                        Brightness.dark
-                                    ? Colors.white
-                                    : LarosaColors.light,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 10),
-                    orders.isEmpty
-                        ? Center(
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(
-                                  Icons.shopping_cart_outlined,
-                                  size: 80,
-                                  color: LarosaColors.mediumGray,
-                                ),
-                                const SizedBox(height: 20),
-                                const Text(
-                                  "No current orders",
-                                  style: TextStyle(
-                                    fontSize: 20,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.grey,
-                                  ),
-                                ),
-                                const SizedBox(height: 10),
-                                const Text(
-                                  "It looks like you haven't placed any orders yet.",
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    color: Colors.grey,
-                                    height: 1.4,
-                                  ),
-                                  textAlign: TextAlign.center,
-                                ),
-                                const SizedBox(height: 20),
-                                ElevatedButton(
-                                  onPressed: () {
-                                    Navigator.of(context).push(_createRoute());
-                                  },
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: LarosaColors.purple,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(25),
-                                    ),
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 28,
-                                      vertical: 14,
-                                    ),
-                                    elevation: 5,
-                                    shadowColor:
-                                        LarosaColors.primary.withOpacity(0.5),
-                                  ),
-                                  child: const Text(
-                                    "Make a New Order",
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 16,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          )
-                        : ListView.builder(
-                            shrinkWrap: true,
-                            physics: const NeverScrollableScrollPhysics(),
-                            itemCount: orders.length,
-                            itemBuilder: (context, index) {
-                              return creativeOrderCard(orders[index]);
-                            },
-                          ),
-                    const SizedBox(height: 70),
-                  ],
-                ),
-              ),
+              OrdersWidget(),
             ],
           ),
           const Positioned(

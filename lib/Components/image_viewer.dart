@@ -13,12 +13,16 @@ class ImageViewScreen extends StatefulWidget {
   final int initialIndex;
   final String displayName;
   final dynamic postDetails;
-  const ImageViewScreen(
-      {super.key,
-      required this.imageUrls,
-      required this.initialIndex,
-      required this.displayName,
-      required this.postDetails});
+  final Function(dynamic updatedPost)? onPostUpdated;
+
+  const ImageViewScreen({
+    super.key,
+    required this.imageUrls,
+    required this.initialIndex,
+    required this.displayName,
+    required this.postDetails,
+    this.onPostUpdated,
+  });
 
   @override
   State<ImageViewScreen> createState() => _ImageViewScreenState();
@@ -71,12 +75,15 @@ class _ImageViewScreenState extends State<ImageViewScreen> {
           // Post details
           if (widget.postDetails != null)
             Positioned(
-              bottom: 10,
-              left: 10,
-              right: 10,
+              bottom: 0,
+              left: 0,
+              right: 0,
               child: Column(
                 children: [
-                  PostInteract(post: widget.postDetails),
+                  PostInteract(
+                    post: widget.postDetails,
+                    onPostUpdated: widget.onPostUpdated,
+                  ),
                   Gap(10),
                   PostDetails(
                     caption: widget.postDetails['caption'],
@@ -91,4 +98,3 @@ class _ImageViewScreenState extends State<ImageViewScreen> {
     );
   }
 }
-

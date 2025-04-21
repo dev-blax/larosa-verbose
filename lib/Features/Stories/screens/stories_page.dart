@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:larosa_block/Features/Stories/providers/story_provider.dart';
 import 'package:larosa_block/Features/Stories/widgets/story_viewer.dart';
-import 'package:larosa_block/Services/log_service.dart';
 import 'package:provider/provider.dart';
 
 class StoriesPage extends StatefulWidget {

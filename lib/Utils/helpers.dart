@@ -6,6 +6,7 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hive/hive.dart';
 import 'package:intl/intl.dart';
+import 'package:larosa_block/Services/oath_service.dart';
 import 'package:logger/logger.dart';
 import 'package:mime/mime.dart';
 import 'package:share_plus/share_plus.dart';
@@ -139,6 +140,9 @@ class HelperFunctions {
 
     // final GoogleAuthService googleAuthService = GoogleAuthService();
     // await googleAuthService.signOut();
+
+    final OauthService oauthService = OauthService();
+    await oauthService.googleLogout();
 
     // Navigate to login
     if (context.mounted) {

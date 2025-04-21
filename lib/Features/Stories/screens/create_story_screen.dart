@@ -193,8 +193,12 @@ class _CreateStoryScreenState extends State<CreateStoryScreen> {
                               Padding(
                                 padding: const EdgeInsets.all(16),
                                 child: CupertinoTextField(
+                                  prefix: const Icon(CupertinoIcons.text_alignleft, color: CupertinoColors.systemGrey),
                                   controller: _captionControllers[index],
                                   placeholder: 'Add a caption...',
+                                  placeholderStyle: TextStyle(
+                                    color: CupertinoColors.systemGrey
+                                  ),
                                   maxLines: null,
                                   decoration: BoxDecoration(
                                     borderRadius: BorderRadius.circular(8),

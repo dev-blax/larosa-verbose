@@ -1,6 +1,8 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:flutter_web_auth_2/flutter_web_auth_2.dart';
+import 'package:hive/hive.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 
 import '../Utils/links.dart';
@@ -17,10 +19,12 @@ class OauthService {
   final DioService _dioService = DioService();
   final GeoService _geoService = GeoService();
 
-  Future<GoogleSignInAccount?> signinWithGoogle() async {
+  Future<GoogleSignInAccount?> signinWithGoogle({BuildContext? context}) async {
     try {
+      LogService.logInfo('Starting Google Sign In process');
       final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
       if (googleUser != null) {
+        LogService.logInfo('Google Sign In successful for user: ${googleUser.email}');
         final GoogleSignInAuthentication auth = await googleUser.authentication;
         String token = auth.idToken!;
 
@@ -31,34 +35,93 @@ class OauthService {
           token = token.substring(initLength, endLength);
         }
 
-        LogService.logInfo('access token ${auth.accessToken}');
+        LogService.logInfo('Starting location fetch');
+        try {
+          final position = await _geoService.getCurrentLocation(context: context);
+          LogService.logInfo('Location fetch result: ${position?.latitude}, ${position?.longitude}');
+          final double latitude = position?.latitude ?? 0.0;
+          final double longitude = position?.longitude ?? 0.0;
 
-        final position = await _geoService.getCurrentLocation();
-        final double latitude = position?.latitude ?? 0.0;
-        final double longitude = position?.longitude ?? 0.0;
+          LogService.logInfo('Making API request to ${LarosaLinks.baseurl}${LarosaLinks.socialLogin}');
+          var response = await _dioService.dio.post(
+            '${LarosaLinks.baseurl}${LarosaLinks.socialLogin}',
+            data: {
+              'token': auth.idToken,
+              'authProvider': 'GOOGLE',
+              'latitude': latitude,
+              'longitude': longitude,
+            },
+          );
 
-        await _dioService.dio.post(
-          '${LarosaLinks.baseurl}${LarosaLinks.socialLogin}',
-          data: {
-            'token': auth.idToken,
-            'authProvider': 'GOOGLE',
-            'latitude': latitude,
-            'longitude': longitude,
-          },
-        );
+          LogService.logInfo('API response received: ${response.data}');
 
-        return googleUser;
+          final data = response.data;
+
+          var box = await Hive.openBox('userBox');
+          await box.clear();
+          box.put('profileId', data['profileId']);
+          box.put('accountId', data['accountType']['id']);
+          box.put('accountName', data['accountType']['name']);
+          box.put('reservation', data['reservation']);
+
+          box.put('token', data['jwtAuthenticationResponse']['token']);
+          LogService.logInfo(
+              'got toke ${data['jwtAuthenticationResponse']['token']}');
+          box.put(
+            'refreshToken',
+            data['jwtAuthenticationResponse']['refreshToken'],
+          );
+
+          return googleUser;
+        } catch (locationError) {
+          LogService.logError('Location error: $locationError');
+          // Try to proceed without location
+          var response = await _dioService.dio.post(
+            '${LarosaLinks.baseurl}${LarosaLinks.socialLogin}',
+            data: {
+              'token': auth.idToken,
+              'authProvider': 'GOOGLE',
+              'latitude': 0.0,
+              'longitude': 0.0,
+            },
+          );
+          LogService.logInfo('API response without location: ${response.data}');
+          // Continue with the rest of the data processing
+          final data = response.data;
+
+          var box = await Hive.openBox('userBox');
+          await box.clear();
+          box.put('profileId', data['profileId']);
+          box.put('accountId', data['accountType']['id']);
+          box.put('accountName', data['accountType']['name']);
+          box.put('reservation', data['reservation']);
+
+          box.put('token', data['jwtAuthenticationResponse']['token']);
+          LogService.logInfo(
+              'got toke ${data['jwtAuthenticationResponse']['token']}');
+          box.put(
+            'refreshToken',
+            data['jwtAuthenticationResponse']['refreshToken'],
+          );
+
+          return googleUser;
+        }
       } else {
-        LogService.logError('Failed to sign in');
+        LogService.logError('User cancelled Google Sign In');
         _googleSignIn.disconnect();
         return null;
       }
-    } catch (e) {
-      LogService.logError('Error signing in with Google: $e');
+    } catch (e, stackTrace) {
+      LogService.logError('Error signing in with Google: $e\nStack trace: $stackTrace');
       _googleSignIn.signOut();
       LogService.logInfo('Signed out from Google');
       return null;
     }
+  }
+
+  // google logout
+  Future<void> googleLogout() async {
+    _googleSignIn.disconnect();
   }
 
   final String clientKey = 'sbaw9h94ykl64jqmv3';
@@ -193,4 +256,5 @@ class OauthService {
       return null;
     }
   }
+
 }

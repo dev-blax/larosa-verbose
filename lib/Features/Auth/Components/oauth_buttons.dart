@@ -17,6 +17,7 @@ class OauthButtons extends StatefulWidget {
 
 class _OauthButtonsState extends State<OauthButtons> {
   final OauthService _oauthService = OauthService();
+  bool isGoogleLoading = false;
 
   @override
   Widget build(BuildContext context) {
@@ -25,24 +26,37 @@ class _OauthButtonsState extends State<OauthButtons> {
       children: [
         GestureDetector(
           onTap: () async {
-            final googleUser = await _oauthService.signinWithGoogle();
-            if (googleUser != null && mounted) {
-              context.goNamed('home');
-            } else {
-              NavigationService.showErrorSnackBar('Google Sign-In Failed');
+            setState(() {
+              isGoogleLoading = true;
+            });
+            try {
+              final googleUser = await _oauthService.signinWithGoogle(context: context);
+              if (googleUser != null && mounted) {
+                context.goNamed('home');
+              } else {
+                NavigationService.showErrorSnackBar(
+                  'Google Sign-In Failed',
+                );
+              }
+            } finally {
+              setState(() {
+                isGoogleLoading = false;
+              });
             }
           },
           child: Animate(
             effects: const [
               FadeEffect(
-                  begin: BlurEffect.minBlur,
-                  end: BlurEffect.defaultBlur,
-                  duration: Duration(seconds: 5)),
+                begin: BlurEffect.minBlur,
+                end: BlurEffect.defaultBlur,
+                duration: Duration(seconds: 5),
+              ),
               ScaleEffect(
-                  begin: ScaleEffect.defaultValue,
-                  end: ScaleEffect.neutralValue,
-                  duration: Duration(seconds: 1),
-                  delay: Duration(seconds: 0))
+                begin: ScaleEffect.defaultValue,
+                end: ScaleEffect.neutralValue,
+                duration: Duration(seconds: 1),
+                delay: Duration(seconds: 0),
+              )
             ],
             child: Card(
               color: Colors.white,

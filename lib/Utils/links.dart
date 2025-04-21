@@ -17,4 +17,15 @@ class LarosaLinks {
   static const String brandProfile = '/brand/myProfile';
   static const String socialLogin = '/api/v1/auth/social';
   static const String notifyOnline = '/app/user/addUser';
+  // Reels endpoints
+  static const String reelsFetch = '$baseurl/reels/fetch';
+  static const String reelsFavourite = '$baseurl/favorites/update';
+  static const String reelsLike = '$baseurl/like/save';
+
+  // discover
+  static const String discover = '$baseurl/search/discover';
+
+  // Cart
+  static const String cartList = '$baseurl/cart/list';
+  static const String cartRemoveItem = '$baseurl/cart/remove-item';
 }

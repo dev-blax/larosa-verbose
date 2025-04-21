@@ -6,9 +6,9 @@ import 'package:provider/provider.dart';
 import 'package:stomp_dart_client/stomp_dart_client.dart';
 import 'package:toastification/toastification.dart';
 import 'Features/Cart/controllers/cart_controller.dart';
-import 'Features/Feeds/Controllers/business_post_controller.dart';
 import 'Features/Feeds/Controllers/content_controller.dart';
 import 'Features/Feeds/Controllers/home_feeds_controller.dart';
+import 'Features/Feeds/Controllers/second_business_category_provider.dart';
 import 'Features/Onboarding/onboarding_controller.dart';
 import 'Services/auth_service.dart';
 import 'Services/log_service.dart';
@@ -99,8 +99,9 @@ class _AppState extends State<App> {
         ChangeNotifierProvider(create: (_) => ContentController()),
         ChangeNotifierProvider(create: (_) => OnboardingProvider()),
         ChangeNotifierProvider(create: (_) => CartController()),
-        ChangeNotifierProvider(create: (_) => BusinessCategoryProvider()),
         ChangeNotifierProvider(create: (_) => StoryProvider()),
+        ChangeNotifierProvider(create: (_) => SecondBusinessCategoryProvider()),
+
       ],
       child: ToastificationWrapper(
         child: MaterialApp.router(

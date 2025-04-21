@@ -74,11 +74,16 @@ class BusinessCategoryProvider with ChangeNotifier {
       _error = null;
       notifyListeners();
 
+
+      LogService.logFatal('loading categories');
+
       final response = await _dioService.dio.post(
         '${LarosaLinks.baseurl}/api/v1/business-categories/all',
       );
 
       if (response.statusCode == 200) {
+        LogService.logFatal('categories loaded');
+        LogService.logFatal('categories: ${response.data[0]}');
         final List<dynamic> data = response.data;
         _businessCategories = data.map((category) {
           return {
@@ -86,6 +91,7 @@ class BusinessCategoryProvider with ChangeNotifier {
             'name': category['name'],
           };
         }).toList();
+        LogService.logFatal('categories: $_businessCategories');
       } else {
         _error = 'Failed to load categories';
         HelperFunctions.showToast('Cannot load categories', false);

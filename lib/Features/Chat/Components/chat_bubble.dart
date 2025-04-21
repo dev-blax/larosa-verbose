@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -111,38 +112,11 @@ class ChatBubbleComponent extends HookWidget {
     );
   }
 
-  // Widget _buildTextBubble(BuildContext context) {
-  //   return Container(
-  //     constraints: BoxConstraints(
-  //       maxWidth: MediaQuery.of(context).size.width * .7,
-  //     ),
-  //     padding: const EdgeInsets.all(10),
-  //     decoration: BoxDecoration(
-  //       gradient: LinearGradient(
-  //         colors: [
-  //           isSentByMe ? const Color(0xffb91d73) : LarosaColors.secondary,
-  //           LarosaColors.primary,
-  //         ],
-  //         begin: Alignment.topLeft,
-  //         end: Alignment.centerRight,
-  //       ),
-  //       borderRadius: BorderRadius.circular(10),
-  //     ),
-  //     child: Text(
-  //       message,
-  //       style: TextStyle(
-  //         color: isSentByMe ? Colors.white : LarosaColors.light,
-  //       ),
-  //     ),
-  //   );
-  // }
-
   Widget _buildTextBubble(BuildContext context) {
   return Row(
     mainAxisSize: MainAxisSize.min,
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
-      // Retry icon positioned outside the left of the bubble if it failed to send
       if (hasFailed)
         IconButton(
           icon: const Icon(
@@ -151,9 +125,9 @@ class ChatBubbleComponent extends HookWidget {
             size: 16,
           ),
           onPressed: () {
-            print('Retry button pressed'); // Log message for confirmation
+            
             if (onRetry != null) {
-              onRetry!(); // Trigger the retry callback
+              onRetry!();
             }
           },
         ),
@@ -200,8 +174,6 @@ class ChatBubbleComponent extends HookWidget {
   );
 }
 
-
-
   Widget _buildAudioBubble(
       context,
       just_audio.AudioPlayer audioPlayer,
@@ -229,6 +201,7 @@ class ChatBubbleComponent extends HookWidget {
         if (state.processingState == just_audio.ProcessingState.completed) {
           isPlaying.value = false;
           position.value = Duration.zero;
+          audioPlayer.stop();
           audioPlayer.seek(Duration.zero);
         }
       });
@@ -292,7 +265,7 @@ class ChatBubbleComponent extends HookWidget {
                         }
                       },
                       icon: Icon(
-                        isPlaying.value ? Icons.pause : Icons.play_arrow,
+                        isPlaying.value ? CupertinoIcons.pause : CupertinoIcons.play_fill,
                         color: Colors.white,
                       ),
                     ),

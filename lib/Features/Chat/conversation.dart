@@ -3,7 +3,7 @@ import 'dart:io';
 import 'dart:typed_data';
 import 'package:avatar_glow/avatar_glow.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:dio/dio.dart' as Dio;
+import 'package:dio/dio.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_sound/flutter_sound.dart';
@@ -341,7 +341,6 @@ class _LarosaConversationState extends State<LarosaConversation> {
       messageType = MessageType.text;
     }
 
-    // Update UI immediately
     setState(() {
       sendingMessages[messageId] = {
         'isSending': true,
@@ -366,7 +365,7 @@ class _LarosaConversationState extends State<LarosaConversation> {
     messageController.clear();
 
     // Prepare form data
-    final formData = Dio.FormData.fromMap({
+    final formData = FormData.fromMap({
       'recipientId': widget.profileId.toString(),
       'content': message,
     });
@@ -376,7 +375,7 @@ class _LarosaConversationState extends State<LarosaConversation> {
       formData.files.add(
         MapEntry(
           'mediaFile',
-          Dio.MultipartFile.fromBytes(
+          MultipartFile.fromBytes(
             audioData!,
             filename: 'recording.aac',
             contentType: MediaType('audio', 'aac'),
@@ -387,7 +386,7 @@ class _LarosaConversationState extends State<LarosaConversation> {
       formData.files.add(
         MapEntry(
           'mediaFile',
-          await Dio.MultipartFile.fromFile(pickedFile!.path),
+          await MultipartFile.fromFile(pickedFile!.path),
         ),
       );
     }
@@ -776,21 +775,31 @@ class _LarosaConversationState extends State<LarosaConversation> {
       }
 
       return SizedBox(
-        height:
-            MediaQuery.of(context).size.height * 0.7, // Adjust height as needed
-        child: AspectRatio(
-          aspectRatio: _videoController!.value.aspectRatio,
-          child: VideoPlayer(_videoController!),
+        height: MediaQuery.of(context).size.height * 0.7,
+        child: Container(
+          constraints: BoxConstraints(
+            maxWidth: MediaQuery.of(context).size.width * 0.7,
+          ),
+          child: AspectRatio(
+            aspectRatio: _videoController!.value.aspectRatio,
+            child: VideoPlayer(_videoController!),
+          ),
         ),
       );
     }
 
-    return Expanded(
-      child: SizedBox(
-        width: MediaQuery.of(context).size.width,
-        child: Image.file(
-          pickedFile!,
-          fit: BoxFit.cover,
+    return SizedBox(
+      height: MediaQuery.of(context).size.height * 0.7,
+      child: Container(
+        constraints: BoxConstraints(
+          maxWidth: MediaQuery.of(context).size.width * 0.7,
+        ),
+        child: AspectRatio(
+          aspectRatio: 1,
+          child: Image.file(
+            pickedFile!,
+            fit: BoxFit.cover,
+          ),
         ),
       ),
     );

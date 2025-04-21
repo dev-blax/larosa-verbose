@@ -39,6 +39,8 @@ class DioService {
           String message = '';
           bool isConnectionError = false;
 
+          LogService.logError('Dio Error: $error');
+
           switch (error.type) {
             case DioExceptionType.connectionTimeout:
             case DioExceptionType.sendTimeout:

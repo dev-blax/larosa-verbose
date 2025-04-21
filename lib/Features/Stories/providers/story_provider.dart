@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:larosa_block/Services/auth_service.dart';
 import 'package:larosa_block/Services/dio_service.dart';
 import 'package:larosa_block/Services/log_service.dart';
+import 'package:larosa_block/Services/navigation_service.dart';
 import 'package:larosa_block/Utils/links.dart';
 import 'package:http_parser/http_parser.dart' as parser;
 
@@ -123,6 +124,7 @@ class StoryProvider extends ChangeNotifier {
       if (response.statusCode == 201) {
         await fetchFollowedStories();
         LogService.logInfo('Story uploaded successfully');
+        NavigationService.showSnackBar('Story uploaded successfully');
         return true;
       } 
 

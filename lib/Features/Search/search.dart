@@ -6,20 +6,21 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:gap/gap.dart';
-import 'package:http/http.dart' as http;
 import 'package:larosa_block/Components/bottom_navigation.dart';
 import 'package:larosa_block/Components/image_viewer.dart';
 import 'package:larosa_block/Features/Search/Components/search_delegate.dart';
-import 'package:larosa_block/Services/auth_service.dart';
-import 'package:larosa_block/Services/log_service.dart';
 import 'package:larosa_block/Utils/colors.dart';
 import 'package:larosa_block/Utils/links.dart';
 import 'package:larosa_block/Utils/svg_paths.dart';
 import 'package:mime/mime.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:video_player/video_player.dart';
 import 'package:video_thumbnail/video_thumbnail.dart';
+
+import '../../Services/auth_service.dart';
+import '../../Services/dio_service.dart';
+import '../../Services/log_service.dart';
+import 'widgets/fullscreen_video_viewer.dart';
 
 class SearchScreen extends StatefulWidget {
   const SearchScreen({super.key});
@@ -30,7 +31,10 @@ class SearchScreen extends StatefulWidget {
 class _SearchScreenState extends State<SearchScreen> {
   static List<dynamic> suggestions = [];
   bool isLoadingSuggestions = true;
+  bool isLoadingMore = false;
+  int currentPage = 1;
   final Map<int, String> _videoThumbnails = {};
+  final ScrollController _scrollController = ScrollController();
 
   @override
   void initState() {
@@ -39,6 +43,7 @@ class _SearchScreenState extends State<SearchScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadSavedSuggestions();
     });
+    _scrollController.addListener(_onScroll);
   }
 
   bool _isVideo(String url) {
@@ -68,10 +73,12 @@ class _SearchScreenState extends State<SearchScreen> {
   }
 
   Future<void> _loadSavedSuggestions() async {
+    LogService.logInfo('Loading saved suggestions');
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String? savedSuggestions = prefs.getString('suggestions');
 
     if (savedSuggestions != null) {
+      LogService.logInfo('Loading saved suggestions');
       setState(() {
         suggestions = json.decode(savedSuggestions);
         isLoadingSuggestions = false;
@@ -90,7 +97,68 @@ class _SearchScreenState extends State<SearchScreen> {
         }
       }
     } else {
+      LogService.logInfo('No saved suggestions found');
       _loadSuggestions();
+    }
+  }
+
+  void _onScroll() {
+    if (_scrollController.position.pixels == _scrollController.position.maxScrollExtent && !isLoadingMore) {
+      _loadMoreSuggestions();
+    }
+  }
+
+  Future<void> _loadMoreSuggestions() async {
+    if (isLoadingMore) return;
+    setState(() {
+      isLoadingMore = true;
+    });
+    currentPage++;
+    Map<String, dynamic> body = {
+      'countryId': 1.toString(),
+      'profileId': AuthService.getProfileId(),
+      'page': currentPage.toString(),
+    };
+
+    LogService.logInfo('Loading more suggestions, page: $currentPage');
+    LogService.logInfo('body: $body');
+
+    final response = await DioService().dio.post(
+      LarosaLinks.discover,
+      data: body,
+    );
+
+    if (response.statusCode == 302 || response.statusCode == 403) {
+      await AuthService.refreshToken();
+      _loadMoreSuggestions();
+      return;
+    }
+
+    if (response.statusCode != 200) {
+      setState(() {
+        isLoadingMore = false;
+      });
+      return;
+    }
+
+    LogService.logInfo('response: ${response.data}');
+
+    List<dynamic> newData = response.data;
+    setState(() {
+      suggestions.addAll(newData);
+      isLoadingMore = false;
+    });
+
+    // Save updated suggestions to SharedPreferences
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    prefs.setString('suggestions', json.encode(suggestions));
+
+    for (int i = suggestions.length - newData.length; i < suggestions.length; i++) {
+      String firstMedia = suggestions[i]['names'].split(',').toList()[0];
+      LogService.logDebug(firstMedia);
+      if (_isVideo(firstMedia)) {
+        _generateVideoThumbnail(firstMedia, i);
+      }
     }
   }
 
@@ -99,26 +167,19 @@ class _SearchScreenState extends State<SearchScreen> {
       isLoadingSuggestions = true;
     });
 
-    Map<String, String> headers = {
-      "Content-Type": "application/json",
-      "Access-Control-Allow-Origin": "*",
-    };
-
-    var url = Uri.https(
-      LarosaLinks.nakedBaseUrl,
-      '/search/discover',
-    );
-
     Map<String, dynamic> body = {
       'countryId': 1.toString(),
       'profileId': AuthService.getProfileId(),
+      'page': '1',
     };
 
-    final response = await http.post(
-      url,
-      body: jsonEncode(body),
-      headers: headers,
+    LogService.logInfo('body: $body');
+
+    final response = await DioService().dio.post(
+      LarosaLinks.discover,
+      data: body,
     );
+
     if (response.statusCode == 302 || response.statusCode == 403) {
       await AuthService.refreshToken();
       _loadSuggestions();
@@ -126,13 +187,19 @@ class _SearchScreenState extends State<SearchScreen> {
     }
 
     if (response.statusCode != 200) {
+      setState(() {
+        isLoadingSuggestions = false;
+      });
       return;
     }
 
-    List<dynamic> data = json.decode(response.body);
+    LogService.logInfo('response: ${response.data}');
+
+    List<dynamic> data = response.data;
 
     setState(() {
       suggestions = data;
+      currentPage = 1;
       isLoadingSuggestions = false;
     });
 
@@ -177,15 +244,19 @@ class _SearchScreenState extends State<SearchScreen> {
             SizedBox(
               width: double.infinity,
               child: GridView.builder(
+                controller: _scrollController,
                 gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                   crossAxisCount: 2,
                   crossAxisSpacing: 2.0,
                   mainAxisSpacing: 2.0,
                   childAspectRatio: 1,
                 ),
-                itemCount: isLoadingSuggestions ? 10 : suggestions.length + 2,
+                itemCount: isLoadingSuggestions ? 10 : suggestions.length,
                 itemBuilder: (context, index) {
                   if (index >= suggestions.length) {
+                    if (isLoadingMore) {
+                      return const Center(child: CircularProgressIndicator());
+                    }
                     return const SizedBox.shrink();
                   }
                   if (isLoadingSuggestions) {
@@ -339,6 +410,11 @@ class _SearchScreenState extends State<SearchScreen> {
                                   initialIndex: index,
                                   displayName: name,
                                   postDetails: suggestions[index],
+                                  onPostUpdated: (updatedPost) {
+                                    setState(() {
+                                      suggestions[index] = updatedPost;
+                                    });
+                                  },
                                 ),
                               ),
                             );
@@ -419,83 +495,6 @@ class _SearchScreenState extends State<SearchScreen> {
               ),
             ),
           ],
-        ),
-      ),
-    );
-  }
-}
-
-class FullScreenVideoViewer extends StatefulWidget {
-  final String videoUrl;
-
-  const FullScreenVideoViewer({Key? key, required this.videoUrl})
-      : super(key: key);
-
-  @override
-  State<FullScreenVideoViewer> createState() => _FullScreenVideoViewerState();
-}
-
-class _FullScreenVideoViewerState extends State<FullScreenVideoViewer> {
-  late VideoPlayerController _videoController;
-
-  @override
-  void initState() {
-    super.initState();
-    _videoController = VideoPlayerController.network(widget.videoUrl)
-      ..initialize().then((_) {
-        setState(() {});
-        _videoController.play();
-      });
-  }
-
-  @override
-  void dispose() {
-    _videoController.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    // Determine theme colors
-    final theme = Theme.of(context);
-    final bgColor = theme.brightness == Brightness.dark
-        ? Colors.black.withOpacity(.3)
-        : Colors.white.withOpacity(.3);
-    final iconColor =
-        theme.brightness == Brightness.dark ? Colors.white : Colors.black;
-
-    return Scaffold(
-      backgroundColor: Colors.black,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.close, color: Colors.white),
-          onPressed: () => Navigator.pop(context),
-        ),
-      ),
-      body: Center(
-        child: _videoController.value.isInitialized
-            ? AspectRatio(
-                aspectRatio: _videoController.value.aspectRatio,
-                child: VideoPlayer(_videoController),
-              )
-            : const CircularProgressIndicator(),
-      ),
-      floatingActionButton: FloatingActionButton(
-        backgroundColor: bgColor,
-        onPressed: () {
-          setState(() {
-            if (_videoController.value.isPlaying) {
-              _videoController.pause();
-            } else {
-              _videoController.play();
-            }
-          });
-        },
-        child: Icon(
-          _videoController.value.isPlaying ? Icons.pause : Icons.play_arrow,
-          color: iconColor,
         ),
       ),
     );

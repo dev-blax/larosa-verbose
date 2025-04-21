@@ -108,7 +108,6 @@ class _OldPostCompoentState extends State<OldPostCompoent>
       );
 
       if (response.statusCode == 302) {
-        print('response: ${response.statusCode}');
         await AuthService.refreshToken();
         _favouritePost();
       }
@@ -372,6 +371,7 @@ class _OldPostCompoentState extends State<OldPostCompoent>
                         child: IconButton(
                           onPressed: () {
                             if (AuthService.getToken().isNotEmpty) {
+                              LogService.logTrace('post details, post: ${widget.post}');
                               String username = widget.post['username'];
                               double price =
                                   double.parse(widget.post['price'].toString());
@@ -554,6 +554,11 @@ class _OldPostCompoentState extends State<OldPostCompoent>
                         child: CommentSection(
                           postId: widget.post['id'],
                           names: widget.post['names'],
+                          onCommentAdded: (newCommentCount) {
+                            setState(() {
+                              widget.post['comments'] = newCommentCount;
+                            });
+                          },
                         ),
                       ),
                     );

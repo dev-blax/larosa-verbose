@@ -16,16 +16,12 @@ import '../../Utils/links.dart';
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
 
-
-   // This method sends the deletion request to the API.
   Future<bool> _deleteAccount(String reason, {String? comments}) async {
     String token = AuthService.getToken();
     if (token.isEmpty) return false;
 
-    // Construct the URL using your base URL and endpoint.
     var url = Uri.https(LarosaLinks.nakedBaseUrl, '/api/v1/account-deletion');
 
-    // Build the request body.
     var body = {
       'reason': reason,
     };
@@ -46,15 +42,8 @@ class SettingsScreen extends StatelessWidget {
       );
 
       if (response.statusCode == 200) {
-        // Success: Account deletion successful.
         return true;
       } else {
-        // Log error details for debugging.
-
-        // print("Account deletion failed: ${response.statusCode} ${response.body}");
-        // print("Body: $body");
-        // print("Token: $token");
-        // print("Url: ${LarosaLinks.nakedBaseUrl}");
         return true;
       }
     } catch (e) {

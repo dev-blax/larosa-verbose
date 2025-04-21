@@ -1,29 +1,30 @@
-import 'dart:convert';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_emoji/flutter_emoji.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
-import 'package:flutter_svg/svg.dart';
 import 'package:gap/gap.dart';
 import 'package:iconsax/iconsax.dart';
-import 'package:http/http.dart' as http;
+import 'package:larosa_block/Features/Feeds/Components/comments_shimmer.dart';
 import 'package:larosa_block/Services/auth_service.dart';
+import 'package:larosa_block/Services/dio_service.dart';
 import 'package:larosa_block/Services/log_service.dart';
+import 'package:larosa_block/Services/navigation_service.dart';
 import 'package:larosa_block/Utils/colors.dart';
 import 'package:larosa_block/Utils/links.dart';
-import 'package:shimmer/shimmer.dart';
-
-import '../../../Utils/helpers.dart';
 import 'carousel.dart';
+import 'post_comment_tile.dart';
 
 class CommentSection extends StatefulWidget {
   final int postId;
   final String names;
+  final Function(int newCommentCount) onCommentAdded;
+
   const CommentSection({
     super.key,
     required this.postId,
     required this.names,
+    required this.onCommentAdded,
   });
 
   @override
@@ -33,7 +34,7 @@ class CommentSection extends StatefulWidget {
 class _CommentSectionState extends State<CommentSection> {
   final TextEditingController _commentController = TextEditingController();
   List<dynamic> postComments = [];
-  List<String> mediaFiles = []; // List to hold media files (URLs)
+  List<String> mediaFiles = [];
 
   bool _isLoading = true;
   String? replyToUsername;
@@ -41,14 +42,7 @@ class _CommentSectionState extends State<CommentSection> {
   bool isCommenting = false;
   var parser = EmojiParser();
 
-  Map<String, String> headers = {
-    "Content-Type": "application/json",
-    "Access-Control-Allow-Origin": "*",
-  };
-
   Map<int, Map<String, dynamic>> commentStatus = {};
-
-
 
   Future<bool> _sendComment(
     String comment,
@@ -56,16 +50,10 @@ class _CommentSectionState extends State<CommentSection> {
     int parentCommentId, {
     int? commentId,
   }) async {
-    String token = AuthService.getToken();
-    if (token.isEmpty) return false;
-
-    // Convert emojis to shortcodes
-    String processedComment = parser.unemojify(comment);
-
-    var url = Uri.https(
-      LarosaLinks.nakedBaseUrl,
-      isReply ? '/comments/reply' : '/comments/new',
-    );
+    final dio = DioService().dio;
+    final processedComment = parser.unemojify(comment);
+    final endpoint = isReply ? '/comments/reply' : '/comments/new';
+    final url = '${LarosaLinks.baseurl}$endpoint';
 
     int newCommentId = commentId ?? DateTime.now().millisecondsSinceEpoch;
     setState(() {
@@ -75,35 +63,24 @@ class _CommentSectionState extends State<CommentSection> {
         'content': comment
       };
     });
-    LogService.logInfo('Sending comment $comment');
-    LogService.logInfo('processedComment: $processedComment');
 
-    
+    LogService.logDebug('Sending ${isReply ? "reply" : "comment"} to: $url');
 
     try {
-      var body = isReply
-          ? {
-              'profileId': AuthService.getProfileId(),
-              'postId': widget.postId,
-              'parentId': parentCommentId,
-              'message': processedComment,
-            }
-          : {
-              'profileId': AuthService.getProfileId(),
-              'postId': widget.postId,
-              'message': processedComment,
-            };
+      final data = {
+        'profileId': AuthService.getProfileId(),
+        'postId': widget.postId.toString(),
+        'message': processedComment,
+      };
 
-      final response = await http.post(
-        url,
-        body: jsonEncode(body),
-        headers: {
-          "Authorization": 'Bearer $token',
-          "Content-Type": "application/json",
-        },
-      );
+      if (isReply) {
+        data['parentId'] = parentCommentId.toString();
+      }
 
-      if (response.statusCode == 201) {
+      LogService.logDebug('Sending data: $data');
+      final response = await dio.post(url, data: data);
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
         setState(() {
           _commentController.clear();
           replyToUsername = null;
@@ -113,12 +90,16 @@ class _CommentSectionState extends State<CommentSection> {
             'hasFailed': false
           };
         });
+
+        NavigationService.showSnackBar('Comment sent successfully');
         await fetchComments();
+        widget.onCommentAdded(postComments.length);
         return true;
       } else {
-        throw Exception('Failed to send comment');
+        throw Exception('Failed to send comment: ${response.statusCode}');
       }
-    } catch (e) {
+    } catch (error) {
+      LogService.logError('Failed to send comment: $error');
       setState(() {
         commentStatus[newCommentId] = {
           'isSending': false,
@@ -130,22 +111,10 @@ class _CommentSectionState extends State<CommentSection> {
     }
   }
 
-  void _retryComment(int commentId) {
-    String commentContent = commentStatus[commentId]?['content'] ?? '';
-    if (commentContent.isNotEmpty) {
-      _sendComment(
-          commentContent, replyToUsername != null, parentCommentId ?? 0,
-          commentId: commentId);
-    }
-  }
-
   @override
   void initState() {
     fetchComments();
-    mediaFiles = widget.names
-        .split(',')
-        .map((e) => e.trim())
-        .toList(); // Split and trim the URLs
+    mediaFiles = widget.names.split(',').map((e) => e.trim()).toList();
     super.initState();
   }
 
@@ -153,7 +122,7 @@ class _CommentSectionState extends State<CommentSection> {
     return CenterSnapCarousel(
       mediaUrls: [url],
       isPlayingState: false,
-    ); // Ensure VideoPlayerWidget is a widget class
+    );
   }
 
   Widget _buildMediaFile(String url) {
@@ -184,205 +153,41 @@ class _CommentSectionState extends State<CommentSection> {
   }
 
   Future<void> fetchComments() async {
-    var url = Uri.https(LarosaLinks.nakedBaseUrl, '/comments/post');
     try {
-      LogService.logDebug('Requesting comments');
-      final response = await http.post(
+      final dio = DioService().dio;
+      final url = '${LarosaLinks.baseurl}/comments/post';
+
+      LogService.logDebug('Requesting comments from: $url');
+
+      final response = await dio.post(
         url,
-        body: jsonEncode({
+        data: {
           'postId': widget.postId.toString(),
-        }),
-        headers: headers,
+        },
       );
 
       if (response.statusCode == 200) {
-        final List<dynamic> data = json.decode(response.body);
+        final List<dynamic> data = response.data;
+        LogService.logFatal(' ${data[0]}');
 
         setState(() {
           postComments = data.reversed.toList();
           _isLoading = false;
+          widget.onCommentAdded(postComments.length);
         });
-        return;
       }
-
-      if (response.statusCode == 403 || response.statusCode == 302) {
-        await AuthService.refreshToken();
-        fetchComments();
-      } else {
-        // Optionally handle other status codes here
-      }
-    } catch (e) {
-      // Optionally handle the error here
+    } catch (error) {
+      LogService.logError('Failed to fetch comments: $error');
+      setState(() {
+        _isLoading = false;
+      });
     }
-  }
-
-  Widget commentsShimmer(BuildContext context) {
-    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
-    return Scaffold(
-      // backgroundColor: Colors.black,
-      body: Column(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Expanded(
-            child: SingleChildScrollView(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Post Image Placeholder
-                  Shimmer.fromColors(
-                    baseColor:
-                        isDarkMode ? Colors.grey[900]! : Colors.grey[400]!,
-                    highlightColor:
-                        isDarkMode ? Colors.grey[700]! : Colors.grey[100]!,
-                    child: Container(
-                      height: 200, // Height for the image
-                      width: double.infinity,
-                      color: Colors.grey[300],
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                  // Comment List Placeholder
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                    child: Column(
-                      children: List.generate(10, (index) {
-                        return Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            // Profile Picture and Username Shimmer
-                            Row(
-                              children: [
-                                Shimmer.fromColors(
-                                  baseColor: isDarkMode
-                                      ? Colors.grey[900]!
-                                      : Colors.grey[400]!,
-                                  highlightColor: isDarkMode
-                                      ? Colors.grey[700]!
-                                      : Colors.grey[100]!,
-                                  child: Container(
-                                    width: 40,
-                                    height: 40,
-                                    decoration: BoxDecoration(
-                                      shape: BoxShape.circle,
-                                      color: Colors.grey[300],
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(width: 10),
-                                Shimmer.fromColors(
-                                  baseColor: isDarkMode
-                                      ? Colors.grey[900]!
-                                      : Colors.grey[400]!,
-                                  highlightColor: isDarkMode
-                                      ? Colors.grey[700]!
-                                      : Colors.grey[100]!,
-                                  child: Container(
-                                    width: 100,
-                                    height: 10,
-                                    color: Colors.grey[300],
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 10),
-                            // Comment Text Shimmer
-                            Shimmer.fromColors(
-                              baseColor: isDarkMode
-                                  ? Colors.grey[900]!
-                                  : Colors.grey[400]!,
-                              highlightColor: isDarkMode
-                                  ? Colors.grey[700]!
-                                  : Colors.grey[100]!,
-                              child: Container(
-                                width: double.infinity,
-                                height: 15,
-                                margin: const EdgeInsets.only(left: 50),
-                                color: Colors.grey[300],
-                              ),
-                            ),
-                            const SizedBox(height: 5),
-                            Shimmer.fromColors(
-                              baseColor: isDarkMode
-                                  ? Colors.grey[900]!
-                                  : Colors.grey[400]!,
-                              highlightColor: isDarkMode
-                                  ? Colors.grey[700]!
-                                  : Colors.grey[100]!,
-                              child: Container(
-                                width: MediaQuery.of(context).size.width * 0.8,
-                                height: 10,
-                                margin: const EdgeInsets.only(left: 50),
-                                color: Colors.grey[300],
-                              ),
-                            ),
-                            const SizedBox(height: 5),
-                            // Date and Reply Shimmer
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Shimmer.fromColors(
-                                  baseColor: isDarkMode
-                                      ? Colors.grey[900]!
-                                      : Colors.grey[400]!,
-                                  highlightColor: isDarkMode
-                                      ? Colors.grey[700]!
-                                      : Colors.grey[100]!,
-                                  child: Container(
-                                    width: 80,
-                                    height: 10,
-                                    color: Colors.grey[300],
-                                  ),
-                                ),
-                                Shimmer.fromColors(
-                                  baseColor: isDarkMode
-                                      ? Colors.grey[900]!
-                                      : Colors.grey[400]!,
-                                  highlightColor: isDarkMode
-                                      ? Colors.grey[700]!
-                                      : Colors.grey[100]!,
-                                  child: Container(
-                                    width: 50,
-                                    height: 10,
-                                    color: Colors.grey[300],
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 20),
-                          ],
-                        );
-                      }),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          // Comment Input Shimmer
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Shimmer.fromColors(
-              baseColor: isDarkMode ? Colors.grey[900]! : Colors.grey[400]!,
-              highlightColor:
-                  isDarkMode ? Colors.grey[700]! : Colors.grey[100]!,
-              child: Container(
-                height: 50,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(10),
-                  color: Colors.grey[300],
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
   }
 
   @override
   Widget build(BuildContext context) {
     return _isLoading
-        ? commentsShimmer(context)
+        ? CommentsShimmer()
         : Scaffold(
             body: Column(
               children: [
@@ -450,7 +255,6 @@ class _CommentSectionState extends State<CommentSection> {
                                     },
                                   ),
                                 ),
-                                // This is the media section when the app bar is collapsed
                                 if (!hasVideoFiles)
                                   Positioned(
                                     bottom: 0,
@@ -459,8 +263,7 @@ class _CommentSectionState extends State<CommentSection> {
                                     child: Opacity(
                                       opacity: 1.0 - percentCollapsed,
                                       child: SizedBox(
-                                        height:
-                                            300, // Increased height for the collapsed state
+                                        height: 300,
                                         child: PageView.builder(
                                           itemCount: mediaFiles.length,
                                           itemBuilder: (context, index) {
@@ -542,6 +345,7 @@ class _CommentSectionState extends State<CommentSection> {
                           height: 50,
                           child: TextField(
                             controller: _commentController,
+                            style: const TextStyle(color: Colors.white),
                             decoration: InputDecoration(
                               enabledBorder: const OutlineInputBorder(
                                 borderSide: BorderSide.none,
@@ -557,10 +361,6 @@ class _CommentSectionState extends State<CommentSection> {
                             ),
                             onSubmitted: (value) async {
                               if (value.isEmpty) {
-                                // Get.snackbar(
-                                //   'Explore Larosa',
-                                //   'You can not post an empty comment',
-                                // );
                                 return;
                               }
                               await _sendComment(
@@ -578,6 +378,8 @@ class _CommentSectionState extends State<CommentSection> {
                           if (_commentController.text.isNotEmpty &&
                               !isCommenting) {
                             String commentText = _commentController.text;
+                            final isReply = replyToUsername != null;
+                            final pCommentId = parentCommentId;
 
                             setState(() {
                               isCommenting = true;
@@ -585,16 +387,15 @@ class _CommentSectionState extends State<CommentSection> {
                               postComments.insert(
                                 0,
                                 {
-                                  'id': DateTime.now()
-                                      .millisecondsSinceEpoch, // temporary ID
-                                  'username':
-                                      'Current User', // Replace with actual username if available
+                                  'id': DateTime.now().millisecondsSinceEpoch,
+                                  'username': 'Current User',
                                   'message': commentText,
-                                  'profilePicture':
-                                      null, // Replace if profile picture available
+                                  'profilePicture': null,
                                   'duration': 'Just now',
-                                  'replies': 0,
-                                  'likes': 0,
+                                  'replyCount': 0,
+                                  'likeCount': 0,
+                                  'isLikedByMe': false,
+                                  'parentId': isReply ? pCommentId : null,
                                   'isSending': true,
                                   'hasFailed': false,
                                 },
@@ -604,15 +405,17 @@ class _CommentSectionState extends State<CommentSection> {
 
                             bool success = await _sendComment(
                               commentText,
-                              replyToUsername != null,
-                              parentCommentId ?? 0,
+                              isReply,
+                              pCommentId ?? 0,
                             );
 
                             if (success) {
-                              // Comment was sent successfully; update UI
+                              // Comment was sent successfully
                               setState(() {
-                                postComments[0]['isSending'] = false;
+                                replyToUsername = null;
+                                parentCommentId = null;
                               });
+                              await fetchComments(); // Refresh to get the actual comment data
                             } else {
                               // Sending failed; update UI to show retry
                               setState(() {
@@ -624,8 +427,6 @@ class _CommentSectionState extends State<CommentSection> {
                             setState(() {
                               isCommenting = false;
                             });
-                          } else {
-                            // HelperFunctions.displaySnackbar('Cannot comment');
                           }
                         },
                         child: Container(
@@ -660,163 +461,5 @@ class _CommentSectionState extends State<CommentSection> {
               ],
             ),
           );
-  }
-}
-
-class PostCommentTile extends StatefulWidget {
-  final dynamic comment;
-  final int postId;
-  final bool hasFailed;
-  final bool isSending;
-  final VoidCallback? onRetry;
-  final Function(String, int) onReply;
-
-  const PostCommentTile({
-    super.key,
-    required this.comment,
-    required this.onReply,
-    required this.postId,
-    this.hasFailed = false,
-    this.isSending = false,
-    this.onRetry,
-  });
-
-  @override
-  State<PostCommentTile> createState() => _PostCommentTileState();
-}
-
-class _PostCommentTileState extends State<PostCommentTile> {
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 0.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Row(
-                children: [
-                  CircleAvatar(
-                    radius: 12,
-                    backgroundImage: widget.comment['profilePicture'] == null
-                        ? const AssetImage('assets/images/EXPLORE.png')
-                        : CachedNetworkImageProvider(
-                            widget.comment['profilePicture']),
-                  ),
-                  const Gap(5),
-                  Text(
-                    widget.comment['username'] ?? '',
-                    style: Theme.of(context).textTheme.bodySmall,
-                  ),
-                ],
-              ),
-              Text(widget.comment['duration'] ?? ''),
-            ],
-          ),
-          const Gap(5),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Comment message container
-              Container(
-                decoration: BoxDecoration(
-                  gradient: LarosaColors.blueGradient,
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8),
-                child: Text(
-                  HelperFunctions.emojifyAText(widget.comment['message'] ?? ''),
-                  style: const TextStyle(color: Colors.white),
-                ),
-              ),
-              SizedBox(
-                  height: widget.isSending || widget.hasFailed
-                      ? 4
-                      : 0), // Spacing between message and indicators
-
-              if (widget.isSending || widget.hasFailed)
-                // Retry and isSending indicators
-                Padding(
-                  padding: const EdgeInsets.only(
-                      left: 30.0, top: 10), // Add left padding
-                  child: Row(
-                    children: [
-                      if (widget.isSending)
-                        const SizedBox(
-                          width: 16,
-                          height: 16,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 1.5,
-                            color: Colors.green,
-                          ),
-                        ),
-                      if (widget.hasFailed && widget.onRetry != null)
-                        SizedBox(
-                          height: 15,
-                          width: 10,
-                          child: IconButton(
-                            icon: const Icon(Icons.refresh,
-                                color: Colors.red, size: 16),
-                            onPressed: widget.onRetry,
-                          ),
-                        ),
-                    ],
-                  ),
-                )
-            ],
-          ),
-          Gap(widget.isSending || widget.hasFailed ? 8 : 0),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Row(
-                children: [
-                  const Text('12.9.2024'), // Placeholder date, adjust as needed
-                  TextButton(
-                    onPressed: () {
-                      widget.onReply(widget.comment['username'] ?? '',
-                          widget.comment['id']);
-                    },
-                    child: const Text('Reply'),
-                  ),
-                ],
-              ),
-              Row(
-                children: [
-                  Row(
-                    children: [
-                      const Icon(Iconsax.message, size: 18),
-                      const Gap(5),
-                      Text(widget.comment['replies'].toString()),
-                    ],
-                  ),
-                  const Gap(20),
-                  Row(
-                    children: [
-                      SvgPicture.asset(
-                        'assets/icons/SolarHeartAngleBold.svg',
-                        width: 20,
-                        colorFilter: const ColorFilter.mode(
-                          Colors.red,
-                          BlendMode.srcIn,
-                        ),
-                        semanticsLabel: 'Like icon',
-                      ),
-                      const Gap(5),
-                      Text(widget.comment['likes'].toString()),
-                    ],
-                  ),
-                ],
-              )
-            ],
-          ),
-          const Divider(),
-        ],
-      ),
-    );
   }
 }

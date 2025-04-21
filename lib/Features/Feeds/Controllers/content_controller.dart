@@ -53,6 +53,7 @@ class ContentController extends ChangeNotifier {
       LogService.logInfo('response code ${response.statusCode}');
 
       if (response.statusCode == 201) {
+        newContentMediaStrings.clear();
         return true;
       } else {
         LogService.logError('non 200 ${response.data}');
@@ -120,7 +121,10 @@ class ContentController extends ChangeNotifier {
 
     try {
       LogService.logInfo('Files: ${formData.files.length} ');
-      LogService.logFatal('sending request');
+      LogService.logFatal('formdata');
+      print(formData.fields);
+
+
       
       Dio.Response response = await _dioService.dio.post(
         '${LarosaLinks.baseurl}/api/v1/business-post/create',
@@ -131,6 +135,7 @@ class ContentController extends ChangeNotifier {
 
       if (response.statusCode == 201 || response.statusCode == 200) {
         LogService.logInfo('success');
+        newContentMediaStrings.clear();
         return true;
       } else {
         LogService.logError('non 200 ${response.data}');

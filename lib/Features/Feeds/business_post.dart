@@ -9,6 +9,7 @@ import 'package:go_router/go_router.dart';
 import 'package:iconsax/iconsax.dart';
 import 'package:ionicons/ionicons.dart';
 import 'package:larosa_block/Features/Feeds/Controllers/content_controller.dart';
+import 'package:larosa_block/Features/Feeds/Controllers/second_business_category_provider.dart';
 import 'package:larosa_block/Utils/colors.dart';
 import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
@@ -17,7 +18,7 @@ import 'package:http/http.dart' as http;
 import '../../Services/auth_service.dart';
 import '../../Services/log_service.dart';
 import '../../Utils/helpers.dart';
-import 'Controllers/business_post_controller.dart';
+//import 'Controllers/business_post_controller.dart';
 
 class BusinessPostScreen extends StatefulWidget {
   const BusinessPostScreen({super.key});
@@ -38,7 +39,6 @@ class _BusinessPostScreenState extends State<BusinessPostScreen>
   bool _breakfastIncluded = false;
   int? _selectedReservationTypeId;
 
-  // Separate form keys for each tab to prevent duplication
   final _businessFormKey = GlobalKey<FormState>();
   final _personalFormKey = GlobalKey<FormState>();
 
@@ -52,9 +52,8 @@ class _BusinessPostScreenState extends State<BusinessPostScreen>
 
   final String token = AuthService.getToken();
 
-  List<Map<String, dynamic>> reservationTypesList =
-      []; // Holds the reservation types data
-  bool isLoading = false; // Tracks loading state
+  List<Map<String, dynamic>> reservationTypesList = [];
+  bool isLoading = false;
 
   @override
   void initState() {
@@ -66,10 +65,13 @@ class _BusinessPostScreenState extends State<BusinessPostScreen>
       length: _isBusinessAccount ? 2 : 1,
       vsync: this,
     );
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Provider.of<SecondBusinessCategoryProvider>(context, listen: false)
+          .fetchBrandCategories();
+    });
   }
 
-  final List<Map<String, dynamic>> _mediaControllers =
-      []; // List to store media info and controllers
+  final List<Map<String, dynamic>> _mediaControllers = [];
 
   Future<void> _pickMedia() async {
     bool hasImage = _mediaControllers.any((media) =>
@@ -131,15 +133,17 @@ class _BusinessPostScreenState extends State<BusinessPostScreen>
                   );
                   if (pickedFile != null) {
                     File videoFile = File(pickedFile.path);
-                    final VideoPlayerController controller = VideoPlayerController.file(videoFile);
+                    final VideoPlayerController controller =
+                        VideoPlayerController.file(videoFile);
                     await controller.initialize();
 
                     final Duration videoDuration = controller.value.duration;
 
-                    if(videoDuration.inMinutes > 5){
+                    if (videoDuration.inMinutes > 5) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
-                          content: Text('Video duration should not exceed 5 minutes'),
+                          content: Text(
+                              'Video duration should not exceed 5 minutes'),
                         ),
                       );
                       return;
@@ -154,19 +158,15 @@ class _BusinessPostScreenState extends State<BusinessPostScreen>
     );
   }
 
-// Method to handle video addition to the post with preview setup
   void _addVideo(String filePath) {
-    // Declare and initialize the video controller without using cascade notation initially
     final videoController = VideoPlayerController.file(File(filePath));
 
-    // Initialize the controller and set up looping and autoplay once initialized
     videoController.initialize().then((_) {
-      setState(() {}); // Refresh the UI after the video is loaded
+      setState(() {});
       videoController.setLooping(true);
       videoController.play();
     });
 
-    // Add the controller and file path to the media list
     setState(() {
       _mediaControllers.add({
         'filePath': filePath,
@@ -174,7 +174,6 @@ class _BusinessPostScreenState extends State<BusinessPostScreen>
       });
     });
 
-    // Add media path to ContentController
     Provider.of<ContentController>(context, listen: false)
         .addToNewContentMediaStrings(filePath);
   }
@@ -193,9 +192,8 @@ class _BusinessPostScreenState extends State<BusinessPostScreen>
       final response = await http.get(
         Uri.parse(url),
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization':
-              'Bearer $token', // Replace with actual token if needed
+          "Content-Type": "application/json",
+          "Authorization": 'Bearer $token',
         },
       );
 
@@ -209,7 +207,8 @@ class _BusinessPostScreenState extends State<BusinessPostScreen>
         });
       } else {
         LogService.logError(
-            'Failed to fetch reservation types: ${response.statusCode}');
+          'Failed to fetch reservation types: ${response.statusCode}',
+        );
       }
     } catch (e) {
       LogService.logError('Error fetching reservation types: $e');
@@ -222,27 +221,23 @@ class _BusinessPostScreenState extends State<BusinessPostScreen>
 
   @override
   void dispose() {
-    // Dispose each video controller when the screen is closed
     for (var media in _mediaControllers) {
       media['controller']?.dispose();
     }
+    _tabController.dispose();
     super.dispose();
   }
 
   void _removeMedia(String mediaPath) {
-    // Find the media in the list
     final mediaIndex =
         _mediaControllers.indexWhere((media) => media['filePath'] == mediaPath);
     if (mediaIndex != -1) {
-      // Dispose the associated video controller if it exists
       _mediaControllers[mediaIndex]['controller']?.dispose();
 
-      // Remove the media from the list
       setState(() {
         _mediaControllers.removeAt(mediaIndex);
       });
 
-      // Update the ContentController
       Provider.of<ContentController>(context, listen: false)
           .removeFromNewContentMediaStrings(mediaPath);
     }
@@ -250,7 +245,7 @@ class _BusinessPostScreenState extends State<BusinessPostScreen>
 
   Future<void> _showCropper() async {
     if (_selectedImage == null) return;
-    
+
     final croppedFile = await ImageCropper().cropImage(
       sourcePath: _selectedImage!.path,
       aspectRatio: const CropAspectRatio(ratioX: 3, ratioY: 4),
@@ -259,12 +254,10 @@ class _BusinessPostScreenState extends State<BusinessPostScreen>
           toolbarTitle: 'Crop Image - Explore Larosa',
           toolbarColor: LarosaColors.primary,
           toolbarWidgetColor: Colors.white,
-
           initAspectRatio: CropAspectRatioPreset.ratio3x2,
           lockAspectRatio: false,
           showCropGrid: true,
           dimmedLayerColor: Colors.black54,
-          
           activeControlsWidgetColor: LarosaColors.secondary,
         ),
         IOSUiSettings(
@@ -293,7 +286,6 @@ class _BusinessPostScreenState extends State<BusinessPostScreen>
       });
     });
 
-    // Add to ContentController for persistence or other usage
     Provider.of<ContentController>(context, listen: false)
         .addToNewContentMediaStrings(imageFile.path);
   }
@@ -314,7 +306,6 @@ class _BusinessPostScreenState extends State<BusinessPostScreen>
                 children: [
                   const Gap(5),
                   _buildMediaList(contentController),
-                  
                   if (isBusinessPost && _isBusinessAccount) ...[
                     // const Gap(20),
                     // _buildCategorySelector(),
@@ -334,10 +325,7 @@ class _BusinessPostScreenState extends State<BusinessPostScreen>
                     _buildBreakfastToggle(),
                     const Gap(10),
                   ],
-
-                  if (!isBusinessPost)
-                  Gap(10),
-                   
+                  if (!isBusinessPost) Gap(10),
                   _buildConditionalGap(isBusinessPost),
                   _buildCaptionInputField(isBusinessPost),
                   const Gap(15),
@@ -356,13 +344,23 @@ class _BusinessPostScreenState extends State<BusinessPostScreen>
   }
 
   Widget _buildUnitSelector() {
-    return Consumer<BusinessCategoryProvider>(
-      builder: (context, categoryProvider, child) {
-        final units = categoryProvider.units;
-
-        if (units.isEmpty) {
-          return const SizedBox.shrink();
+    return Consumer<SecondBusinessCategoryProvider>(
+      builder: (context, secondBusinessCategoryProvider, child) {
+        if (secondBusinessCategoryProvider.isLoading) {
+          return const Center(child: CupertinoActivityIndicator());
         }
+
+        if (secondBusinessCategoryProvider.error != null) {
+          return Center(child: Text(secondBusinessCategoryProvider.error!));
+        }
+
+        final categories = secondBusinessCategoryProvider.categories;
+        if (categories.isEmpty) {
+          return Text('No categories');
+        }
+
+        final allSubcategories =
+            categories.expand((category) => category.subcategories).toList();
 
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -370,7 +368,7 @@ class _BusinessPostScreenState extends State<BusinessPostScreen>
             const Gap(10),
             DropdownButtonFormField<int>(
               decoration: InputDecoration(
-                labelText: "Select Unit",
+                labelText: "Select Subcategory",
                 labelStyle: const TextStyle(color: LarosaColors.mediumGray),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
@@ -378,134 +376,188 @@ class _BusinessPostScreenState extends State<BusinessPostScreen>
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: LarosaColors.secondary, width: 3),
+                  borderSide: const BorderSide(
+                    color: LarosaColors.secondary,
+                    width: 3,
+                  ),
                 ),
               ),
-              value: unitId,
-              items: units
-                  
-                  .map<DropdownMenuItem<int>>((item) {
+              value: secondBusinessCategoryProvider.selectedSubcategory?.id,
+              items: allSubcategories.map<DropdownMenuItem<int>>((subcategory) {
                 return DropdownMenuItem<int>(
-                  value: item['id'],
-                  child: Text(item['name']),
+                  value: subcategory.id,
+                  child: Text(subcategory.name),
                 );
               }).toList(),
               onChanged: (value) {
                 if (value != null) {
-                  //categoryProvider.selectUnit(value);
+                  final selectedSubcategory =
+                      allSubcategories.firstWhere((sub) => sub.id == value);
+                  secondBusinessCategoryProvider
+                      .selectSubcategory(selectedSubcategory);
                   setState(() {
-                    unitId = value;
+                    unitId = null;
                   });
                 }
               },
               isExpanded: true,
-              hint: const Text("Choose a Unit"),
+              hint: const Text("Choose a Subcategory"),
               validator: (value) =>
-                  value == null ? "Please select a unit" : null,
+                  value == null ? "Please select a subcategory" : null,
             ),
+            const Gap(10),
+            // Unit Type Dropdown
+            if (secondBusinessCategoryProvider.selectedSubcategory != null) ...[
+              if (secondBusinessCategoryProvider
+                  .selectedSubcategory!.unitTypes.isEmpty)
+                const Padding(
+                  padding: EdgeInsets.all(8.0),
+                  child: Text(
+                    "This subcategory doesn't have any units available yet",
+                    style: TextStyle(color: Colors.red),
+                  ),
+                )
+              else
+                DropdownButtonFormField<int>(
+                  decoration: InputDecoration(
+                    labelText: "Select Unit",
+                    labelStyle: const TextStyle(color: LarosaColors.mediumGray),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide:
+                          const BorderSide(color: Colors.grey, width: 3),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(
+                        color: LarosaColors.secondary,
+                        width: 3,
+                      ),
+                    ),
+                  ),
+                  value: unitId,
+                  items: secondBusinessCategoryProvider
+                      .selectedSubcategory!.unitTypes
+                      .map<DropdownMenuItem<int>>((unit) {
+                    return DropdownMenuItem<int>(
+                      value: unit.id,
+                      child: Text(unit.name),
+                    );
+                  }).toList(),
+                  onChanged: (value) {
+                    if (value != null) {
+                      setState(() {
+                        unitId = value;
+                      });
+                    }
+                  },
+                  isExpanded: true,
+                  hint: const Text("Choose a Unit"),
+                  validator: (value) =>
+                      value == null ? "Please select a unit" : null,
+                ),
+            ],
           ],
         );
       },
     );
   }
 
- Widget _buildReservationTypeSelector() {
+  Widget _buildReservationTypeSelector() {
+    if (AuthService.isReservation() == false) {
+      return const SizedBox.shrink();
+    }
 
-  if (AuthService.isReservation() == false) {
-    return const SizedBox.shrink();
-  }
-
-  return Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      DropdownButtonFormField<int>(
-        decoration: InputDecoration(
-          labelText: "Reservation Type",
-          labelStyle: const TextStyle(color: LarosaColors.mediumGray),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: Colors.grey, width: 1),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide:
-                const BorderSide(color: LarosaColors.secondary, width: 2),
-          ),
-          hintText: 'Choose a Reservation Type',
-          hintStyle: TextStyle(
-            color: LarosaColors.mediumGray.withOpacity(0.8),
-            fontSize: 16,
-          ),
-        ),
-        value: _selectedReservationTypeId,
-        items: reservationTypesList.map((type) {
-          return DropdownMenuItem<int>(
-            value: type['id'],
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  type['name'] ?? 'Unknown',
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                    color: LarosaColors.primary,
-                  ),
-                ),
-              ],
-            ),
-          );
-        }).toList(),
-        onChanged: (value) {
-          setState(() {
-            _selectedReservationTypeId = value;
-          });
-        },
-        validator: (value) =>
-            value == null ? 'Please select a reservation type' : null,
-        isExpanded: true,
-      ),
-      if (_selectedReservationTypeId != null)
-        Padding(
-          padding: const EdgeInsets.only(top: 10),
-          child: Card(
-            elevation: 2,
-            shape: RoundedRectangleBorder(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        DropdownButtonFormField<int>(
+          decoration: InputDecoration(
+            labelText: "Reservation Type",
+            labelStyle: const TextStyle(color: LarosaColors.mediumGray),
+            border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: Colors.grey, width: 1),
             ),
-            child: Padding(
-              padding: const EdgeInsets.all(12),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide:
+                  const BorderSide(color: LarosaColors.secondary, width: 2),
+            ),
+            hintText: 'Choose a Reservation Type',
+            hintStyle: TextStyle(
+              color: LarosaColors.mediumGray.withOpacity(0.8),
+              fontSize: 16,
+            ),
+          ),
+          value: _selectedReservationTypeId,
+          items: reservationTypesList.map((type) {
+            return DropdownMenuItem<int>(
+              value: type['id'],
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    "Selected Type: ${reservationTypesList.firstWhere((type) => type['id'] == _selectedReservationTypeId)['name']}",
+                    type['name'] ?? 'Unknown',
                     style: const TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.bold,
                       color: LarosaColors.primary,
                     ),
                   ),
-                  const Gap(5),
-                  Text(
-                    reservationTypesList
-                            .firstWhere((type) =>
-                                type['id'] == _selectedReservationTypeId)[
-                        'description'] ??
-                        '',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: LarosaColors.mediumGray.withOpacity(0.8),
-                    ),
-                  ),
                 ],
+              ),
+            );
+          }).toList(),
+          onChanged: (value) {
+            setState(() {
+              _selectedReservationTypeId = value;
+            });
+          },
+          validator: (value) =>
+              value == null ? 'Please select a reservation type' : null,
+          isExpanded: true,
+        ),
+        if (_selectedReservationTypeId != null)
+          Padding(
+            padding: const EdgeInsets.only(top: 10),
+            child: Card(
+              elevation: 2,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      "Selected Type: ${reservationTypesList.firstWhere((type) => type['id'] == _selectedReservationTypeId)['name']}",
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        color: LarosaColors.primary,
+                      ),
+                    ),
+                    const Gap(5),
+                    Text(
+                      reservationTypesList.firstWhere((type) =>
+                              type['id'] ==
+                              _selectedReservationTypeId)['description'] ??
+                          '',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: LarosaColors.mediumGray.withOpacity(0.8),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
-        ),
-    ],
-  );
-}
+      ],
+    );
+  }
 
   Widget _buildMediaList(ContentController contentController) {
     bool hasVideo = _mediaControllers.any((media) =>
@@ -542,8 +594,8 @@ class _BusinessPostScreenState extends State<BusinessPostScreen>
                             } else {
                               return Center(
                                   child: CircularProgressIndicator(
-                                    color: Theme.of(context).colorScheme.primary,
-                                  ));
+                                color: Theme.of(context).colorScheme.primary,
+                              ));
                             }
                           },
                         )
@@ -561,7 +613,10 @@ class _BusinessPostScreenState extends State<BusinessPostScreen>
                         padding: const EdgeInsets.all(6),
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(15),
-                          color: Theme.of(context).colorScheme.background.withOpacity(.7),
+                          color: Theme.of(context)
+                              .colorScheme
+                              .background
+                              .withOpacity(.7),
                         ),
                         child: Icon(
                           Icons.delete,
@@ -721,8 +776,8 @@ class _BusinessPostScreenState extends State<BusinessPostScreen>
         ),
         hintText: 'Enter Price',
         hintStyle: TextStyle(color: LarosaColors.mediumGray.withOpacity(0.8)),
-        //prefixText: '\$', 
-        suffixText: 'Tsh',// Add a currency prefix
+        //prefixText: '\$',
+        suffixText: 'Tsh', // Add a currency prefix
         prefixStyle: const TextStyle(
           color: LarosaColors.mediumGray,
           fontWeight: FontWeight.bold,
@@ -748,8 +803,7 @@ class _BusinessPostScreenState extends State<BusinessPostScreen>
   }
 
   Widget _buildBreakfastToggle() {
-
-    if(AuthService.isReservation() == false){
+    if (AuthService.isReservation() == false) {
       return SizedBox.shrink();
     }
 
@@ -766,8 +820,7 @@ class _BusinessPostScreenState extends State<BusinessPostScreen>
         Switch(
           value: _breakfastIncluded,
           activeColor: LarosaColors.mediumGray,
-          activeTrackColor:
-              LarosaColors.mediumGray.withOpacity(0.5),
+          activeTrackColor: LarosaColors.mediumGray.withOpacity(0.5),
           inactiveThumbColor: LarosaColors.mediumGray,
           inactiveTrackColor: LarosaColors.mediumGray.withOpacity(0.3),
           onChanged: (value) {
@@ -798,8 +851,6 @@ class _BusinessPostScreenState extends State<BusinessPostScreen>
       ),
       maxLines: 5,
       style: const TextStyle(color: LarosaColors.primary),
-      // validator: (value) =>
-      //     value == null || value.isEmpty ? "Caption cannot be empty" : null,
     );
   }
 
@@ -827,30 +878,40 @@ class _BusinessPostScreenState extends State<BusinessPostScreen>
               contentController.newContentMediaStrings,
             );
 
-            bool success;
+            bool success = false;
 
-            if (isBusinessPost) {
-              success = await contentController.postBusiness(
-                _captionController.text,
-                double.tryParse(_priceController.text.replaceAll(',', '')) ?? 0,
-                maxHeight,
-                unitId!,
-              );
-            } else {
-              // Use uploadPost for personal accounts
-              LogService.logInfo('uploading post');
-              success = await contentController.uploadPost(
-                _captionController.text,
-                double.tryParse(_priceController.text.replaceAll(',', '')) ?? 0,
-              );
-            }
+            try {
+              if (isBusinessPost) {
+                success = await contentController.postBusiness(
+                  _captionController.text,
+                  double.tryParse(_priceController.text.replaceAll(',', '')) ?? 0,
+                  maxHeight,
+                  unitId!,
+                );
+              } else {
+                success = await contentController.uploadPost(
+                  _captionController.text,
+                  double.tryParse(_priceController.text.replaceAll(',', '')) ?? 0,
+                );
+              }
 
-            setState(() {
-              isCreatingPost = false;
-            });
+              setState(() {
+                isCreatingPost = false;
+              });
 
-            if (success && context.mounted) {
-              context.go('/');
+              if (success && context.mounted) {
+                context.go('/');
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Post created successfully'),
+                  ),
+                );
+              }
+            } catch (e) {
+              LogService.logError('Error creating post: $e');
+              setState(() {
+                isCreatingPost = false;
+              });
             }
           }
         },
@@ -934,11 +995,11 @@ class _BusinessPostScreenState extends State<BusinessPostScreen>
                 controller: _tabController,
                 children: _isBusinessAccount
                     ? [
-                        _buildTabContent(true), // Business Tab
-                        _buildTabContent(false), // Personal Tab
+                        _buildTabContent(true),
+                        _buildTabContent(false),
                       ]
                     : [
-                        _buildTabContent(false), // Personal Tab only
+                        _buildTabContent(false),
                       ],
               ),
             ),
