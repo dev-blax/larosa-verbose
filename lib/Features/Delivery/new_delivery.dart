@@ -1241,81 +1241,51 @@ class _NewDeliveryState extends State<NewDelivery> {
   }
 
   Future<void> _loadDriverOffer() async {
-    print('123');
-    setState(() {
-      isLoadingDriverOffer = true;
-    });
+  print('123');
+  setState(() {
+    isLoadingDriverOffer = true;
+  });
 
-    // If source location is not set, attempt to retrieve the current location.
+  // If source location is not set, attempt to retrieve the current location.
+  if (sourceLatitude == null || sourceLongitude == null) {
+    print('Source location not set, attempting to get current location');
+    await _getCurrentLocation(true);
+    // Recheck whether location is available.
     if (sourceLatitude == null || sourceLongitude == null) {
-      print('Source location not set, attempting to get current location');
-      await _getCurrentLocation(true);
-      // Recheck whether location is available.
-      if (sourceLatitude == null || sourceLongitude == null) {
-        print('Source location is still null after attempting to retrieve it.');
-        setState(() {
-          isLoadingDriverOffer = false;
-        });
-        return;
-      }
-    }
-
-    // Get the city name using the source location.
-    final placeDetails =
-        await getCountryAndCity(sourceLatitude!, sourceLongitude!);
-    print('Place details: $placeDetails');
-    final cityName = placeDetails["city"] ?? "";
-    print('City name: $cityName');
-    if (cityName.isEmpty) {
-      print('City name is empty.');
+      print('Source location is still null after attempting to retrieve it.');
       setState(() {
         isLoadingDriverOffer = false;
       });
       return;
     }
-
-    print('fred'); // Debug point: Proceeding to call driver offer endpoint.
-
-    // final String endpoint =
-    //     '${LarosaLinks.baseurl}/api/v1/ride-offers/driver/best-offer?cityName=$cityName';
-
-    final String endpoint =
-        '${LarosaLinks.baseurl}/api/v1/ride-offers/ustomer/best-offer?cityName=Dodoma';
-    Map<String, String> headers = {
-      "Content-Type": "application/json",
-      "Access-Control-Allow-Origin": "*",
-      'Authorization': 'Bearer ${AuthService.getToken()}',
-    };
-    final String endpoint =
-        '${LarosaLinks.baseurl}/api/v1/ride-offers/ustomer/best-offer?cityName=Dodoma';
-    Map<String, String> headers = {
-      "Content-Type": "application/json",
-      "Access-Control-Allow-Origin": "*",
-      'Authorization': 'Bearer ${AuthService.getToken()}',
-    };
-
-    try {
-      final response = await http.get(Uri.parse(endpoint), headers: headers);
-      print('frs : ${response.body}');
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        setState(() {
-          driverOffer = jsonDecode(response.body);
-          isLoadingDriverOffer = false;
-        });
-      } else {
-        LogService.logError(
-            "Failed to fetch driver offer: ${response.statusCode}");
-        setState(() {
-          isLoadingDriverOffer = false;
-        });
-      }
-    } catch (e) {
-      LogService.logError("Error fetching driver offer: $e");
-      setState(() {
-        isLoadingDriverOffer = false;
-      });
-    }
   }
+
+  // Get the city name using the source location.
+  final placeDetails = await getCountryAndCity(sourceLatitude!, sourceLongitude!);
+  print('Place details: $placeDetails');
+  final cityName = placeDetails["city"] ?? "";
+  print('City name: $cityName');
+  if (cityName.isEmpty) {
+    print('City name is empty.');
+    setState(() {
+      isLoadingDriverOffer = false;
+    });
+    return;
+  }
+
+  print('fred'); // Debug point: Proceeding to call driver offer endpoint.
+
+  // final String endpoint =
+  //     '${LarosaLinks.baseurl}/api/v1/ride-offers/driver/best-offer?cityName=$cityName';
+
+    final String endpoint =
+        '${LarosaLinks.baseurl}/api/v1/ride-offers/ustomer/best-offer?cityName=Dodoma';
+    Map<String, String> headers = {
+      "Content-Type": "application/json",
+      "Access-Control-Allow-Origin": "*",
+      'Authorization': 'Bearer ${AuthService.getToken()}',
+    };
+
     try {
       final response = await http.get(Uri.parse(endpoint), headers: headers);
       print('frs : ${response.body}');
@@ -1353,8 +1323,6 @@ class _NewDeliveryState extends State<NewDelivery> {
 
   void _updateMarker(double latitude, double longitude) {
     setState(() {
-      _markers
-          .removeWhere((marker) => marker.markerId.value == 'dynamic_marker');
       _markers
           .removeWhere((marker) => marker.markerId.value == 'dynamic_marker');
       _markers.add(
@@ -1400,12 +1368,8 @@ class _NewDeliveryState extends State<NewDelivery> {
         LogService.logInfo("Time Estimation Response: ${response.body}");
         return jsonDecode(response.body);
       } else {
-        LogService.logError(
-            "frs Failed to fetch time estimation: ${response.statusCode}");
-        return {
-          "error":
-              "123 Failed to fetch time estimation. Status code: ${response.statusCode}"
-        };
+        LogService.logError("Failed to fetch time estimation: ${response.statusCode}");
+        return {"error": "Failed to fetch time estimation. Status code: ${response.statusCode}"};
       }
     } catch (e) {
       LogService.logError("Error estimating time: $e");
@@ -1428,8 +1392,6 @@ class _NewDeliveryState extends State<NewDelivery> {
               final terms = prediction['terms'] as List;
               final region =
                   terms.length > 1 ? terms[1]['value'] as String : '';
-              final region =
-                  terms.length > 1 ? terms[1]['value'] as String : '';
               return {
                 'description': prediction['description'] as String,
                 'place_id': prediction['place_id'] as String,
@@ -1441,11 +1403,6 @@ class _NewDeliveryState extends State<NewDelivery> {
         return suggestions.isNotEmpty
             ? suggestions
             : [
-                {
-                  'description': 'No results found.',
-                  'place_id': '',
-                  'region': ''
-                }
                 {
                   'description': 'No results found.',
                   'place_id': '',
@@ -1484,8 +1441,6 @@ class _NewDeliveryState extends State<NewDelivery> {
       final response = await http.get(Uri.parse(url));
       if (response.statusCode == 200) {
         final jsonData = jsonDecode(response.body);
-        if (jsonData['result'] != null &&
-            jsonData['result']['geometry'] != null) {
         if (jsonData['result'] != null &&
             jsonData['result']['geometry'] != null) {
           final location = jsonData['result']['geometry']['location'];
@@ -1571,8 +1526,6 @@ class _NewDeliveryState extends State<NewDelivery> {
       } else {
         LogService.logError(
             'Error fetching ride history: ${response.statusCode}');
-        LogService.logError(
-            'Error fetching ride history: ${response.statusCode}');
       }
     } catch (e) {
       LogService.logError('Failed to fetch ride history: $e');
@@ -1581,11 +1534,7 @@ class _NewDeliveryState extends State<NewDelivery> {
 
   Future<Map<String, String>> getCountryAndCity(
       double latitude, double longitude) async {
-  Future<Map<String, String>> getCountryAndCity(
-      double latitude, double longitude) async {
     try {
-      List<Placemark> placemarks =
-          await placemarkFromCoordinates(latitude, longitude);
       List<Placemark> placemarks =
           await placemarkFromCoordinates(latitude, longitude);
       if (placemarks.isNotEmpty) {
@@ -1680,22 +1629,20 @@ class _NewDeliveryState extends State<NewDelivery> {
           "Please enter pickup and destination locations", true);
       return;
     }
-
-    setState(() => isFetchingTimeEstimations = true);
-
-    // Get country + city from reverse‐geocoding
-    final placeDetails =
-        await getCountryAndCity(sourceLatitude!, sourceLongitude!);
+    setState(() {
+      isFetchingTimeEstimations = true;
+    });
+    final placeDetails = await getCountryAndCity(sourceLatitude!, sourceLongitude!);
     final String country = placeDetails["country"] ?? "Unknown";
     final String rawCity = placeDetails["city"] ?? "Unknown";
 
-    // Ensure title‐case (in case API is case‐sensitive)
-    String city = rawCity
-        .split(' ')
-        .map((w) => w[0].toUpperCase() + w.substring(1).toLowerCase())
-        .join(' ');
+    const String endpoint = '${LarosaLinks.baseurl}/api/v1/transport-cost/calculate';
+    Map<String, String> headers = {
+      "Content-Type": "application/json",
+      "Access-Control-Allow-Origin": "*",
+      'Authorization': 'Bearer ${AuthService.getToken()}',
+    };
 
-    // Build request body with BOTH keys
     final Map<String, dynamic> requestBody = {
       // "startLat": sourceLatitude,
       // "startLng": sourceLongitude,
@@ -1731,43 +1678,30 @@ class _NewDeliveryState extends State<NewDelivery> {
       setState(() => isFetchingTimeEstimations = false);
 
       if (response.statusCode == 200 || response.statusCode == 201) {
-        print("Succeeded frs : ${response.body}");
-
-        final estimations = jsonDecode(response.body);
-        bool allBusy = (estimations["vehicleEstimations"] as List)
-            .every((e) => e["pickupDuration"] == 0);
-
-        if (allBusy) {
+        final Map<String, dynamic> estimations = jsonDecode(response.body);
+        bool allDriversBusy = estimations["vehicleEstimations"]
+            .every((estimation) => estimation["pickupDuration"] == 0);
+        if (allDriversBusy) {
+           showTimeEstimationsModal(context, estimations);
+           
           // HelperFunctions.displayInfo(
-          //     context,
-          //     "Our system is experiencing high demand at the moment. "
-          //     "Please hold on while we secure the best available driver...");
-
-
-              showTimeEstimationsModal(context, estimations);
-
+          //   context,
+          //   "Our system is experiencing high demand at the moment. Please hold on while we secure the best available driver for you. Your comfort and safety are our top priority."
+          // );
         } else {
           showTimeEstimationsModal(context, estimations);
         }
       } else {
-        print("Failed frs : ${response.body}");
-        HelperFunctions.showToast(
-            "Failed to fetch transport cost "
-            "(status ${response.statusCode})",
-            true);
+        HelperFunctions.showToast("Failed to fetch transport cost. Status code: ${response.statusCode}", true);
       }
     } catch (e) {
       setState(() => isFetchingTimeEstimations = false);
       LogService.logError("Error calculating transport cost: $e");
       HelperFunctions.showToast(
           "An error occurred while calculating transport cost", true);
-      HelperFunctions.showToast(
-          "An error occurred while calculating transport cost", true);
     }
   }
 
-  void showTimeEstimationsModal(
-      BuildContext context, Map<String, dynamic> estimations) {
   void showTimeEstimationsModal(
       BuildContext context, Map<String, dynamic> estimations) {
     showModalBottomSheet(
@@ -1797,16 +1731,12 @@ class _NewDeliveryState extends State<NewDelivery> {
       LocationPermission permission = await Geolocator.requestPermission();
       if (permission == LocationPermission.denied ||
           permission == LocationPermission.deniedForever) {
-      if (permission == LocationPermission.denied ||
-          permission == LocationPermission.deniedForever) {
         setState(() {
           isLoadingSource = false;
           isLoadingDestination = false;
         });
         return;
       }
-      Position position = await Geolocator.getCurrentPosition(
-          desiredAccuracy: LocationAccuracy.high);
       Position position = await Geolocator.getCurrentPosition(
           desiredAccuracy: LocationAccuracy.high);
       List<Placemark> placemarks =
@@ -1861,8 +1791,6 @@ class _NewDeliveryState extends State<NewDelivery> {
         const begin = Offset(0.0, 1.0);
         const end = Offset.zero;
         const curve = Curves.easeInOut;
-        var tween =
-            Tween(begin: begin, end: end).chain(CurveTween(curve: curve));
         var tween =
             Tween(begin: begin, end: end).chain(CurveTween(curve: curve));
         var offsetAnimation = animation.drive(tween);
