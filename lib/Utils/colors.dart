@@ -63,4 +63,12 @@ class LarosaColors {
     begin: Alignment.centerLeft,
     end: Alignment.centerRight,
   );
+
+
+  // Gradient for Cancel / Delete
+  static const LinearGradient dangerGradient = LinearGradient(
+    colors: [Color.fromARGB(255, 173, 60, 60), Color.fromARGB(255, 172, 18, 18)],
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+  );
 }

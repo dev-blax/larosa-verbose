@@ -1241,39 +1241,42 @@ class _NewDeliveryState extends State<NewDelivery> {
   }
 
   Future<void> _loadDriverOffer() async {
-    setState(() {
-      isLoadingDriverOffer = true;
-    });
+  print('123');
+  setState(() {
+    isLoadingDriverOffer = true;
+  });
 
-    // If source location is not set, attempt to retrieve the current location.
+  // If source location is not set, attempt to retrieve the current location.
+  if (sourceLatitude == null || sourceLongitude == null) {
+    print('Source location not set, attempting to get current location');
+    await _getCurrentLocation(true);
+    // Recheck whether location is available.
     if (sourceLatitude == null || sourceLongitude == null) {
-      LogService.logDebug(
-          'Source location not set, attempting to get current location');
-      await _getCurrentLocation(true);
-      // Recheck whether location is available.
-      if (sourceLatitude == null || sourceLongitude == null) {
-        LogService.logDebug(
-            'Source location is still null after attempting to retrieve it.');
-        setState(() {
-          isLoadingDriverOffer = false;
-        });
-        return;
-      }
-    }
-
-    // Get the city name using the source location.
-    final placeDetails =
-        await getCountryAndCity(sourceLatitude!, sourceLongitude!);
-    print('Place details: $placeDetails');
-    final cityName = placeDetails["city"] ?? "";
-    print('City name: $cityName');
-    if (cityName.isEmpty) {
-      print('City name is empty.');
+      print('Source location is still null after attempting to retrieve it.');
       setState(() {
         isLoadingDriverOffer = false;
       });
       return;
     }
+  }
+
+  // Get the city name using the source location.
+  final placeDetails = await getCountryAndCity(sourceLatitude!, sourceLongitude!);
+  print('Place details: $placeDetails');
+  final cityName = placeDetails["city"] ?? "";
+  print('City name: $cityName');
+  if (cityName.isEmpty) {
+    print('City name is empty.');
+    setState(() {
+      isLoadingDriverOffer = false;
+    });
+    return;
+  }
+
+  print('fred'); // Debug point: Proceeding to call driver offer endpoint.
+
+  // final String endpoint =
+  //     '${LarosaLinks.baseurl}/api/v1/ride-offers/driver/best-offer?cityName=$cityName';
 
     final String endpoint =
         '${LarosaLinks.baseurl}/api/v1/ride-offers/ustomer/best-offer?cityName=Dodoma';
@@ -1365,12 +1368,8 @@ class _NewDeliveryState extends State<NewDelivery> {
         LogService.logInfo("Time Estimation Response: ${response.body}");
         return jsonDecode(response.body);
       } else {
-        LogService.logError(
-            "Failed to fetch time estimation: ${response.statusCode}");
-        return {
-          "error":
-              "Failed to fetch time estimation. Status code: ${response.statusCode}"
-        };
+        LogService.logError("Failed to fetch time estimation: ${response.statusCode}");
+        return {"error": "Failed to fetch time estimation. Status code: ${response.statusCode}"};
       }
     } catch (e) {
       LogService.logError("Error estimating time: $e");
@@ -1540,7 +1539,7 @@ class _NewDeliveryState extends State<NewDelivery> {
           await placemarkFromCoordinates(latitude, longitude);
       if (placemarks.isNotEmpty) {
         Placemark place = placemarks[0];
-        LogService.logDebug('Geocoding Result: $place');
+        // LogService.logDebug('Geocoding Result: $place');
         return {
           "country": place.country ?? "Unknown",
           "city": place.locality ?? place.administrativeArea ?? "Unknown",
@@ -1551,6 +1550,75 @@ class _NewDeliveryState extends State<NewDelivery> {
     }
     return {"country": "Unknown", "city": "Unknown"};
   }
+
+  // Future<void> fetchTimeEstimations() async {
+  //   if (sourceLatitude == null ||
+  //       sourceLongitude == null ||
+  //       destinationLatitude == null ||
+  //       destinationLongitude == null) {
+  //     HelperFunctions.showToast("Please enter pickup and destination locations", true);
+  //     return;
+  //   }
+  //   setState(() {
+  //     isFetchingTimeEstimations = true;
+  //   });
+  //   final placeDetails = await getCountryAndCity(sourceLatitude!, sourceLongitude!);
+  //   final String country = placeDetails["country"] ?? "Unknown";
+  //   final String cityName = placeDetails["city"] ?? "Unknown";
+
+  //   const String endpoint = '${LarosaLinks.baseurl}/api/v1/transport-cost/calculate';
+  //   Map<String, String> headers = {
+  //     "Content-Type": "application/json",
+  //     "Access-Control-Allow-Origin": "*",
+  //     'Authorization': 'Bearer ${AuthService.getToken()}',
+  //   };
+
+  //   final Map<String, dynamic> requestBody = {
+  //     "startLat": sourceLatitude,
+  //     "startLng": sourceLongitude,
+  //     "endLat": destinationLatitude,
+  //     "endLng": destinationLongitude,
+  //     "country": country,
+  //     "cityName": cityName,
+  //     // "City": cityName,
+  //     "City": "Dodoma",
+  //     "city": "dodoma"
+  //   };
+
+  //   try {
+  //     final response = await http.post(
+  //       Uri.parse(endpoint),
+  //       headers: headers,
+  //       body: jsonEncode(requestBody),
+  //     );
+  //     setState(() {
+  //       isFetchingTimeEstimations = false;
+  //     });
+  //     // print("frs : ${response.body}");
+  //     if (response.statusCode == 200 || response.statusCode == 201) {
+  //       final Map<String, dynamic> estimations = jsonDecode(response.body);
+  //       bool allDriversBusy = estimations["vehicleEstimations"]
+  //           .every((estimation) => estimation["pickupDuration"] == 0);
+  //       if (allDriversBusy) {
+  //         HelperFunctions.displayInfo(
+  //           context,
+  //           "Our system is experiencing high demand at the moment. Please hold on while we secure the best available driver for you. Your comfort and safety are our top priority."
+  //         );
+  //       } else {
+  //         showTimeEstimationsModal(context, estimations);
+  //       }
+  //     } else {
+  //       print("frs : ${AuthService.getToken()}");
+  //       HelperFunctions.showToast("xyz Failed to fetch transport cost. Status code: ${response.statusCode}", true);
+  //     }
+  //   } catch (e) {
+  //     setState(() {
+  //       isFetchingTimeEstimations = false;
+  //     });
+  //     LogService.logError("Error calculating transport cost: $e");
+  //     HelperFunctions.showToast("An error occurred while calculating transport cost", true);
+  //   }
+  // }
 
   Future<void> fetchTimeEstimations() async {
     if (sourceLatitude == null ||
@@ -1564,13 +1632,11 @@ class _NewDeliveryState extends State<NewDelivery> {
     setState(() {
       isFetchingTimeEstimations = true;
     });
-    final placeDetails =
-        await getCountryAndCity(sourceLatitude!, sourceLongitude!);
+    final placeDetails = await getCountryAndCity(sourceLatitude!, sourceLongitude!);
     final String country = placeDetails["country"] ?? "Unknown";
-    final String cityName = placeDetails["city"] ?? "Unknown";
+    final String rawCity = placeDetails["city"] ?? "Unknown";
 
-    const String endpoint =
-        '${LarosaLinks.baseurl}/api/v1/transport-cost/calculate';
+    const String endpoint = '${LarosaLinks.baseurl}/api/v1/transport-cost/calculate';
     Map<String, String> headers = {
       "Content-Type": "application/json",
       "Access-Control-Allow-Origin": "*",
@@ -1578,42 +1644,58 @@ class _NewDeliveryState extends State<NewDelivery> {
     };
 
     final Map<String, dynamic> requestBody = {
-      "startLat": sourceLatitude,
-      "startLng": sourceLongitude,
-      "endLat": destinationLatitude,
-      "endLng": destinationLongitude,
-      "country": country,
-      "cityName": cityName,
+      // "startLat": sourceLatitude,
+      // "startLng": sourceLongitude,
+      // "endLat": destinationLatitude,
+      // "endLng": destinationLongitude,
+      // "country": country,
+      // "city": city,
+      // "cityName": city,
+
+
+      
+  "startLat": -6.1620,
+  "startLng": 35.7516,
+  "endLat":   -6.1750,
+  "endLng":   35.7497,
+  "country":  "Tanzania",
+  "city":     "Dodoma",
+  "cityName": "Dodoma"
     };
+
+    print('→ Payload: ${jsonEncode(requestBody)}');
 
     try {
       final response = await http.post(
-        Uri.parse(endpoint),
-        headers: headers,
+        Uri.parse('${LarosaLinks.baseurl}/api/v1/transport-cost/calculate'),
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer ${AuthService.getToken()}",
+        },
         body: jsonEncode(requestBody),
       );
-      setState(() {
-        isFetchingTimeEstimations = false;
-      });
+
+      setState(() => isFetchingTimeEstimations = false);
+
       if (response.statusCode == 200 || response.statusCode == 201) {
         final Map<String, dynamic> estimations = jsonDecode(response.body);
         bool allDriversBusy = estimations["vehicleEstimations"]
             .every((estimation) => estimation["pickupDuration"] == 0);
         if (allDriversBusy) {
-          HelperFunctions.displayInfo(context,
-              "Our system is experiencing high demand at the moment. Please hold on while we secure the best available driver for you. Your comfort and safety are our top priority.");
+           showTimeEstimationsModal(context, estimations);
+           
+          // HelperFunctions.displayInfo(
+          //   context,
+          //   "Our system is experiencing high demand at the moment. Please hold on while we secure the best available driver for you. Your comfort and safety are our top priority."
+          // );
         } else {
           showTimeEstimationsModal(context, estimations);
         }
       } else {
-        HelperFunctions.showToast(
-            "Failed to fetch transport cost. Status code: ${response.statusCode}",
-            true);
+        HelperFunctions.showToast("Failed to fetch transport cost. Status code: ${response.statusCode}", true);
       }
     } catch (e) {
-      setState(() {
-        isFetchingTimeEstimations = false;
-      });
+      setState(() => isFetchingTimeEstimations = false);
       LogService.logError("Error calculating transport cost: $e");
       HelperFunctions.showToast(
           "An error occurred while calculating transport cost", true);
