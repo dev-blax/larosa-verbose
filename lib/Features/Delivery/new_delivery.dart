@@ -207,7 +207,6 @@
 //   return {"country": "Unknown", "city": "Unknown"};
 // }
 
-
 //   Future<void> fetchTimeEstimations() async {
 //   if (sourceLatitude == null ||
 //       sourceLongitude == null ||
@@ -274,7 +273,6 @@
 //   "Our system is experiencing high demand at the moment. Please hold on while we secure the best available driver for you. Your comfort and safety are our top priority."
 // );
 
-
 //       } else {
 //         showTimeEstimationsModal(context, estimations);
 //       }
@@ -292,7 +290,6 @@
 //     HelperFunctions.showToast("An error occurred while calculating transport cost", true);
 //   }
 // }
-
 
 //   Future<List<Map<String, String>>> _getPlaceSuggestions(String input) async {
 //     final String apiKey = dotenv.env['GOOGLE_MAPS_PLACES_API_KEY']!;
@@ -524,7 +521,6 @@
 //     }
 //   }
 
-
 //   @override
 //   Widget build(BuildContext context) {
 //     return Scaffold(
@@ -664,7 +660,7 @@
 //                       _destinationController.text = suggestion['description']!;
 //                       final placeId = suggestion['place_id']!;
 //                       await _getPlaceDetails(
-//                           placeId, false); 
+//                           placeId, false);
 //                     } else {
 //                       LogService.logInfo(
 //                           'Invalid selection: ${suggestion['description']}');
@@ -948,9 +944,6 @@
 //     );
 //   }
 
-
-
-
 // Widget creativeOrderCard(Map order) {
 //   // Extract required information from the order map.
 //   final deliveryLocation = order['deliveryLocation'];
@@ -1175,14 +1168,6 @@
 // }
 // }
 
-
-
-
-
-
-
-
-
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_typeahead/flutter_typeahead.dart';
@@ -1257,73 +1242,74 @@ class _NewDeliveryState extends State<NewDelivery> {
   }
 
   Future<void> _loadDriverOffer() async {
-  print('123');
-  setState(() {
-    isLoadingDriverOffer = true;
-  });
+    print('123');
+    setState(() {
+      isLoadingDriverOffer = true;
+    });
 
-  // If source location is not set, attempt to retrieve the current location.
-  if (sourceLatitude == null || sourceLongitude == null) {
-    print('Source location not set, attempting to get current location');
-    await _getCurrentLocation(true);
-    // Recheck whether location is available.
+    // If source location is not set, attempt to retrieve the current location.
     if (sourceLatitude == null || sourceLongitude == null) {
-      print('Source location is still null after attempting to retrieve it.');
+      print('Source location not set, attempting to get current location');
+      await _getCurrentLocation(true);
+      // Recheck whether location is available.
+      if (sourceLatitude == null || sourceLongitude == null) {
+        print('Source location is still null after attempting to retrieve it.');
+        setState(() {
+          isLoadingDriverOffer = false;
+        });
+        return;
+      }
+    }
+
+    // Get the city name using the source location.
+    final placeDetails =
+        await getCountryAndCity(sourceLatitude!, sourceLongitude!);
+    print('Place details: $placeDetails');
+    final cityName = placeDetails["city"] ?? "";
+    print('City name: $cityName');
+    if (cityName.isEmpty) {
+      print('City name is empty.');
       setState(() {
         isLoadingDriverOffer = false;
       });
       return;
     }
-  }
 
-  // Get the city name using the source location.
-  final placeDetails = await getCountryAndCity(sourceLatitude!, sourceLongitude!);
-  print('Place details: $placeDetails');
-  final cityName = placeDetails["city"] ?? "";
-  print('City name: $cityName');
-  if (cityName.isEmpty) {
-    print('City name is empty.');
-    setState(() {
-      isLoadingDriverOffer = false;
-    });
-    return;
-  }
+    print('fred'); // Debug point: Proceeding to call driver offer endpoint.
 
-  print('fred'); // Debug point: Proceeding to call driver offer endpoint.
+    // final String endpoint =
+    //     '${LarosaLinks.baseurl}/api/v1/ride-offers/driver/best-offer?cityName=$cityName';
 
-  // final String endpoint =
-  //     '${LarosaLinks.baseurl}/api/v1/ride-offers/driver/best-offer?cityName=$cityName';
+    final String endpoint =
+        '${LarosaLinks.baseurl}/api/v1/ride-offers/ustomer/best-offer?cityName=Dodoma';
+    Map<String, String> headers = {
+      "Content-Type": "application/json",
+      "Access-Control-Allow-Origin": "*",
+      'Authorization': 'Bearer ${AuthService.getToken()}',
+    };
 
-  final String endpoint =
-      '${LarosaLinks.baseurl}/api/v1/ride-offers/ustomer/best-offer?cityName=Dodoma';
-  Map<String, String> headers = {
-    "Content-Type": "application/json",
-    "Access-Control-Allow-Origin": "*",
-    'Authorization': 'Bearer ${AuthService.getToken()}',
-  };
-
-  try {
-    final response = await http.get(Uri.parse(endpoint), headers: headers);
-    print('frs : ${response.body}');
-    if (response.statusCode == 200 || response.statusCode == 201) {
-      setState(() {
-        driverOffer = jsonDecode(response.body);
-        isLoadingDriverOffer = false;
-      });
-    } else {
-      LogService.logError("Failed to fetch driver offer: ${response.statusCode}");
+    try {
+      final response = await http.get(Uri.parse(endpoint), headers: headers);
+      print('frs : ${response.body}');
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        setState(() {
+          driverOffer = jsonDecode(response.body);
+          isLoadingDriverOffer = false;
+        });
+      } else {
+        LogService.logError(
+            "Failed to fetch driver offer: ${response.statusCode}");
+        setState(() {
+          isLoadingDriverOffer = false;
+        });
+      }
+    } catch (e) {
+      LogService.logError("Error fetching driver offer: $e");
       setState(() {
         isLoadingDriverOffer = false;
       });
     }
-  } catch (e) {
-    LogService.logError("Error fetching driver offer: $e");
-    setState(() {
-      isLoadingDriverOffer = false;
-    });
   }
-}
-
 
   String formatTime(double minutes) {
     int hours = (minutes / 60).floor();
@@ -1339,7 +1325,8 @@ class _NewDeliveryState extends State<NewDelivery> {
 
   void _updateMarker(double latitude, double longitude) {
     setState(() {
-      _markers.removeWhere((marker) => marker.markerId.value == 'dynamic_marker');
+      _markers
+          .removeWhere((marker) => marker.markerId.value == 'dynamic_marker');
       _markers.add(
         Marker(
           markerId: const MarkerId('dynamic_marker'),
@@ -1383,8 +1370,12 @@ class _NewDeliveryState extends State<NewDelivery> {
         LogService.logInfo("Time Estimation Response: ${response.body}");
         return jsonDecode(response.body);
       } else {
-        LogService.logError("Failed to fetch time estimation: ${response.statusCode}");
-        return {"error": "Failed to fetch time estimation. Status code: ${response.statusCode}"};
+        LogService.logError(
+            "frs Failed to fetch time estimation: ${response.statusCode}");
+        return {
+          "error":
+              "123 Failed to fetch time estimation. Status code: ${response.statusCode}"
+        };
       }
     } catch (e) {
       LogService.logError("Error estimating time: $e");
@@ -1405,7 +1396,8 @@ class _NewDeliveryState extends State<NewDelivery> {
         final suggestions = (jsonData['predictions'] as List)
             .map((prediction) {
               final terms = prediction['terms'] as List;
-              final region = terms.length > 1 ? terms[1]['value'] as String : '';
+              final region =
+                  terms.length > 1 ? terms[1]['value'] as String : '';
               return {
                 'description': prediction['description'] as String,
                 'place_id': prediction['place_id'] as String,
@@ -1417,7 +1409,11 @@ class _NewDeliveryState extends State<NewDelivery> {
         return suggestions.isNotEmpty
             ? suggestions
             : [
-                {'description': 'No results found.', 'place_id': '', 'region': ''}
+                {
+                  'description': 'No results found.',
+                  'place_id': '',
+                  'region': ''
+                }
               ];
       } else {
         return [
@@ -1432,7 +1428,8 @@ class _NewDeliveryState extends State<NewDelivery> {
       LogService.logError('Error fetching suggestions: $e');
       return [
         {
-          'description': 'Failed to fetch locations. Please check your connection.',
+          'description':
+              'Failed to fetch locations. Please check your connection.',
           'place_id': '',
           'region': ''
         }
@@ -1450,7 +1447,8 @@ class _NewDeliveryState extends State<NewDelivery> {
       final response = await http.get(Uri.parse(url));
       if (response.statusCode == 200) {
         final jsonData = jsonDecode(response.body);
-        if (jsonData['result'] != null && jsonData['result']['geometry'] != null) {
+        if (jsonData['result'] != null &&
+            jsonData['result']['geometry'] != null) {
           final location = jsonData['result']['geometry']['location'];
           final address = jsonData['result']['formatted_address'];
           final lat = location['lat'];
@@ -1530,19 +1528,22 @@ class _NewDeliveryState extends State<NewDelivery> {
           rideHistory = jsonDecode(response.body);
         });
       } else {
-        LogService.logError('Error fetching ride history: ${response.statusCode}');
+        LogService.logError(
+            'Error fetching ride history: ${response.statusCode}');
       }
     } catch (e) {
       LogService.logError('Failed to fetch ride history: $e');
     }
   }
 
-  Future<Map<String, String>> getCountryAndCity(double latitude, double longitude) async {
+  Future<Map<String, String>> getCountryAndCity(
+      double latitude, double longitude) async {
     try {
-      List<Placemark> placemarks = await placemarkFromCoordinates(latitude, longitude);
+      List<Placemark> placemarks =
+          await placemarkFromCoordinates(latitude, longitude);
       if (placemarks.isNotEmpty) {
         Placemark place = placemarks[0];
-        LogService.logDebug('Geocoding Result: $place');
+        // LogService.logDebug('Geocoding Result: $place');
         return {
           "country": place.country ?? "Unknown",
           "city": place.locality ?? place.administrativeArea ?? "Unknown",
@@ -1554,71 +1555,170 @@ class _NewDeliveryState extends State<NewDelivery> {
     return {"country": "Unknown", "city": "Unknown"};
   }
 
+  // Future<void> fetchTimeEstimations() async {
+  //   if (sourceLatitude == null ||
+  //       sourceLongitude == null ||
+  //       destinationLatitude == null ||
+  //       destinationLongitude == null) {
+  //     HelperFunctions.showToast("Please enter pickup and destination locations", true);
+  //     return;
+  //   }
+  //   setState(() {
+  //     isFetchingTimeEstimations = true;
+  //   });
+  //   final placeDetails = await getCountryAndCity(sourceLatitude!, sourceLongitude!);
+  //   final String country = placeDetails["country"] ?? "Unknown";
+  //   final String cityName = placeDetails["city"] ?? "Unknown";
+
+  //   const String endpoint = '${LarosaLinks.baseurl}/api/v1/transport-cost/calculate';
+  //   Map<String, String> headers = {
+  //     "Content-Type": "application/json",
+  //     "Access-Control-Allow-Origin": "*",
+  //     'Authorization': 'Bearer ${AuthService.getToken()}',
+  //   };
+
+  //   final Map<String, dynamic> requestBody = {
+  //     "startLat": sourceLatitude,
+  //     "startLng": sourceLongitude,
+  //     "endLat": destinationLatitude,
+  //     "endLng": destinationLongitude,
+  //     "country": country,
+  //     "cityName": cityName,
+  //     // "City": cityName,
+  //     "City": "Dodoma",
+  //     "city": "dodoma"
+  //   };
+
+  //   try {
+  //     final response = await http.post(
+  //       Uri.parse(endpoint),
+  //       headers: headers,
+  //       body: jsonEncode(requestBody),
+  //     );
+  //     setState(() {
+  //       isFetchingTimeEstimations = false;
+  //     });
+  //     // print("frs : ${response.body}");
+  //     if (response.statusCode == 200 || response.statusCode == 201) {
+  //       final Map<String, dynamic> estimations = jsonDecode(response.body);
+  //       bool allDriversBusy = estimations["vehicleEstimations"]
+  //           .every((estimation) => estimation["pickupDuration"] == 0);
+  //       if (allDriversBusy) {
+  //         HelperFunctions.displayInfo(
+  //           context,
+  //           "Our system is experiencing high demand at the moment. Please hold on while we secure the best available driver for you. Your comfort and safety are our top priority."
+  //         );
+  //       } else {
+  //         showTimeEstimationsModal(context, estimations);
+  //       }
+  //     } else {
+  //       print("frs : ${AuthService.getToken()}");
+  //       HelperFunctions.showToast("xyz Failed to fetch transport cost. Status code: ${response.statusCode}", true);
+  //     }
+  //   } catch (e) {
+  //     setState(() {
+  //       isFetchingTimeEstimations = false;
+  //     });
+  //     LogService.logError("Error calculating transport cost: $e");
+  //     HelperFunctions.showToast("An error occurred while calculating transport cost", true);
+  //   }
+  // }
+
   Future<void> fetchTimeEstimations() async {
     if (sourceLatitude == null ||
         sourceLongitude == null ||
         destinationLatitude == null ||
         destinationLongitude == null) {
-      HelperFunctions.showToast("Please enter pickup and destination locations", true);
+      HelperFunctions.showToast(
+          "Please enter pickup and destination locations", true);
       return;
     }
-    setState(() {
-      isFetchingTimeEstimations = true;
-    });
-    final placeDetails = await getCountryAndCity(sourceLatitude!, sourceLongitude!);
+
+    setState(() => isFetchingTimeEstimations = true);
+
+    // Get country + city from reverse‐geocoding
+    final placeDetails =
+        await getCountryAndCity(sourceLatitude!, sourceLongitude!);
     final String country = placeDetails["country"] ?? "Unknown";
-    final String cityName = placeDetails["city"] ?? "Unknown";
+    final String rawCity = placeDetails["city"] ?? "Unknown";
 
-    const String endpoint = '${LarosaLinks.baseurl}/api/v1/transport-cost/calculate';
-    Map<String, String> headers = {
-      "Content-Type": "application/json",
-      "Access-Control-Allow-Origin": "*",
-      'Authorization': 'Bearer ${AuthService.getToken()}',
-    };
+    // Ensure title‐case (in case API is case‐sensitive)
+    String city = rawCity
+        .split(' ')
+        .map((w) => w[0].toUpperCase() + w.substring(1).toLowerCase())
+        .join(' ');
 
+    // Build request body with BOTH keys
     final Map<String, dynamic> requestBody = {
-      "startLat": sourceLatitude,
-      "startLng": sourceLongitude,
-      "endLat": destinationLatitude,
-      "endLng": destinationLongitude,
-      "country": country,
-      "cityName": cityName,
+      // "startLat": sourceLatitude,
+      // "startLng": sourceLongitude,
+      // "endLat": destinationLatitude,
+      // "endLng": destinationLongitude,
+      // "country": country,
+      // "city": city,
+      // "cityName": city,
+
+
+      
+  "startLat": -6.1620,
+  "startLng": 35.7516,
+  "endLat":   -6.1750,
+  "endLng":   35.7497,
+  "country":  "Tanzania",
+  "city":     "Dodoma",
+  "cityName": "Dodoma"
     };
+
+    print('→ Payload: ${jsonEncode(requestBody)}');
 
     try {
       final response = await http.post(
-        Uri.parse(endpoint),
-        headers: headers,
+        Uri.parse('${LarosaLinks.baseurl}/api/v1/transport-cost/calculate'),
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer ${AuthService.getToken()}",
+        },
         body: jsonEncode(requestBody),
       );
-      setState(() {
-        isFetchingTimeEstimations = false;
-      });
+
+      setState(() => isFetchingTimeEstimations = false);
+
       if (response.statusCode == 200 || response.statusCode == 201) {
-        final Map<String, dynamic> estimations = jsonDecode(response.body);
-        bool allDriversBusy = estimations["vehicleEstimations"]
-            .every((estimation) => estimation["pickupDuration"] == 0);
-        if (allDriversBusy) {
-          HelperFunctions.displayInfo(
-            context,
-            "Our system is experiencing high demand at the moment. Please hold on while we secure the best available driver for you. Your comfort and safety are our top priority."
-          );
+        print("Succeeded frs : ${response.body}");
+
+        final estimations = jsonDecode(response.body);
+        bool allBusy = (estimations["vehicleEstimations"] as List)
+            .every((e) => e["pickupDuration"] == 0);
+
+        if (allBusy) {
+          // HelperFunctions.displayInfo(
+          //     context,
+          //     "Our system is experiencing high demand at the moment. "
+          //     "Please hold on while we secure the best available driver...");
+
+
+              showTimeEstimationsModal(context, estimations);
+
         } else {
           showTimeEstimationsModal(context, estimations);
         }
       } else {
-        HelperFunctions.showToast("Failed to fetch transport cost. Status code: ${response.statusCode}", true);
+        print("Failed frs : ${response.body}");
+        HelperFunctions.showToast(
+            "Failed to fetch transport cost "
+            "(status ${response.statusCode})",
+            true);
       }
     } catch (e) {
-      setState(() {
-        isFetchingTimeEstimations = false;
-      });
+      setState(() => isFetchingTimeEstimations = false);
       LogService.logError("Error calculating transport cost: $e");
-      HelperFunctions.showToast("An error occurred while calculating transport cost", true);
+      HelperFunctions.showToast(
+          "An error occurred while calculating transport cost", true);
     }
   }
 
-  void showTimeEstimationsModal(BuildContext context, Map<String, dynamic> estimations) {
+  void showTimeEstimationsModal(
+      BuildContext context, Map<String, dynamic> estimations) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -1644,14 +1744,16 @@ class _NewDeliveryState extends State<NewDelivery> {
     });
     try {
       LocationPermission permission = await Geolocator.requestPermission();
-      if (permission == LocationPermission.denied || permission == LocationPermission.deniedForever) {
+      if (permission == LocationPermission.denied ||
+          permission == LocationPermission.deniedForever) {
         setState(() {
           isLoadingSource = false;
           isLoadingDestination = false;
         });
         return;
       }
-      Position position = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
+      Position position = await Geolocator.getCurrentPosition(
+          desiredAccuracy: LocationAccuracy.high);
       List<Placemark> placemarks =
           await placemarkFromCoordinates(position.latitude, position.longitude);
       if (placemarks.isNotEmpty) {
@@ -1704,7 +1806,8 @@ class _NewDeliveryState extends State<NewDelivery> {
         const begin = Offset(0.0, 1.0);
         const end = Offset.zero;
         const curve = Curves.easeInOut;
-        var tween = Tween(begin: begin, end: end).chain(CurveTween(curve: curve));
+        var tween =
+            Tween(begin: begin, end: end).chain(CurveTween(curve: curve));
         var offsetAnimation = animation.drive(tween);
         return SlideTransition(position: offsetAnimation, child: child);
       },
@@ -1749,7 +1852,8 @@ class _NewDeliveryState extends State<NewDelivery> {
             children: [
               Container(
                 width: double.infinity,
-                padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+                padding:
+                    const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
                 decoration: BoxDecoration(
                   gradient: const LinearGradient(
                     colors: [LarosaColors.secondary, LarosaColors.purple],
@@ -1826,7 +1930,9 @@ class _NewDeliveryState extends State<NewDelivery> {
                       Text(
                         '${order['status']}',
                         style: TextStyle(
-                          color: order['status'] == 'PENDING' ? Colors.orange : Colors.green,
+                          color: order['status'] == 'PENDING'
+                              ? Colors.orange
+                              : Colors.green,
                         ),
                       ),
                     ],
@@ -1889,10 +1995,13 @@ class _NewDeliveryState extends State<NewDelivery> {
                             backgroundColor: Colors.transparent,
                             builder: (BuildContext context) {
                               return StatefulBuilder(
-                                builder: (BuildContext context, StateSetter setState) {
+                                builder: (BuildContext context,
+                                    StateSetter setState) {
                                   return MapModal(
-                                    latitude: deliveryLocation['latitude'] ?? 0.0,
-                                    longitude: deliveryLocation['longitude'] ?? 0.0,
+                                    latitude:
+                                        deliveryLocation['latitude'] ?? 0.0,
+                                    longitude:
+                                        deliveryLocation['longitude'] ?? 0.0,
                                   );
                                 },
                               );
@@ -1995,7 +2104,8 @@ class _NewDeliveryState extends State<NewDelivery> {
                       // Optionally reload the driver offer after updating source location.
                       await _loadDriverOffer();
                     } else {
-                      LogService.logInfo('Invalid selection: ${suggestion['description']}');
+                      LogService.logInfo(
+                          'Invalid selection: ${suggestion['description']}');
                     }
                   },
                   direction: VerticalDirection.down,
@@ -2012,7 +2122,8 @@ class _NewDeliveryState extends State<NewDelivery> {
                         suffixIcon: isLoadingSource
                             ? const Padding(
                                 padding: EdgeInsets.all(8.0),
-                                child: CircularProgressIndicator(strokeWidth: 2),
+                                child:
+                                    CircularProgressIndicator(strokeWidth: 2),
                               )
                             : IconButton(
                                 icon: const Icon(Ionicons.locate),
@@ -2057,7 +2168,8 @@ class _NewDeliveryState extends State<NewDelivery> {
                       final placeId = suggestion['place_id']!;
                       await _getPlaceDetails(placeId, false);
                     } else {
-                      LogService.logInfo('Invalid selection: ${suggestion['description']}');
+                      LogService.logInfo(
+                          'Invalid selection: ${suggestion['description']}');
                     }
                   },
                   direction: VerticalDirection.down,
@@ -2074,7 +2186,8 @@ class _NewDeliveryState extends State<NewDelivery> {
                         suffixIcon: isLoadingDestination
                             ? const Padding(
                                 padding: EdgeInsets.all(8.0),
-                                child: CircularProgressIndicator(strokeWidth: 2),
+                                child:
+                                    CircularProgressIndicator(strokeWidth: 2),
                               )
                             : IconButton(
                                 icon: const Icon(Ionicons.locate),
@@ -2100,7 +2213,8 @@ class _NewDeliveryState extends State<NewDelivery> {
                 ),
                 child: FilledButton(
                   style: ButtonStyle(
-                    backgroundColor: WidgetStateProperty.all(Colors.transparent),
+                    backgroundColor:
+                        WidgetStateProperty.all(Colors.transparent),
                     padding: WidgetStateProperty.all(
                       const EdgeInsets.symmetric(vertical: 12, horizontal: 24),
                     ),
@@ -2112,7 +2226,8 @@ class _NewDeliveryState extends State<NewDelivery> {
                   ),
                   onPressed: isRequestingRide ? null : fetchTimeEstimations,
                   child: isFetchingTimeEstimations
-                      ? const CupertinoActivityIndicator(color: Colors.white, radius: 10.0)
+                      ? const CupertinoActivityIndicator(
+                          color: Colors.white, radius: 10.0)
                       : const Text(
                           'Initiate Ride Request',
                           style: TextStyle(
@@ -2155,10 +2270,14 @@ class _NewDeliveryState extends State<NewDelivery> {
                         ),
                         const SizedBox(height: 8),
                         // Adjust these keys based on your actual API response.
-                        Text("Offer ID: ${driverOffer!['offerId']}", style: const TextStyle(color: Colors.white)),
-                        Text("Driver: ${driverOffer!['driverName']}", style: const TextStyle(color: Colors.white)),
-                        Text("Amount: Tsh ${driverOffer!['offerAmount']}", style: const TextStyle(color: Colors.white)),
-                        Text("City: ${driverOffer!['cityName']}", style: const TextStyle(color: Colors.white)),
+                        Text("Offer ID: ${driverOffer!['offerId']}",
+                            style: const TextStyle(color: Colors.white)),
+                        Text("Driver: ${driverOffer!['driverName']}",
+                            style: const TextStyle(color: Colors.white)),
+                        Text("Amount: Tsh ${driverOffer!['offerAmount']}",
+                            style: const TextStyle(color: Colors.white)),
+                        Text("City: ${driverOffer!['cityName']}",
+                            style: const TextStyle(color: Colors.white)),
                       ],
                     ),
                   ),
@@ -2168,7 +2287,8 @@ class _NewDeliveryState extends State<NewDelivery> {
               const Gap(10),
               // Orders section.
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 4.0),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10.0, vertical: 4.0),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -2177,7 +2297,10 @@ class _NewDeliveryState extends State<NewDelivery> {
                       children: [
                         ShaderMask(
                           shaderCallback: (bounds) => const LinearGradient(
-                            colors: [LarosaColors.secondary, LarosaColors.purple],
+                            colors: [
+                              LarosaColors.secondary,
+                              LarosaColors.purple
+                            ],
                             begin: Alignment.topLeft,
                             end: Alignment.bottomRight,
                           ).createShader(bounds),
@@ -2193,7 +2316,10 @@ class _NewDeliveryState extends State<NewDelivery> {
                         Container(
                           decoration: BoxDecoration(
                             gradient: const LinearGradient(
-                              colors: [LarosaColors.secondary, LarosaColors.purple],
+                              colors: [
+                                LarosaColors.secondary,
+                                LarosaColors.purple
+                              ],
                               begin: Alignment.centerLeft,
                               end: Alignment.centerRight,
                             ),
@@ -2210,7 +2336,8 @@ class _NewDeliveryState extends State<NewDelivery> {
                                     decoration: BoxDecoration(
                                       gradient: LinearGradient(
                                         colors: [
-                                          LarosaColors.secondary.withOpacity(0.55),
+                                          LarosaColors.secondary
+                                              .withOpacity(0.55),
                                           LarosaColors.purple.withOpacity(0.4),
                                         ],
                                         begin: Alignment.topLeft,
@@ -2227,7 +2354,8 @@ class _NewDeliveryState extends State<NewDelivery> {
                                         topLeft: Radius.circular(20),
                                         topRight: Radius.circular(20),
                                       ),
-                                      child: RideHistoryModal(rideHistory: rideHistory),
+                                      child: RideHistoryModal(
+                                          rideHistory: rideHistory),
                                     ),
                                   );
                                 },
@@ -2238,14 +2366,18 @@ class _NewDeliveryState extends State<NewDelivery> {
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(20),
                               ),
-                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 12, vertical: 8),
                             ),
                             child: Text(
                               'Ride History',
                               style: TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold,
-                                color: Theme.of(context).brightness == Brightness.dark ? Colors.white : LarosaColors.light,
+                                color: Theme.of(context).brightness ==
+                                        Brightness.dark
+                                    ? Colors.white
+                                    : LarosaColors.light,
                               ),
                             ),
                           ),
@@ -2297,7 +2429,8 @@ class _NewDeliveryState extends State<NewDelivery> {
                                       vertical: 14,
                                     ),
                                     elevation: 5,
-                                    shadowColor: LarosaColors.primary.withOpacity(0.5),
+                                    shadowColor:
+                                        LarosaColors.primary.withOpacity(0.5),
                                   ),
                                   child: const Text(
                                     "Make a New Order",

@@ -57,20 +57,22 @@ Future<void> main() async {
   ]);
   
   // Check if Firebase has already been initialized to avoid duplicate initialization.
-  // if (Firebase.apps.isEmpty) {
-  //   await Firebase.initializeApp(
-  //     options: DefaultFirebaseOptions.currentPlatform,
-  //   );
-  // } else {
-  //   // Optionally, you can log that Firebase is already initialized.
-  //   debugPrint('Firebase is already initialized');
-  // }
+  if (Firebase.apps.isEmpty) {
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+  } else {
+    // Optionally, you can log that Firebase is already initialized.
+    debugPrint('Firebase is already initialized');
+  }
 
   // Initialize Hive for local storage.
   HiveService hiveService = HiveService();
   await hiveService.init();
   await hiveService.openBox('userBox');
   await hiveService.openBox('onboardingBox');
+  // await hiveService.openBox('bookingBox');
+  await hiveService.openBox<String>('bookingBox');
   await hiveService.openBox('profileBox');
 
   // Load environment variables.

@@ -1,15 +1,18 @@
 import 'dart:convert';
 
+import 'package:avatar_glow/avatar_glow.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:intl/intl.dart';
 import 'package:recase/recase.dart';
 import 'package:stomp_dart_client/stomp_dart_client.dart';
 
 import '../../Services/auth_service.dart';
+import '../../Services/hive_service.dart';
 import '../../Services/log_service.dart';
 import '../../Utils/colors.dart';
 import '../../Utils/helpers.dart';
@@ -39,6 +42,9 @@ class TimeEstimationsModalContent extends StatefulWidget {
 
 class _TimeEstimationsModalContentState
     extends State<TimeEstimationsModalContent> {
+  final HiveService hiveService = HiveService();
+  String? activeRideType;
+
   final Set<Marker> _markers = {};
 
   bool isRequestingRide = false;
@@ -50,6 +56,9 @@ class _TimeEstimationsModalContentState
   final Set<Polyline> _polylines = {};
 
   late GoogleMapController _mapController;
+
+  final _currencyFormatter = NumberFormat.decimalPattern();
+// or, if you want no decimal digits: NumberFormat('#,##0', 'en_US');
 
   // Fetch current location and city (filtered for administrative region)
   Future<void> _updateCurrentCityFromLocation() async {
@@ -240,14 +249,22 @@ class _TimeEstimationsModalContentState
       })();
 
       final requestBody = {
-        "startLat": widget.sourceLatitude,
-        "startLng": widget.sourceLongitude,
-        "endLat": widget.destinationLatitude,
-        "endLng": widget.destinationLongitude,
+        // "startLat": widget.sourceLatitude,
+        // "startLng": widget.sourceLongitude,
+        // "endLat": widget.destinationLatitude,
+        // "endLng": widget.destinationLongitude,
         "vehicleType": selectedVehicleType,
         "paymentMethod": paymentMethod,
-        "country": sourceLocation['country'],
-        "city": sourceCity,
+        // "country": sourceLocation['country'],
+        // "city": sourceCity,
+
+        "startLat": -6.1620,
+        "startLng": 35.7516,
+        "endLat": -6.1750,
+        "endLng": 35.7497,
+        "country": "Tanzania",
+        "city": "Dodoma",
+        // "cityName": "Dodoma"
       };
 
       LogService.logDebug("Request Body: ${jsonEncode(requestBody)}");
@@ -267,6 +284,14 @@ class _TimeEstimationsModalContentState
 
         // Trigger success modal
         // showSuccessModal(context, "Your ride request was successful!");
+
+        hiveService.putData(
+            'bookingBox', 'activeRideType', selectedVehicleType);
+        setState(() => activeRideType = selectedVehicleType);
+        HelperFunctions.showNotification(
+          title: 'Booked',
+          body: 'Your $selectedVehicleType ride is confirmed!',
+        );
 
         HelperFunctions.showNotification(
           title: 'Success',
@@ -305,6 +330,13 @@ class _TimeEstimationsModalContentState
     }
   }
 
+// And in your widget:
+  void _cancelBooking() async {
+    // Explicitly tell Dart that this is a Box<String>
+    await hiveService.deleteData<String>('bookingBox', 'activeRideType');
+    setState(() => activeRideType = null);
+  }
+
   Future<Map<String, String>> getCountryAndCity(
       double latitude, double longitude) async {
     try {
@@ -328,6 +360,10 @@ class _TimeEstimationsModalContentState
   @override
   void initState() {
     super.initState();
+
+    // Load any previously booked ride
+    activeRideType =
+        hiveService.getData<String>('bookingBox', 'activeRideType');
 
     _initializeMarkers();
     _drawRoute();
@@ -482,58 +518,82 @@ class _TimeEstimationsModalContentState
 
   @override
   Widget build(BuildContext context) {
-    // print('Destination Latitude: ${widget.destinationLatitude}, Destination Longitude: ${widget.destinationLongitude}');
+//     // final vehicles = widget.estimations['vehicleEstimations'] as List<dynamic>;
+    final distance = (widget.estimations['distance'] as num).toDouble();
+//     final currency = widget.estimations['currency'] as String;
+
+//     // 1) Pull in the raw list
+//     final rawVehicles =
+//         widget.estimations['vehicleEstimations'] as List<dynamic>;
+//     final vehicles = rawVehicles.map((v) => v as Map<String, dynamic>).toList();
+
+// // 2) Sort: available (pickupDuration>0) first, then the rest
+//     final sortedVehicles = [
+//       ...vehicles.where((v) => (v['pickupDuration'] as num).toDouble() > 0),
+//       ...vehicles.where((v) => (v['pickupDuration'] as num).toDouble() == 0),
+//     ];
+
+    final rawVehicles =
+        widget.estimations['vehicleEstimations'] as List<dynamic>;
+    final vehicles = rawVehicles.cast<Map<String, dynamic>>();
+
+// final sortedVehicles = [
+//   // available first
+//   ...vehicles.where((v) => (v['pickupDuration'] as num) > 0),
+//   // then the rest
+//   ...vehicles.where((v) => (v['pickupDuration'] as num) == 0),
+// ];
+
+// 2’) Sort: booked first, then available, then busy
+    final sortedVehicles = [
+      // 1) The one the user has already booked
+      if (activeRideType != null)
+        ...vehicles.where((v) => v['vehicleType'] == activeRideType),
+      // 2) All other available rides
+      ...vehicles.where((v) =>
+          v['vehicleType'] != activeRideType &&
+          (v['pickupDuration'] as num).toDouble() > 0),
+      // 3) All busy rides
+      ...vehicles.where((v) =>
+          v['vehicleType'] != activeRideType &&
+          (v['pickupDuration'] as num).toDouble() == 0),
+    ];
+
     return Container(
-      height: MediaQuery.of(context).size.height * 0.9, // Occupy 90% height
-      padding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 12.0),
+      height: MediaQuery.of(context).size.height * 0.9,
+      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
       decoration: BoxDecoration(
         borderRadius: const BorderRadius.vertical(top: Radius.circular(15)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 10,
-            spreadRadius: 5,
-          ),
-        ],
+        boxShadow: [BoxShadow(color: Colors.black26, blurRadius: 8)],
+        color: Colors.white,
       ),
       child: Column(
         children: [
-          // Modal handle
-          Center(
-            child: Container(
-              width: 40,
-              height: 4,
-              margin: const EdgeInsets.only(bottom: 10),
-              decoration: BoxDecoration(
-                color: Colors.grey[300],
-                borderRadius: BorderRadius.circular(10),
-              ),
+          // ─── Grab‑handle ───
+          Container(
+            width: 40,
+            height: 4,
+            margin: const EdgeInsets.only(bottom: 12),
+            decoration: BoxDecoration(
+              color: Colors.grey[300],
+              borderRadius: BorderRadius.circular(2),
             ),
           ),
 
-          // Google Map Section
+          // ─── Map ───
           Expanded(
+            flex: 4,
             child: ClipRRect(
-              borderRadius: BorderRadius.circular(15),
+              borderRadius: BorderRadius.circular(12),
               child: GoogleMap(
                 initialCameraPosition: CameraPosition(
                   target: LatLng(widget.sourceLatitude, widget.sourceLongitude),
-                  zoom: 12.0,
+                  zoom: 12,
                 ),
                 markers: _markers,
                 polylines: _polylines,
-                zoomControlsEnabled: true,
-                zoomGesturesEnabled: true,
-                scrollGesturesEnabled: true,
-                tiltGesturesEnabled: true,
-                rotateGesturesEnabled: true,
-                myLocationEnabled: true,
-                mapToolbarEnabled: true,
-                indoorViewEnabled: true,
-                buildingsEnabled: true,
-                onMapCreated: (controller) {
-                  _mapController = controller;
-                  // Fit map bounds once the map is created
+                onMapCreated: (c) {
+                  _mapController = c;
                   _fitMapToBounds([
                     LatLng(widget.sourceLatitude, widget.sourceLongitude),
                     LatLng(widget.destinationLatitude,
@@ -544,101 +604,577 @@ class _TimeEstimationsModalContentState
             ),
           ),
 
-          const SizedBox(height: 8),
+          const SizedBox(height: 12),
+
+          // ─── Distance Header ───
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.straighten,
+                  size: 18, color: LarosaColors.primary),
+              const SizedBox(width: 6),
+              RichText(
+                text: TextSpan(
+                  children: [
+                    TextSpan(
+                      text: '${distance.toStringAsFixed(2)} ',
+                      style: const TextStyle(
+                        fontSize: 17,
+                        fontWeight: FontWeight.bold,
+                        color: LarosaColors.primary,
+                      ),
+                    ),
+                    const TextSpan(
+                      text: 'km',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w400,
+                        color: LarosaColors.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 12),
+
+          // ─── Vehicle Options ───
+          // Expanded(
+          //   flex: 6,
+          //   child: ListView.builder(
+          //     itemCount: vehicles.length,
+          //     itemBuilder: (ctx, i) {
+          //       final data = vehicles[i] as Map<String, dynamic>;
+          //       return _buildVehicleRow(data, 'TZS', context);
+          //     },
+          //   ),
+          // ),
 
           Expanded(
-  child: Column(
-    children: [
-      Expanded(
-        child: ListView(
-          children: widget.estimations.entries.map((entry) {
-            return _buildVehicleRow(entry.key, entry.value);
-          }).toList(),
-        ),
-      ),
-      if (widget.estimations.entries.every((entry) =>
-          !entry.value.containsKey('closestDriver') || entry.value['closestDriver'] == null))
-        Padding(
-          padding: const EdgeInsets.symmetric(vertical: 16.0),
-          child: Column(
-  children: [
-    Icon(Icons.bus_alert, size: 40, color: LarosaColors.primary),
-    SizedBox(height: 8),
-    RichText(
-      textAlign: TextAlign.center,
-      text: TextSpan(
-        children: [
-          TextSpan(
-            text: 'All ',
-            style: TextStyle(fontSize: 16, color: Colors.black),
-          ),
-          TextSpan(
-            text: 'LaRosa Rides',
-            style: TextStyle(
-              fontSize: 15,
-              color: LarosaColors.primary,
-              fontStyle: FontStyle.italic,
-              fontWeight: FontWeight.bold,
+            flex: 6,
+            child: ListView.builder(
+              itemCount: sortedVehicles.length, // ← vehicles → sortedVehicles
+              itemBuilder: (ctx, i) {
+                final data =
+                    sortedVehicles[i]; // ← vehicles[i] → sortedVehicles[i]
+                return _buildVehicleRow(data, 'TZS', context);
+              },
             ),
           ),
-          TextSpan(
-            text:
-                ' are currently engaged. We appreciate your patience as we work to serve you soon.',
-            style: TextStyle(fontSize: 14, color: Colors.black),
-          ),
+
+          // ─── All busy fallback ───
+          // if (vehicles.every((v) => (v as Map<String, dynamic>)['pickupDuration'] == 0))
+          //   Padding(
+          //     padding: const EdgeInsets.symmetric(vertical: 16),
+          //     child: Column(
+          //       children: const [
+          //         Icon(Icons.bus_alert, size: 36, color: Colors.green),
+          //         SizedBox(height: 8),
+          //         Text(
+          //           'All LaRosa rides are currently engaged.\nPlease hold on—we’ll get you a driver asap.',
+          //           textAlign: TextAlign.center,
+          //           style: TextStyle(fontSize: 14),
+          //         ),
+          //       ],
+          //     ),
+          //   ),
         ],
       ),
-    ),
-  ],
-)
+    );
+  }
+
+  // Widget _buildVehicleRow(
+  //     Map<String, dynamic> data, String currency, BuildContext context) {
+  //   final rawType = (data['vehicleType'] as String);
+  //   final cost = (data['cost'] as num).toDouble();
+  //   final offerCost = (data['costAfterOffer'] as num).toDouble();
+  //   final pickupMin = (data['pickupDuration'] as num).toDouble();
+  //   final travelMin = (data['routeDuration'] as num).toDouble();
+  //   final available = pickupMin > 0;
+
+  //   final isBooked = data['vehicleType'] == activeRideType;
+
+  //   final isDark = Theme.of(context).brightness == Brightness.dark;
+  //   final cardColor = isDark ? LarosaColors.dark : LarosaColors.light;
+
+  //   final hasDiscount = offerCost < cost;
+  //   final displayPrice = hasDiscount ? offerCost : cost;
+
+  //   final icon = _getVehicleIcon(rawType);
+  //   final type = _formatVehicleType(rawType);
+
+  //   return Container(
+  //     // color: cardColor,
+  //     margin: const EdgeInsets.symmetric(horizontal: 0, vertical: 4),
+  //     decoration: BoxDecoration(
+  //       color: cardColor,
+  //       border: const Border(
+  //         top: BorderSide(
+  //           color: LarosaColors.borderPrimary,
+  //           width: 1,
+  //         ),
+  //         bottom: BorderSide(
+  //           color: LarosaColors.borderPrimary,
+  //           width: 1,
+  //         ),
+  //       ),
+  //       borderRadius: BorderRadius.circular(12), // optional
+  //     ),
+  //     // shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+  //     child: Padding(
+  //       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
+  //       child: Stack(
+  //         children: [
+  //           // 🔘 Status indicator
+  //           Positioned(
+  //             top: 2,
+  //             right: 2,
+  //             child: Icon(
+  //               Icons.circle,
+  //               size: 10,
+  //               color: available ? LarosaColors.success : LarosaColors.warning,
+  //             ),
+  //           ),
+
+  //           Column(
+  //             crossAxisAlignment: CrossAxisAlignment.start,
+  //             children: [
+  //               // 🚘 Vehicle Icon + Type
+  //               Row(
+  //                 children: [
+  //                   CircleAvatar(
+  //                     radius: 18,
+  //                     backgroundColor: LarosaColors.primary.withOpacity(0.1),
+  //                     child: Icon(
+  //                       icon,
+  //                       size: 18,
+  //                       color: LarosaColors.primary,
+  //                     ),
+  //                   ),
+  //                   const SizedBox(width: 8),
+  //                   Text(
+  //                     type,
+  //                     style: TextStyle(
+  //                       fontSize: 13,
+  //                       fontWeight: FontWeight.w600,
+  //                       color: isDark ? LarosaColors.white : LarosaColors.black,
+  //                     ),
+  //                   ),
+  //                 ],
+  //               ),
+
+  //               const SizedBox(height: 10),
+
+  //               // 🛒 Price Display
+  //               Row(
+  //                 children: [
+  //                   const Icon(Icons.local_offer_outlined,
+  //                       size: 16, color: LarosaColors.success),
+  //                   const SizedBox(width: 6),
+  //                   if (hasDiscount) ...[
+  //                     Text(
+  //                       '${cost.toStringAsFixed(0)} $currency',
+  //                       style: TextStyle(
+  //                         fontSize: 12,
+  //                         color: LarosaColors.darkGrey,
+  //                         decoration: TextDecoration.lineThrough,
+  //                       ),
+  //                     ),
+  //                     const SizedBox(width: 6),
+  //                     Text(
+  //                       '${offerCost.toStringAsFixed(0)} $currency',
+  //                       style: const TextStyle(
+  //                         fontSize: 13.5,
+  //                         color: LarosaColors.secondary,
+  //                         fontWeight: FontWeight.w600,
+  //                       ),
+  //                     ),
+  //                   ] else ...[
+  //                     Text(
+  //                       '${displayPrice.toStringAsFixed(0)} $currency',
+  //                       style: TextStyle(
+  //                         fontSize: 13,
+  //                         fontWeight: FontWeight.w600,
+  //                         color: isDark
+  //                             ? LarosaColors.white
+  //                             : LarosaColors.primary,
+  //                       ),
+  //                     ),
+  //                   ]
+  //                 ],
+  //               ),
+
+  //               const SizedBox(height: 8),
+
+  //               // 📊 Info Row
+  //               Row(
+  //                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
+  //                 children: [
+  //                   _tinyInfo(Icons.access_time, formatTime(pickupMin)),
+  //                   _tinyInfo(Icons.route_rounded, formatTime(travelMin)),
+  //                 ],
+  //               ),
+
+  //               const SizedBox(height: 10),
+
+  //               // ✅ Select or Busy
+  //               Align(
+  //                 alignment: Alignment.centerRight,
+  //                 child: available
+  //                     ? Container(
+  //                         decoration: BoxDecoration(
+  //                           gradient: LarosaColors.blueGradient,
+  //                           borderRadius: BorderRadius.circular(8),
+  //                         ),
+  //                         child: TextButton.icon(
+  //                           onPressed: isRequestingRide
+  //                               ? null
+  //                               : () =>
+  //                                   _requestRide(selectedVehicleType: rawType),
+  //                           icon: isRequestingRide
+  //                               ? const SizedBox(
+  //                                   width: 14,
+  //                                   height: 14,
+  //                                   child: CircularProgressIndicator(
+  //                                     strokeWidth: 2,
+  //                                     color: Colors.white,
+  //                                   ),
+  //                                 )
+  //                               : const Icon(Icons.local_taxi,
+  //                                   size: 14, color: Colors.white),
+  //                           label: Text(
+  //                             isRequestingRide ? '' : 'Select',
+  //                             style: const TextStyle(
+  //                                 fontSize: 11,
+  //                                 fontWeight: FontWeight.bold,
+  //                                 color: Colors.white),
+  //                           ),
+  //                           style: TextButton.styleFrom(
+  //                             backgroundColor: Colors.transparent,
+  //                             shadowColor: Colors.transparent,
+  //                             padding: const EdgeInsets.symmetric(
+  //                                 horizontal: 20, vertical: 8),
+  //                             minimumSize: const Size(
+  //                                 0, 28), // <-- enforce a smaller height
+  //                             tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+  //                             shape: RoundedRectangleBorder(
+  //                                 borderRadius: BorderRadius.circular(8)),
+  //                           ),
+  //                         ),
+  //                       )
+  //                     : Row(
+  //                         mainAxisSize: MainAxisSize.min,
+  //                         children: const [
+  //                           Icon(Icons.warning_amber_rounded,
+  //                               size: 14, color: LarosaColors.warning),
+  //                           SizedBox(width: 4),
+  //                           Text(
+  //                             'Busy',
+  //                             style: TextStyle(
+  //                               fontSize: 11,
+  //                               color: LarosaColors.warning,
+  //                               fontWeight: FontWeight.w500,
+  //                             ),
+  //                           ),
+  //                         ],
+  //                       ),
+  //               ),
+  //             ],
+  //           ),
+  //         ],
+  //       ),
+  //     ),
+  //   );
+  // }
+
+  Widget _buildVehicleRow(
+    Map<String, dynamic> data,
+    String currency,
+    BuildContext context,
+  ) {
+    final rawType = data['vehicleType'] as String;
+    final cost = (data['cost'] as num).toDouble();
+    final offerCost = (data['costAfterOffer'] as num).toDouble();
+    final pickupMin = (data['pickupDuration'] as num).toDouble();
+    final travelMin = (data['routeDuration'] as num).toDouble();
+    final available = pickupMin > 0;
+
+    // isBooked comes from your State: activeRideType
+    final isBooked = rawType == activeRideType;
+
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final cardColor = isDark ? LarosaColors.dark : LarosaColors.light;
+
+    final hasDiscount = offerCost < cost;
+    final displayPrice = hasDiscount ? offerCost : cost;
+
+    final icon = _getVehicleIcon(rawType);
+    final type = _formatVehicleType(rawType);
+
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 4),
+      decoration: BoxDecoration(
+        color: cardColor,
+        border: const Border(
+          top: BorderSide(color: LarosaColors.borderPrimary, width: 1),
+          bottom: BorderSide(color: LarosaColors.borderPrimary, width: 1),
         ),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Vehicle Icon + Type
+            Row(
+              children: [
+                CircleAvatar(
+                  radius: 18,
+                  backgroundColor: LarosaColors.primary.withOpacity(0.1),
+                  child: Icon(icon, size: 18, color: LarosaColors.primary),
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  type,
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: isDark ? LarosaColors.white : LarosaColors.black,
+                  ),
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 8),
+
+            // Price Display
+            Row(
+              children: [
+                const Icon(Icons.local_offer_outlined,
+                    size: 16, color: LarosaColors.success),
+                const SizedBox(width: 6),
+                if (hasDiscount) ...[
+                  Text(
+                    '${cost.toStringAsFixed(0)} $currency',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: LarosaColors.darkGrey,
+                      decoration: TextDecoration.lineThrough,
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                ],
+                Text(
+                  // '${displayPrice.toStringAsFixed(0)} $currency',
+                  '${_currencyFormatter.format(displayPrice)} $currency',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: hasDiscount
+                        ? LarosaColors.secondary
+                        : (isDark ? LarosaColors.white : LarosaColors.primary),
+                  ),
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 8),
+
+            // Info Row
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                _tinyInfo(Icons.access_time, formatTime(pickupMin)),
+                _tinyInfo(Icons.route_rounded, formatTime(travelMin)),
+              ],
+            ),
+
+            const SizedBox(height: 10),
+
+            // Action Button: Cancel / Select / Busy
+            Align(
+              alignment: Alignment.centerRight,
+              child: isBooked
+                  // Already booked → show Cancel
+                  // ? TextButton.icon(
+                  //     onPressed: _cancelBooking,
+                  //     icon: const Icon(Icons.local_taxi,
+                  //         size: 14, color: Colors.white),
+                  //     label: const Text(
+                  //       'Cancel',
+                  //       style: TextStyle(
+                  //           fontSize: 11,
+                  //           fontWeight: FontWeight.bold,
+                  //           color: Colors.white),
+                  //     ),
+                  //     style: TextButton.styleFrom(
+                  //       backgroundColor: Colors.redAccent,
+                  //       padding: const EdgeInsets.symmetric(
+                  //           horizontal: 20, vertical: 6),
+                  //       minimumSize: const Size(0, 28),
+                  //       tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  //       shape: RoundedRectangleBorder(
+                  //           borderRadius: BorderRadius.circular(8)),
+                  //     ),
+                  //   )
+
+             ?   Padding(
+  padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 0),
+  child: Row(
+    children: [
+      // ─── Animated “Driver is on the way” ───
+      AvatarGlow(
+        glowColor: Colors.greenAccent,
+        glowRadiusFactor: .5,
+        duration: const Duration(milliseconds: 1500),
+        repeat: true,
+        // showTwoGlows: true,
+        child:  Icon(
+          // Icons.local_taxi,
+           icon,
+          size: 24,
+          color: Colors.green,
+        ),
+      ),
+      const SizedBox(width: 8),
+      const Text(
+        'Driver is on the way',
+        style: TextStyle(
+          fontSize: 14,
+          fontWeight: FontWeight.w600,
+          color: Colors.green,
+        ),
+      ),
+
+      const Spacer(),
+
+      // ─── Cancel Button ───
+      Container(
+        decoration: BoxDecoration(
+                            gradient: LarosaColors.dangerGradient,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+        child: TextButton.icon(
+          onPressed: _cancelBooking,
+          icon: Icon(
+            icon,
+            size: 18,
+            color: Colors.white,
+          ),
+          label: const Text(
+            'Cancel',
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+            ),
+          ),
+          style: TextButton.styleFrom(
+                                backgroundColor: Colors.transparent,
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 16, vertical: 6),
+                                minimumSize: const Size(0, 28),
+                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                              ),
+        ),
+      ),
     ],
   ),
 )
-        ],
+                  : (available
+                      // Available → gradient Select
+                      ? Container(
+                          decoration: BoxDecoration(
+                            gradient: LarosaColors.blueGradient,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: TextButton.icon(
+                            onPressed: isRequestingRide
+                                ? null
+                                : () =>
+                                    _requestRide(selectedVehicleType: rawType),
+                            icon: isRequestingRide
+                                ?  SizedBox(
+                                    width: 14,
+                                    height: 14,
+                                    child: Padding(
+                                      padding: const EdgeInsets.all(8.0),
+                                      child: CupertinoActivityIndicator(
+                                        radius: 8,
+                                        color: Colors.white, animating: true,),
+                                    )
+                                  )
+                                : Icon(icon,
+            size: 18, color: Colors.white),
+                            label: Text(
+                              isRequestingRide ? '' : 'Select',
+                              style: const TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white),
+                            ),
+                            style: TextButton.styleFrom(
+                              backgroundColor: Colors.transparent,
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 16, vertical: 6),
+                              minimumSize: const Size(0, 28),
+                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                            ),
+                          ),
+                        )
+                      // Busy → no action
+                      : const Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.warning_amber_rounded,
+                                size: 14, color: LarosaColors.warning),
+                            SizedBox(width: 4),
+                            Text(
+                              'Busy',
+                              style: TextStyle(
+                                  fontSize: 11,
+                                  color: LarosaColors.warning,
+                                  fontWeight: FontWeight.w500),
+                            ),
+                          ],
+                        )),
+            ),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildVehicleRow(String vehicleType, Map<String, dynamic> data) {
-    final isAvailable =
-        data.containsKey('closestDriver') && data['closestDriver'] != null;
+  IconData _getVehicleIcon(String vehicleType) {
+    switch (vehicleType.toLowerCase()) {
+      case 'motorcycle':
+        return Icons.motorcycle;
+      case 'bajaj':
+        return Icons.electric_rickshaw;
+      case 'larosamini':
+      case 'larosa mini':
+        return Icons.directions_car;
+      default:
+        return Icons.help_outline;
+    }
+  }
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+  Widget _tinyInfo(IconData icon, String value) {
+    return Row(
       children: [
-        Row(
-          children: [
-            Icon(Icons.directions_car,
-                color: isAvailable ? Colors.blue : Colors.grey),
-            const SizedBox(width: 8),
-            Text(
-              vehicleType.sentenceCase,
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                color: isAvailable ? Colors.black : Colors.grey,
-              ),
-            ),
-          ],
+        Icon(icon, size: 14, color: LarosaColors.mediumGray),
+        const SizedBox(width: 4),
+        Text(
+          value,
+          style: const TextStyle(fontSize: 12),
         ),
-        if (isAvailable) // Only show details if available
-          Padding(
-            padding: const EdgeInsets.only(left: 16.0, top: 4.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text("Closest Driver: ${data['closestDriver']}"),
-                Text("Time to Customer: ${formatTime(data['timeToCustomer'])}"),
-                Text(
-                    "Travel Time: ${formatTime(data['timeFromCustomerToDestination'])}"),
-              ],
-            ),
-          ),
-        const Divider(),
       ],
     );
   }
-  
+
   String formatTime(double minutes) {
     int hours = (minutes / 60).floor();
     int mins = (minutes % 60).round();
