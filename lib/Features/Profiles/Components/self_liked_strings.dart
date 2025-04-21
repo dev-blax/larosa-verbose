@@ -6,7 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:flutter_svg/svg.dart';
-import 'package:go_router/go_router.dart';
+import 'package:larosa_block/Features/Profiles/Components/vertical_posts_view.dart';
 import 'package:larosa_block/Services/auth_service.dart';
 import 'package:larosa_block/Utils/colors.dart';
 import 'package:larosa_block/Utils/links.dart';
@@ -168,9 +168,14 @@ class _SelfLikedStringsComponentState extends State<SelfLikedStringsComponent> {
               //   activePost: index,
               // ))
 
-              context.push(
-                '/profilePosts?title=LikedStrings&activePost=$index',
-                extra: imagePosts,
+              Navigator.push(
+                context,
+                CupertinoPageRoute(
+                  builder: (context) => VerticalPostsView(
+                    posts: imagePosts,
+                    initialIndex: index,
+                  ),
+                ),
               );
             },
             child: ClipRRect(
@@ -215,9 +220,14 @@ class _SelfLikedStringsComponentState extends State<SelfLikedStringsComponent> {
           ],
           child: GestureDetector(
             onTap: () {
-              context.push(
-                '/profilePosts?title=Liked Strings&activePost=$index',
-                extra: imagePosts,
+              Navigator.push(
+                context,
+                CupertinoPageRoute(
+                  builder: (context) => VerticalPostsView(
+                    posts: imagePosts,
+                    initialIndex: index,
+                  ),
+                ),
               );
             },
             child: ClipRRect(

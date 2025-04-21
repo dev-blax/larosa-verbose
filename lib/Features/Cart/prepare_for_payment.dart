@@ -195,75 +195,6 @@ class _PrepareForPaymentState extends State<PrepareForPayment> {
     }
   }
 
-  Future<List<Map<String, String>>> _getPlaceSuggestions(String input) async {
-    final String apiKey = dotenv.env['GOOGLE_MAPS_PLACES_API_KEY']!;
-    const String baseUrl =
-        'https://maps.googleapis.com/maps/api/place/autocomplete/json';
-    final url = '$baseUrl?input=$input&key=$apiKey&components=country:tz';
-
-    try {
-      final response = await http.get(Uri.parse(url));
-      if (response.statusCode == 200) {
-        final json = jsonDecode(response.body);
-        final suggestions = (json['predictions'] as List)
-            .map((prediction) => {
-                  'description': prediction['description'] as String,
-                  'place_id': prediction['place_id'] as String,
-                })
-            .toList();
-        return suggestions.isNotEmpty
-            ? suggestions
-            : [
-                {'description': 'No results found', 'place_id': ''}
-              ];
-      } else {
-        LogService.logError('Error fetching suggestions: ${response.body}');
-        return [
-          {
-            'description': 'Failed to fetch locations. Please try again.',
-            'place_id': ''
-          }
-        ];
-      }
-    } catch (e) {
-      LogService.logError('Error fetching suggestions: $e');
-      return [
-        {
-          'description':
-              'Failed to fetch locations. Please check your connection.',
-          'place_id': ''
-        }
-      ];
-    }
-  }
-
-  Future<void> _getPlaceDetails(String placeId) async {
-    final String apiKey = dotenv.env['GOOGLE_MAPS_PLACES_API_KEY']!;
-    const String detailsUrl =
-        'https://maps.googleapis.com/maps/api/place/details/json';
-    final url = '$detailsUrl?place_id=$placeId&key=$apiKey';
-
-    try {
-      final response = await http.get(Uri.parse(url));
-      if (response.statusCode == 200) {
-        final json = jsonDecode(response.body);
-        if (json['result'] != null && json['result']['geometry'] != null) {
-          final location = json['result']['geometry']['location'];
-          final address = json['result']['formatted_address'];
-          final lat = location['lat'];
-          final lng = location['lng'];
-
-          setState(() {
-            latitude = lat;
-            longitude = lng;
-            selectedStreetName = address;
-          });
-        }
-      }
-    } catch (e) {
-      LogService.logError('Error: $e');
-    }
-  }
 
   Future<void> _fetchExchangeRate() async {
     try {
@@ -327,11 +258,9 @@ class _PrepareForPaymentState extends State<PrepareForPayment> {
   @override
   void initState() {
     super.initState();
-    // _getCurrentLocation();
     _fetchExchangeRate();
     _getCurrentLocation().then((_) => fetchTransportCost());
 
-    // Optionally, set default values
     checkInDate = DateTime.now();
     checkOutDate = DateTime.now().add(const Duration(days: 1));
   }
@@ -488,7 +417,7 @@ class _PrepareForPaymentState extends State<PrepareForPayment> {
         ),
         centerTitle: true,
       ),
-      body: ListView(
+      body: Column(
         children: [
           SingleChildScrollView(
             child: Column(
@@ -497,6 +426,7 @@ class _PrepareForPaymentState extends State<PrepareForPayment> {
                 SizedBox(
                   height: 300,
                   child: ListView.builder(
+                    physics: const BouncingScrollPhysics(),
                     itemCount: widget.itemsToDisplay.length,
                     itemBuilder: (context, index) {
                       final item = widget.itemsToDisplay[index];

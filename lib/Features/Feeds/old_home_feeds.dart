@@ -79,8 +79,8 @@ class _OldHomeFeedsScreenState extends State<OldHomeFeedsScreen> with SingleTick
 
   @override
   void dispose() {
-    final controller = Provider.of<OldHomeFeedsController>(context, listen: false);
-    controller.scrollController.removeListener(_onScroll);
+    // final controller = Provider.of<OldHomeFeedsController>(context, listen: false);
+    // controller.scrollController.removeListener(_onScroll);
     _animationController.dispose();
     super.dispose();
   }

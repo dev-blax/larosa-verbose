@@ -457,14 +457,6 @@ class _ProfileVisitScreenState extends State<ProfileVisitScreen> {
           fit: BoxFit.cover,
           filterQuality: FilterQuality.low,
         ),
-        // Image.asset(
-        //   imageUrl: profile!['coverPhoto'] ??
-        //       'assets/images/banner_business.png',
-        //   height: 200,
-        //   width: MediaQuery.of(context).size.width,
-        //   fit: BoxFit.cover,
-        //   filterQuality: FilterQuality.low,
-        // ),
         Positioned.fill(
           child: Container(
             decoration: const BoxDecoration(
@@ -854,43 +846,51 @@ class _ProfileVisitScreenState extends State<ProfileVisitScreen> {
                                   ),
                                 ),
 
-                                // options icon on top right
                                 Positioned(
                                   top: 20,
                                   right: 10,
                                   child: IconButton(
                                     onPressed: () {
-                                      showModalBottomSheet(
+                                      showCupertinoModalPopup(
                                         context: context,
-                                        builder: (context) => Container(
-                                          padding: const EdgeInsets.symmetric(vertical: 20),
-                                          child: Column(
-                                            mainAxisSize: MainAxisSize.min,
-                                            children: [
-                                              ListTile(
-                                                leading: const Icon(Icons.block),
-                                                title: const Text('Block User'),
-                                                onTap: () {
-                                                  Navigator.pop(context);
-                                                  showDialog(
-                                                    context: context,
-                                                    builder: (context) => Dialog(child: BlockUserComponent(profileId: widget.profileId,)),
-                                                  );
-                                                },
-                                              ),
-                                              ListTile(
-                                                leading: const Icon(Icons.report),
-                                                title: const Text('Report User'),
-                                                onTap: () {
-                                                  Navigator.pop(context);
-                                                  showDialog(
-                                                    context: context,
-                                                    builder: (context) => Dialog(child: ReportUserComponent(reportProfileId: widget.profileId,)),
-                                                  );
-                                                },
-                                              ),
-                                              // Add more options here as needed
-                                            ],
+                                        builder: (context) => CupertinoActionSheet(
+                                          title: const Text('User Options'),
+                                          message: const Text('Choose an action'),
+                                          actions: [
+                                            CupertinoActionSheetAction(
+                                              onPressed: () {
+                                                Navigator.pop(context);
+                                                showDialog(
+                                                  context: context,
+                                                  builder: (context) => Dialog(
+                                                    child: BlockUserComponent(
+                                                      profileId: widget.profileId,
+                                                    ),
+                                                  ),
+                                                );
+                                              },
+                                              child: const Text('Block User'),
+                                              isDestructiveAction: true,
+                                            ),
+                                            CupertinoActionSheetAction(
+                                              onPressed: () {
+                                                Navigator.pop(context);
+                                                showDialog(
+                                                  context: context,
+                                                  builder: (context) => Dialog(
+                                                    child: ReportUserComponent(
+                                                      reportProfileId: widget.profileId,
+                                                    ),
+                                                  ),
+                                                );
+                                              },
+                                              child: const Text('Report User'),
+                                              isDestructiveAction: true,
+                                            ),
+                                          ],
+                                          cancelButton: CupertinoActionSheetAction(
+                                            onPressed: () => Navigator.pop(context),
+                                            child: const Text('Cancel'),
                                           ),
                                         ),
                                       );

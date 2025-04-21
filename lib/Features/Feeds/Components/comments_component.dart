@@ -168,7 +168,6 @@ class _CommentSectionState extends State<CommentSection> {
 
       if (response.statusCode == 200) {
         final List<dynamic> data = response.data;
-        LogService.logFatal(' ${data[0]}');
 
         setState(() {
           postComments = data.reversed.toList();
@@ -237,15 +236,13 @@ class _CommentSectionState extends State<CommentSection> {
                             double percentCollapsed =
                                 ((constraints.maxHeight - kToolbarHeight) /
                                         (400 - kToolbarHeight))
-                                    .clamp(0.0,
-                                        1.0); // Ensure value is between 0 and 1
+                                    .clamp(0.0, 1.0);
 
                             bool hasVideoFiles =
                                 mediaFiles.any((url) => url.endsWith('.mp4'));
 
                             return Stack(
                               children: [
-                                // This is the media section when the app bar is expanded
                                 Opacity(
                                   opacity: percentCollapsed,
                                   child: PageView.builder(
@@ -286,7 +283,8 @@ class _CommentSectionState extends State<CommentSection> {
                             postComments.isEmpty
                                 ? const Center(
                                     child: Text(
-                                        'Be the first to comment on this post'),
+                                      'Be the first to comment on this post',
+                                    ),
                                   )
                                 : Column(
                                     children: [

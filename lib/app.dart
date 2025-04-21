@@ -51,7 +51,7 @@ class _AppState extends State<App> {
 
     stompClient.activate();
   }
-  
+
   void onConnect(StompFrame frame) {
     setState(() {
       connectedToSocket = true;
@@ -83,8 +83,8 @@ class _AppState extends State<App> {
   void _setSystemUIOverlayStyle() {
     SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
-      statusBarIconBrightness: Brightness.light, 
-      statusBarBrightness: Brightness.dark, 
+      statusBarIconBrightness: Brightness.light,
+      statusBarBrightness: Brightness.dark,
       systemNavigationBarColor: Colors.black,
       systemNavigationBarIconBrightness: Brightness.light,
     ));
@@ -101,7 +101,6 @@ class _AppState extends State<App> {
         ChangeNotifierProvider(create: (_) => CartController()),
         ChangeNotifierProvider(create: (_) => StoryProvider()),
         ChangeNotifierProvider(create: (_) => SecondBusinessCategoryProvider()),
-
       ],
       child: ToastificationWrapper(
         child: MaterialApp.router(
@@ -112,17 +111,22 @@ class _AppState extends State<App> {
           builder: (context, child) {
             NavigationService.setContext(context);
             Brightness brightness = Theme.of(context).brightness;
-            SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
-              statusBarColor: Colors.transparent,
-              statusBarIconBrightness: 
-                brightness == Brightness.dark ? Brightness.light : Brightness.dark,
-              statusBarBrightness: 
-                brightness == Brightness.dark ? Brightness.light : Brightness.dark,
-              systemNavigationBarColor: 
-                brightness == Brightness.dark ? Colors.black : Colors.white,
-              systemNavigationBarIconBrightness: 
-                brightness == Brightness.dark ? Brightness.light : Brightness.dark,
-            ));
+            SystemChrome.setSystemUIOverlayStyle(
+              SystemUiOverlayStyle(
+                statusBarColor: Colors.transparent,
+                statusBarIconBrightness: brightness == Brightness.dark
+                    ? Brightness.light
+                    : Brightness.dark,
+                statusBarBrightness: brightness == Brightness.dark
+                    ? Brightness.light
+                    : Brightness.dark,
+                systemNavigationBarColor:
+                    brightness == Brightness.dark ? Colors.black : Colors.white,
+                systemNavigationBarIconBrightness: brightness == Brightness.dark
+                    ? Brightness.light
+                    : Brightness.dark,
+              ),
+            );
             return child!;
           },
           debugShowCheckedModeBanner: false,

@@ -53,7 +53,7 @@ class _OrdersWidgetState extends State<OrdersWidget> {
         //LogService.logInfo(response.body);
         setState(() {
           orders = jsonDecode(response.body);
-          orders = orders.reversed.toList();
+          //orders = orders.reversed.toList();
         });
 
         LogService.logInfo('Orders loaded: ${orders}');
@@ -108,10 +108,18 @@ class _OrdersWidgetState extends State<OrdersWidget> {
     );
   }
 
-  Widget creativeOrderCard(Map order) {
+  Widget creativeOrderCard(Map<String, dynamic> order) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final items = (order['items'] as List?) ?? [];
+    final items = (order['items'] as List?)?.cast<Map<String, dynamic>>() ?? [];
     final totalItems = items.fold<int>(0, (sum, item) => sum + ((item['quantity'] as num?)?.toInt() ?? 0));
+    final deliveryLocation = order['deliveryLocation'] as Map<String, dynamic>? ?? {};
+    final driver = order['driver'] as Map<String, dynamic>? ?? {};
+
+    // Collect all media from items
+    final allMedia = items.expand<String>((item) {
+      final mediaLinks = (item['mediaLink'] as List?)?.cast<String>() ?? [];
+      return mediaLinks;
+    }).toList();
 
     LogService.logInfo('Order: $order');
 
@@ -153,7 +161,7 @@ class _OrdersWidgetState extends State<OrdersWidget> {
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                           decoration: BoxDecoration(
-                            color: _getStatusColor(order['status']).withOpacity(0.1),
+                            color: _getStatusColor(order['status']?.toString()).withOpacity(0.1),
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Row(
@@ -162,7 +170,7 @@ class _OrdersWidgetState extends State<OrdersWidget> {
                                 width: 6,
                                 height: 6,
                                 decoration: BoxDecoration(
-                                  color: _getStatusColor(order['status']),
+                                  color: _getStatusColor(order['status']?.toString()),
                                   shape: BoxShape.circle,
                                 ),
                               ),
@@ -170,7 +178,7 @@ class _OrdersWidgetState extends State<OrdersWidget> {
                               Text(
                                 order['status']?.toString().toUpperCase() ?? 'PENDING',
                                 style: TextStyle(
-                                  color: _getStatusColor(order['status']),
+                                  color: _getStatusColor(order['status']?.toString()),
                                   fontSize: 12,
                                   fontWeight: FontWeight.w600,
                                 ),
@@ -180,7 +188,7 @@ class _OrdersWidgetState extends State<OrdersWidget> {
                         ),
                         const SizedBox(width: 12),
                         Text(
-                          '#${order['id'] ?? 'N/A'}',
+                          '#${order['id']?.toString() ?? 'N/A'}',
                           style: TextStyle(
                             color: isDark ? Colors.white70 : Colors.black54,
                             fontSize: 14,
@@ -190,7 +198,7 @@ class _OrdersWidgetState extends State<OrdersWidget> {
                       ],
                     ),
                     Text(
-                      'TSh ${HelperFunctions.formatPrice(order['totalAmount'] ?? 0.0)}',
+                      'TSh ${HelperFunctions.formatPrice((order['totalAmount'] as num?)?.toDouble() ?? 0.0)}',
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
@@ -201,13 +209,96 @@ class _OrdersWidgetState extends State<OrdersWidget> {
                 ),
               ),
               
+              // Media Gallery
+              if (allMedia.isNotEmpty) ...[
+                Container(
+                  height: 120,
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  child: ListView.builder(
+                    scrollDirection: Axis.horizontal,
+                    itemCount: allMedia.length,
+                    itemBuilder: (context, index) {
+                      final mediaUrl = allMedia[index];
+                      final isVideo = mediaUrl.toLowerCase().endsWith('.mp4');
+                      
+                      return Container(
+                        width: 100,
+                        margin: EdgeInsets.only(right: index < allMedia.length - 1 ? 12 : 0),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(12),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.05),
+                              blurRadius: 4,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(12),
+                          child: Stack(
+                            fit: StackFit.expand,
+                            children: [
+                              Image.network(
+                                mediaUrl,
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) {
+                                  return Container(
+                                    color: isDark ? Colors.white12 : Colors.black.withOpacity(0.05),
+                                    child: Icon(
+                                      CupertinoIcons.photo,
+                                      color: isDark ? Colors.white30 : Colors.black26,
+                                    ),
+                                  );
+                                },
+                                loadingBuilder: (context, child, loadingProgress) {
+                                  if (loadingProgress == null) return child;
+                                  return Container(
+                                    color: isDark ? Colors.white12 : Colors.black.withOpacity(0.05),
+                                    child: Center(
+                                      child: CupertinoActivityIndicator(
+                                        color: isDark ? Colors.white54 : Colors.black45,
+                                      ),
+                                    ),
+                                  );
+                                },
+                              ),
+                              if (isVideo)
+                                Container(
+                                  decoration: BoxDecoration(
+                                    gradient: LinearGradient(
+                                      begin: Alignment.bottomCenter,
+                                      end: Alignment.topCenter,
+                                      colors: [
+                                        Colors.black.withOpacity(0.4),
+                                        Colors.transparent,
+                                      ],
+                                    ),
+                                  ),
+                                  child: const Center(
+                                    child: Icon(
+                                      CupertinoIcons.play_circle_fill,
+                                      color: Colors.white,
+                                      size: 32,
+                                    ),
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ],
+              
               // Order Details
               Padding(
                 padding: const EdgeInsets.all(16),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Location
+                    // Location and Driver Info
                     Row(
                       children: [
                         Icon(
@@ -216,12 +307,29 @@ class _OrdersWidgetState extends State<OrdersWidget> {
                           color: isDark ? Colors.white60 : Colors.black45,
                         ),
                         const SizedBox(width: 8),
-                        Text(
-                          (order['deliveryLocation'] as Map?)?['city'] ?? 'Location Pending',
-                          style: TextStyle(
-                            color: isDark ? Colors.white70 : Colors.black87,
-                            fontSize: 15,
-                            fontWeight: FontWeight.w500,
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                deliveryLocation['city']?.toString() ?? 'Location Pending',
+                                style: TextStyle(
+                                  color: isDark ? Colors.white70 : Colors.black87,
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                              if (driver['name'] != null) ...[
+                                const SizedBox(height: 4),
+                                Text(
+                                  'Driver: ${driver['name']}',
+                                  style: TextStyle(
+                                    color: isDark ? Colors.white60 : Colors.black54,
+                                    fontSize: 13,
+                                  ),
+                                ),
+                              ],
+                            ],
                           ),
                         ),
                       ],
@@ -241,14 +349,14 @@ class _OrdersWidgetState extends State<OrdersWidget> {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text(
-                            '$totalItems items',
+                            '$totalItems ${totalItems == 1 ? 'item' : 'items'}',
                             style: TextStyle(
                               color: isDark ? Colors.white70 : Colors.black87,
                               fontSize: 14,
                             ),
                           ),
                           Text(
-                            'Delivery: TSh ${HelperFunctions.formatPrice(order['deliveryAmount'] ?? 0.0)}',
+                            'Delivery: TSh ${HelperFunctions.formatPrice((order['deliveryAmount'] as num?)?.toDouble() ?? 0.0)}',
                             style: TextStyle(
                               color: isDark ? Colors.white60 : Colors.black54,
                               fontSize: 13,

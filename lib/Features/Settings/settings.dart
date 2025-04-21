@@ -57,7 +57,6 @@ Future<Map<String, String>?> _showDeletionDialog(BuildContext context) {
   String selectedReason = "USER_REQUESTED";
   TextEditingController commentsController = TextEditingController();
 
-  // Define a common gradient to use for the header and buttons.
   final Gradient commonGradient = LinearGradient(
     colors: [
       Theme.of(context).colorScheme.primary,
@@ -304,39 +303,7 @@ Future<Map<String, String>?> _showDeletionDialog(BuildContext context) {
                 ),
               ),
             ),
-            
-            // const Gap(20),
-
-            // InkWell(
-            //   onTap: () {},
-            //   child: Container(
-            //     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            //     decoration: BoxDecoration(
-            //       color: Theme.of(context).colorScheme.surface,
-            //       borderRadius: BorderRadius.circular(8),
-            //     ),
-            //     child: Row(
-            //       children: [
-            //         const Icon(Icons.lock, color: Colors.grey),
-            //         const SizedBox(width: 12),
-            //         const Text(
-            //           'Change Password',
-            //           style: TextStyle(
-            //             fontSize: 16,
-            //             fontWeight: FontWeight.w500,
-            //             color: Colors.grey,
-            //           ),
-            //         ),
-            //         const Spacer(),
-            //         Icon(
-            //           Icons.chevron_right,
-            //           color: Colors.grey[600],
-            //         ),
-            //       ],
-            //     ),
-            //   ),
-            // ),
-
+          
             
             const Gap(20),
 
@@ -375,12 +342,34 @@ Future<Map<String, String>?> _showDeletionDialog(BuildContext context) {
             const Gap(20),
             InkWell(
               onTap: () async {
-                var userbox = Hive.box('userBox');
-                var onboardingBox = Hive.box('onboardingBox');
-                await userbox.clear();
-                await onboardingBox.clear();
+                showCupertinoDialog<void>(
+                  context: context,
+                  builder: (BuildContext context) => CupertinoAlertDialog(
+                    title: const Text('Confirm Logout'),
+                    content: const Text('Are you sure you want to log out? This will remove all your local data.'),
+                    actions: <CupertinoDialogAction>[
+                      CupertinoDialogAction(
+                        onPressed: () {
+                          Navigator.pop(context);
+                        },
+                        child: const Text('Cancel'),
+                      ),
+                      CupertinoDialogAction(
+                        isDestructiveAction: true,
+                        onPressed: () async {
+                          Navigator.pop(context);
+                          var userbox = Hive.box('userBox');
+                          var onboardingBox = Hive.box('onboardingBox');
+                          await userbox.clear();
+                          await onboardingBox.clear();
 
-                if (context.mounted) HelperFunctions.logout(context);
+                          if (context.mounted) HelperFunctions.logout(context);
+                        },
+                        child: const Text('Logout'),
+                      ),
+                    ],
+                  ),
+                );
               },
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
