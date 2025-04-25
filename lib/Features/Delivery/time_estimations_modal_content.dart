@@ -562,11 +562,11 @@ class _TimeEstimationsModalContentState
     return Container(
       height: MediaQuery.of(context).size.height * 0.9,
       padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
-      decoration: BoxDecoration(
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(15)),
-        boxShadow: [BoxShadow(color: Colors.black26, blurRadius: 8)],
-        color: Colors.white,
-      ),
+      // decoration: BoxDecoration(
+      //   borderRadius: const BorderRadius.vertical(top: Radius.circular(15)),
+      //   boxShadow: [BoxShadow(color: Colors.black26, blurRadius: 8)],
+      //   color: Colors.white,
+      // ),
       child: Column(
         children: [
           // ─── Grab‑handle ───
@@ -924,14 +924,14 @@ class _TimeEstimationsModalContentState
 
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 4),
-      decoration: BoxDecoration(
-        color: cardColor,
-        border: const Border(
-          top: BorderSide(color: LarosaColors.borderPrimary, width: 1),
-          bottom: BorderSide(color: LarosaColors.borderPrimary, width: 1),
-        ),
-        borderRadius: BorderRadius.circular(12),
-      ),
+      // decoration: BoxDecoration(
+      //   color: cardColor,
+      //   border: const Border(
+      //     top: BorderSide(color: LarosaColors.borderPrimary, width: 1),
+      //     bottom: BorderSide(color: LarosaColors.borderPrimary, width: 1),
+      //   ),
+      //   borderRadius: BorderRadius.circular(12),
+      // ),
       child: Padding(
         padding: const EdgeInsets.all(12),
         child: Column(
