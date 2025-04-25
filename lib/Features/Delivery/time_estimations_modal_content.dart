@@ -616,6 +616,15 @@ class _TimeEstimationsModalContentState
               RichText(
                 text: TextSpan(
                   children: [
+                    const TextSpan(
+                      text: 'Route Distance ',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w400,
+                        color: LarosaColors.textSecondary,
+                      ),
+                    ),
+
                     TextSpan(
                       text: '${distance.toStringAsFixed(2)} ',
                       style: const TextStyle(
@@ -984,13 +993,22 @@ class _TimeEstimationsModalContentState
             const SizedBox(height: 8),
 
             // Info Row
+            // Row(
+            //   mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            //   children: [
+            //     _tinyInfo(Icons.access_time, formatTime(pickupMin)),
+            //     _tinyInfo(Icons.route_rounded, formatTime(travelMin)),
+            //   ],
+            // ),
+
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                _tinyInfo(Icons.access_time, formatTime(pickupMin)),
-                _tinyInfo(Icons.route_rounded, formatTime(travelMin)),
-              ],
-            ),
+  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+  children: [
+    _tinyInfo(Icons.access_time, 'Arrival:', formatTime(pickupMin)),
+    _tinyInfo(Icons.route_rounded, 'Route:',   formatTime(travelMin)),
+  ],
+),
+
 
             const SizedBox(height: 10),
 
@@ -1162,18 +1180,38 @@ class _TimeEstimationsModalContentState
     }
   }
 
-  Widget _tinyInfo(IconData icon, String value) {
-    return Row(
-      children: [
-        Icon(icon, size: 14, color: LarosaColors.mediumGray),
-        const SizedBox(width: 4),
-        Text(
-          value,
-          style: const TextStyle(fontSize: 12),
-        ),
-      ],
-    );
-  }
+  // Widget _tinyInfo(IconData icon, String value) {
+  //   return Row(
+  //     children: [
+  //       Icon(icon, size: 14, color: LarosaColors.mediumGray),
+  //       const SizedBox(width: 4),
+  //       Text(
+  //         value,
+  //         style: const TextStyle(fontSize: 12),
+  //       ),
+  //     ],
+  //   );
+  // }
+
+  Widget _tinyInfo(IconData icon, String label, String? value) {
+  // parse “5 min” → 5, or null/invalid → 0
+  final minutes = int.tryParse(value!.replaceAll(RegExp(r'[^0-9]'), '')) ?? 0;
+
+  // nothing to show for zero minutes
+  if (minutes == 0) return const SizedBox.shrink();
+
+  return Row(
+    children: [
+      Icon(icon, size: 14, color: LarosaColors.mediumGray),
+      const SizedBox(width: 4),
+      Text(
+        '$label $value',
+        style: const TextStyle(fontSize: 12),
+      ),
+    ],
+  );
+}
+
 
   String formatTime(double minutes) {
     int hours = (minutes / 60).floor();
