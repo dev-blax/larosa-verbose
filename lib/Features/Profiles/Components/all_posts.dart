@@ -1,12 +1,12 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/cupertino.dart';
-import 'package:go_router/go_router.dart';
 import 'package:http/http.dart' as http;
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:larosa_block/Features/Profiles/Components/vertical_posts_view.dart';
 import 'package:larosa_block/Services/auth_service.dart';
 import 'package:larosa_block/Services/log_service.dart';
 import 'package:larosa_block/Utils/colors.dart';
@@ -116,9 +116,15 @@ class _AllPostsState extends State<AllPosts> {
           String? thumbnailPath = _videoThumbnails[index];
           return GestureDetector(
             onTap: () {
-              context.push(
-                '/profilePosts?title=Strings&activePost=$index',
-                extra: posts,
+
+              Navigator.push(
+                context,
+                CupertinoPageRoute(
+                  builder: (context) => VerticalPostsView(
+                    posts: posts,
+                    initialIndex: index,
+                  ),
+                ),
               );
             },
             child: ClipRRect(
@@ -164,19 +170,14 @@ class _AllPostsState extends State<AllPosts> {
           ],
           child: GestureDetector(
             onTap: () {
-              //   => Get.to(
-              //   ProfilePostsScreen(
-              //     title: 'Strings',
-              //     posts: posts,
-              //     activePost: index,
-              //   ),
-              // )
-
-              LogService.logFatal('index $index');
-
-              context.push(
-                '/profilePosts?title=Strings&activePost=$index',
-                extra: posts,
+              Navigator.push(
+                context,
+                CupertinoPageRoute(
+                  builder: (context) => VerticalPostsView(
+                    posts: posts,
+                    initialIndex: index,
+                  ),
+                ),
               );
             },
             child: ClipRRect(

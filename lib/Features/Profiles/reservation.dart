@@ -3,7 +3,6 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
-import 'package:larosa_block/Utils/helpers.dart';
 import 'package:stomp_dart_client/stomp_dart_client.dart';
 import '../../Services/auth_service.dart';
 import '../../Services/log_service.dart';
@@ -97,17 +96,6 @@ class _ReservationDashboardState extends State<ReservationDashboard> {
       destination: supplierChannel,
       callback: (StompFrame frame) {
         if (frame.body != null) {
-          // final Map<String, dynamic> notification = jsonDecode(frame.body!);
-          // setState(() {
-          //   supplierNotifications.insert(0, {
-          //     'id': notification['orderId'],
-          //     'message': notification['caption'],
-          //     'isAcknowledgeLoading': false,
-          //     'isReadyLoading': false,
-          //   });
-          // });
-
-          // Reload notifications after successful acknowledgment
           _loadNotifications();
         }
       },
@@ -208,14 +196,12 @@ class _ReservationDashboardState extends State<ReservationDashboard> {
   @override
   void initState() {
     super.initState();
-    // print(AuthService.isReservation());
     initializeWebSocket(widget.supplierId);
     _loadNotifications();
   }
 
   @override
   void dispose() {
-    // closeWebSocketConnection();
     super.dispose();
   }
 
@@ -273,220 +259,6 @@ class _ReservationDashboardState extends State<ReservationDashboard> {
               style: TextStyle(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
-
-            // Product Details List
-            // ...notification['productDetails'].map<Widget>((product) {
-            //   return Padding(
-            //     padding: const EdgeInsets.only(bottom: 10.0),
-            //     child: Card(
-            //       elevation: 1,
-            //       margin: const EdgeInsets.symmetric(horizontal: 2.0),
-            //       shape: RoundedRectangleBorder(
-            //         borderRadius: BorderRadius.circular(12),
-            //       ),
-            //       child: Padding(
-            //         padding: const EdgeInsets.all(3.0),
-            //         child: Column(
-            //           crossAxisAlignment: CrossAxisAlignment.start,
-            //           children: [
-            //             // Product Header
-            //             Row(
-            //               mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            //               children: [
-            //                 Text(
-            //                   'Product ID: ${product['id']}',
-            //                   style: const TextStyle(
-            //                     fontWeight: FontWeight.bold,
-            //                     fontSize: 14,
-            //                   ),
-            //                 ),
-            //                 Text(
-            //                   'Tsh ${NumberFormat('#,##0', 'en_US').format(product['price'])}',
-            //                   style: const TextStyle(
-            //                     fontWeight: FontWeight.bold,
-            //                     fontSize: 14,
-            //                     color: Colors.green,
-            //                   ),
-            //                 ),
-            //               ],
-            //             ),
-            //             const SizedBox(height: 8),
-
-            //             // Caption and Unit Name
-            //             Text(
-            //               '${product['caption']}',
-            //               style: const TextStyle(
-            //                 fontSize: 14,
-            //                 color: Colors.grey,
-            //               ),
-            //             ),
-
-            //             const SizedBox(height: 8),
-            //             Text(
-            //               'Unit: ${product['unitName']}',
-            //               style: const TextStyle(
-            //                 fontSize: 14,
-            //                 fontStyle: FontStyle.italic,
-            //               ),
-            //             ),
-            //             const Divider(height: 20, thickness: 1),
-
-            //             // Additional Product Details
-            //             Row(
-            //               mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            //               children: [
-            //                 Column(
-            //                   crossAxisAlignment: CrossAxisAlignment.start,
-            //                   children: [
-            //                     const Text('Availability',
-            //                         style:
-            //                             TextStyle(fontWeight: FontWeight.bold)),
-            //                     Text('${product['availabilityStatus']}',
-            //                         style: const TextStyle(
-            //                           fontSize: 12,
-            //                         )),
-            //                   ],
-            //                 ),
-            //                 Column(
-            //                   crossAxisAlignment: CrossAxisAlignment.start,
-            //                   children: [
-            //                     const Text('Weight',
-            //                         style:
-            //                             TextStyle(fontWeight: FontWeight.bold)),
-            //                     Text(
-            //                         '${product['weightCategoryName']?.toUpperCase()}',
-            //                         style: const TextStyle(
-            //                           fontSize: 12,
-            //                         )),
-            //                   ],
-            //                 ),
-            //                 Column(
-            //                   crossAxisAlignment: CrossAxisAlignment.start,
-            //                   children: [
-            //                     const Text('Size',
-            //                         style: TextStyle(
-            //                             fontWeight: FontWeight.bold,
-            //                             fontSize: 14)),
-            //                     Text(
-            //                       '${product['sizeCategoryName']?.toUpperCase()}',
-            //                       style: const TextStyle(
-            //                         fontSize: 12,
-            //                       ),
-            //                     ),
-            //                   ],
-            //                 ),
-            //               ],
-            //             ),
-            //             const SizedBox(height: 8),
-
-            //             // Quantity
-            //             Text(
-            //               'Quantity: ${product['quantity']}',
-            //               style: const TextStyle(
-            //                 fontSize: 14,
-            //                 fontWeight: FontWeight.bold,
-            //               ),
-            //             ),
-            //             const Divider(height: 20, thickness: 1),
-
-            //             // Product Images
-            //             if (product['names'] != null)
-            //               Column(
-            //                 crossAxisAlignment: CrossAxisAlignment.start,
-            //                 children: [
-            //                   const Text(
-            //                     'Product Images:',
-            //                     style: TextStyle(
-            //                       fontSize: 14,
-            //                       fontWeight: FontWeight.bold,
-            //                     ),
-            //                   ),
-            //                   const SizedBox(height: 8),
-            //                   SingleChildScrollView(
-            //                     scrollDirection: Axis.horizontal,
-            //                     child: Row(
-            //                       children:
-            //                           product['names'].map<Widget>((imageUrl) {
-            //                         return Padding(
-            //                           padding:
-            //                               const EdgeInsets.only(right: 8.0),
-            //                           child: ClipRRect(
-            //                             borderRadius: BorderRadius.circular(8),
-            //                             child: Image.network(
-            //                               imageUrl,
-            //                               height: 100,
-            //                               width: 100,
-            //                               fit: BoxFit.cover,
-            //                             ),
-            //                           ),
-            //                         );
-            //                       }).toList(),
-            //                     ),
-            //                   ),
-            //                 ],
-            //               ),
-
-            //             const SizedBox(
-            //               height: 5,
-            //             ),
-            //             const Divider(),
-
-            //             // Confirm Button (Inside Product Details)
-            //             if (!notification['confirmed'])
-            //               buildCustomButton(
-            //                 label: 'Confirm',
-            //                 onTap: () => acknowledgeNotification(
-            //                     notification['notificationId'],
-            //                     product['id'],
-            //                     index),
-            //                 isLoading: notification['isAcknowledgeLoading'],
-            //               ),
-
-            //             // Mark Ready for Pickup Button
-            //             if (notification['confirmed'] &&
-            //                 !notification['readyForPickup'])
-            //               buildCustomButton(
-            //                 label: 'Mark Ready for Pickup',
-            //                 onTap: () => markAsReadyForPickup(
-            //                     notification['notificationId'],
-            //                     product['id'],
-            //                     index),
-            //                 isLoading: notification['isReadyLoading'],
-            //               ),
-
-            //             // Success Message
-            //             if (notification['confirmed'] &&
-            //                 notification['readyForPickup'])
-            //               Container(
-            //                 padding: const EdgeInsets.all(10),
-            //                 margin: const EdgeInsets.only(top: 10),
-            //                 decoration: BoxDecoration(
-            //                   color: Colors.green.withOpacity(0.2),
-            //                   borderRadius: BorderRadius.circular(10),
-            //                 ),
-            //                 child: Row(
-            //                   children: [
-            //                     const Icon(Icons.check_circle,
-            //                         color: Colors.green),
-            //                     const SizedBox(width: 8),
-            //                     Expanded(
-            //                       child: Text(
-            //                         'Order ${notification['orderId']} is ready for pickup! 🎉',
-            //                         style: const TextStyle(
-            //                           fontWeight: FontWeight.bold,
-            //                           color: Colors.green,
-            //                         ),
-            //                       ),
-            //                     ),
-            //                   ],
-            //                 ),
-            //               ),
-            //           ],
-            //         ),
-            //       ),
-            //     ),
-            //   );
-            // }).toList(),
 
             ...notification['productDetails'].map<Widget>((product) {
               return Padding(
@@ -832,60 +604,6 @@ class _ReservationDashboardState extends State<ReservationDashboard> {
                 Radius.circular(16), // Smooth rounded bottom for a premium feel
           ),
         ),
-        // bottom: PreferredSize(
-        //   preferredSize:
-        //       const Size.fromHeight(60), // Extended height for modern look
-        //   child: Container(
-        //     decoration: BoxDecoration(
-        //       color: Theme.of(context)
-        //           .colorScheme
-        //           .secondaryContainer, // Clean, modern theme
-        //       borderRadius: const BorderRadius.vertical(
-        //         bottom: Radius.circular(16), // Matches the AppBar shape
-        //       ),
-        //     ),
-        //     padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 16),
-        //     child: Row(
-        //       mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        //       children: [
-        //         Text(
-        //           'Welcome back, Aslay Mihogo!', // Dynamic welcome text
-        //           style: TextStyle(
-        //             fontSize: 14,
-        //             fontWeight: FontWeight.w500,
-        //             color: Theme.of(context).colorScheme.onSecondaryContainer,
-        //           ),
-        //         ),
-        //         OutlinedButton.icon(
-        //           style: OutlinedButton.styleFrom(
-        //             side: BorderSide(
-        //               color: Theme.of(context).colorScheme.primary,
-        //               width: 1,
-        //             ),
-        //             shape: RoundedRectangleBorder(
-        //               borderRadius: BorderRadius.circular(8),
-        //             ),
-        //           ),
-        //           onPressed: () {
-        //             // Action for "View Insights"
-        //           },
-        //           icon: Icon(
-        //             Icons.insights_outlined,
-        //             size: 16,
-        //             color: Theme.of(context).colorScheme.primary,
-        //           ),
-        //           label: Text(
-        //             'View Insights',
-        //             style: TextStyle(
-        //               fontSize: 12,
-        //               color: Theme.of(context).colorScheme.primary,
-        //             ),
-        //           ),
-        //         ),
-        //       ],
-        //     ),
-        //   ),
-        // ),
       ),
       body: ValueListenableBuilder<List<Map<String, dynamic>>>(
         valueListenable: supplierNotifications,

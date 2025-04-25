@@ -1,12 +1,11 @@
 import 'dart:convert';
 import 'dart:io';
-import 'package:flutter/cupertino.dart';
-import 'package:go_router/go_router.dart';
-import 'package:http/http.dart' as http;
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:flutter_svg/svg.dart';
+import 'package:flutter_svg/flutter_svg.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:http/http.dart' as http;
 import 'package:larosa_block/Services/auth_service.dart';
 import 'package:larosa_block/Utils/colors.dart';
 import 'package:larosa_block/Utils/links.dart';
@@ -14,6 +13,7 @@ import 'package:mime/mime.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:video_thumbnail/video_thumbnail.dart';
+import 'vertical_posts_view.dart';
 
 class SelfAllPosts extends StatefulWidget {
   final int profileId;
@@ -137,7 +137,7 @@ class _SelfAllPostsState extends State<SelfAllPosts> {
           mainAxisSpacing: 8.0,
           childAspectRatio: 1,
         ),
-        itemCount: 6, // Show 6 skeleton items
+        itemCount: 6,
         itemBuilder: (context, index) {
           return Animate(
             effects: const [
@@ -181,9 +181,14 @@ class _SelfAllPostsState extends State<SelfAllPosts> {
           String? thumbnailPath = _videoThumbnails[index];
           return GestureDetector(
             onTap: () {
-              context.push(
-                '/profilePosts?title=Strings&activePost=$index',
-                extra: posts,
+              Navigator.push(
+                context,
+                CupertinoPageRoute(
+                  builder: (context) => VerticalPostsView(
+                    posts: posts,
+                    initialIndex: index,
+                  ),
+                ),
               );
             },
             child: ClipRRect(
@@ -224,9 +229,14 @@ class _SelfAllPostsState extends State<SelfAllPosts> {
           ],
           child: GestureDetector(
             onTap: () {
-              context.push(
-                '/profilePosts?title=Strings&activePost=$index',
-                extra: posts,
+              Navigator.push(
+                context,
+                CupertinoPageRoute(
+                  builder: (context) => VerticalPostsView(
+                    posts: posts,
+                    initialIndex: index,
+                  ),
+                ),
               );
             },
             child: ClipRRect(

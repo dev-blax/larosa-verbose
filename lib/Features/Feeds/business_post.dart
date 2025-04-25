@@ -79,81 +79,58 @@ class _BusinessPostScreenState extends State<BusinessPostScreen>
         media['filePath'].endsWith(".jpg") ||
         media['filePath'].endsWith(".jpeg"));
 
-    showModalBottomSheet(
+    showCupertinoModalPopup(
       context: context,
-      builder: (context) => Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [
-              LarosaColors.purple.withOpacity(0.8),
-              LarosaColors.secondary.withOpacity(0.8),
-            ],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
+      builder: (context) => CupertinoActionSheet(
+        title: const Text('Choose Media'),
+        message: const Text('Select the type of media you want to share'),
+        actions: [
+          CupertinoActionSheetAction(
+            onPressed: () async {
+              Navigator.pop(context);
+              final XFile? pickedFile = await _picker.pickImage(
+                source: ImageSource.gallery,
+              );
+              if (pickedFile != null) {
+                final imageData = pickedFile;
+                setState(() {
+                  _selectedImage = imageData;
+                });
+                _showCropper();
+              }
+            },
+            child: const Text('Select Image'),
           ),
-          borderRadius: const BorderRadius.only(
-            topLeft: Radius.circular(20),
-            topRight: Radius.circular(20),
-          ),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              leading: const Icon(Icons.image, color: Colors.white),
-              title: const Text(
-                'Pick Image',
-                style: TextStyle(color: Colors.white),
-              ),
-              onTap: () async {
-                Navigator.pop(context); // Close the bottom sheet
-                final XFile? pickedFile = await _picker.pickImage(
+          if (!hasImage)
+            CupertinoActionSheetAction(
+              onPressed: () async {
+                Navigator.pop(context);
+                final XFile? pickedFile = await _picker.pickVideo(
                   source: ImageSource.gallery,
                 );
                 if (pickedFile != null) {
-                  final imageData = pickedFile;
-                  setState(() {
-                    _selectedImage = imageData;
-                  });
-                  _showCropper();
+                  File videoFile = File(pickedFile.path);
+                  final VideoPlayerController controller =
+                      VideoPlayerController.file(videoFile);
+                  await controller.initialize();
+
+                  final Duration videoDuration = controller.value.duration;
+
+                  if (videoDuration.inMinutes > 5) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text(
+                            'Video duration should not exceed 5 minutes'),
+                      ),
+                    );
+                    return;
+                  }
+                  _addVideo(pickedFile.path);
                 }
               },
+              child: const Text('Select Video'),
             ),
-            if (!hasImage)
-              ListTile(
-                leading: const Icon(Icons.videocam, color: Colors.white),
-                title: const Text(
-                  'Pick Video',
-                  style: TextStyle(color: Colors.white),
-                ),
-                onTap: () async {
-                  Navigator.pop(context); // Close the bottom sheet
-                  final XFile? pickedFile = await _picker.pickVideo(
-                    source: ImageSource.gallery,
-                  );
-                  if (pickedFile != null) {
-                    File videoFile = File(pickedFile.path);
-                    final VideoPlayerController controller =
-                        VideoPlayerController.file(videoFile);
-                    await controller.initialize();
-
-                    final Duration videoDuration = controller.value.duration;
-
-                    if (videoDuration.inMinutes > 5) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text(
-                              'Video duration should not exceed 5 minutes'),
-                        ),
-                      );
-                      return;
-                    }
-                    _addVideo(pickedFile.path);
-                  }
-                },
-              ),
-          ],
-        ),
+        ],
       ),
     );
   }

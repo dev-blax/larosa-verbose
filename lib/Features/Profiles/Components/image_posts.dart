@@ -1,14 +1,14 @@
 import 'dart:convert';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/cupertino.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:go_router/go_router.dart';
 import 'package:http/http.dart' as http;
 import 'package:larosa_block/Services/auth_service.dart';
 import 'package:larosa_block/Utils/colors.dart';
 import 'package:larosa_block/Utils/links.dart';
 import 'package:mime/mime.dart';
+
+import 'vertical_posts_view.dart';
 
 class ImagePostsComponent extends StatefulWidget {
   final int profileId;
@@ -92,9 +92,14 @@ class _ImagePostsComponentState extends State<ImagePostsComponent> {
           ],
           child: GestureDetector(
             onTap: () {
-              context.push(
-                '/profilePosts?title=Posts&activePost=$index',
-                extra: imagePosts,
+              Navigator.push(
+                context,
+                CupertinoPageRoute(
+                  builder: (context) => VerticalPostsView(
+                    posts: imagePosts,
+                    initialIndex: index,
+                  ),
+                ),
               );
             },
             child: ClipRRect(

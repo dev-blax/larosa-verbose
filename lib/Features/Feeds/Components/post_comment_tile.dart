@@ -43,9 +43,10 @@ class _PostCommentTileState extends State<PostCommentTile> {
   @override
   void initState() {
     super.initState();
-    isLiked = widget.comment['isLikedByMe'] ?? false;
-    likeCount = widget.comment['likeCount'] ?? 0;
-    if (widget.comment['replyCount'] != null && widget.comment['replyCount'] > 0) {
+    LogService.logFatal(' ${widget.comment}');
+    isLiked = widget.comment['liked'] ?? false;
+    likeCount = widget.comment['likes'] ?? 0;
+    if (widget.comment['replies'] != null && widget.comment['replies'] > 0) {
       _fetchReplies();
     }
   }
@@ -70,6 +71,7 @@ class _PostCommentTileState extends State<PostCommentTile> {
       );
 
       if (response.statusCode == 200) {
+        LogService.logFatal('replies ${response.data}');
         setState(() {
           replies = response.data;
           showReplies = true;
@@ -104,6 +106,7 @@ class _PostCommentTileState extends State<PostCommentTile> {
       );
 
       if (response.statusCode == 200) {
+        LogService.logFatal('like response ${response.data}');
         setState(() {
           isLiked = !isLiked;
           likeCount += isLiked ? 1 : -1;
@@ -175,7 +178,7 @@ class _PostCommentTileState extends State<PostCommentTile> {
             margin: const EdgeInsets.only(left: 24),
             decoration: BoxDecoration(
               color: Theme.of(context).brightness == Brightness.dark
-                  ? Colors.white.withOpacity(0.05)
+                  ? Colors.white.withOpacity(0.25)
                   : Colors.black.withOpacity(0.03),
               borderRadius: BorderRadius.circular(8),
             ),
@@ -192,7 +195,7 @@ class _PostCommentTileState extends State<PostCommentTile> {
 
   @override
   Widget build(BuildContext context) {
-    final replyCount = widget.comment['replyCount'] ?? 0;
+    final replyCount = widget.comment['replies'] ?? 0;
     
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 8),

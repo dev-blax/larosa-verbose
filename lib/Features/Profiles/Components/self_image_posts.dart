@@ -3,9 +3,8 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import 'package:get/get.dart';
-import 'package:go_router/go_router.dart';
 import 'package:http/http.dart' as http;
+import 'package:larosa_block/Features/Profiles/Components/vertical_posts_view.dart';
 import 'package:larosa_block/Services/auth_service.dart';
 import 'package:larosa_block/Utils/colors.dart';
 import 'package:larosa_block/Utils/links.dart';
@@ -66,7 +65,7 @@ class _SelfImagePostsComponentState extends State<SelfImagePostsComponent> {
       );
 
       if (response.statusCode != 200) {
-        Get.snackbar('Explore Larosa', response.body);
+        // Get.snackbar('Explore Larosa', response.body);
         return;
       }
 
@@ -109,7 +108,7 @@ class _SelfImagePostsComponentState extends State<SelfImagePostsComponent> {
           mainAxisSpacing: 8.0,
           childAspectRatio: 1,
         ),
-        itemCount: 6, // Show a few skeleton items while loading
+        itemCount: 6,
         itemBuilder: (context, index) {
           return const SkeletonLoader();
         },
@@ -141,10 +140,15 @@ class _SelfImagePostsComponentState extends State<SelfImagePostsComponent> {
             onTap: () {
            
 
-            context.push(
-                '/profilePosts?title=Strings&activePost=$index',
-                extra: imagePosts,
-              );
+            Navigator.push(
+              context,
+              CupertinoPageRoute(
+                builder: (context) => VerticalPostsView(
+                  posts: imagePosts,
+                  initialIndex: index,
+                ),
+              ),
+            );
             },
             child: ClipRRect(
               borderRadius: BorderRadius.circular(10),

@@ -6,11 +6,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:flutter_svg/svg.dart';
-import 'package:go_router/go_router.dart';
+import 'package:larosa_block/Features/Profiles/Components/vertical_posts_view.dart';
 import 'package:larosa_block/Services/auth_service.dart';
 import 'package:larosa_block/Services/log_service.dart';
 import 'package:larosa_block/Utils/colors.dart';
-import 'package:larosa_block/Utils/helpers.dart';
 import 'package:larosa_block/Utils/links.dart';
 
 import 'package:mime/mime.dart';
@@ -120,9 +119,14 @@ class _LikedStringsComponentState extends State<LikedStringsComponent> {
           String? thumbnailPath = _videoThumbnails[index];
           return GestureDetector(
             onTap: () {
-              context.push(
-                '/profilePosts?title=Liked Strings&activePost=$index',
-                extra: posts,
+              Navigator.push(
+                context,
+                CupertinoPageRoute(
+                  builder: (context) => VerticalPostsView(
+                    posts: posts,
+                    initialIndex: index,
+                  ),
+                ),
               );
             },
             child: ClipRRect(
@@ -167,9 +171,14 @@ class _LikedStringsComponentState extends State<LikedStringsComponent> {
           ],
           child: GestureDetector(
             onTap: () {
-              context.push(
-                '/profilePosts?title=Liked Strings&activePost=$index',
-                extra: posts,
+              Navigator.push(
+                context,
+                CupertinoPageRoute(
+                  builder: (context) => VerticalPostsView(
+                    posts: posts,
+                    initialIndex: index,
+                  ),
+                ),
               );
             },
             child: ClipRRect(

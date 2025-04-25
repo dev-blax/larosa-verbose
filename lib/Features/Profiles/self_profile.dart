@@ -410,7 +410,8 @@ class _HomeProfileScreenState extends State<HomeProfileScreen> {
               children: [
                 Shimmer.fromColors(
                   baseColor: isDarkMode ? Colors.grey[900]! : Colors.grey[400]!,
-            highlightColor: isDarkMode ? Colors.grey[700]! : Colors.grey[100]!,
+                  highlightColor:
+                      isDarkMode ? Colors.grey[700]! : Colors.grey[100]!,
                   child: Container(
                     height: 180, // Adjust height to match your cover image
                     width: double.infinity,
@@ -422,8 +423,10 @@ class _HomeProfileScreenState extends State<HomeProfileScreen> {
                   bottom: 10,
                   right: 16,
                   child: Shimmer.fromColors(
-                    baseColor: isDarkMode ? Colors.grey[900]! : Colors.grey[400]!,
-            highlightColor: isDarkMode ? Colors.grey[700]! : Colors.grey[100]!,
+                    baseColor:
+                        isDarkMode ? Colors.grey[900]! : Colors.grey[400]!,
+                    highlightColor:
+                        isDarkMode ? Colors.grey[700]! : Colors.grey[100]!,
                     child: Container(
                       width: 80,
                       height: 80,
@@ -449,8 +452,10 @@ class _HomeProfileScreenState extends State<HomeProfileScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Shimmer.fromColors(
-                        baseColor: isDarkMode ? Colors.grey[900]! : Colors.grey[400]!,
-            highlightColor: isDarkMode ? Colors.grey[700]! : Colors.grey[100]!,
+                        baseColor:
+                            isDarkMode ? Colors.grey[900]! : Colors.grey[400]!,
+                        highlightColor:
+                            isDarkMode ? Colors.grey[700]! : Colors.grey[100]!,
                         child: Container(
                           width: 150,
                           height: 15,
@@ -459,8 +464,10 @@ class _HomeProfileScreenState extends State<HomeProfileScreen> {
                       ),
                       const SizedBox(height: 5),
                       Shimmer.fromColors(
-                        baseColor: isDarkMode ? Colors.grey[900]! : Colors.grey[400]!,
-            highlightColor: isDarkMode ? Colors.grey[700]! : Colors.grey[100]!,
+                        baseColor:
+                            isDarkMode ? Colors.grey[900]! : Colors.grey[400]!,
+                        highlightColor:
+                            isDarkMode ? Colors.grey[700]! : Colors.grey[100]!,
                         child: Container(
                           width: 100,
                           height: 10,
@@ -469,8 +476,10 @@ class _HomeProfileScreenState extends State<HomeProfileScreen> {
                       ),
                       const SizedBox(height: 5),
                       Shimmer.fromColors(
-                        baseColor: isDarkMode ? Colors.grey[900]! : Colors.grey[400]!,
-            highlightColor: isDarkMode ? Colors.grey[700]! : Colors.grey[100]!,
+                        baseColor:
+                            isDarkMode ? Colors.grey[900]! : Colors.grey[400]!,
+                        highlightColor:
+                            isDarkMode ? Colors.grey[700]! : Colors.grey[100]!,
                         child: Container(
                           width: 200,
                           height: 10,
@@ -492,8 +501,10 @@ class _HomeProfileScreenState extends State<HomeProfileScreen> {
                   return Column(
                     children: [
                       Shimmer.fromColors(
-                        baseColor: isDarkMode ? Colors.grey[900]! : Colors.grey[400]!,
-            highlightColor: isDarkMode ? Colors.grey[700]! : Colors.grey[100]!,
+                        baseColor:
+                            isDarkMode ? Colors.grey[900]! : Colors.grey[400]!,
+                        highlightColor:
+                            isDarkMode ? Colors.grey[700]! : Colors.grey[100]!,
                         child: Container(
                           width: 60,
                           height: 10,
@@ -502,8 +513,10 @@ class _HomeProfileScreenState extends State<HomeProfileScreen> {
                       ),
                       const SizedBox(height: 5),
                       Shimmer.fromColors(
-                        baseColor: isDarkMode ? Colors.grey[900]! : Colors.grey[400]!,
-            highlightColor: isDarkMode ? Colors.grey[700]! : Colors.grey[100]!,
+                        baseColor:
+                            isDarkMode ? Colors.grey[900]! : Colors.grey[400]!,
+                        highlightColor:
+                            isDarkMode ? Colors.grey[700]! : Colors.grey[100]!,
                         child: Container(
                           width: 40,
                           height: 10,
@@ -523,8 +536,10 @@ class _HomeProfileScreenState extends State<HomeProfileScreen> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Shimmer.fromColors(
-                    baseColor: isDarkMode ? Colors.grey[900]! : Colors.grey[400]!,
-            highlightColor: isDarkMode ? Colors.grey[700]! : Colors.grey[100]!,
+                    baseColor:
+                        isDarkMode ? Colors.grey[900]! : Colors.grey[400]!,
+                    highlightColor:
+                        isDarkMode ? Colors.grey[700]! : Colors.grey[100]!,
                     child: Container(
                       width: 100,
                       height: 35,
@@ -535,8 +550,10 @@ class _HomeProfileScreenState extends State<HomeProfileScreen> {
                     ),
                   ),
                   Shimmer.fromColors(
-                    baseColor: isDarkMode ? Colors.grey[900]! : Colors.grey[400]!,
-            highlightColor: isDarkMode ? Colors.grey[700]! : Colors.grey[100]!,
+                    baseColor:
+                        isDarkMode ? Colors.grey[900]! : Colors.grey[400]!,
+                    highlightColor:
+                        isDarkMode ? Colors.grey[700]! : Colors.grey[100]!,
                     child: Container(
                       width: 100,
                       height: 35,
@@ -547,8 +564,10 @@ class _HomeProfileScreenState extends State<HomeProfileScreen> {
                     ),
                   ),
                   Shimmer.fromColors(
-                    baseColor: isDarkMode ? Colors.grey[900]! : Colors.grey[400]!,
-            highlightColor: isDarkMode ? Colors.grey[700]! : Colors.grey[100]!,
+                    baseColor:
+                        isDarkMode ? Colors.grey[900]! : Colors.grey[400]!,
+                    highlightColor:
+                        isDarkMode ? Colors.grey[700]! : Colors.grey[100]!,
                     child: Container(
                       width: 100,
                       height: 35,
@@ -569,8 +588,10 @@ class _HomeProfileScreenState extends State<HomeProfileScreen> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: List.generate(4, (index) {
                   return Shimmer.fromColors(
-                    baseColor: isDarkMode ? Colors.grey[900]! : Colors.grey[400]!,
-            highlightColor: isDarkMode ? Colors.grey[700]! : Colors.grey[100]!,
+                    baseColor:
+                        isDarkMode ? Colors.grey[900]! : Colors.grey[400]!,
+                    highlightColor:
+                        isDarkMode ? Colors.grey[700]! : Colors.grey[100]!,
                     child: Container(
                       width: 40,
                       height: 40,
@@ -586,7 +607,8 @@ class _HomeProfileScreenState extends State<HomeProfileScreen> {
 
             // Grid Items Placeholder
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 12),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 8.0, vertical: 12),
               child: GridView.builder(
                 padding: Platform.isIOS ? EdgeInsets.zero : null,
                 physics: const NeverScrollableScrollPhysics(),
@@ -598,11 +620,14 @@ class _HomeProfileScreenState extends State<HomeProfileScreen> {
                   mainAxisSpacing: 10,
                   childAspectRatio: 1,
                 ),
-                itemCount: Platform.isIOS ? 8 : 4, // Placeholder count for grid items
+                itemCount:
+                    Platform.isIOS ? 8 : 4, // Placeholder count for grid items
                 itemBuilder: (context, index) {
                   return Shimmer.fromColors(
-                    baseColor: isDarkMode ? Colors.grey[900]! : Colors.grey[400]!,
-            highlightColor: isDarkMode ? Colors.grey[700]! : Colors.grey[100]!,
+                    baseColor:
+                        isDarkMode ? Colors.grey[900]! : Colors.grey[400]!,
+                    highlightColor:
+                        isDarkMode ? Colors.grey[700]! : Colors.grey[100]!,
                     child: Container(
                       decoration: BoxDecoration(
                         color: Colors.grey[300],
@@ -624,8 +649,7 @@ class _HomeProfileScreenState extends State<HomeProfileScreen> {
     return RefreshIndicator(
       onRefresh: () => _fetchProfile(forceRefresh: true),
       child: isLoading
-          ? profileShimmer(
-              context) // Use the ProfileShimmer widget when loading
+          ? profileShimmer(context)
           : Scaffold(
               body: Stack(
                 children: [
@@ -671,10 +695,9 @@ class _HomeProfileScreenState extends State<HomeProfileScreen> {
                                           Navigator.push(
                                             context,
                                             MaterialPageRoute(
-                                              builder: (context) =>
-                                                  Dashboard(
-                                                      supplierId: supplierId
-                                                          .toString()),
+                                              builder: (context) => Dashboard(
+                                                  supplierId:
+                                                      supplierId.toString()),
                                             ),
                                           );
                                         } else {
@@ -767,9 +790,10 @@ class _HomeProfileScreenState extends State<HomeProfileScreen> {
                           Expanded(
                             child: MediaQuery.removePadding(
                               context: context,
-    removeTop: Platform.isIOS,
+                              removeTop: Platform.isIOS,
                               child: Padding(
-                                padding: EdgeInsets.all(Platform.isIOS ? 8.0 : 0),
+                                padding:
+                                    EdgeInsets.all(Platform.isIOS ? 8.0 : 0),
                                 child: TabBarView(
                                   children: <Widget>[
                                     Animate(
