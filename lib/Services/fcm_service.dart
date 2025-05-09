@@ -1,20 +1,18 @@
 import 'dart:convert';
 
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-import 'package:hive/hive.dart';
 import 'package:http/http.dart' as http;
+import 'package:larosa_block/Services/auth_service.dart';
 import 'package:larosa_block/Utils/links.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 
 import 'log_service.dart';
 
-// This needs to be a top-level function
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   await Firebase.initializeApp();
   LogService.logInfo('Handling a background message: ${message.messageId}');
-  // You can handle background messages here
 }
 
 class FcmService {
@@ -31,17 +29,14 @@ class FcmService {
   FcmService._internal();
 
   Future<void> initialize() async {
-    // Initialize Firebase
     await Firebase.initializeApp();
 
-    // Initialize local notifications
     const AndroidInitializationSettings androidSettings =
         AndroidInitializationSettings('@mipmap/ic_launcher');
     const InitializationSettings initSettings =
         InitializationSettings(android: androidSettings);
     await _flutterLocalNotificationsPlugin.initialize(initSettings);
 
-    // Request permission for notifications
     NotificationSettings settings = await _firebaseMessaging.requestPermission(
       alert: true,
       badge: true,
@@ -52,19 +47,16 @@ class FcmService {
       _token = await _firebaseMessaging.getToken();
       LogService.logInfo('FCM Token: $_token');
 
-      // Listen for token refresh
       _firebaseMessaging.onTokenRefresh.listen((newToken) {
         _token = newToken;
         updateUserToken(newToken);
       });
 
-      // Update the token on the server
       if (_token != null) {
         await updateUserToken(_token!);
       }
     }
 
-    // Set up message handlers
     FirebaseMessaging.onMessage.listen(_handleForegroundMessage);
     FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
     FirebaseMessaging.onMessageOpenedApp.listen(_handleMessageOpenedApp);
@@ -118,8 +110,9 @@ class FcmService {
 
   Future<void> updateUserToken(String token) async {
     try {
-      var box = await Hive.openBox('userBox');
-      final String authToken = box.get('token');
+
+      final String authToken = AuthService.getToken();
+
 
       final response = await http.post(
         Uri.parse('$_baseUrl$_userTokenEndpoint'),
@@ -130,10 +123,15 @@ class FcmService {
         body: jsonEncode({'fcmToken': token}),
       );
 
+      LogService.logInfo('FCM token response: ${response.body}');
+
       if (response.statusCode != 200) {
+        LogService.logError(
+            'Failed to update FCM token: ${response.statusCode}');
         throw Exception('Failed to update FCM token: ${response.statusCode}');
       } else {
-        LogService.logInfo('FCM token updated successfully');
+        LogService.logInfo(
+            'FCM token updated successfully ${response.statusCode}');
       }
     } catch (e) {
       LogService.logError('Error updating user token: $e');

@@ -121,10 +121,14 @@ class _ProfileVisitScreenState extends State<ProfileVisitScreen> {
       "Access-Control-Allow-Origin": "*",
       'Authorization': 'Bearer $token',
     };
-    
+
+    LogService.logInfo('isBusiness $isBusiness');
+    String profileEndPoint = !isBusiness ? '/personal/visit' : '/brand/visit';
+    LogService.logInfo('profile endpoint $profileEndPoint');
+
     var url = Uri.https(
       LarosaLinks.nakedBaseUrl,
-      !isBusiness ? '/personal/visit' : '/brand/visit',
+      profileEndPoint,
     );
 
     try {
@@ -162,7 +166,7 @@ class _ProfileVisitScreenState extends State<ProfileVisitScreen> {
           _followers = profile!['followers'];
         });
 
-        await _fetchUserPosts();
+        // await _fetchUserPosts();
 
         return;
       }
@@ -214,14 +218,21 @@ class _ProfileVisitScreenState extends State<ProfileVisitScreen> {
     }
   }
 
+  void asyncInit() async {
+    await _fetchProfile();
+    await _fetchUserPosts();
+  }
+
   @override
   void initState() {
     super.initState();
     isBusiness = widget.isBusiness;
 
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _fetchProfile();
-    });
+    // WidgetsBinding.instance.addPostFrameCallback((_) {
+    //   _fetchProfile();
+    // });
+
+    asyncInit();
   }
 
   Widget _actionButtons() {

@@ -36,10 +36,9 @@ class DioService {
           return handler.next(response);
         },
         onError: (DioException error, handler) async {
+          LogService.logTrace('Dio Error: ${error.message}');
           String message = '';
           bool isConnectionError = false;
-
-          LogService.logError('Dio Error: $error');
 
           switch (error.type) {
             case DioExceptionType.connectionTimeout:
@@ -84,7 +83,7 @@ class DioService {
           }
 
           _hasConnectionError = isConnectionError;
-          LogService.logError('Dio Error: $error');
+          //LogService.logError('Dio Error: $error');
           NavigationService.showErrorSnackBar(message);
           return handler.next(error);
         },
@@ -101,7 +100,7 @@ class DioService {
         return true;
       }
     } catch (e) {
-      LogService.logError('Token refresh failed: $e');
+      //LogService.logError('Token refresh failed: $e');
     }
     return false;
   }

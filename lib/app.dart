@@ -39,7 +39,10 @@ class _AppState extends State<App> {
     stompClient = StompClient(
       config: StompConfig.sockJS(
         url: wsUrl,
-        onConnect: onConnect,
+        stompConnectHeaders: {
+          'Authorization': 'Bearer ${AuthService.getToken()}'
+        },
+        onConnect: _onConnect,
         onWebSocketError: (dynamic error) =>
             LogService.logError('WebSocket error: $error'),
         onStompError: (StompFrame frame) =>
@@ -52,7 +55,7 @@ class _AppState extends State<App> {
     stompClient.activate();
   }
 
-  void onConnect(StompFrame frame) {
+  void _onConnect(StompFrame frame) {
     setState(() {
       connectedToSocket = true;
     });

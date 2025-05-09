@@ -1,20 +1,20 @@
 import 'dart:convert';
 import 'dart:io';
-import 'dart:typed_data';
 import 'package:avatar_glow/avatar_glow.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:dio/dio.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_sound/flutter_sound.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:gap/gap.dart';
-import 'package:hive/hive.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:http_parser/http_parser.dart';
 import 'package:iconsax/iconsax.dart';
 import 'package:intl/intl.dart';
+import 'package:larosa_block/Services/encryption_service.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:stomp_dart_client/stomp_dart_client.dart';
@@ -29,23 +29,8 @@ import '../../Utils/colors.dart';
 import '../../Utils/helpers.dart';
 import '../../Utils/links.dart';
 import 'Components/chat_bubble.dart';
-
-class TimeBubble extends StatelessWidget {
-  final String duration;
-  const TimeBubble({super.key, required this.duration});
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(8.0),
-      child: Text(
-        duration,
-        style: Theme.of(context).textTheme.labelMedium,
-        textAlign: TextAlign.center,
-      ),
-    );
-  }
-}
+import 'Components/time_bubble.dart';
+import 'providers/conversation_controller.dart';
 
 class LarosaConversation extends StatefulWidget {
   final int profileId;
@@ -74,12 +59,89 @@ class _LarosaConversationState extends State<LarosaConversation> {
   bool isVerified = false;
   String profilePicture = '';
   bool isLoadingProfile = true;
+  List<Map<String, dynamic>> messages = [];
   List<Widget> messageWidgets = [];
   List<String> timeBubbleTexts = [];
+  String profileType = 'PERSONAL';
+  final FlutterSoundPlayer _soundPlayer = FlutterSoundPlayer();
+  late StompClient stompClient;
+  bool connectedToSocket = false;
+  bool _isPlaying = false;
+
+  Future<void> _socketConnection() async {
+    LogService.logFatal('connecting to socket');
+    const String wsUrl = '${LarosaLinks.baseurl}/ws';
+    final token = AuthService.getToken();
+
+    stompClient = StompClient(
+      config: StompConfig.sockJS(
+        url: wsUrl,
+        stompConnectHeaders: {
+          'Authorization': 'Bearer $token'
+        },
+        onConnect: _onConnect,
+        onWebSocketError: (dynamic error) =>
+            LogService.logError('WebSocket error: $error'),
+        onStompError: (StompFrame frame) =>
+            LogService.logWarning('Stomp error: ${frame.headers}'),
+        onDisconnect: (StompFrame frame) {
+          LogService.logWarning('Disconnected from WebSocket');
+          setState(() => connectedToSocket = false);
+        },
+      ),
+    );
+
+    stompClient.activate();
+  }
+
+  void _onConnect(StompFrame frame) {
+    if (!mounted) return;
+
+    setState(() => connectedToSocket = true);
+    LogService.logInfo(
+      'Connected to WebSocket server',
+    );
+
+    stompClient.subscribe(
+      destination: '/user/${AuthService.getProfileId()}/queue/messages',
+      callback: (StompFrame message) {
+        if (!mounted) return;
+
+        if (message.body != null) {
+          try {
+            final data = json.decode(message.body!) as Map<String, dynamic>;
+
+            _playMagicTone();
+
+            // Add the new message to the list
+            _addNewMessage({
+              'id': data['id'] ?? 0,
+              'senderId': data['senderId'] ?? 0,
+              'recipientId': data['recipientId'] ?? 0,
+              'content': data['content'] ?? '',
+              'mediaUrl': data['mediaUrl'],
+              'messageType': data['messageType'] ?? 'TEXT',
+              'status': data['status'] ?? 'SENT',
+              'timestamp': DateTime.now().millisecondsSinceEpoch,
+            });
+
+          } catch (e) {
+            LogService.logError('Error parsing message: $e');
+          }
+        }
+      },
+    );
+  }
 
   // Generate a unique ID for each message
   String generateMessageId() {
     return DateTime.now().millisecondsSinceEpoch.toString();
+  }
+
+  Future<void> asyncInit() async {
+    await _fetchChatMessages();
+    await _fetchUserDetails();
+    await _socketConnection();
   }
 
   String formatTime(int duration) {
@@ -101,14 +163,16 @@ class _LarosaConversationState extends State<LarosaConversation> {
   }
 
   Future<void> _fetchUserDetails() async {
+    LogService.logFatal('Fetching user details...');
     String personalLink = '${LarosaLinks.baseurl}/personal/visit';
     String brandLink = '${LarosaLinks.baseurl}/brand/visit';
 
     try {
-      LogService.logDebug('fetching user details for ${widget.profileId}');
+      final String url = profileType == 'PERSONAL' ? personalLink : brandLink;
+
 
       final response = await _dioService.dio.post(
-        widget.isBusiness ? brandLink : personalLink,
+        url,
         data: jsonEncode({
           'ownerId': widget.profileId,
         }),
@@ -120,8 +184,6 @@ class _LarosaConversationState extends State<LarosaConversation> {
       }
 
       final Map<String, dynamic> data = response.data;
-
-      LogService.logInfo('profile data: $data');
 
       setState(() {
         profile = data;
@@ -138,184 +200,223 @@ class _LarosaConversationState extends State<LarosaConversation> {
   }
 
   Future<void> _fetchChatMessages() async {
-    var box = Hive.box('userBox');
-    String chatId = widget.profileId.toString();
-    String localStorageKey = 'chat_$chatId';
+    try {
+      LogService.logFatal('Fetching chat messages...');
+      final response = await _dioService.dio.get(
+        '${LarosaLinks.baseurl}/messages/${AuthService.getProfileId()}/${widget.profileId}',
+      );
 
-    List<dynamic>? localMessages = box.get(localStorageKey);
+      if (response.statusCode == 200) {
+        final List<dynamic> data = response.data['messages'];
+        final encryptionService = EncryptionService();
+        final conversationController = ConversationController();
+
+        // get my private key and password
+        // final privateKey = await encryptionService.getEncryptedPrivateKey();
+        // final password = await encryptionService.getE2EPassword();
+
+        // Only proceed with E2E decryption if we have both private key and password
+        Uint8List? decryptedPrivateKey;
+        // if (privateKey != null && password != null) {
+        //   try {
+        //     decryptedPrivateKey = await encryptionService.decryptPrivateKey(privateKey, password);
+        //     LogService.logInfo('Private key decrypted successfully');
+        //   } catch (e) {
+        //     LogService.logError('Failed to decrypt private key: $e');
+        //   }
+        // }
+        
+        final List<Map<String, dynamic>> messagesList = await Future.wait(
+          data.map((message) async {
+            LogService.logFatal('Processing message: $message');
+            String content = message['content'] ?? '';
+            final symmetricKey = message['symmetricKey'];
+            final status = message['status'] ?? '';
+            final messageId = message['id'] ?? 0;
+              
+            // Queue message for status update if not read
+            if (status != 'READ' && messageId > 0 && message['senderId'] == widget.profileId) {
+              LogService.logFatal('Queueing message for status update: $messageId');
+              conversationController.queueMessageForStatusUpdate(messageId);
+            }
+            
+            if (content.isNotEmpty && symmetricKey != null && symmetricKey.isNotEmpty) {
+              try {
+                // Convert base64 key to Uint8List
+                final keyBytes = base64Decode(symmetricKey);
+                // Decrypt the content
+                content = await encryptionService.decrypt(content, keyBytes);
+                LogService.logInfo('Message decrypted successfully');
+              } catch (e) {
+                LogService.logError('Failed to decrypt message: $e');
+                // Keep original content if decryption fails
+              }
+            }
+
+            // if e2e is true
+            if (message['endToEndEncrypted'] && decryptedPrivateKey != null) {
+              try {
+                content = await encryptionService.decrypt(content, decryptedPrivateKey);
+                LogService.logInfo('E2E message decrypted successfully');
+              } catch (e) {
+                LogService.logError('Failed to decrypt E2E message: $e');
+              }
+            }
+
+            return {
+              'id': messageId,
+              'senderId': message['senderId'] ?? 0,
+              'recipientId': message['recipientId'] ?? 0,
+              'content': content,
+              'mediaUrl': message['mediaUrl'],
+              'messageType': message['messageType'] ?? 'TEXT',
+              'status': status,
+              'timestamp': message['timestamp'] ?? DateTime.now().millisecondsSinceEpoch,
+              'symmetricKey': symmetricKey ?? '',
+              'endToEndEncrypted': message['endToEndEncrypted'] ?? false,
+            };
+          }),
+        );
+
+        // Handle encryption key generation outside setState
+        if (messagesList.isEmpty) {
+          await encryptionService.generateAndStoreKey();
+          LogService.logFatal('Generated symmetric key');
+          final key = await encryptionService.getStoredKey();
+          LogService.logTrace('Key: $key');
+        }
+
+        setState(() {
+          messages = messagesList;
+          profileType = response.data['profileType'] ?? 'PERSONAL';
+          _buildMessageWidgets();
+        });
+      }
+    } catch (e) {
+      LogService.logError('Error fetching chat messages: $e');
+    }
+  }
+
+  void _addNewMessage(Map<String, dynamic> messageData) {
+    LogService.logFatal('Adding new message: $messageData');
+    setState(() {
+      // insert at the end of the list
+      messages.add(messageData);
+      _buildMessageWidgets();
+    });
+  }
+
+  void _buildMessageWidgets() {
+    LogService.logFatal('Building message widgets with ${messages.length} messages');
     List<Widget> bubbles = [];
     List<String> timeBubbleTexts = [];
 
-    if (localMessages != null) {
-      for (var chat in localMessages) {
-        bool isSentByMe = chat['senderId'] == AuthService.getProfileId();
+    for (var chat in messages) {
+      bool isSentByMe = chat['senderId'] == AuthService.getProfileId();
 
-        MessageType messageType;
-        if (chat['mediaUrl'] != null && chat['mediaUrl'] != '') {
-          if (chat['mediaUrl'].endsWith('.mp4')) {
-            messageType = MessageType.image;
-          } else if (chat['mediaUrl'].endsWith('.webp') ||
-              chat['mediaUrl'].endsWith('.jpg') ||
-              chat['mediaUrl'].endsWith('.png')) {
-            messageType = MessageType.image;
-          } else {
-            messageType = MessageType.audio;
-          }
+      MessageType messageType;
+      if (chat['mediaUrl'] != null && chat['mediaUrl'] != '') {
+        if (chat['mediaUrl'].endsWith('.mp4')) {
+          messageType = MessageType.video;
+        } else if (chat['mediaUrl'].endsWith('.webp') ||
+            chat['mediaUrl'].endsWith('.jpg') ||
+            chat['mediaUrl'].endsWith('.png')) {
+          messageType = MessageType.image;
         } else {
-          messageType = MessageType.text;
+          messageType = MessageType.audio;
         }
+      } else {
+        messageType = MessageType.text;
+      }
 
-        String timeBubbleText = formatTime(chat['duration']);
-        if (!timeBubbleTexts.contains(timeBubbleText)) {
-          timeBubbleTexts.add(timeBubbleText);
-          bubbles.add(
-            TimeBubble(
-              duration: timeBubbleText,
-            ),
-          );
-        }
-
+      String timeBubbleText = formatTime(chat['duration'] ?? 0);
+      if (!timeBubbleTexts.contains(timeBubbleText)) {
+        timeBubbleTexts.add(timeBubbleText);
         bubbles.add(
-          ChatBubbleComponent(
-            message: chat['mediaUrl'] ?? chat['content'],
-            isSentByMe: isSentByMe,
-            messageType: messageType,
-            comment: chat,
+          TimeBubble(
+            duration: timeBubbleText,
           ),
         );
       }
 
-      setState(() {
-        messageWidgets = bubbles.reversed.toList();
-      });
+      LogService.logTrace('chat: ${chat}');
+
+      bubbles.add(
+        ChatBubbleComponent(
+          message: chat['mediaUrl'] ?? chat['content'],
+          isSentByMe: isSentByMe,
+          messageType: messageType,
+          comment: chat,
+          status: chat['status'] == 'SENT'
+              ? MessageStatus.sent
+              : chat['status'] == 'DELIVERED'
+                  ? MessageStatus.delivered
+                  : chat['status'] == 'READ'
+                      ? MessageStatus.read
+                      : MessageStatus.pending,
+        ),
+      );
     }
 
-    // Fetch messages from API and apply the same grouping logic
+    setState(() {
+      messageWidgets = bubbles;
+      messageWidgets = messageWidgets.reversed.toList();
+    });
+  }
+
+  Future<void> _playMagicTone() async {
     try {
-      LogService.logInfo('Requesting chats...');
-
-      final response = await _dioService.dio.get(
-        '${LarosaLinks.baseurl}/messages/${AuthService.getProfileId()}/$chatId',
-      );
-
-      if (response.statusCode != 200) {
-        LogService.logError('Error: ${response.data}');
-        return;
+      if (!_soundPlayer.isOpen()) {
+        await _soundPlayer.openPlayer();
       }
 
-      List<dynamic> data = response.data;
-      bubbles = [];
-      timeBubbleTexts.clear();
+      // Load the .wav file from assets
+      final ByteData data = await rootBundle.load('assets/music/magic_tone.mp3');
+      final Uint8List bytes = data.buffer.asUint8List();
 
-      for (var chat in data) {
-        bool isSentByMe = chat['senderId'] == AuthService.getProfileId();
+      // Write to a temporary file
+      final tempDir = await getTemporaryDirectory();
+      final tempFile = File('${tempDir.path}/magic_tone.mp3');
+      await tempFile.writeAsBytes(bytes);
 
-        // Determine message type based on mediaUrl or mediaType
-        MessageType messageType;
-        if (chat['mediaUrl'] != null && chat['mediaUrl'] != '') {
-          if (chat['mediaUrl'].endsWith('.mp4')) {
-            messageType = MessageType.image;
-          } else if (chat['mediaUrl'].endsWith('.webp') ||
-              chat['mediaUrl'].endsWith('.jpg') ||
-              chat['mediaUrl'].endsWith('.png')) {
-            messageType = MessageType.image;
-          } else {
-            messageType = MessageType.audio;
-          }
-        } else {
-          messageType = MessageType.text;
-        }
-
-        // Format and group messages by time
-        String timeBubbleText = formatTime(chat['duration']);
-        if (!timeBubbleTexts.contains(timeBubbleText)) {
-          timeBubbleTexts.add(timeBubbleText);
-          bubbles.add(
-            TimeBubble(
-              duration: timeBubbleText,
-            ),
-          );
-        }
-
-        bubbles.add(
-          ChatBubbleComponent(
-            message: chat['mediaUrl'] ?? chat['content'],
-            isSentByMe: isSentByMe,
-            messageType: messageType,
-            comment: chat,
-          ),
-        );
-      }
+      // Play the file
+      await _soundPlayer.startPlayer(
+        fromURI: tempFile.path,
+        codec: Codec.pcm16WAV,
+        whenFinished: () {
+          setState(() {
+            _isPlaying = false;
+          });
+        },
+      );
 
       setState(() {
-        messageWidgets =
-            bubbles.reversed.toList(); // Reverse messages for latest-first view
+        _isPlaying = true;
       });
-
-      box.put(localStorageKey, data); // Cache the latest messages
     } catch (e) {
-      LogService.logError('Error fetching messages: $e');
+      LogService.logError('Error playing magic tone: $e');
     }
-  }
-
-  Future<void> _connectToStomp(
-    String url,
-    Function(StompFrame) onConnectCallback,
-  ) async {
-    _stompClient = StompClient(
-      config: StompConfig.sockJS(
-        url: url,
-        onConnect: onConnectCallback,
-        onWebSocketError: (dynamic error) {
-          print('WebSocket error occurred: $error');
-        },
-        onStompError: (StompFrame frame) {
-          print('Stomp error occurred: ${frame.body}');
-        },
-        onDisconnect: (_) {
-          print('Disconnected');
-        },
-      ),
-    );
-    _stompClient.activate();
-  }
-
-  void _stompController() async {
-    LogService.logInfo('connecting to stomp');
-    try {
-      await _connectToStomp(
-        socketChannel,
-        _onConnectCallback,
-      );
-    } catch (e) {
-      LogService.logError('Error connecting to stomp');
-    }
-  }
-
-  void _onConnectCallback(StompFrame connectFrame) {
-    _stompClient.subscribe(
-      destination: '/user/${AuthService.getProfileId()}/queue/ack',
-      callback: _onMessageReceived,
-    );
-  }
-
-  void _onMessageReceived(StompFrame frame) {
-    _fetchChatMessages();
   }
 
   @override
   void initState() {
     super.initState();
-    _stompController();
-    _fetchUserDetails();
-    _fetchChatMessages();
+    _initPlayer();
+    asyncInit();
     messageController.addListener(_onMessageChanged);
+  }
+
+  Future<void> _initPlayer() async {
+    await _soundPlayer.openPlayer();
   }
 
   @override
   void dispose() {
     messageController.removeListener(_onMessageChanged);
     messageController.dispose();
+    if (_soundPlayer.isOpen()) {
+      _soundPlayer.closePlayer();
+    }
     _stompClient.deactivate();
     super.dispose();
   }
@@ -328,8 +429,8 @@ class _LarosaConversationState extends State<LarosaConversation> {
 
   Future<void> _sendMessage(
       {String? retryMessageId, String? messageContent}) async {
-    String messageId = retryMessageId ?? generateMessageId(); 
-    String message = messageContent ?? messageController.text; 
+    String messageId = retryMessageId ?? generateMessageId();
+    String message = messageContent ?? messageController.text;
 
     // Determine the message type
     MessageType messageType;
@@ -347,16 +448,23 @@ class _LarosaConversationState extends State<LarosaConversation> {
         'hasFailed': false,
         'content': message,
       };
+
+      // chat bubble props
+      LogService.logFatal('adding new message');
+      LogService.logFatal('message: $message');
+      LogService.logFatal('messageType: $messageType');
+
       messageWidgets.insert(
         0,
         ChatBubbleComponent(
           message: message,
           isSentByMe: true,
           messageType: messageType,
-          comment: {'duration': 0},
+          comment: {'duration': 0, 'timestamp': DateTime.now().millisecondsSinceEpoch},
           isSending: true,
           hasFailed: false,
           onRetry: () => _retryMessage(messageId),
+          status: MessageStatus.pending,
         ),
       );
     });
@@ -364,11 +472,111 @@ class _LarosaConversationState extends State<LarosaConversation> {
     // Clear input immediately
     messageController.clear();
 
-    // Prepare form data
+    LogService.logInfo('my profile Id : ${AuthService.getProfileId()}');
+    LogService.logInfo('recipient profile Id : ${widget.profileId}');
+
+    // check if user enable e2e encryption
+    final encryptionService = EncryptionService();
+    final isE2EEnabled = await encryptionService.isE2EEnabled();
+    String? receiversPublicKey;
+    String? sendersPublicKey;
+    if (isE2EEnabled) {
+      LogService.logInfo('E2E enabled');
+
+     // fetch recepient user public key
+     final conversationController = ConversationController();
+     receiversPublicKey = await conversationController.fetchUserPublicKey(widget.profileId);
+     sendersPublicKey = await encryptionService.getPublicKey();
+     if (receiversPublicKey == null || sendersPublicKey == null) {
+       LogService.logError('Failed to fetch public key');
+       return;
+     }
+
+     LogService.logInfo('Receivers public key: $receiversPublicKey');
+     LogService.logInfo('Senders public key: $sendersPublicKey');
+
+    } else {
+      LogService.logInfo('E2E not enabled');
+    }
+
+    // Get or generate symmetric key
+    String? symmetricKeyBase64 = await EncryptionService().getStoredKeyBase64();
+    if (symmetricKeyBase64 == null) {
+      await EncryptionService().generateAndStoreKey();
+      symmetricKeyBase64 = await EncryptionService().getStoredKeyBase64();
+    }
+
+    if (symmetricKeyBase64 == null) {
+      LogService.logError('Failed to generate symmetric key');
+      return;
+    }
+
+    LogService.logTrace('symmetricKeyBase64: $symmetricKeyBase64');
+
+    // Get the key as Uint8List for encryption
+    final key = await encryptionService.getStoredKey();
+    if (key == null) {
+      LogService.logError('Failed to retrieve symmetric key for encryption');
+      return;
+    }
+
+    LogService.logTrace('key: $key');
+
+    // Encrypt the message
+    String encryptedMessage;
+    try {
+      encryptedMessage = await encryptionService.encrypt(message, key);
+      LogService.logInfo('Message encrypted successfully');
+    } catch (e) {
+      LogService.logError('Failed to encrypt message: $e');
+      return;
+    }
+
+    LogService.logTrace('encryptedMessage: $encryptedMessage');
+
+    // is e2e enabled encrypt symmetric key with public key
+    String? receiversEncryptedSymmetricKey;
+    String? sendersEncryptedSymmetricKey;
+    if (isE2EEnabled && receiversPublicKey != null && sendersPublicKey != null) {
+      try {
+        receiversEncryptedSymmetricKey = await encryptionService.encryptWithPublicKey(
+          symmetricKeyBase64,
+          receiversPublicKey,
+        );
+        LogService.logInfo('Symmetric key encrypted successfully');
+      } catch (e) {
+        LogService.logError('Failed to encrypt symmetric key: $e');
+        return;
+      }
+
+      try {
+        sendersEncryptedSymmetricKey = await encryptionService.encryptWithPublicKey(
+          symmetricKeyBase64,
+          sendersPublicKey,
+        );
+        LogService.logInfo('Senders symmetric key encrypted successfully');
+      } catch (e) {
+        LogService.logError('Failed to encrypt senders symmetric key: $e');
+        return;
+      }
+    }
+
+    // Prepare form data with encrypted message
     final formData = FormData.fromMap({
       'recipientId': widget.profileId.toString(),
-      'content': message,
+      'content': encryptedMessage,
+      'symmetricKey': receiversEncryptedSymmetricKey ?? symmetricKeyBase64,
+      'endToEndEncrypted': isE2EEnabled,
     });
+
+    if (isE2EEnabled && receiversPublicKey != null) {
+      formData.fields.add(
+        MapEntry(
+          'symmetricKeyForSender',
+          sendersEncryptedSymmetricKey ?? symmetricKeyBase64,
+        ),
+      );
+    }
 
     // Add media file if present
     if (audioData != null) {
@@ -391,7 +599,6 @@ class _LarosaConversationState extends State<LarosaConversation> {
       );
     }
 
-
     setState(() {
       pickedFile = null;
       audioData = null;
@@ -399,7 +606,6 @@ class _LarosaConversationState extends State<LarosaConversation> {
       _videoController = null;
     });
 
-    // Send message in background
     _dioService.dio
         .post('${LarosaLinks.baseurl}/message/send', data: formData)
         .then((response) {
@@ -430,6 +636,7 @@ class _LarosaConversationState extends State<LarosaConversation> {
           isSending: false,
           hasFailed: true,
           onRetry: () => _retryMessage(messageId),
+          status: MessageStatus.delivered,
         );
       });
     });
@@ -456,7 +663,7 @@ class _LarosaConversationState extends State<LarosaConversation> {
   final FlutterSoundPlayer _player = FlutterSoundPlayer();
   bool isRecording = false;
   bool isPlaying = false;
-  Uint8List? audioData; // Use Uint8List for audioData
+  Uint8List? audioData;
 
   File? pickedFile; // Holds the selected image or video file
   VideoPlayerController? _videoController;
@@ -713,8 +920,6 @@ class _LarosaConversationState extends State<LarosaConversation> {
 
                   HelperFunctions.larosaLogger('Send button pressed');
 
-
-
                   if (messageController.text.isNotEmpty ||
                       pickedFile != null ||
                       audioData != null) {
@@ -724,13 +929,9 @@ class _LarosaConversationState extends State<LarosaConversation> {
 
                     _sendMessage();
 
-                    //pickedFile = null;
-
                     messageController.clear();
 
-                    HelperFunctions.larosaLogger(
-                      'Message, media file, or audio data sent',
-                    );
+                    
                   } else {
                     HelperFunctions.larosaLogger(
                       'Nothing to send: message, media file, and audio data are all empty',

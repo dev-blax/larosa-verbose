@@ -34,6 +34,64 @@ class BusinessCategoryProvider with ChangeNotifier {
     fetchCategories();
   }
 
+
+ static Future<List<dynamic>> fetchReservationCategoriesIds() async {
+    final DioService dioService = DioService();
+
+    try {
+      final response = await dioService.dio.get(
+        '${LarosaLinks.baseurl}/api/v1/business-categories/accomodation-reservation-categories-ids',
+      );
+
+      if (response.statusCode == 200) {
+        return response.data;
+      } else {
+        throw Exception('Failed to load categories');
+      }
+    } catch (e) {
+      throw Exception('Failed to load categories $e');
+    }
+  }
+
+
+  // fetch my brand categories
+  static Future<List<dynamic>> fetchBrandCategoriesIds() async {
+    final DioService dioService = DioService();
+
+    try {
+      final response = await dioService.dio.get(
+        '${LarosaLinks.baseurl}/api/v1/business-categories/brand',
+      );
+
+      if (response.statusCode == 200) {
+        return response.data;
+      } else {
+        throw Exception('Failed to load categories');
+      }
+    } catch (e) {
+      throw Exception('Failed to load categories $e');
+    }
+  }
+
+
+  static Future<bool> deletePost(int postId) async {
+    try {
+      var response = await DioService().dio.delete(
+        '${LarosaLinks.baseurl}/api/v1/delete/$postId',
+      );
+
+      if (response.statusCode == 200) {
+        return true;
+      } else {
+        LogService.logError('Failed to delete post ${response.data} ${response.statusCode}');
+        return false;
+      }
+    } catch (e) {
+      LogService.logError('Failed to delete post $e');
+      return false;
+    }
+  }
+
   Future<void> fetchUnits() async {
     final token = AuthService.getToken();
     final headers = {

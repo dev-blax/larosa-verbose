@@ -4,6 +4,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:gap/gap.dart';
 import 'package:go_router/go_router.dart';
@@ -11,6 +12,7 @@ import 'package:hive/hive.dart';
 import 'package:iconsax/iconsax.dart';
 import 'package:larosa_block/Components/text_input.dart';
 import 'package:larosa_block/Features/Auth/Components/oauth_buttons.dart';
+import 'package:larosa_block/Features/Auth/email_verification_code_screen.dart';
 import 'package:larosa_block/Services/dio_service.dart';
 import 'package:larosa_block/Services/log_service.dart';
 import 'package:larosa_block/Utils/colors.dart';
@@ -34,6 +36,7 @@ class _PersonalRegisterScreenState extends State<PersonalRegisterScreen> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _usernameController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
+  final TextEditingController _dobController = TextEditingController();
   final DioService _dioService = DioService();
 
   Future<void> _savePersonalUser() async {
@@ -41,7 +44,7 @@ class _PersonalRegisterScreenState extends State<PersonalRegisterScreen> {
       setState(() {
         isLoading = true;
       });
-      
+
       final response = await _dioService.dio.post(
         '${LarosaLinks.baseurl}/api/v1/auth/register',
         data: jsonEncode({
@@ -50,62 +53,47 @@ class _PersonalRegisterScreenState extends State<PersonalRegisterScreen> {
           "username": _usernameController.text,
           "email": _emailController.text,
           "password": _passwordController.text,
+          // "dob": _dobController.text,
           "cityId": 1,
-          "countryId": 2,
+          "countryId": 1,
         }),
       );
 
-      // Parse response data first to catch any JSON decode errors
       LogService.logInfo('Registration response: ${response.data}');
       final data = response.data;
-
-      LogService.logInfo('Registration data: ${data}');
-
-      // Check for successful status code
       if (response.statusCode != 201) {
-        
-        LogService.logError('Registration failed with status ${response.statusCode}: ${response.data}');
-        HelperFunctions.showToast(
-          data['message'] ?? 'Registration failed. Please try again.',
-          false
-        );
+        LogService.logError(
+            'Registration failed with status ${response.statusCode}: ${response.data}');
         return;
       }
 
       LogService.logInfo('Registration successful: ${data}');
 
-      // Store user data in Hive
-      var box =  Hive.box('userBox');
+      var box = Hive.box('userBox');
       await box.clear();
-      
+
       try {
-        box.put('profileId', data['profileId']);
-        box.put('accountId', data['accountType']['id']);
-        box.put('isBusiness', false);
-        box.put('accountName', data['accountType']['name']);
-        box.put('token', data['jwtAuthenticationResponse']['token']);
-        box.put(
-          'refreshToken',
-          data['jwtAuthenticationResponse']['refreshToken'],
-        );
 
         if (mounted) {
-          context.goNamed('home');
+          Navigator.push(
+              context,
+              CupertinoPageRoute(
+                  builder: (context) => EmailVerificationCodeScreen(
+                        email: _emailController.text,
+                      )));
         }
       } catch (storageError) {
         LogService.logError('Failed to store user data: $storageError');
         HelperFunctions.showToast(
-          'Registration successful but failed to save user data. Please try logging in.',
-          false
-        );
+            'Registration successful but failed to save user data. Please try logging in.',
+            false);
         return;
       }
-      
     } catch (e) {
       LogService.logError('Registration error');
       print(e);
       String errorMessage = 'Registration failed. ';
-      
+
       if (e is DioException) {
         switch (e.type) {
           case DioExceptionType.connectionTimeout:
@@ -118,7 +106,8 @@ class _PersonalRegisterScreenState extends State<PersonalRegisterScreen> {
             if (responseData != null) {
               try {
                 final parsedData = jsonDecode(responseData);
-                LogService.logError('Registration failed with message: ${parsedData}');
+                LogService.logError(
+                    'Registration failed with message: ${parsedData}');
                 errorMessage = parsedData['message'] ?? 'Please try again.';
               } catch (_) {
                 errorMessage += responseData.toString();
@@ -129,8 +118,8 @@ class _PersonalRegisterScreenState extends State<PersonalRegisterScreen> {
             errorMessage += 'Please try again.';
         }
       }
-      
-      HelperFunctions.showToast(errorMessage, false);
+
+      //HelperFunctions.showToast(errorMessage, false);
     } finally {
       if (mounted) {
         setState(() {
@@ -139,7 +128,6 @@ class _PersonalRegisterScreenState extends State<PersonalRegisterScreen> {
       }
     }
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -202,7 +190,7 @@ class _PersonalRegisterScreenState extends State<PersonalRegisterScreen> {
                             children: [
                               Flexible(
                                 child: Divider(
-                                  color: Colors.white,
+                                  color: CupertinoColors.white,
                                   thickness: 3,
                                   indent: 10,
                                   endIndent: 5,
@@ -212,11 +200,11 @@ class _PersonalRegisterScreenState extends State<PersonalRegisterScreen> {
                                 'OR',
                                 style: TextStyle(
                                     fontWeight: FontWeight.w700,
-                                    color: Colors.white),
+                                    color: CupertinoColors.white),
                               ),
                               Flexible(
                                   child: Divider(
-                                color: Colors.white,
+                                color: CupertinoColors.white,
                                 thickness: 3,
                                 indent: 5,
                                 endIndent: 10,
@@ -243,6 +231,104 @@ class _PersonalRegisterScreenState extends State<PersonalRegisterScreen> {
                             ),
                           ),
                           const Gap(10),
+                          Animate(
+                            effects: const [
+                              SlideEffect(
+                                begin: Offset(-.5, 0),
+                                end: Offset(0, 0),
+                                duration: Duration(seconds: 3),
+                                curve: Curves.elasticOut,
+                              )
+                            ],
+                            child: TextFormField(
+                              readOnly: true,
+                              onTap: () {
+                                showCupertinoModalPopup(
+                                  context: context,
+                                  builder: (BuildContext context) => Container(
+                                    height: 300,
+                                    padding: const EdgeInsets.only(top: 6.0),
+                                    color: CupertinoColors.systemBackground.darkColor,
+                                    child: SafeArea(
+                                      top: false,
+                                      child: Column(
+                                        children: [
+                                          Row(
+                                            mainAxisAlignment: MainAxisAlignment.end,
+                                            children: [
+                                              CupertinoButton(
+                                                onPressed: () => Navigator.pop(context),
+                                                child: const Text('Done'),
+                                              ),
+                                            ],
+                                          ),
+                                          Expanded(
+                                            child: CupertinoDatePicker(
+                                              mode: CupertinoDatePickerMode.date,
+                                              initialDateTime: DateTime.now().subtract(const Duration(days: 365 * 18)),
+                                              maximumDate: DateTime.now(),
+                                              minimumDate: DateTime(1900),
+                                              onDateTimeChanged: (DateTime newDate) {
+                                                setState(() {
+                                                  _dobController.text = DateFormat('yyyy-MM-dd').format(newDate);
+                                                });
+                                              },
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              },
+                              keyboardType: TextInputType.datetime,
+                              style: const TextStyle(color: CupertinoColors.white),
+                              decoration: InputDecoration(
+                                prefixIcon: Icon(Iconsax.calendar, color: CupertinoColors.white),
+                                hintText: 'Date of Birth',
+                                hintStyle: const TextStyle(color: CupertinoColors.white),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(20),
+                                  borderSide: const BorderSide(
+                                    color: CupertinoColors.white,
+                                  ),
+                                ),
+                                filled: false,
+                                enabledBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(20),
+                                  borderSide: const BorderSide(
+                                    color: CupertinoColors.white,
+                                  ),
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(20),
+                                  borderSide: const BorderSide(
+                                    color: CupertinoColors.white,
+                                  ),
+                                ),
+                                errorBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(20),
+                                  borderSide: const BorderSide(
+                                    color: CupertinoColors.white,
+                                  ),
+                                ),
+                                focusedErrorBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(20),
+                                  borderSide: const BorderSide(
+                                    color: CupertinoColors.white,
+                                  ),
+                                ),
+                              ),
+                              // inputType: TextInputType.datetime,
+                              // iconData: Iconsax.calendar,
+                              // label: 'Date of Birth',
+                              controller: _dobController,
+                              validator:
+                                  ValidationHelpers.validateRequiredField,
+                            ),
+                          ),
+                          const Gap(10),
+
                           Animate(
                             effects: const [
                               SlideEffect(
@@ -310,12 +396,13 @@ class _PersonalRegisterScreenState extends State<PersonalRegisterScreen> {
                                     acceptedTerms = value ?? false;
                                   });
                                 },
-                                checkColor: Colors.white,
-                                fillColor: WidgetStateProperty.resolveWith<Color>(
-                                  (Set<WidgetState> states) {
-                                    return LarosaColors.primary;
-                                  },
+                                shape: const RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.all(
+                                    Radius.circular(5),
+                                  ),
                                 ),
+                                checkColor: Colors.white,
+                                fillColor: WidgetStatePropertyAll(CupertinoColors.systemBlue),
                               ),
                               Expanded(
                                 child: GestureDetector(
@@ -327,17 +414,21 @@ class _PersonalRegisterScreenState extends State<PersonalRegisterScreen> {
                                   child: RichText(
                                     text: TextSpan(
                                       text: 'I accept the ',
-                                      style: const TextStyle(color: Colors.white),
+                                      style:
+                                          const TextStyle(color: Colors.white),
                                       children: [
                                         TextSpan(
                                           text: 'Terms of Service',
                                           style: const TextStyle(
                                             color: Colors.blue,
-                                            decoration: TextDecoration.underline,
+                                            decoration:
+                                                TextDecoration.underline,
                                           ),
                                           recognizer: TapGestureRecognizer()
                                             ..onTap = () {
-                                              HelperFunctions.launchURL('https://explore-larosa.serialsoftpro.com/terms', context);
+                                              HelperFunctions.launchURL(
+                                                  'https://explore-larosa.serialsoftpro.com/terms',
+                                                  context);
                                             },
                                         ),
                                       ],
@@ -357,11 +448,12 @@ class _PersonalRegisterScreenState extends State<PersonalRegisterScreen> {
                                   });
                                 },
                                 checkColor: Colors.white,
-                                fillColor: WidgetStateProperty.resolveWith<Color>(
-                                  (Set<WidgetState> states) {
-                                    return LarosaColors.primary;
-                                  },
+                                shape: const RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.all(
+                                    Radius.circular(5),
+                                  ),
                                 ),
+                                fillColor: WidgetStatePropertyAll(CupertinoColors.systemBlue),
                               ),
                               Expanded(
                                 child: GestureDetector(
@@ -373,17 +465,21 @@ class _PersonalRegisterScreenState extends State<PersonalRegisterScreen> {
                                   child: RichText(
                                     text: TextSpan(
                                       text: 'I accept the ',
-                                      style: const TextStyle(color: Colors.white),
+                                      style:
+                                          const TextStyle(color: Colors.white),
                                       children: [
                                         TextSpan(
                                           text: 'Privacy Policy',
                                           style: const TextStyle(
                                             color: Colors.blue,
-                                            decoration: TextDecoration.underline,
+                                            decoration:
+                                                TextDecoration.underline,
                                           ),
                                           recognizer: TapGestureRecognizer()
                                             ..onTap = () {
-                                              HelperFunctions.launchURL('https://explore-larosa.serialsoftpro.com/privacy', context);
+                                              HelperFunctions.launchURL(
+                                                  'https://explore-larosa.serialsoftpro.com/privacy',
+                                                  context);
                                             },
                                         ),
                                       ],
@@ -416,13 +512,15 @@ class _PersonalRegisterScreenState extends State<PersonalRegisterScreen> {
                                         style: ElevatedButton.styleFrom(
                                           elevation: 0.0,
                                           shape: RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.circular(10),
+                                            borderRadius:
+                                                BorderRadius.circular(10),
                                           ),
                                           padding: const EdgeInsets.all(16.0),
                                           backgroundColor: Colors.transparent,
                                         ),
                                         onPressed: () async {
-                                          if (_formKey.currentState!.validate()) {
+                                          if (_formKey.currentState!
+                                              .validate()) {
                                             setState(() {
                                               isLoading = true;
                                             });
@@ -473,13 +571,13 @@ class _PersonalRegisterScreenState extends State<PersonalRegisterScreen> {
     );
   }
 
-
   @override
   void dispose() {
     _fullnameController.dispose();
     _emailController.dispose();
     _usernameController.dispose();
     _passwordController.dispose();
+    _dobController.dispose();
     super.dispose();
   }
 }

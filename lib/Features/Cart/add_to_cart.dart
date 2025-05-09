@@ -12,15 +12,17 @@ import 'package:flutter_typeahead/flutter_typeahead.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:larosa_block/Features/Cart/main_cart.dart';
 import 'package:larosa_block/Services/log_service.dart';
 import 'package:larosa_block/Services/dio_service.dart';
+
 import 'package:geolocator/geolocator.dart';
 import '../../Components/cart_button.dart';
 import '../../Components/loading_shimmer.dart';
 import '../../Services/auth_service.dart';
 import '../../Utils/colors.dart';
 import '../../Utils/links.dart';
-import 'prepare_for_payment.dart';
+import 'proceed_to_payment.dart';
 import 'screens/payment_method_screen.dart';
 import 'widgets/add_to_cart_table.dart';
 
@@ -29,7 +31,7 @@ class AddToCartScreen extends StatefulWidget {
   final double price;
   final String names;
   final int postId;
-  final int? productId;
+  final int productId;
 
   final String? reservationType;
   final int? adults;
@@ -42,7 +44,7 @@ class AddToCartScreen extends StatefulWidget {
     required this.price,
     required this.names,
     required this.postId,
-    this.productId,
+    required this.productId,
     this.reservationType,
     this.adults,
     this.children,
@@ -57,6 +59,7 @@ class _AddToCartScreenState extends State<AddToCartScreen> {
   int itemCount = 1;
   final TextEditingController _typeAheadController = TextEditingController();
   final DioService _dioService = DioService();
+  final TextEditingController _phoneNumberController = TextEditingController();
   Position? _currentPosition;
   String? selectedStreetName;
   String? currentStreetName;
@@ -136,6 +139,15 @@ class _AddToCartScreenState extends State<AddToCartScreen> {
   }
 
   Future<void> fetchTransportCost() async {
+    if (widget.reservationType != null) {
+      LogService.logTrace('is reservation, hence no delivery cost');
+      setState(() {
+        deliveryCost = 'Tsh 2000';
+        estimatedTime = '48 min';
+      });
+      return;
+    }
+
     if (latitude == null || longitude == null) {
       setState(() {
         deliveryCost = 'Error: Missing destination data';
@@ -144,43 +156,29 @@ class _AddToCartScreenState extends State<AddToCartScreen> {
       return;
     }
 
-    // Fixed pickup location
-    const double pickupLat = -6.125649;
-    const double pickupLng = 35.79266299999999;
-
     // Request body with fixed pickup location
     final Map<String, dynamic> requestBody = {
-      "startLat": pickupLat,
-      "startLng": pickupLng,
-      "endLat": latitude!,
-      "endLng": longitude!,
+      "productId": widget.productId,
+      "customerLatitude": latitude!,
+      "customerLongitude": longitude!,
       "country": "Tanzania",
-      "cityName": "Dodoma"
+      "city": "Dodoma"
     };
 
     try {
       LogService.logInfo('Fetching transport cost...');
 
       final response = await _dioService.dio.post(
-        '${LarosaLinks.baseurl}/api/v1/transport-cost/calculate',
+        '${LarosaLinks.baseurl}/api/v1/delivery-cost/calculate',
         data: requestBody,
       );
-
-      LogService.logInfo('Transport cost response: ${response.data}');
 
       if (response.statusCode == 200) {
         final data = response.data as Map<String, dynamic>;
 
-        final double distance = (data['distance'] as num?)?.toDouble() ?? 0.0;
-        final double motorcycleCost =
-            (data['vehicleEstimations'][0]['cost'] as num?)?.toDouble() ?? 0.0;
-
         setState(() {
-          deliveryCost = motorcycleCost > 0
-              ? 'Tsh ${motorcycleCost.toStringAsFixed(2)}'
-              : 'Unavailable';
-          estimatedTime =
-              distance > 0 ? '${(distance * 10).toInt()} min' : 'Unavailable';
+          deliveryCost = 'Tsh ${data['cost']}';
+          estimatedTime = '48 min';
         });
 
         LogService.logInfo('Delivery cost: $deliveryCost');
@@ -334,19 +332,23 @@ class _AddToCartScreenState extends State<AddToCartScreen> {
     }
   }
 
+  void asyncInit() async {
+    _fetchExchangeRate();
+    await _getCurrentLocation();
+    await fetchTransportCost();
+  }
+
   @override
   void initState() {
     super.initState();
-    LogService.logError(
-        'initState, adults: ${widget.adults}, children: ${widget.children}');
 
     adults = widget.adults ?? 0;
     children = widget.children ?? 0;
 
-    _fetchExchangeRate();
-    _getCurrentLocation().then((_) => fetchTransportCost());
+    // _fetchExchangeRate();
+    // _getCurrentLocation().then((_) => fetchTransportCost());
+    asyncInit();
 
-    // Optionally, set default values
     checkInDate = DateTime.now();
     checkOutDate = DateTime.now().add(const Duration(days: 1));
   }
@@ -448,7 +450,7 @@ class _AddToCartScreenState extends State<AddToCartScreen> {
     }
   }
 
-  Future<bool> addItemToCart(
+  Future<bool> _addItemToCart(
       int profileId, List<Map<String, dynamic>> items) async {
     final Uri uri = Uri.https(
       LarosaLinks.nakedBaseUrl,
@@ -482,7 +484,8 @@ class _AddToCartScreenState extends State<AddToCartScreen> {
         return true;
       } else {
         LogService.logError(
-            'Failed to add item to cart. Status Code: ${response.statusCode}  ${response.body}');
+          'Failed to add item to cart. Status Code: ${response.statusCode}  ${response.body},',
+        );
       }
       return false;
     } catch (error) {
@@ -597,10 +600,7 @@ class _AddToCartScreenState extends State<AddToCartScreen> {
                           showDialog(
                             context: context,
                             builder: (BuildContext context) {
-                              return AlertDialog(
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(15.0),
-                                ),
+                              return CupertinoAlertDialog(
                                 title: const Text('Location Information'),
                                 content: const Text(
                                   'When location permission is granted:\n\n'
@@ -693,7 +693,33 @@ class _AddToCartScreenState extends State<AddToCartScreen> {
                       errorMessage: _errorMessage,
                     ),
                   ),
-                if (!isReservation) const Divider(),
+                if (!isReservation)
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: CupertinoTextField(
+                      prefix: Padding(
+                        padding: const EdgeInsets.only(left: 12.0),
+                        child: const Icon(Icons.phone),
+                      ),
+                      padding: const EdgeInsets.symmetric(
+                          vertical: 16.0, horizontal: 16.0),
+                      placeholder: 'Enter phone Number',
+                      controller: _phoneNumberController,
+                      style: TextStyle(
+                        color: Theme.of(context).brightness == Brightness.light
+                            ? CupertinoColors.systemGrey
+                            : CupertinoColors.systemGrey,
+                      ),
+                      keyboardType: TextInputType.phone,
+                      decoration: BoxDecoration(
+                        color: CupertinoColors.systemGrey6,
+                        borderRadius: BorderRadius.all(Radius.circular(8)),
+                        // border: Border.all(
+                        //   color: LarosaColors.primary,
+                        // )
+                      ),
+                    ),
+                  ),
 
                 const Divider(),
                 const Gap(5),
@@ -706,6 +732,43 @@ class _AddToCartScreenState extends State<AddToCartScreen> {
                       child: deliveryCost.contains('Tsh')
                           ? buildWideGradientButton(
                               onTap: () {
+                                // Check for capacity limits
+                                bool exceedsCapacity = false;
+                                String exceedMessage = '';
+
+                                if (widget.adults != null &&
+                                    adults > widget.adults!) {
+                                  exceedsCapacity = true;
+                                  exceedMessage =
+                                      'Adults capacity (${widget.adults}) exceeded';
+                                }
+                                if (widget.children != null &&
+                                    children > widget.children!) {
+                                  exceedsCapacity = true;
+                                  exceedMessage = exceedMessage.isEmpty
+                                      ? 'Children capacity (${widget.children}) exceeded'
+                                      : '$exceedMessage\nChildren capacity (${widget.children}) exceeded';
+                                }
+
+                                if (exceedsCapacity) {
+                                  showCupertinoDialog(
+                                    context: context,
+                                    builder: (BuildContext context) =>
+                                        CupertinoAlertDialog(
+                                      title: const Text('Capacity Exceeded'),
+                                      content: Text(exceedMessage),
+                                      actions: [
+                                        CupertinoDialogAction(
+                                          child: const Text('OK'),
+                                          onPressed: () =>
+                                              Navigator.pop(context),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                  return;
+                                }
+
                                 if (!isReservation) {
                                   final fullName =
                                       _fullNameController.text.trim();
@@ -734,9 +797,6 @@ class _AddToCartScreenState extends State<AddToCartScreen> {
                                   }
                                 }
 
-
-                                LogService.logInfo('Marathon Continues');
-
                                 final totalPrice = widget.price * itemCount +
                                     double.parse(deliveryCost
                                         .replaceAll('Tsh ', '')
@@ -748,61 +808,26 @@ class _AddToCartScreenState extends State<AddToCartScreen> {
                                   }
                                 ];
 
-                                // showModalBottomSheet(
-                                //   context: context,
-                                //   shape: const RoundedRectangleBorder(
-                                //     borderRadius: BorderRadius.vertical(
-                                //       top: Radius.circular(20),
-                                //     ),
-                                //   ),
-                                //   isScrollControlled: true,
-                                //   builder: (BuildContext context) {
-                                //     return FractionallySizedBox(
-                                //       heightFactor: 0.90,
-                                //       child: PaymentMethodModal(
-                                //         currentPosition: _currentPosition,
-                                //         deliveryDestination: selectedStreetName,
-                                //         deliveryLatitude: latitude,
-                                //         deliveryLongitude: longitude,
-                                //         totalPrice: isReservation
-                                //             ? totalPrice
-                                //             : widget.price * itemCount,
-                                //         quantity: itemCount,
-                                //         postId: [widget.postId],
-                                //         adults: adults, // Pass adults
-                                //         children: children, // Pass children
-                                //         fullName: _fullNameController.text
-                                //             .trim(), // Pass full name
-                                //         checkInDate: checkInDate,
-                                //         checkOutDate: checkOutDate,
-                                //         isReservation: !isReservation,
-                                //         items: items,
-                                //       ),
-                                //     );
-                                //   },
-                                // );
-
                                 // take to payment method screen
                                 Navigator.of(context).push(
-                                CupertinoPageRoute(
-                                  builder: (context) => PaymentMethodScreen(
-                                    totalPrice: totalPrice,
-                                    postId: [widget.postId],
-                                    items: items,
-                                    quantity: itemCount,
-                                    deliveryDestination: selectedStreetName,
-                                    deliveryLatitude: latitude,
-                                    deliveryLongitude: longitude,
-                                    adults: adults,
-                                    children: children,
-                                    fullName: _fullNameController.text.trim(),
-                                    checkInDate: checkInDate,
-                                    checkOutDate: checkOutDate,
-                                    isReservation: !isReservation,
+                                  CupertinoPageRoute(
+                                    builder: (context) => PaymentMethodScreen(
+                                      totalPrice: totalPrice,
+                                      postId: [widget.postId],
+                                      items: items,
+                                      quantity: itemCount,
+                                      deliveryDestination: selectedStreetName,
+                                      deliveryLatitude: latitude,
+                                      deliveryLongitude: longitude,
+                                      adults: adults,
+                                      children: children,
+                                      fullName: _fullNameController.text.trim(),
+                                      checkInDate: checkInDate,
+                                      checkOutDate: checkOutDate,
+                                      isReservation: !isReservation,
+                                    ),
                                   ),
-                                ),
-                              );
-
+                                );
                               },
                               label: 'Pay Now',
                               startColor: LarosaColors.secondary,
@@ -817,15 +842,54 @@ class _AddToCartScreenState extends State<AddToCartScreen> {
                     const SizedBox(
                       width: 70,
                     ),
+                    // if(isReservation)
                     Expanded(
-                      child: deliveryCost.contains('Tsh')
+                      child: deliveryCost != 'Calculating...'
                           ? buildWideGradientButton(
                               onTap: () async {
                                 try {
+                                  // Check for capacity limits
+                                  bool exceedsCapacity = false;
+                                  String exceedMessage = '';
+
+                                  if (widget.adults != null &&
+                                      adults > widget.adults!) {
+                                    exceedsCapacity = true;
+                                    exceedMessage =
+                                        'Adults capacity (${widget.adults}) exceeded';
+                                  }
+                                  if (widget.children != null &&
+                                      children > widget.children!) {
+                                    exceedsCapacity = true;
+                                    exceedMessage = exceedMessage.isEmpty
+                                        ? 'Children capacity (${widget.children}) exceeded'
+                                        : '$exceedMessage\nChildren capacity (${widget.children}) exceeded';
+                                  }
+
+                                  if (exceedsCapacity) {
+                                    showCupertinoDialog(
+                                      context: context,
+                                      builder: (BuildContext context) =>
+                                          CupertinoAlertDialog(
+                                        title: const Text('Capacity Exceeded'),
+                                        content: Text(exceedMessage),
+                                        actions: [
+                                          CupertinoDialogAction(
+                                            child: const Text('OK'),
+                                            onPressed: () =>
+                                                Navigator.pop(context),
+                                          ),
+                                        ],
+                                      ),
+                                    );
+                                    return;
+                                  }
+
                                   int? profileId = AuthService.getProfileId();
                                   if (profileId == null) {
                                     throw Exception(
-                                        'Profile ID is null. Please log in again.');
+                                      'Profile ID is null. Please log in again.',
+                                    );
                                   }
 
                                   List<Map<String, dynamic>> items = [
@@ -836,10 +900,11 @@ class _AddToCartScreenState extends State<AddToCartScreen> {
                                   ];
 
                                   LogService.logTrace(
-                                      'product Id ${widget.postId}');
+                                    'product Id ${widget.postId}',
+                                  );
 
                                   bool success =
-                                      await addItemToCart(profileId, items);
+                                      await _addItemToCart(profileId, items);
 
                                   if (success) {
                                     ScaffoldMessenger.of(context).showSnackBar(
@@ -851,7 +916,12 @@ class _AddToCartScreenState extends State<AddToCartScreen> {
                                     );
 
                                     // Navigate to the cart screen
-                                    context.pushReplacement('/maincart');
+                                    Navigator.pushReplacement(
+                                      context,
+                                      CupertinoPageRoute(
+                                        builder: (context) => const MyCart(),
+                                      ),
+                                    );
                                   } else {
                                     ScaffoldMessenger.of(context).showSnackBar(
                                       const SnackBar(

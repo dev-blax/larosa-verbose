@@ -41,9 +41,8 @@ class Subcategory {
     return Subcategory(
       id: json['id'],
       name: json['name'],
-      unitTypes: (json['unitTypes'] as List)
-          .map((e) => UnitType.fromJson(e))
-          .toList(),
+      unitTypes:
+          (json['unitTypes'] as List).map((e) => UnitType.fromJson(e)).toList(),
     );
   }
 }
@@ -68,7 +67,7 @@ class UnitType {
   }
 }
 
-class SecondBusinessCategoryProvider extends ChangeNotifier {
+class SecondBusinessCategoryProvider with ChangeNotifier {
   final _dioService = DioService();
   List<BusinessCategory> _categories = [];
   Subcategory? _selectedSubcategory;
@@ -97,13 +96,13 @@ class SecondBusinessCategoryProvider extends ChangeNotifier {
       LogService.logDebug('categories: $_categories');
       notifyListeners();
     } on DioException catch (e) {
-      _error = e.message ?? 'An error occurred while loading business categories';
+      _error =
+          e.message ?? 'An error occurred while loading business categories';
     } finally {
       _isLoading = false;
       notifyListeners();
     }
   }
-
 
   Future<void> fetchBrandCategories() async {
     _isLoading = true;
@@ -114,6 +113,8 @@ class SecondBusinessCategoryProvider extends ChangeNotifier {
       final response = await _dioService.dio.get(
         '${LarosaLinks.baseurl}/api/v1/business-categories/brand',
       );
+
+      LogService.logFatal('my categories: ${response.data}');
 
       _categories = (response.data as List)
           .map((json) => BusinessCategory.fromJson(json))
@@ -129,7 +130,19 @@ class SecondBusinessCategoryProvider extends ChangeNotifier {
     }
   }
 
-  void selectSubcategory(Subcategory subcategory) {
+
+  // static version of fetch brand categories
+  static Future<List<BusinessCategory>> fetchMyBrandCategories() async {
+    final response = await DioService().dio.get(
+      '${LarosaLinks.baseurl}/api/v1/business-categories/brand',
+    );
+
+    return (response.data as List)
+        .map((json) => BusinessCategory.fromJson(json))
+        .toList();
+  }
+
+  void selectSubcategory(Subcategory? subcategory) {
     _selectedSubcategory = subcategory;
     notifyListeners();
   }

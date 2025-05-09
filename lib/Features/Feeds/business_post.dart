@@ -10,7 +10,10 @@ import 'package:iconsax/iconsax.dart';
 import 'package:ionicons/ionicons.dart';
 import 'package:larosa_block/Features/Feeds/Controllers/content_controller.dart';
 import 'package:larosa_block/Features/Feeds/Controllers/second_business_category_provider.dart';
+import 'package:larosa_block/Services/dio_service.dart';
+import 'package:larosa_block/Types/reservation_types.dart';
 import 'package:larosa_block/Utils/colors.dart';
+import 'package:larosa_block/Utils/links.dart';
 import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:video_player/video_player.dart';
@@ -18,7 +21,8 @@ import 'package:http/http.dart' as http;
 import '../../Services/auth_service.dart';
 import '../../Services/log_service.dart';
 import '../../Utils/helpers.dart';
-//import 'Controllers/business_post_controller.dart';
+import 'Controllers/business_post_controller.dart';
+import 'widgets/business_post_shimmer.dart';
 
 class BusinessPostScreen extends StatefulWidget {
   const BusinessPostScreen({super.key});
@@ -35,9 +39,11 @@ class _BusinessPostScreenState extends State<BusinessPostScreen>
   final TextEditingController _discountController = TextEditingController();
   final TextEditingController _adultsController = TextEditingController();
   final TextEditingController _childrenController = TextEditingController();
+  final TextEditingController _quantityController = TextEditingController();
 
   bool _breakfastIncluded = false;
   int? _selectedReservationTypeId;
+  bool _pageReady = false;
 
   final _businessFormKey = GlobalKey<FormState>();
   final _personalFormKey = GlobalKey<FormState>();
@@ -54,21 +60,56 @@ class _BusinessPostScreenState extends State<BusinessPostScreen>
 
   List<Map<String, dynamic>> reservationTypesList = [];
   bool isLoading = false;
+  List<dynamic> _reservationCategories = [];
+  List<BusinessCategory> _myBusinessCategories = [];
+  List<Subcategory> mySubcategories = [];
+  List<dynamic> _myBusinessCategoriesIds = [];
+
+  bool hasReservationCategories = false;
+
+  List<ReservationFacility> _reservationFacilities = [];
+  final List<ReservationFacility> _selectedFacilities = [];
+  final TextEditingController _facilityFilterController = TextEditingController();
+  String _facilityFilterText = '';
+
+  void _asyncInit() async {
+    _isBusinessAccount = AuthService.isBusinessAccount();
+    await _loadReservationTypes();
+    _reservationCategories =
+        (await BusinessCategoryProvider.fetchReservationCategoriesIds())
+            .map<int>((id) => id as int)
+            .toList();
+
+    _myBusinessCategories =
+        await SecondBusinessCategoryProvider.fetchMyBrandCategories();
+    mySubcategories = _myBusinessCategories
+        .expand((category) => category.subcategories)
+        .toList();
+    _myBusinessCategoriesIds =
+        _myBusinessCategories.map((category) => category.id).toList();
+
+    _tabController = TabController(
+      length: _isBusinessAccount ? (hasReservationCategories ? 3 : 2) : 1,
+      vsync: this,
+    );
+
+    setState(() {
+      hasReservationCategories = _myBusinessCategoriesIds
+          .any((id) => _reservationCategories.contains(id));
+      _pageReady = true;
+    });
+
+    await _loadReservationFacilities();
+  }
 
   @override
   void initState() {
     super.initState();
-
-    _loadReservationTypes();
-    _isBusinessAccount = AuthService.isBusinessAccount();
-    _tabController = TabController(
-      length: _isBusinessAccount ? 2 : 1,
-      vsync: this,
-    );
     WidgetsBinding.instance.addPostFrameCallback((_) {
       Provider.of<SecondBusinessCategoryProvider>(context, listen: false)
           .fetchBrandCategories();
     });
+    _asyncInit();
   }
 
   final List<Map<String, dynamic>> _mediaControllers = [];
@@ -119,8 +160,8 @@ class _BusinessPostScreenState extends State<BusinessPostScreen>
                   if (videoDuration.inMinutes > 5) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
-                        content: Text(
-                            'Video duration should not exceed 5 minutes'),
+                        content:
+                            Text('Video duration should not exceed 5 minutes'),
                       ),
                     );
                     return;
@@ -162,8 +203,7 @@ class _BusinessPostScreenState extends State<BusinessPostScreen>
       isLoading = true;
     });
 
-    const String url =
-        'https://burnished-core-439210-f6.uc.r.appspot.com/api/v1/reservation-types';
+    const String url = '${LarosaLinks.baseurl}/api/v1/reservation-types';
 
     try {
       final response = await http.get(
@@ -182,6 +222,10 @@ class _BusinessPostScreenState extends State<BusinessPostScreen>
               .map((type) => type as Map<String, dynamic>)
               .toList();
         });
+
+        LogService.logFatal('Reservation types loaded successfully');
+        LogService.logFatal(
+            'Reservation types: ${reservationTypesList.length}');
       } else {
         LogService.logError(
           'Failed to fetch reservation types: ${response.statusCode}',
@@ -194,6 +238,128 @@ class _BusinessPostScreenState extends State<BusinessPostScreen>
         isLoading = false;
       });
     }
+  }
+
+  Future<void> _loadReservationFacilities() async {
+    const String url =
+        'https://burnished-core-439210-f6.uc.r.appspot.com/api/v1/reservation-facilities';
+    try {
+      var response = await DioService().dio.get(url);
+
+      if (response.statusCode == 200) {
+        LogService.logFatal('Reservation facilities loaded successfully');
+        print(response.data);
+        setState(() {
+          _reservationFacilities = (response.data as List<dynamic>)
+              .map((item) =>
+                  ReservationFacility.fromJson(item as Map<dynamic, dynamic>))
+              .toList();
+        });
+      } else {
+        LogService.logError(
+          'Failed to fetch reservation facilities ${response.statusCode}',
+        );
+      }
+    } catch (e) {
+      LogService.logError('Error loading reservation facilities: $e');
+    }
+  }
+
+  Widget _buildFacilitySearchField() {
+    return TextField(
+      controller: _facilityFilterController,
+      decoration: InputDecoration(
+        labelText: "Search Facilities",
+        labelStyle: const TextStyle(color: LarosaColors.mediumGray),
+        border: const OutlineInputBorder(
+          borderRadius: BorderRadius.all(Radius.circular(12)),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: LarosaColors.secondary, width: 2),
+        ),
+        hintText: 'Type to search facilities...',
+        suffixIcon: _facilityFilterText.isNotEmpty
+            ? IconButton(
+                icon: const Icon(Icons.clear),
+                onPressed: () {
+                  _facilityFilterController.clear();
+                  setState(() => _facilityFilterText = '');
+                },
+              )
+            : null,
+      ),
+      onChanged: (value) => setState(() => _facilityFilterText = value),
+    );
+  }
+
+  Widget _buildSelectedFacilitiesChips() {
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: _selectedFacilities
+          .map((facility) => Chip(
+                label: Text(facility.name),
+                deleteIcon: const Icon(Icons.close, size: 18),
+                onDeleted: () =>
+                    setState(() => _selectedFacilities.remove(facility)),
+              ))
+          .toList(),
+    );
+  }
+
+  Widget _buildFacilitiesList(List<ReservationFacility> filteredFacilities) {
+    if (filteredFacilities.isEmpty || _facilityFilterText.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    return Container(
+      constraints: const BoxConstraints(maxHeight: 200),
+      decoration: BoxDecoration(
+        border: Border.all(color: Colors.grey.shade300),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: ListView.builder(
+        shrinkWrap: true,
+        itemCount: filteredFacilities.length,
+        itemBuilder: (context, index) {
+          final facility = filteredFacilities[index];
+          return ListTile(
+            title: Text(facility.name),
+            subtitle: facility.category != null
+                ? Text(facility.category!.name)
+                : null,
+            onTap: () => setState(() {
+              _selectedFacilities.add(facility);
+              _facilityFilterController.clear();
+              _facilityFilterText = '';
+            }),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildReservationFacilities() {
+    final filteredFacilities = _reservationFacilities
+        .where((facility) =>
+            !_selectedFacilities.contains(facility) &&
+            facility.name
+                .toLowerCase()
+                .contains(_facilityFilterText.toLowerCase()))
+        .toList();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildSelectedFacilitiesChips(),
+        const SizedBox(height: 8),
+        _buildFacilitiesList(filteredFacilities),
+        const SizedBox(height: 8),
+        _buildFacilitySearchField(),
+        
+      ],
+    );
   }
 
   @override
@@ -267,7 +433,7 @@ class _BusinessPostScreenState extends State<BusinessPostScreen>
         .addToNewContentMediaStrings(imageFile.path);
   }
 
-  Widget _buildTabContent(bool isBusinessPost) {
+  Widget _buildTabContent(bool isBusinessPost, bool hasReservationCategories) {
     return Consumer<ContentController>(
       builder: (context, contentController, child) {
         return SingleChildScrollView(
@@ -284,29 +450,92 @@ class _BusinessPostScreenState extends State<BusinessPostScreen>
                   const Gap(5),
                   _buildMediaList(contentController),
                   if (isBusinessPost && _isBusinessAccount) ...[
-                    // const Gap(20),
-                    // _buildCategorySelector(),
-                    // const Gap(5),
-                    _buildUnitSelector(),
-                    const Gap(10),
-                    _buildReservationTypeSelector(),
-                    const Gap(10),
-                    _buildPriceInputField(),
-                    const Gap(10),
-                    _buildDiscountInputField(),
-                    const Gap(10),
-                    _buildAdultsInputField(),
-                    const Gap(10),
-                    _buildChildrenInputField(),
-                    const Gap(10),
-                    _buildBreakfastToggle(),
-                    const Gap(10),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 8.0),
+                      child: _buildUnitSelector(),
+                    ),
+                    if(!hasReservationCategories)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 8.0),
+                      child: _buildSizeInputField(),
+                    ),
+                    if(!hasReservationCategories)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 8.0),
+                      child: _buildWeightInputField(),
+                    ),
+                    
+                    if (hasReservationCategories)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 8.0),
+                        child: _buildReservationTypeSelector(),
+                      ),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 8.0),
+                      child: _buildPriceInputField(),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 8.0),
+                      child: _buildQuantityField(),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 8.0),
+                      child: _buildDiscountInputField(),
+                    ),
+                    if (hasReservationCategories)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 8.0),
+                        child: _buildAdultsInputField(),
+                      ),
+                    if (hasReservationCategories)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 8.0),
+                        child: _buildChildrenInputField(),
+                      ),
+                    if (hasReservationCategories)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 8.0),
+                        child: _buildBreakfastToggle(),
+                      ),
+                    
+
+                      if (hasReservationCategories)
+                        Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 8.0),
+                          child: _buildParkingToggle(),
+                        ),
+
+                        if(hasReservationCategories)
+                        Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 8.0),
+                          child: _buildGymToggle(),
+                        ),
+                        // pools
+                        //   
+                      if (hasReservationCategories)
+                        Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 8.0),
+                          child: _buildPoolToggle(),
+                        ),
+                        // wifi
+                        if (hasReservationCategories)
+                        Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 8.0),
+                          child: _buildWifiToggle(),
+                        ),
+
+                        if (hasReservationCategories)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 8.0),
+                        child: _buildReservationFacilities(),
+                      ),
                   ],
                   if (!isBusinessPost) Gap(10),
                   _buildConditionalGap(isBusinessPost),
                   _buildCaptionInputField(isBusinessPost),
                   const Gap(15),
-                  _buildGradientPostButton(contentController, isBusinessPost),
+                  _buildGradientPostButton(contentController, isBusinessPost,
+                      hasReservationCategories),
                 ],
               ),
             ),
@@ -318,6 +547,73 @@ class _BusinessPostScreenState extends State<BusinessPostScreen>
 
   Widget _buildConditionalGap(bool isBusinessPost) {
     return isBusinessPost ? const SizedBox.shrink() : const Gap(15);
+  }
+
+
+  // size input
+  final TextEditingController _sizeController = TextEditingController();
+  Widget _buildSizeInputField() {
+    return TextFormField(
+      keyboardType: TextInputType.number,
+      controller: _sizeController,
+      decoration: InputDecoration(
+        border: const OutlineInputBorder(
+          borderRadius: BorderRadius.all(Radius.circular(12)),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: LarosaColors.secondary, width: 3),
+        ),
+        labelText: 'Size',
+        labelStyle: TextStyle(color: LarosaColors.mediumGray.withValues(alpha: 0.8)),
+      ),
+      maxLines: 1,
+      style: const TextStyle(color: LarosaColors.primary),
+    );
+  }
+
+  // weight input
+  final TextEditingController _weightController = TextEditingController();
+  Widget _buildWeightInputField() {
+    return TextFormField(
+      keyboardType: TextInputType.number,
+      controller: _weightController,
+      decoration: InputDecoration(
+        border: const OutlineInputBorder(
+          borderRadius: BorderRadius.all(Radius.circular(12)),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: LarosaColors.secondary, width: 3),
+        ),
+        labelText: 'Weight',
+        labelStyle: TextStyle(color: LarosaColors.mediumGray.withValues(alpha: 0.8)),
+      ),
+      maxLines: 1,
+      style: const TextStyle(color: LarosaColors.primary),
+    );
+  }
+
+  // aspect ratio input
+  final TextEditingController _aspectRatioController = TextEditingController();
+  Widget _buildAspectRatioInputField() {
+    return TextFormField(
+      keyboardType: TextInputType.number,
+      controller: _aspectRatioController,
+      decoration: InputDecoration(
+        border: const OutlineInputBorder(
+          borderRadius: BorderRadius.all(Radius.circular(12)),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: LarosaColors.secondary, width: 3),
+        ),
+        labelText: 'Aspect Ratio',
+        labelStyle: TextStyle(color: LarosaColors.mediumGray.withValues(alpha: 0.8)),
+      ),
+      maxLines: 1,
+      style: const TextStyle(color: LarosaColors.primary),
+    );
   }
 
   Widget _buildUnitSelector() {
@@ -332,12 +628,64 @@ class _BusinessPostScreenState extends State<BusinessPostScreen>
         }
 
         final categories = secondBusinessCategoryProvider.categories;
+
         if (categories.isEmpty) {
           return Text('No categories');
         }
 
+        LogService.logDebug(
+          'User Category ids: ${categories.map((c) => c.id)}',
+        );
+        _myBusinessCategoriesIds = categories.map((c) => c.id).toList();
+
         final allSubcategories =
             categories.expand((category) => category.subcategories).toList();
+
+        // Create a map of subcategories by ID to check for duplicates
+        final subcategoriesById = <int, List<Subcategory>>{};
+        for (var sub in allSubcategories) {
+          subcategoriesById.putIfAbsent(sub.id, () => []).add(sub);
+        }
+
+        // Log any duplicates found
+        subcategoriesById.forEach((id, subs) {
+          if (subs.length > 1) {
+            LogService.logWarning(
+              'Found duplicate subcategory ID $id: ${subs.map((s) => s.name).join(', ')}',
+            );
+          }
+        });
+
+        // If there's a selected value that doesn't exist in the items, reset it
+        if (secondBusinessCategoryProvider.selectedSubcategory != null &&
+            !allSubcategories.any((sub) =>
+                sub.id ==
+                secondBusinessCategoryProvider.selectedSubcategory!.id)) {
+          secondBusinessCategoryProvider.selectSubcategory(null);
+        }
+
+        // Create unique items for the dropdown
+        final dropdownItems = allSubcategories
+            .asMap()
+            .entries
+            .map<DropdownMenuItem<int>>((entry) {
+          final subcategory = entry.value;
+          final hasDuplicate = subcategoriesById[subcategory.id]!.length > 1;
+
+          // If there are duplicates, include the category name for clarity
+          final categoryName = categories
+              .firstWhere((cat) => cat.subcategories.contains(subcategory))
+              .name;
+
+          return DropdownMenuItem<int>(
+            value: subcategory.id,
+            child: Text(hasDuplicate
+                ? '${subcategory.name} ($categoryName)'
+                : subcategory.name),
+          );
+        }).toList();
+
+        // log unit ids from subcategories
 
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -360,12 +708,7 @@ class _BusinessPostScreenState extends State<BusinessPostScreen>
                 ),
               ),
               value: secondBusinessCategoryProvider.selectedSubcategory?.id,
-              items: allSubcategories.map<DropdownMenuItem<int>>((subcategory) {
-                return DropdownMenuItem<int>(
-                  value: subcategory.id,
-                  child: Text(subcategory.name),
-                );
-              }).toList(),
+              items: dropdownItems,
               onChanged: (value) {
                 if (value != null) {
                   final selectedSubcategory =
@@ -452,9 +795,8 @@ class _BusinessPostScreenState extends State<BusinessPostScreen>
           decoration: InputDecoration(
             labelText: "Reservation Type",
             labelStyle: const TextStyle(color: LarosaColors.mediumGray),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(color: Colors.grey, width: 1),
+            border: const OutlineInputBorder(
+              borderRadius: BorderRadius.all(Radius.circular(12)),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
@@ -686,6 +1028,7 @@ class _BusinessPostScreenState extends State<BusinessPostScreen>
     return TextFormField(
       controller: _adultsController,
       decoration: InputDecoration(
+        labelText: 'Adults',
         border: const OutlineInputBorder(
           borderRadius: BorderRadius.all(Radius.circular(12)),
         ),
@@ -699,8 +1042,9 @@ class _BusinessPostScreenState extends State<BusinessPostScreen>
       ),
       keyboardType: TextInputType.number,
       validator: (value) {
-        if (value == null || value.isEmpty)
+        if (value == null || value.isEmpty) {
           return "Number of adults is required";
+        }
         final adults = int.tryParse(value);
         return (adults == null || adults < 0)
             ? "Enter a valid number of adults"
@@ -716,6 +1060,7 @@ class _BusinessPostScreenState extends State<BusinessPostScreen>
     return TextFormField(
       controller: _childrenController,
       decoration: InputDecoration(
+        labelText: 'Children',
         border: const OutlineInputBorder(
           borderRadius: BorderRadius.all(Radius.circular(12)),
         ),
@@ -729,8 +1074,9 @@ class _BusinessPostScreenState extends State<BusinessPostScreen>
       ),
       keyboardType: TextInputType.number,
       validator: (value) {
-        if (value == null || value.isEmpty)
+        if (value == null || value.isEmpty) {
           return "Number of children is required";
+        }
         final children = int.tryParse(value);
         return (children == null || children < 0)
             ? "Enter a valid number of children"
@@ -779,6 +1125,40 @@ class _BusinessPostScreenState extends State<BusinessPostScreen>
     );
   }
 
+  Widget _buildQuantityField() {
+    return TextFormField(
+      controller: _quantityController,
+      decoration: InputDecoration(
+        labelText: 'Quantity',
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: LarosaColors.secondary, width: 3),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: LarosaColors.secondary, width: 3),
+        ),
+        hintText: 'Enter Quantity',
+        hintStyle: TextStyle(color: LarosaColors.mediumGray.withOpacity(0.8)),
+      ),
+      keyboardType: TextInputType.number,
+      style: const TextStyle(
+        color: LarosaColors.primary,
+        fontSize: 16,
+      ),
+      validator: (value) {
+        if (value == null || value.isEmpty) {
+          return "Quantity is required.";
+        }
+        final parsedQuantity = int.tryParse(value);
+        if (parsedQuantity == null || parsedQuantity <= 0) {
+          return "Please enter a valid quantity.";
+        }
+        return null;
+      },
+    );
+  }
+
   Widget _buildBreakfastToggle() {
     if (AuthService.isReservation() == false) {
       return SizedBox.shrink();
@@ -796,13 +1176,140 @@ class _BusinessPostScreenState extends State<BusinessPostScreen>
         ),
         Switch(
           value: _breakfastIncluded,
-          activeColor: LarosaColors.mediumGray,
-          activeTrackColor: LarosaColors.mediumGray.withOpacity(0.5),
+          activeColor: CupertinoColors.activeGreen,
+          activeTrackColor: CupertinoColors.activeGreen.withValues(alpha: 0.5),
           inactiveThumbColor: LarosaColors.mediumGray,
-          inactiveTrackColor: LarosaColors.mediumGray.withOpacity(0.3),
+          inactiveTrackColor: LarosaColors.mediumGray.withValues(alpha: 0.3),
           onChanged: (value) {
             setState(() {
               _breakfastIncluded = value;
+            });
+          },
+        ),
+      ],
+    );
+  }
+
+
+  bool _wifiIncluded = false;
+  Widget _buildWifiToggle(){
+    if (AuthService.isReservation() == false) {
+      return SizedBox.shrink();
+    }
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        const Text(
+          "Wifi Included?",
+          style: TextStyle(
+            color: LarosaColors.mediumGray,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        Switch(
+          value: _wifiIncluded,
+          activeColor: CupertinoColors.activeGreen,
+          activeTrackColor: CupertinoColors.activeGreen.withValues(alpha: 0.5),
+          inactiveThumbColor: LarosaColors.mediumGray,
+          inactiveTrackColor: LarosaColors.mediumGray.withValues(alpha: 0.3),
+          onChanged: (value) {
+            setState(() {
+              _wifiIncluded = value;
+            });
+          },
+        ),
+      ],
+    );
+  }
+
+  bool _gymIncluded = false;
+  Widget _buildGymToggle(){
+    if (AuthService.isReservation() == false) {
+      return SizedBox.shrink();
+    }
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        const Text(
+          "Gym Included?",
+          style: TextStyle(
+            color: LarosaColors.mediumGray,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        Switch(
+          value: _gymIncluded,
+          activeColor: CupertinoColors.activeBlue,
+          activeTrackColor: CupertinoColors.activeGreen.withValues(alpha: 0.5),
+          inactiveThumbColor: LarosaColors.mediumGray,
+          inactiveTrackColor: LarosaColors.mediumGray.withValues(alpha: 0.3),
+          onChanged: (value) {
+            setState(() {
+              _gymIncluded = value;
+            });
+          },
+        ),
+      ],
+    );
+  }
+
+
+  bool _poolIncluded = false;
+  Widget _buildPoolToggle(){
+    if (AuthService.isReservation() == false) {
+      return SizedBox.shrink();
+    }
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        const Text(
+          "Swimming Pool Included?",
+          style: TextStyle(
+            color: LarosaColors.mediumGray,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        Switch(
+          value: _poolIncluded,
+          activeColor: CupertinoColors.activeGreen,
+          activeTrackColor: CupertinoColors.activeGreen.withValues(alpha: 0.5),
+          inactiveThumbColor: LarosaColors.mediumGray,
+          inactiveTrackColor: LarosaColors.mediumGray.withValues(alpha: 0.3),
+          onChanged: (value) {
+            setState(() {
+              _poolIncluded = value;
+            });
+          },
+        ),
+      ],
+    );
+  }
+
+
+  bool _parkingIncluded = false;
+  Widget _buildParkingToggle(){
+    if (AuthService.isReservation() == false) {
+      return SizedBox.shrink();
+    }
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        const Text(
+          "Parking Included?",
+          style: TextStyle(
+            color: LarosaColors.mediumGray,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        Switch(
+          value: _parkingIncluded,
+          activeColor: CupertinoColors.systemGreen,
+          activeTrackColor: CupertinoColors.systemGreen.withValues(alpha: 0.5),
+          inactiveThumbColor: CupertinoColors.systemGrey,
+          inactiveTrackColor: CupertinoColors.systemGrey.withValues(alpha: 0.3),
+          onChanged: (value) {
+            setState(() {
+              _parkingIncluded = value;
             });
           },
         ),
@@ -831,8 +1338,8 @@ class _BusinessPostScreenState extends State<BusinessPostScreen>
     );
   }
 
-  Widget _buildGradientPostButton(
-      ContentController contentController, bool isBusinessPost) {
+  Widget _buildGradientPostButton(ContentController contentController,
+      bool isBusinessPost, bool isReservation) {
     return SizedBox(
       width: double.infinity,
       child: GestureDetector(
@@ -842,7 +1349,10 @@ class _BusinessPostScreenState extends State<BusinessPostScreen>
             if (contentController.newContentMediaStrings.isEmpty) {
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
-                    content: Text('Please add media for your post.')),
+                  content: Text(
+                    'Please add media for your post.',
+                  ),
+                ),
               );
               return;
             }
@@ -858,17 +1368,43 @@ class _BusinessPostScreenState extends State<BusinessPostScreen>
             bool success = false;
 
             try {
-              if (isBusinessPost) {
+              if (isBusinessPost && !isReservation) {
                 success = await contentController.postBusiness(
                   _captionController.text,
-                  double.tryParse(_priceController.text.replaceAll(',', '')) ?? 0,
+                  double.tryParse(
+                        _priceController.text.replaceAll(',', ''),
+                      ) ??
+                      0,
                   maxHeight,
                   unitId!,
+                );
+              } else if (isBusinessPost && isReservation) {
+                success = await contentController.postReservation(
+                  ReservatioPost(
+                    caption: _captionController.text,
+                    price: double.tryParse(
+                          _priceController.text.replaceAll(',', ''),
+                        ) ??
+                        0,
+                    height: maxHeight,
+                    unitId: unitId!,
+                    reservationTypeId: _selectedReservationTypeId!,
+                    adultsCount: int.tryParse(_adultsController.text) ?? 0,
+                    childrenCount: int.tryParse(_childrenController.text) ?? 0,
+                    breakfastIncluded: _breakfastIncluded,
+                    quantity: int.tryParse(_quantityController.text) ?? 0,
+                    swingPool: _poolIncluded,
+                    parking: _parkingIncluded,
+                    wifi: _wifiIncluded,
+                    gym: _gymIncluded,
+                    cctv: false,
+                  ),
                 );
               } else {
                 success = await contentController.uploadPost(
                   _captionController.text,
-                  double.tryParse(_priceController.text.replaceAll(',', '')) ?? 0,
+                  double.tryParse(_priceController.text.replaceAll(',', '')) ??
+                      0,
                 );
               }
 
@@ -928,60 +1464,72 @@ class _BusinessPostScreenState extends State<BusinessPostScreen>
     return DefaultTabController(
       length: _isBusinessAccount ? 2 : 1,
       child: Scaffold(
-        body: CustomScrollView(
-          slivers: [
-            SliverAppBar(
-              backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-              title: Text(
-                "Create Post",
-                style: Theme.of(context).textTheme.titleLarge,
+        body: !_pageReady
+            ? const BusinessPostShimmer()
+            : CustomScrollView(
+                slivers: [
+                  SliverAppBar(
+                    backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+                    title: Text(
+                      "Create Post",
+                      style: Theme.of(context).textTheme.titleLarge,
+                    ),
+                    centerTitle: true,
+                    floating: true,
+                    pinned: true,
+                    leading: IconButton(
+                      icon: const Icon(CupertinoIcons.back),
+                      color: LarosaColors.mediumGray,
+                      onPressed: () {
+                        context.pop();
+                      },
+                    ),
+                    bottom: TabBar(
+                      controller: _tabController,
+                      tabs: _isBusinessAccount
+                          ? [
+                              Tab(
+                                icon: Icon(Ionicons.briefcase_outline),
+                                text: "Business",
+                              ),
+                              if (hasReservationCategories)
+                                Tab(
+                                  icon: Icon(CupertinoIcons.bed_double),
+                                  text: "Reservation",
+                                ),
+                              Tab(
+                                icon: Icon(Ionicons.person_outline),
+                                text: "Personal",
+                              ),
+                            ]
+                          : [
+                              Tab(
+                                icon: Icon(Ionicons.person_outline),
+                                text: "Personal",
+                              ),
+                            ],
+                      labelColor: LarosaColors.primary,
+                      unselectedLabelColor: Colors.purple.withOpacity(0.8),
+                      indicatorColor: LarosaColors.primary,
+                    ),
+                  ),
+                  SliverFillRemaining(
+                    child: TabBarView(
+                      controller: _tabController,
+                      children: _isBusinessAccount
+                          ? [
+                              _buildTabContent(true, false),
+                              if (hasReservationCategories)
+                                _buildTabContent(true, true),
+                              _buildTabContent(false, false),
+                            ]
+                          : [
+                              _buildTabContent(false, false),
+                            ],
+                    ),
+                  ),
+                ],
               ),
-              centerTitle: true,
-              floating: true,
-              pinned: true,
-              leading: IconButton(
-                icon: const Icon(CupertinoIcons.back),
-                color: LarosaColors.mediumGray,
-                onPressed: () {
-                  context.pop();
-                },
-              ),
-              bottom: TabBar(
-                controller: _tabController,
-                tabs: _isBusinessAccount
-                    ? const [
-                        Tab(
-                            icon: Icon(Ionicons.briefcase_outline),
-                            text: "Business"),
-                        Tab(
-                            icon: Icon(Ionicons.person_outline),
-                            text: "Personal"),
-                      ]
-                    : const [
-                        Tab(
-                            icon: Icon(Ionicons.person_outline),
-                            text: "Personal"),
-                      ],
-                labelColor: LarosaColors.primary,
-                unselectedLabelColor: Colors.purple.withOpacity(0.8),
-                indicatorColor: LarosaColors.primary,
-              ),
-            ),
-            SliverFillRemaining(
-              child: TabBarView(
-                controller: _tabController,
-                children: _isBusinessAccount
-                    ? [
-                        _buildTabContent(true),
-                        _buildTabContent(false),
-                      ]
-                    : [
-                        _buildTabContent(false),
-                      ],
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }

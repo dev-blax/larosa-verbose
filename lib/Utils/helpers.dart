@@ -6,6 +6,7 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hive/hive.dart';
 import 'package:intl/intl.dart';
+import 'package:larosa_block/Services/encryption_service.dart';
 import 'package:larosa_block/Services/oath_service.dart';
 import 'package:logger/logger.dart';
 import 'package:mime/mime.dart';
@@ -162,6 +163,10 @@ class HelperFunctions {
 
     // final GoogleAuthService googleAuthService = GoogleAuthService();
     // await googleAuthService.signOut();
+
+    // delete all encrypted data
+    final encryptionService = EncryptionService();
+    await encryptionService.deleteAllEncryptedData();
 
     // Navigate to login
     if (context.mounted) {

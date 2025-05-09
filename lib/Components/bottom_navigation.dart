@@ -4,6 +4,7 @@ import 'package:flutter/rendering.dart';
 import 'package:go_router/go_router.dart';
 import 'package:larosa_block/Services/auth_service.dart';
 import '../Utils/colors.dart';
+import 'dart:ui';
 
 enum ActivePage {
   feeds,
@@ -56,82 +57,86 @@ class _BottomNavigationState extends State<BottomNavigation> {
 
   @override
   Widget build(BuildContext context) {
+    final brightness = Theme.of(context).brightness;
     return ClipRect(
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 500),
         curve: Curves.easeInOut,
         height: _isVisible ? 60 : 0,
-        child: Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [
-                LarosaColors.primary.withOpacity(.3),
-                LarosaColors.purple.withOpacity(.3),
-              ],
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-            ),
-            borderRadius: const BorderRadius.only(
-              topLeft: Radius.circular(20), // Top left corner curve
-              topRight: Radius.circular(20), // Top right corner curve
-              bottomLeft: Radius.circular(50), // Bottom left corner curve
-              bottomRight: Radius.circular(50), // Bottom right corner curve
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.1),
-                blurRadius: 8,
-                offset: const Offset(0, -2),
+        child: ClipRRect(
+          borderRadius: const BorderRadius.all(Radius.circular(50)),
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+            child: Container(
+              decoration: BoxDecoration(
+                color: brightness == Brightness.light
+                    ? Colors.white.withValues(alpha: .1)
+                    : Colors.black.withValues(alpha: .1),
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(50),
+                  topRight: Radius.circular(50),
+                  bottomLeft: Radius.circular(50),
+                  bottomRight: Radius.circular(50),
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: brightness == Brightness.light
+                        ? Colors.black.withValues(alpha: .3)
+                        : Colors.white.withValues(alpha: .3),
+                    blurRadius: 8,
+                    offset: const Offset(0, -2),
+                  ),
+                ],
               ),
-            ],
-          ),
-          padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
-          child: SingleChildScrollView(
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                _buildNavItem(
-                  context,
-                  icon: Icons.home_outlined,
-                  label: 'Home',
-                  isActive: widget.activePage == ActivePage.feeds,
-                  onTap: () => context.goNamed('home'),
+              padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+              child: SingleChildScrollView(
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: [
+                    _buildNavItem(
+                      context,
+                      icon: Icons.home_outlined,
+                      label: 'Home',
+                      isActive: widget.activePage == ActivePage.feeds,
+                      onTap: () => context.goNamed('home'),
+                    ),
+                    _buildNavItem(
+                      context,
+                      icon: Icons.search_outlined,
+                      label: 'Search',
+                      isActive: widget.activePage == ActivePage.search,
+                      onTap: () => context.push('/search'),
+                    ),
+                    _buildFloatingActionButton(context),
+                    _buildNavItem(
+                      context,
+                      icon: Icons.local_shipping_outlined,
+                      label: 'Delivery',
+                      isActive: widget.activePage == ActivePage.delivery,
+                      onTap: () {
+                        if (AuthService.getToken().isEmpty) {
+                          context.pushNamed('login');
+                          return;
+                        }
+                        context.pushNamed('maindelivery');
+                      },
+                    ),
+                    _buildNavItem(
+                      context,
+                      icon: Icons.person_outline,
+                      label: 'Profile',
+                      isActive: widget.activePage == ActivePage.account,
+                      onTap: () {
+                        if (AuthService.getToken().isNotEmpty) {
+                          context.pushNamed('homeprofile');
+                        } else {
+                          context.pushNamed('login');
+                        }
+                      },
+                    ),
+                  ],
                 ),
-                _buildNavItem(
-                  context,
-                  icon: Icons.search_outlined,
-                  label: 'Search',
-                  isActive: widget.activePage == ActivePage.search,
-                  onTap: () => context.push('/search'),
-                ),
-                _buildFloatingActionButton(context),
-                _buildNavItem(
-                  context,
-                  icon: Icons.local_shipping_outlined,
-                  label: 'Delivery',
-                  isActive: widget.activePage == ActivePage.delivery,
-                  onTap: () {
-                    if (AuthService.getToken().isEmpty) {
-                      context.pushNamed('login');
-                      return;
-                    }
-                    context.pushNamed('maindelivery');
-                  },
-                ),
-                _buildNavItem(
-                  context,
-                  icon: Icons.person_outline,
-                  label: 'Profile',
-                  isActive: widget.activePage == ActivePage.account,
-                  onTap: () {
-                    if (AuthService.getToken().isNotEmpty) {
-                      context.pushNamed('homeprofile');
-                    } else {
-                      context.pushNamed('login');
-                    }
-                  },
-                ),
-              ],
+              ),
             ),
           ),
         ),

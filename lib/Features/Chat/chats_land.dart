@@ -10,6 +10,8 @@ import 'package:hive/hive.dart';
 import 'package:http/http.dart' as http;
 import 'package:iconsax/iconsax.dart';
 import 'package:larosa_block/Services/auth_service.dart';
+import 'package:larosa_block/Services/encryption_service.dart';
+import 'package:larosa_block/Services/log_service.dart';
 import 'package:larosa_block/Utils/colors.dart';
 import 'package:larosa_block/Utils/helpers.dart';
 import 'package:larosa_block/Utils/links.dart';
@@ -34,7 +36,7 @@ class _ChatsLandState extends State<ChatsLand> {
     });
   }
 
-  Future<void> _fetchChats({int retryCount = 3}) async {
+  Future<void> _fetchChats({int retryCount = 1}) async {
     var box = Hive.box('userBox');
     final profileId = box.get('profileId');
 
@@ -44,11 +46,12 @@ class _ChatsLandState extends State<ChatsLand> {
       return;
     }
 
-    List<dynamic>? localChats = box.get('chatList');
+    final localChats = box.get('chatList');
     if (localChats != null) {
       setState(() {
         isLoadingChats = false;
         chatList = localChats;
+
         chatList.sort((a, b) {
           int durationA = a['lastMessage']['duration'];
           int durationB = b['lastMessage']['duration'];
@@ -74,6 +77,32 @@ class _ChatsLandState extends State<ChatsLand> {
 
       if (response.statusCode == 200) {
         List<dynamic> data = json.decode(response.body);
+        LogService.logTrace('Chats fetched successfully: ${data[0]}');
+        
+        // Decrypt last messages
+        final encryptionService = EncryptionService();
+        for (var chat in data) {
+          final symmetricKey = chat['lastMessage']['symmetricKey'];
+          LogService.logDebug('chat:  $chat');
+          LogService.logTrace('symmetric key: $symmetricKey');
+          if (symmetricKey != null && symmetricKey.isNotEmpty) {
+            try {
+              final content = chat['lastMessage']['content'];
+              if (content != null && content.isNotEmpty) {
+                // Convert base64 key to Uint8List
+                final keyBytes = base64Decode(symmetricKey);
+                // Decrypt the content
+                final decryptedContent = await encryptionService.decrypt(content, keyBytes);
+                chat['lastMessage']['content'] = decryptedContent;
+                LogService.logInfo('Last message decrypted successfully');
+              }
+            } catch (e) {
+              LogService.logError('Failed to decrypt last message: $e');
+              // Keep original content if decryption fails
+            }
+          }
+        }
+
         setState(() {
           isLoadingChats = false;
           chatList = data;
@@ -83,7 +112,7 @@ class _ChatsLandState extends State<ChatsLand> {
             return durationA.compareTo(durationB);
           });
         });
-        
+
         box.put(
           'chatList',
           data,
@@ -143,9 +172,6 @@ class _ChatsLandState extends State<ChatsLand> {
                       itemBuilder: (context, index) {
                         int duration =
                             chatList[index]['lastMessage']['duration'];
-                        // LogService.logInfo(
-                        //   ' ${chatList[index]['lastMessage']['duration']}',
-                        // );
                         return Animate(
                           effects: [
                             SlideEffect(
@@ -161,7 +187,6 @@ class _ChatsLandState extends State<ChatsLand> {
                               duration: Duration(seconds: 3),
                             )
                           ],
-                          
                           child: _chat(
                             chatList[index]['username'],
                             chatList[index]['name'],
@@ -172,6 +197,7 @@ class _ChatsLandState extends State<ChatsLand> {
                             duration,
                             chatList[index]['verificationStatus'] == 'VERIFIED',
                             chatList[index]['profileId'],
+                            chatList[index],
                           ),
                         );
                       },
@@ -180,7 +206,6 @@ class _ChatsLandState extends State<ChatsLand> {
       ),
     );
   }
-
 
   @override
   void dispose() {
@@ -197,6 +222,7 @@ class _ChatsLandState extends State<ChatsLand> {
     int time,
     bool isVerified,
     int profileId,
+    dynamic profile,
   ) {
     DateTime messageTime = DateTime.now().subtract(Duration(seconds: time));
 
@@ -211,20 +237,17 @@ class _ChatsLandState extends State<ChatsLand> {
         child: Row(
           children: <Widget>[
             profileString == null
-                ? 
-                // ClipOval(
-                //     child: Image.asset(
-                //       'assets/images/EXPLORE.png',
-                //       height: 60,
-                //       width: 60,
-                //       fit: BoxFit.cover,
-                //     ),
-                //   )
-                Icon(CupertinoIcons.person_circle_fill, size: 60)
+                ? ClipOval(
+                  child: Image.asset(
+                      'assets/images/EXPLORE.png',
+                      height: 60,
+                      width: 60,
+                      fit: BoxFit.cover,
+                    ),
+                )
                 : ClipOval(
-                  child: CircleAvatar(
+                    child: CircleAvatar(
                       radius: 30,
-                      //backgroundImage: CachedNetworkImageProvider(profileString, ),
                       child: CachedNetworkImage(
                         imageUrl: profileString,
                         height: 60,
@@ -234,7 +257,7 @@ class _ChatsLandState extends State<ChatsLand> {
                             Icon(CupertinoIcons.person_circle_fill, size: 60),
                       ),
                     ),
-                ),
+                  ),
             const Gap(10),
             Expanded(
               child: Row(
@@ -259,13 +282,20 @@ class _ChatsLandState extends State<ChatsLand> {
                         ],
                       ),
                       const Gap(5),
-                      Text(
-                        lastMessage,
-                        style: Theme.of(context).textTheme.bodySmall,
+                      Container(
+                        width: MediaQuery.of(context).size.width * 0.3,
+                        child: Text(
+                          lastMessage,
+                          style: Theme.of(context).textTheme.bodySmall,
+                          // handle overflow
+                          overflow: TextOverflow.clip,
+                          maxLines: 1,
+                        ),
                       ),
                     ],
                   ),
                   Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
                       Text(
                         HelperFunctions.formatLastMessageTime(messageTime),
@@ -277,7 +307,7 @@ class _ChatsLandState extends State<ChatsLand> {
                           width: 30,
                           height: 30,
                           decoration: BoxDecoration(
-                            color: Colors.blue,
+                            color: CupertinoColors.systemBlue,
                             borderRadius: BorderRadius.circular(20),
                           ),
                           child: Center(

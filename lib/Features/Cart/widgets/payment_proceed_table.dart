@@ -64,13 +64,13 @@ class PaymentProceedTable extends StatelessWidget {
                 label: 'Delivery Location',
                 value: currentStreetName ?? 'N/A',
               ),
-              _buildInfoTile(
-                icon: Icons.timer_outlined,
-                label: 'Estimated Time',
-                value: estimatedTime.contains('min')
-                    ? formatEstimatedTime(estimatedTime)
-                    : 'Calculating...',
-              ),
+              // _buildInfoTile(
+              //   icon: Icons.timer_outlined,
+              //   label: 'Estimated Time',
+              //   value: estimatedTime.contains('min')
+              //       ? formatEstimatedTime(estimatedTime)
+              //       : 'Calculating...',
+              // ),
             ],
           ),
           const SizedBox(height: 24),

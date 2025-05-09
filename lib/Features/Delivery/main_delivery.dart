@@ -1,5 +1,5 @@
 import 'dart:convert';
-import 'dart:math';
+// import 'dart:math';
 import 'dart:ui';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:flutter/material.dart';
@@ -25,7 +25,7 @@ class _MainDeliveryScreenState extends State<MainDeliveryScreen> {
   LatLng? _destination;
   final TextEditingController _typeAheadController = TextEditingController();
   List<LatLng> _polylineCoordinates = [];
-  final double _averageSpeed = 50.0;
+  // final double _averageSpeed = 50.0;
   GoogleMapController? _mapController;
 
   double? _distance;
@@ -137,26 +137,26 @@ class _MainDeliveryScreenState extends State<MainDeliveryScreen> {
     }
   }
 
-  double _calculateDistance(LatLng start, LatLng end) {
-    const double R = 6371;
-    double lat1 = start.latitude * (pi / 180.0);
-    double lon1 = start.longitude * (pi / 180.0);
-    double lat2 = end.latitude * (pi / 180.0);
-    double lon2 = end.longitude * (pi / 180.0);
+  // double _calculateDistance(LatLng start, LatLng end) {
+  //   const double R = 6371;
+  //   double lat1 = start.latitude * (pi / 180.0);
+  //   double lon1 = start.longitude * (pi / 180.0);
+  //   double lat2 = end.latitude * (pi / 180.0);
+  //   double lon2 = end.longitude * (pi / 180.0);
 
-    double dLat = lat2 - lat1;
-    double dLon = lon2 - lon1;
+  //   double dLat = lat2 - lat1;
+  //   double dLon = lon2 - lon1;
 
-    double a = (sin(dLat / 2) * sin(dLat / 2)) +
-        (cos(lat1) * cos(lat2) * sin(dLon / 2) * sin(dLon / 2));
-    double c = 2 * atan2(sqrt(a), sqrt(1 - a));
-    double distance = R * c;
-    return distance; // Distance in kilometers
-  }
+  //   double a = (sin(dLat / 2) * sin(dLat / 2)) +
+  //       (cos(lat1) * cos(lat2) * sin(dLon / 2) * sin(dLon / 2));
+  //   double c = 2 * atan2(sqrt(a), sqrt(1 - a));
+  //   double distance = R * c;
+  //   return distance; // Distance in kilometers
+  // }
 
-  double _calculateTime(double distance) {
-    return distance / _averageSpeed; // Time in hours
-  }
+  // double _calculateTime(double distance) {
+  //   return distance / _averageSpeed;
+  // }
 
   void _onMapTapped(LatLng position) {
     setState(() {

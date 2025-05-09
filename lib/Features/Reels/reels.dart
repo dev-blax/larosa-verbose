@@ -52,7 +52,6 @@ class _DeReelsScreenState extends State<DeReelsScreen> {
       _isFetchingMore = loadMore;
     });
 
-
     try {
       final response = await _dioService.dio.post(
         LarosaLinks.reelsFetch,
@@ -62,7 +61,6 @@ class _DeReelsScreenState extends State<DeReelsScreen> {
           'page': _currentPage,
         },
       );
-
 
       if (response.statusCode == 200) {
         List<dynamic> data = response.data;
@@ -153,9 +151,7 @@ class _DeReelsScreenState extends State<DeReelsScreen> {
         await AuthService.refreshToken();
         await _likePost(postId, index);
         return;
-      } else {
-        
-      }
+      } else {}
     } catch (e) {
       //HelperFunctions.displaySnackbar('An unknown error occurred');
     }
@@ -298,7 +294,8 @@ class _DeReelsScreenState extends State<DeReelsScreen> {
     }
 
     final accountType = snippet['accountType'] == 'BUSINESS' ? '2' : '1';
-    context.push('/profilevisit/?profileId=${snippet['profileId']}&accountType=$accountType');
+    context.push(
+        '/profilevisit/?profileId=${snippet['profileId']}&accountType=$accountType');
   }
 
   Widget _postInteracts(
@@ -313,8 +310,7 @@ class _DeReelsScreenState extends State<DeReelsScreen> {
     int favorites,
   ) {
     return Positioned(
-      bottom:
-          MediaQuery.of(context).size.height / 2 - 100,
+      bottom: MediaQuery.of(context).size.height / 2 - 100,
       right: 0.0,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 3.0, vertical: 8),
@@ -325,7 +321,6 @@ class _DeReelsScreenState extends State<DeReelsScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.end,
           children: [
-            // Like Button with Count Below
             Column(
               children: [
                 LikeButton(
@@ -358,18 +353,16 @@ class _DeReelsScreenState extends State<DeReelsScreen> {
                   },
                   countBuilder: (int? count, bool isLiked, String text) {
                     return Text(
-                      text, 
+                      text,
                       style: const TextStyle(
-                        color: Colors.white, 
-                        fontSize: 14.0, 
-                        fontWeight: FontWeight.bold, 
+                        color: Colors.white,
+                        fontSize: 14.0,
+                        fontWeight: FontWeight.bold,
                       ),
                     );
                   },
-                  countPostion: CountPostion
-                      .bottom, 
-                  likeCountPadding: const EdgeInsets.only(
-                      top: 8.0), 
+                  countPostion: CountPostion.bottom,
+                  likeCountPadding: const EdgeInsets.only(top: 8.0),
                   onTap: (bool isLiked) async {
                     toggleLike(snippets.indexOf(snippet));
                     return !isLiked;
@@ -380,7 +373,6 @@ class _DeReelsScreenState extends State<DeReelsScreen> {
             ),
             const SizedBox(height: 5),
 
-            // Favorite Button with Count Below
             Column(
               children: [
                 LikeButton(
@@ -486,7 +478,7 @@ class _DeReelsScreenState extends State<DeReelsScreen> {
                 ),
                 const SizedBox(height: 5),
                 const Text(
-                  'Share', 
+                  'Share',
                   style: TextStyle(color: Colors.white, fontSize: 12),
                 ),
               ],
@@ -496,4 +488,5 @@ class _DeReelsScreenState extends State<DeReelsScreen> {
       ),
     );
   }
+
 }

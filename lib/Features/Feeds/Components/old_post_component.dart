@@ -23,6 +23,7 @@ import 'package:go_router/go_router.dart';
 import 'package:lottie/lottie.dart';
 import 'package:modal_bottom_sheet/modal_bottom_sheet.dart';
 import '../../Cart/add_to_cart.dart';
+import '../Controllers/business_post_controller.dart';
 import 'post_details.dart';
 
 class OldPostCompoent extends StatefulWidget {
@@ -181,6 +182,156 @@ class _OldPostCompoentState extends State<OldPostCompoent>
             isPlayingState: widget.isPlaying,
             postHeight: widget.post['height'],
           ),
+          if (widget.post['reservation_type'] != null)
+            Positioned(
+              top: 0,
+              left: 0,
+              child: Stack(
+                children: [
+                  Container(
+                    height: 50,
+                    width: MediaQuery.of(context).size.width,
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          Colors.black.withOpacity(0.7),
+                          Colors.black.withOpacity(0.01),
+                        ],
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                      ),
+                    ),
+                  ),
+                  Container(
+                    width: MediaQuery.of(context).size.width,
+                    padding: const EdgeInsets.all(8.0),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Row(
+                          children: [
+                            widget.post['wifi'] == 0 ||
+                                    widget.post['wifi'] == null
+                                ? Icon(
+                                    CupertinoIcons.wifi_slash,
+                                    size: 20,
+                                    color: Colors.white,
+                                  )
+                                : Icon(
+                                    CupertinoIcons.wifi,
+                                    size: 20,
+                                    color: Colors.white,
+                                  ),
+                            Gap(5),
+                            Text('Wifi')
+                          ],
+                        ),
+                        Gap(10),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            widget.post['swing_pool'] == 0 ||
+                                    widget.post['swing_pool'] == null
+                                ? SvgPicture.asset(
+                                    SvgIconsPaths.poolOff,
+                                    colorFilter: ColorFilter.mode(
+                                      Colors.white,
+                                      BlendMode.srcIn,
+                                    ),
+                                    height: 20,
+                                  )
+                                : SvgPicture.asset(
+                                    SvgIconsPaths.swimming,
+                                    colorFilter: ColorFilter.mode(
+                                      Colors.white,
+                                      BlendMode.srcIn,
+                                    ),
+                                    height: 20,
+                                  ),
+                            Gap(5),
+                            Text('Swimming')
+                          ],
+                        ),
+                        Gap(10),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Stack(
+                              alignment: Alignment.center,
+                              children: [
+                                SvgPicture.asset(
+                                  SvgIconsPaths.gymIcon,
+                                  colorFilter: ColorFilter.mode(
+                                    Colors.white,
+                                    BlendMode.srcIn,
+                                  ),
+                                  height: 20,
+                                ),
+                              ],
+                            ),
+                            Gap(5),
+                            Text('Gym')
+                          ],
+                        ),
+                        Gap(10),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            widget.post['parking'] == 0 ||
+                                    widget.post['parking'] == null
+                                ? SvgPicture.asset(
+                                    'assets/svg_icons/LucideCircleParkingOff.svg',
+                                    colorFilter: ColorFilter.mode(
+                                      Colors.white,
+                                      BlendMode.srcIn,
+                                    ),
+                                    height: 20,
+                                  )
+                                : SvgPicture.asset(
+                                    'assets/svg_icons/HugeiconsParkingAreaCircle.svg',
+                                    colorFilter: ColorFilter.mode(
+                                      Colors.white,
+                                      BlendMode.srcIn,
+                                    ),
+                                    height: 20,
+                                  ),
+                            Gap(5),
+                            Text('Parking')
+                          ],
+                        ),
+                        Gap(10),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            widget.post['breakfast'] == 0 ||
+                                    widget.post['breakfast'] == null
+                                ? SvgPicture.asset(
+                                    'assets/svg_icons/PepiconsPencilCupOff.svg',
+                                    colorFilter: ColorFilter.mode(
+                                      Colors.white,
+                                      BlendMode.srcIn,
+                                    ),
+                                    height: 20,
+                                  )
+                                : SvgPicture.asset(
+                                    SvgIconsPaths.breakfast,
+                                    colorFilter: ColorFilter.mode(
+                                      Colors.white,
+                                      BlendMode.srcIn,
+                                    ),
+                                    height: 20,
+                                  ),
+                            Gap(5),
+                            Text('Breakfast')
+                          ],
+                        ),
+                      ],
+                    ),
+                  )
+                ],
+              ),
+            ),
           Positioned(
             bottom: 0,
             left: 0,
@@ -202,14 +353,14 @@ class _OldPostCompoentState extends State<OldPostCompoent>
                   gradient: LinearGradient(
                     colors: !_isLiked
                         ? [
-                            Colors.black.withOpacity(0.7),
-                            Colors.black.withOpacity(0.01),
+                            Colors.black.withValues(alpha: 0.7),
+                            Colors.black.withValues(alpha: 0.01),
                           ]
                         : [
                             const Color.fromRGBO(133, 16, 7, 1)
-                                .withOpacity(0.9),
+                                .withValues(alpha: 0.9),
                             const Color.fromRGBO(133, 16, 7, 1)
-                                .withOpacity(0.01),
+                                .withValues(alpha: 0.01),
                           ],
                     begin: Alignment.bottomCenter,
                     end: Alignment.topCenter,
@@ -235,7 +386,7 @@ class _OldPostCompoentState extends State<OldPostCompoent>
                           return;
                         }
 
-                        double accountType =
+                        int accountType =
                             widget.post['accountType'] == 'BUSINESS' ? 2 : 1;
 
                         context.push(
@@ -269,6 +420,9 @@ class _OldPostCompoentState extends State<OldPostCompoent>
                               context.pushNamed('homeprofile');
                               return;
                             }
+
+                            LogService.logInfo(
+                                'isBusiness ${widget.post['accountType']}');
 
                             double accountType =
                                 widget.post['accountType'] == 'BUSINESS'
@@ -371,7 +525,8 @@ class _OldPostCompoentState extends State<OldPostCompoent>
                         child: IconButton(
                           onPressed: () {
                             if (AuthService.getToken().isNotEmpty) {
-                              LogService.logTrace('post details, post: ${widget.post}');
+                              LogService.logTrace(
+                                  'post details, post: ${widget.post}');
                               String username = widget.post['username'];
                               double price =
                                   double.parse(widget.post['price'].toString());
@@ -394,6 +549,7 @@ class _OldPostCompoentState extends State<OldPostCompoent>
                                     reservationType: reservationType,
                                     adults: adults,
                                     breakfastIncluded: breakfastIncluded,
+                                    productId: postId,
                                   ),
                                 ),
                               );
@@ -579,37 +735,110 @@ class _OldPostCompoentState extends State<OldPostCompoent>
             // Share
             IconButton(
               onPressed: () {
-                showModalBottomSheet(
+                showCupertinoModalPopup(
                   context: context,
-                  builder: (context) => Container(
-                    padding: const EdgeInsets.symmetric(vertical: 20),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        ListTile(
-                          leading: const Icon(Icons.share),
-                          title: const Text('Share Post'),
-                          onTap: () {
-                            Navigator.pop(context);
-                            HelperFunctions.shareLink(
-                              widget.post['id'].toString(),
-                            );
-                          },
+                  builder: (context) => CupertinoActionSheet(
+                    actions: [
+                      CupertinoActionSheetAction(
+                        onPressed: () {
+                          Navigator.pop(context);
+                          HelperFunctions.shareLink(
+                            widget.post['id'].toString(),
+                          );
+                        },
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(CupertinoIcons.share,
+                                color: Theme.of(context).colorScheme.primary),
+                            const SizedBox(width: 8),
+                            const Text('Share Post'),
+                          ],
                         ),
-                        ListTile(
-                          leading: const Icon(Icons.report),
-                          title: const Text('Report Post'),
-                          onTap: () {
+                      ),
+                      CupertinoActionSheetAction(
+                        isDestructiveAction: true,
+                        onPressed: () {
+                          Navigator.pop(context);
+                          showCupertinoDialog(
+                            context: context,
+                            builder: (context) => ReportPostComponent(
+                              postId: widget.post['id'].toString(),
+                            ),
+                          );
+                        },
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(CupertinoIcons.exclamationmark_triangle,
+                                color: CupertinoColors.activeOrange),
+                            const SizedBox(width: 8),
+                            const Text('Report Post',
+                                style: TextStyle(
+                                    color: CupertinoColors.activeOrange)),
+                          ],
+                        ),
+                      ),
+                      if (widget.post['profileId'] ==
+                          AuthService.getProfileId())
+                        // Delete Post
+                        CupertinoActionSheetAction(
+                          onPressed: () async {
                             Navigator.pop(context);
-                            showDialog(
+                            
+                            final shouldDelete = await showCupertinoDialog<bool>(
                               context: context,
-                              builder: (context) => ReportPostComponent(
-                                postId: widget.post['id'].toString(),
+                              builder: (BuildContext dialogContext) => CupertinoAlertDialog(
+                                title: const Text('Delete Post'),
+                                content: const Text('Are you sure you want to delete this post?'),
+                                actions: [
+                                  CupertinoDialogAction(
+                                    child: const Text('Cancel'),
+                                    onPressed: () => Navigator.pop(dialogContext, false),
+                                  ),
+                                  CupertinoDialogAction(
+                                    isDestructiveAction: true,
+                                    child: const Text('Delete'),
+                                    onPressed: () => Navigator.pop(dialogContext, true),
+                                  ),
+                                ],
                               ),
                             );
+
+                            if (shouldDelete == true && mounted) {
+                              try {
+                                final success = await BusinessCategoryProvider.deletePost(widget.post['id']);
+                                if (success && mounted) {
+                                  HelperFunctions.showToast('Post deleted successfully', true);
+                                }
+                              } catch (e) {
+                                if (mounted) {
+                                  HelperFunctions.showToast('Failed to delete post', false);
+                                }
+                              }
+                          }
                           },
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Icon(
+                                CupertinoIcons.trash,
+                                color: CupertinoColors.destructiveRed,
+                              ),
+                              const SizedBox(width: 8),
+                              const Text(
+                                'Delete Post',
+                                style: TextStyle(
+                                  color: CupertinoColors.destructiveRed,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
-                      ],
+                    ],
+                    cancelButton: CupertinoActionSheetAction(
+                      onPressed: () => Navigator.pop(context),
+                      child: const Text('Cancel'),
                     ),
                   ),
                 );

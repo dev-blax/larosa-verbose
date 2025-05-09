@@ -6,6 +6,7 @@ import 'package:larosa_block/Components/bottom_navigation.dart';
 import 'package:larosa_block/Components/loading_shimmer.dart';
 import 'package:larosa_block/Features/Feeds/Components/old_post_component.dart';
 import 'package:larosa_block/Features/Feeds/Controllers/old_home_feeds_controller.dart';
+import 'package:larosa_block/Services/log_service.dart';
 import 'package:larosa_block/Utils/colors.dart';
 import 'package:provider/provider.dart';
 import 'package:larosa_block/Features/Feeds/Components/topbar.dart';
@@ -194,6 +195,7 @@ class _OldHomeFeedsScreenState extends State<OldHomeFeedsScreen> with SingleTick
                                 // Regular post item
                                 else {
                                   final post = controller.posts[index];
+                                  LogService.logTrace('post $post');
 
                                   if (_postPlayStates[post['id']] == null) {
                                     _postPlayStates[post['id']] =

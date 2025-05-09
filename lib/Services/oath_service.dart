@@ -3,6 +3,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:flutter_web_auth_2/flutter_web_auth_2.dart';
 import 'package:hive/hive.dart';
+import 'package:larosa_block/Services/navigation_service.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 
 import '../Utils/links.dart';
@@ -24,7 +25,6 @@ class OauthService {
       LogService.logInfo('Starting Google Sign In process');
       final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
       if (googleUser != null) {
-        LogService.logInfo('Google Sign In successful for user: ${googleUser.email}');
         final GoogleSignInAuthentication auth = await googleUser.authentication;
         String token = auth.idToken!;
 
@@ -113,6 +113,7 @@ class OauthService {
       }
     } catch (e, stackTrace) {
       LogService.logError('Error signing in with Google: $e\nStack trace: $stackTrace');
+      NavigationService.showErrorSnackBar('Error signing in with Google ${e.toString()}');
       _googleSignIn.signOut();
       LogService.logInfo('Signed out from Google');
       return null;

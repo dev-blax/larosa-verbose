@@ -305,7 +305,7 @@ class _SearchScreenState extends State<SearchScreen> {
                             context,
                             MaterialPageRoute(
                               builder: (_) =>
-                                  FullScreenVideoViewer(videoUrl: firstMedia),
+                                  FullScreenVideoViewer(videoUrl: firstMedia, post: suggestions[index],),
                             ),
                           );
                         },

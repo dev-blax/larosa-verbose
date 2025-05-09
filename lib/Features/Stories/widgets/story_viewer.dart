@@ -22,7 +22,7 @@ class _StoryViewerState extends State<StoryViewer>
   late PageController _pageController;
   late AnimationController _progressController;
   int _currentIndex = 0;
-  bool _isPaused = false;
+  bool isPaused = false;
 
   @override
   void initState() {
@@ -74,7 +74,7 @@ class _StoryViewerState extends State<StoryViewer>
     final tapPosition = details.globalPosition.dx;
 
     setState(() {
-      _isPaused = true;
+      isPaused = true;
       _progressController.stop();
     });
 
@@ -87,7 +87,7 @@ class _StoryViewerState extends State<StoryViewer>
 
   void _handleTapUp(TapUpDetails details) {
     setState(() {
-      _isPaused = false;
+      isPaused = false;
       _progressController.forward();
     });
   }
@@ -108,13 +108,13 @@ class _StoryViewerState extends State<StoryViewer>
         onTapUp: _handleTapUp,
         onLongPressStart: (_) {
           setState(() {
-            _isPaused = true;
+            isPaused = true;
             _progressController.stop();
           });
         },
         onLongPressEnd: (_) {
           setState(() {
-            _isPaused = false;
+            isPaused = false;
             _progressController.forward();
           });
           HapticFeedback.lightImpact();

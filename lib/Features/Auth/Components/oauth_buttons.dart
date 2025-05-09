@@ -34,9 +34,9 @@ class _OauthButtonsState extends State<OauthButtons> {
               if (googleUser != null && mounted) {
                 context.goNamed('home');
               } else {
-                NavigationService.showErrorSnackBar(
-                  'Google Sign-In Failed',
-                );
+                // NavigationService.showErrorSnackBar(
+                //   'Google Sign-In Failed',
+                // );
               }
             } finally {
               setState(() {

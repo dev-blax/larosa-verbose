@@ -10,6 +10,8 @@ class TextInputComponent extends StatefulWidget {
   final bool isPassword;
   final String? Function(String?)? validator;
   final bool formatAsMoney;
+  final bool readOnly;
+  final Function()? onTap;
 
   const TextInputComponent({
     super.key,
@@ -19,6 +21,8 @@ class TextInputComponent extends StatefulWidget {
     this.isPassword = false,
     this.validator,
     this.formatAsMoney = false,
+    this.readOnly = false,
+    this.onTap,
     required this.iconData,
   });
 
@@ -70,6 +74,8 @@ class _TextInputComponentState extends State<TextInputComponent> {
   Widget build(BuildContext context) {
     return TextFormField(
       controller: _controller,
+      readOnly: widget.readOnly,
+      onTap: widget.onTap,
       decoration: InputDecoration(
         hintText: widget.label,
         hintStyle: const TextStyle(color: Colors.white),
@@ -82,48 +88,48 @@ class _TextInputComponentState extends State<TextInputComponent> {
                 },
                 icon: Icon(
                   hideText ? CupertinoIcons.eye_slash_fill : CupertinoIcons.eye_fill,
-                  color: Colors.white,
+                  color: CupertinoColors.white,
                 ))
             : null,
         prefixIcon: Icon(
           widget.iconData,
           size: 18,
-          color: Colors.white,
+          color: CupertinoColors.white,
         ),
         filled: false,
         fillColor: Colors.white.withOpacity(.8),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(20),
           borderSide: const BorderSide(
-            color: Colors.white,
+            color: CupertinoColors.white,
           ),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(20),
           borderSide: const BorderSide(
-            color: Colors.white,
+            color: CupertinoColors.white,
           ),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(20),
           borderSide: const BorderSide(
-            color: Colors.white,
+            color: CupertinoColors.white,
           ),
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(20),
           borderSide: const BorderSide(
-            color: Colors.white,
+            color: CupertinoColors.white,
           ),
         ),
         focusedErrorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(20),
           borderSide: const BorderSide(
-            color: Colors.white,
+            color: CupertinoColors.white,
           ),
         ),
       ),
-      style: TextStyle(color: Colors.white, fontSize: 16),
+      style: TextStyle(color: CupertinoColors.white, fontSize: 16),
       keyboardType: widget.inputType,
       obscureText: hideText,
       validator: widget.validator,

@@ -6,6 +6,8 @@ import 'package:gap/gap.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hive/hive.dart';
 import 'package:iconsax/iconsax.dart';
+import 'package:larosa_block/Features/Settings/enable_e2e_screen.dart';
+import 'package:larosa_block/Services/encryption_service.dart';
 import 'package:larosa_block/Utils/helpers.dart';
 import 'package:http/http.dart' as http;
 
@@ -13,8 +15,36 @@ import '../../Services/auth_service.dart';
 import '../../Utils/colors.dart';
 import '../../Utils/links.dart';
 
-class SettingsScreen extends StatelessWidget {
-  const SettingsScreen({super.key});
+class SettingsScreen extends StatefulWidget {
+  // optional e2e status
+  final bool? endToEndEncryptionEnabled;
+  const SettingsScreen({super.key, this.endToEndEncryptionEnabled});
+
+  @override
+  State<SettingsScreen> createState() => _SettingsScreenState();
+}
+
+class _SettingsScreenState extends State<SettingsScreen> {
+  bool _isEndToEndEncryptionEnabled = false;
+
+  void asyncInit() async {
+    _isEndToEndEncryptionEnabled = widget.endToEndEncryptionEnabled ?? await EncryptionService().isE2EEnabled();
+    setState(() {});
+  }
+
+  Future<void> _disableEndToEndEncryption() async {
+    await EncryptionService().setE2EEnabled(false);
+    await EncryptionService().deleteE2EKeys();
+    setState(() {
+      _isEndToEndEncryptionEnabled = false;
+    });
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    asyncInit();
+  }
 
   Future<bool> _deleteAccount(String reason, {String? comments}) async {
     String token = AuthService.getToken();
@@ -27,7 +57,7 @@ class SettingsScreen extends StatelessWidget {
     };
     if (comments != null && comments.isNotEmpty) {
       body['comments'] = comments;
-    }else {
+    } else {
       body['comments'] = 'Not Filled';
     }
 
@@ -52,208 +82,208 @@ class SettingsScreen extends StatelessWidget {
     }
   }
 
+  Future<Map<String, String>?> _showDeletionDialog(BuildContext context) {
+    String selectedReason = "USER_REQUESTED";
+    TextEditingController commentsController = TextEditingController();
 
-Future<Map<String, String>?> _showDeletionDialog(BuildContext context) {
-  String selectedReason = "USER_REQUESTED";
-  TextEditingController commentsController = TextEditingController();
+    final Gradient commonGradient = LinearGradient(
+      colors: [
+        Theme.of(context).colorScheme.primary,
+        Theme.of(context).colorScheme.secondary,
+      ],
+      begin: Alignment.topLeft,
+      end: Alignment.bottomRight,
+    );
 
-  final Gradient commonGradient = LinearGradient(
-    colors: [
-      Theme.of(context).colorScheme.primary,
-      Theme.of(context).colorScheme.secondary,
-    ],
-    begin: Alignment.topLeft,
-    end: Alignment.bottomRight,
-  );
-
-  return showDialog<Map<String, String>>(
-    context: context,
-    builder: (context) {
-      return Dialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Custom header with a gradient background.
-            Container(
-              width: double.infinity,
-              decoration: BoxDecoration(
-                gradient: commonGradient,
-                borderRadius: const BorderRadius.only(
-                  topLeft: Radius.circular(16),
-                  topRight: Radius.circular(16),
+    return showDialog<Map<String, String>>(
+      context: context,
+      builder: (context) {
+        return Dialog(
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Custom header with a gradient background.
+              Container(
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  gradient: commonGradient,
+                  borderRadius: const BorderRadius.only(
+                    topLeft: Radius.circular(16),
+                    topRight: Radius.circular(16),
+                  ),
+                ),
+                padding: const EdgeInsets.all(16),
+                child: Row(
+                  children: [
+                    Icon(Icons.delete_forever, color: Colors.white),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Delete Account',
+                        style: Theme.of(context)
+                            .textTheme
+                            .titleLarge
+                            ?.copyWith(color: Colors.white),
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              padding: const EdgeInsets.all(16),
-              child: Row(
-                children: [
-                  Icon(Icons.delete_forever, color: Colors.white),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      'Delete Account',
-                      style: Theme.of(context)
-                          .textTheme
-                          .titleLarge
-                          ?.copyWith(color: Colors.white),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            // Dialog content.
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  DropdownButtonFormField<String>(
-                    value: selectedReason,
-                    items: const [
-                      DropdownMenuItem(
-                        value: 'USER_REQUESTED',
-                        child: Text('User Requested'),
-                      ),
-                      DropdownMenuItem(
-                        value: 'TERMS_VIOLATION',
-                        child: Text('Terms Violation'),
-                      ),
-                      DropdownMenuItem(
-                        value: 'INACTIVITY',
-                        child: Text('Inactivity'),
-                      ),
-                      DropdownMenuItem(
-                        value: 'FRAUDULENT_ACTIVITY',
-                        child: Text('Fraudulent Activity'),
-                      ),
-                      DropdownMenuItem(
-                        value: 'OTHER',
-                        child: Text('Other'),
-                      ),
-                    ],
-                    onChanged: (value) {
-                      if (value != null) {
-                        selectedReason = value;
-                      }
-                    },
-                    decoration: InputDecoration(
-                      labelText: 'Reason',
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  TextField(
-                    controller: commentsController,
-                    maxLines: 3,
-                    decoration: InputDecoration(
-                      labelText: 'Additional Comments (Optional)',
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            // Dialog actions with gradient buttons.
-            Padding(
-              padding: const EdgeInsets.only(right: 16, bottom: 16),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  // Cancel button.
-                  InkWell(
-                    onTap: () => Navigator.of(context).pop(null),
-                    borderRadius: BorderRadius.circular(8),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 16, vertical: 12),
-                      decoration: BoxDecoration(
-                        gradient: commonGradient,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text(
-                        'Cancel',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
+              // Dialog content.
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    DropdownButtonFormField<String>(
+                      value: selectedReason,
+                      items: const [
+                        DropdownMenuItem(
+                          value: 'USER_REQUESTED',
+                          child: Text('User Requested'),
+                        ),
+                        DropdownMenuItem(
+                          value: 'TERMS_VIOLATION',
+                          child: Text('Terms Violation'),
+                        ),
+                        DropdownMenuItem(
+                          value: 'INACTIVITY',
+                          child: Text('Inactivity'),
+                        ),
+                        DropdownMenuItem(
+                          value: 'FRAUDULENT_ACTIVITY',
+                          child: Text('Fraudulent Activity'),
+                        ),
+                        DropdownMenuItem(
+                          value: 'OTHER',
+                          child: Text('Other'),
+                        ),
+                      ],
+                      onChanged: (value) {
+                        if (value != null) {
+                          selectedReason = value;
+                        }
+                      },
+                      decoration: InputDecoration(
+                        labelText: 'Reason',
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
                         ),
                       ),
                     ),
-                  ),
-                  const SizedBox(width: 8),
-                  // Confirm button.
-                  InkWell(
-                    onTap: () {
-                      Navigator.of(context).pop({
-                        'reason': selectedReason,
-                        'comments': commentsController.text,
-                      });
-                    },
-                    borderRadius: BorderRadius.circular(8),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 16, vertical: 12),
-                      decoration: BoxDecoration(
-                        gradient: commonGradient,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text(
-                        'Confirm',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
+                    const SizedBox(height: 16),
+                    TextField(
+                      controller: commentsController,
+                      maxLines: 3,
+                      decoration: InputDecoration(
+                        labelText: 'Additional Comments (Optional)',
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
                         ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
-          ],
-        ),
-      );
-    },
-  );
-}
-
-
-  // This method handles the deletion flow: confirmation, API call, and navigation.
-  void _handleAccountDeletion(BuildContext context) async {
-  final input = await _showDeletionDialog(context);
-  if (input == null) return; // User canceled
-
-  String reason = input['reason']!;
-  String comments = input['comments'] ?? '';
-
-  // Show a loading indicator while processing.
-  showDialog(
-    context: context,
-    barrierDismissible: false,
-    builder: (context) => const Center(child: CupertinoActivityIndicator(color: LarosaColors.secondary,)),
-  );
-
-  bool success = await _deleteAccount(reason, comments: comments);
-
-  // Hide the loading indicator.
-  Navigator.of(context).pop();
-
-  if (success) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Account deletion successful.')),
-    );
-    // Navigate to home route.
-
-    // context.go('/');
-    HelperFunctions.simulateLogout(context);
-  } else {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Account deletion failed.')),
+              // Dialog actions with gradient buttons.
+              Padding(
+                padding: const EdgeInsets.only(right: 16, bottom: 16),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    // Cancel button.
+                    InkWell(
+                      onTap: () => Navigator.of(context).pop(null),
+                      borderRadius: BorderRadius.circular(8),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 12),
+                        decoration: BoxDecoration(
+                          gradient: commonGradient,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          'Cancel',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    // Confirm button.
+                    InkWell(
+                      onTap: () {
+                        Navigator.of(context).pop({
+                          'reason': selectedReason,
+                          'comments': commentsController.text,
+                        });
+                      },
+                      borderRadius: BorderRadius.circular(8),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 12),
+                        decoration: BoxDecoration(
+                          gradient: commonGradient,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          'Confirm',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
-}
+
+  void _handleAccountDeletion(BuildContext context) async {
+    final input = await _showDeletionDialog(context);
+    if (input == null) return; // User canceled
+
+    String reason = input['reason']!;
+    String comments = input['comments'] ?? '';
+
+    // Show a loading indicator while processing.
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const Center(
+          child: CupertinoActivityIndicator(
+        color: LarosaColors.secondary,
+      )),
+    );
+
+    bool success = await _deleteAccount(reason, comments: comments);
+
+    // Hide the loading indicator.
+    Navigator.of(context).pop();
+
+    if (success) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Account deletion successful.')),
+      );
+
+      // context.go('/');
+      HelperFunctions.simulateLogout(context);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Account deletion failed.')),
+      );
+    }
+  }
 
 
   @override
@@ -263,7 +293,7 @@ Future<Map<String, String>?> _showDeletionDialog(BuildContext context) {
         leading: IconButton(
           onPressed: () => context.pop(),
           icon: const Icon(
-            Iconsax.arrow_left_2,
+            CupertinoIcons.back,
           ),
         ),
         title: const Text('Settings'),
@@ -274,11 +304,11 @@ Future<Map<String, String>?> _showDeletionDialog(BuildContext context) {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Gap(20),
-
             InkWell(
               onTap: () => context.pushNamed('blockedList'),
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 decoration: BoxDecoration(
                   color: Theme.of(context).colorScheme.surface,
                   borderRadius: BorderRadius.circular(8),
@@ -303,16 +333,14 @@ Future<Map<String, String>?> _showDeletionDialog(BuildContext context) {
                 ),
               ),
             ),
-          
-            
             const Gap(20),
-
             InkWell(
               onTap: () {
                 context.push('/verification');
               },
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 decoration: BoxDecoration(
                   color: Theme.of(context).colorScheme.surface,
                   borderRadius: BorderRadius.circular(8),
@@ -337,8 +365,69 @@ Future<Map<String, String>?> _showDeletionDialog(BuildContext context) {
                 ),
               ),
             ),
+            // enable end to end ecryption toggle
+            const Gap(20),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.surface,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Row(
+                children: [
+                  const Icon(CupertinoIcons.lock, color: Colors.blue),
+                  const SizedBox(width: 12),
+                  const Text(
+                    'Enable End to End Encryption',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  const Spacer(),
+                  CupertinoSwitch(
+                    value: _isEndToEndEncryptionEnabled,
+                    onChanged: (value) async {
+                      // cupertino dialog to confirm enabling or disabling e2e
+                      await showCupertinoDialog<void>(
+                        context: context,
+                        builder: (BuildContext context) =>
+                            CupertinoAlertDialog(
+                          title: const Text('Confirm'),
+                          content: Text(
+                              'Are you sure you want to ${value ? 'enable' : 'disable'} end to end encryption?'),
+                          actions: <CupertinoDialogAction>[
+                            CupertinoDialogAction(
+                              onPressed: () {
+                                Navigator.pop(context);
+                              },
+                              isDefaultAction: true,
+                              child: const Text('Cancel'),
+                            ),
+                            CupertinoDialogAction(
+                              onPressed: () {
+                                Navigator.pop(context);
+                                if (value) {
+                                  Navigator.push(context,
+                                      CupertinoPageRoute(builder: (context) {
+                                    return const EnableE2eScreen();
+                                  }));
+                                } else {
+                                  _disableEndToEndEncryption();
+                                }
+                              },
+                              isDestructiveAction: true,
+                              child: const Text('Confirm'),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+                ],
+              ),
+            ),
 
-            
             const Gap(20),
             InkWell(
               onTap: () async {
@@ -346,7 +435,8 @@ Future<Map<String, String>?> _showDeletionDialog(BuildContext context) {
                   context: context,
                   builder: (BuildContext context) => CupertinoAlertDialog(
                     title: const Text('Confirm Logout'),
-                    content: const Text('Are you sure you want to log out? This will remove all your local data.'),
+                    content: const Text(
+                        'Are you sure you want to log out? This will remove all your local data.'),
                     actions: <CupertinoDialogAction>[
                       CupertinoDialogAction(
                         onPressed: () {
@@ -372,7 +462,8 @@ Future<Map<String, String>?> _showDeletionDialog(BuildContext context) {
                 );
               },
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 decoration: BoxDecoration(
                   color: Theme.of(context).colorScheme.surface,
                   borderRadius: BorderRadius.circular(8),
@@ -398,13 +489,13 @@ Future<Map<String, String>?> _showDeletionDialog(BuildContext context) {
               ),
             ),
             const Gap(20),
-            
             InkWell(
               onTap: () {
                 _handleAccountDeletion(context);
               },
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 decoration: BoxDecoration(
                   color: Theme.of(context).colorScheme.surface,
                   borderRadius: BorderRadius.circular(8),
@@ -418,7 +509,6 @@ Future<Map<String, String>?> _showDeletionDialog(BuildContext context) {
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w500,
-                        color: Colors.black,
                       ),
                     ),
                     const Spacer(),
@@ -430,42 +520,6 @@ Future<Map<String, String>?> _showDeletionDialog(BuildContext context) {
                 ),
               ),
             ),
-
-
-            // InkWell(
-            //   onTap: () {
-            //     _handleAccountDeletion(context);
-            //   },
-            //   child: Padding(
-            //     padding: const EdgeInsets.symmetric(horizontal: 8.0),
-            //     child: Row(
-            //       mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            //       children: [
-            //         const Column(
-            //           crossAxisAlignment: CrossAxisAlignment.start,
-            //           children: [
-            //             Text('Delete Account'),
-            //             Text(
-            //               'All of your data on our platform will be deleted',
-            //               style: TextStyle(
-            //                 fontSize: 10,
-            //               ),
-            //             )
-            //           ],
-            //         ),
-            //         IconButton(
-            //           onPressed: () {
-            //             _handleAccountDeletion(context);
-            //           },
-            //           icon: const Icon(
-            //             Iconsax.trash,
-            //             color: Colors.red,
-            //           ),
-            //         ),
-            //       ],
-            //     ),
-            //   ),
-            // ),
             const Gap(10),
           ],
         ),

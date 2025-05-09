@@ -8,7 +8,9 @@ import '../../../Services/log_service.dart';
 import '../../../Utils/colors.dart';
 import 'package:intl/intl.dart';
 
-import '../../../Utils/links.dart'; // Import intl for formatDate
+import '../../../Utils/links.dart';
+import 'package:intl_phone_field/intl_phone_field.dart';
+import 'package:intl_phone_field/countries.dart';
 
 class PaymentMethodScreen extends StatefulWidget {
   final double totalPrice;
@@ -49,23 +51,9 @@ class PaymentMethodScreen extends StatefulWidget {
 class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
   final TextEditingController _accountController = TextEditingController();
   String? _selectedMethod;
-  bool _isProcessing = false;
+  bool isProcessing = false;
 
   final List<Map<String, dynamic>> paymentMethods = [
-    {
-      'type': 'Bank',
-      'name': 'CRDB Bank',
-      'value': 'CRDB',
-      'icon': 'assets/icons/crdb.png',
-      'color': Color(0xFF00A651),
-    },
-    {
-      'type': 'Bank',
-      'name': 'NMB Bank',
-      'value': 'NMB',
-      'icon': 'assets/icons/nmb.png',
-      'color': Color(0xFF00A551),
-    },
     {
       'type': 'Mobile',
       'name': 'M-Pesa',
@@ -159,7 +147,8 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
         "items": widget.items,
         "provider": _selectedMethod,
         "paymentMethod": (paymentMethods.firstWhere((method) => method['value'] == _selectedMethod)['type'] ?? '').toUpperCase(),
-        "accountNumber": _accountController.text,
+        "accountNumber": '0${_accountController.text}',
+        "phoneNumber": '0${_accountController.text}',
         "amount": widget.totalPrice,
         "latitude": widget.deliveryLatitude ?? 0,
         "longitude": widget.deliveryLongitude ?? 0,
@@ -179,7 +168,6 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
 
       final response = await dio.post(url, data: body);
       
-      LogService.logDebug('got response');
       // Pop loading dialog
       Navigator.of(context).pop();
 
@@ -332,16 +320,23 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
                       ),
                     ),
                     // 
-                    child: TextField(
+                    child: IntlPhoneField(
                       controller: _accountController,
-                      keyboardType: TextInputType.phone,
-                      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                      initialCountryCode: 'TZ',
+                      countries: [countries.firstWhere((country) => country.code == 'TZ')],
+                      // countries: countries,
+                      //countryDelegate: (country) => country.code == 'TZ',
+
                       decoration: InputDecoration(
                         border: InputBorder.none,
                         hintStyle: TextStyle(
                           color: isDark ? Colors.grey[400] : Colors.grey[600],
                         ),
                       ),
+                      onChanged: (phone) {
+                        // You can access the complete phone number with country code using:
+                        // phone.completeNumber
+                      },
                     ),
                   ),
                 ],
@@ -382,7 +377,7 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
                   width: double.infinity,
                   height: 50,
                   child: ElevatedButton(
-                    onPressed: _isProcessing ? null : _processPayment,
+                    onPressed: isProcessing ? null : _processPayment,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: LarosaColors.primary,
                       foregroundColor: Colors.white,
@@ -390,7 +385,7 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
                         borderRadius: BorderRadius.circular(12),
                       ),
                     ),
-                    child: _isProcessing
+                    child: isProcessing
                         ? const SizedBox(
                             height: 20,
                             width: 20,

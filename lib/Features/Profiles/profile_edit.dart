@@ -17,6 +17,7 @@ import 'package:larosa_block/Utils/colors.dart';
 import 'package:larosa_block/Utils/helpers.dart';
 import 'package:larosa_block/Utils/links.dart';
 import 'package:dio/dio.dart' as dio;
+import 'package:shimmer/shimmer.dart';
 
 class EditProfileScreen extends StatefulWidget {
   const EditProfileScreen({super.key});
@@ -155,6 +156,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         _fullnameController.text = profile!['name'];
         _usernameController.text = profile!['username'];
         _bioController.text = profile!['bio'] ?? 'write';
+        isloading = false;
       });
     } catch (e) {
       // Get.snackbar('Explore Larosa', 'an error occured');
@@ -162,6 +164,52 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   }
 
   Widget _personalCoverAndDetails() {
+    if (isloading) {
+      // dark mode using brightness
+      final brightness = MediaQuery.of(context).platformBrightness;
+      
+      return Stack(
+        clipBehavior: Clip.none,
+        children: [
+          // Cover photo shimmer
+          Shimmer.fromColors(
+            baseColor: Colors.grey[300]!,
+            highlightColor: Colors.grey[100]!,
+            child: Container(
+              height: 200,
+              width: MediaQuery.of(context).size.width,
+              color: brightness != Brightness.dark ? Colors.grey[800]! : Colors.grey[300]!,
+            ),
+          ),
+          // Profile section shimmer
+          Positioned(
+            bottom: -50,
+            right: 20,
+            child: Shimmer.fromColors(
+              baseColor: Colors.grey[300]!,
+              highlightColor: Colors.grey[100]!,
+              child: Row(
+                children: [
+                  // Profile picture placeholder
+                  Container(
+                    width: 150,
+                    height: 150,
+                    decoration: BoxDecoration(
+                      color: brightness != Brightness.dark ? Colors.grey[800]! : Colors.grey[300]!,
+                      borderRadius: BorderRadius.circular(10),
+                      shape: BoxShape.rectangle,
+                    ),
+                  ),
+                  const Gap(16),
+                
+                ],
+              ),
+            ),
+          ),
+        ],
+      );
+    }
+    
     return Stack(
       clipBehavior: Clip.none,
       children: [
@@ -177,7 +225,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     fit: BoxFit.cover,
                     filterQuality: FilterQuality.high,
                   )
-                : profile!['coverPhoto'] != null
+                : profile?['coverPhoto'] != null
                     ? CachedNetworkImage(
                         imageUrl: profile!['coverPhoto'],
                         height: 200,
@@ -219,17 +267,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             ),
           ],
         ),
-        // Positioned.fill(
-        //   child: Container(
-        //     decoration: const BoxDecoration(
-        //       gradient: LinearGradient(
-        //         colors: [Colors.black, Colors.transparent],
-        //         begin: Alignment.bottomCenter,
-        //         end: Alignment.topCenter,
-        //       ),
-        //     ),
-        //   ),
-        // ),
 
         // profile image
         Positioned(
@@ -267,7 +304,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                           filterQuality: FilterQuality.high,
                         ),
                       )
-                    : profile!['coverPhoto'] != null
+                    : profile?['profilePicture'] != null
                         ? GestureDetector(
                             onTap: () async {
                               final XFile? image = await _imagePicker.pickImage(
@@ -319,31 +356,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                               ),
                             ),
                           ),
-                // Padding(
-                //   padding: const EdgeInsets.all(8.0),
-                //   child: CircleAvatar(
-                //     child: IconButton(
-                //       onPressed: () async {
-                //         final XFile? image = await _imagePicker.pickImage(
-                //           source: ImageSource.gallery,
-                //         );
-                //         if (image != null) {
-                //           final imageData = await image.readAsBytes();
-                //           final String tempPath =
-                //               '${Directory.systemTemp.path}/${DateTime.now().millisecondsSinceEpoch}.png';
-                //           final File imageFile = File(tempPath)
-                //             ..writeAsBytesSync(imageData);
-                //           setState(() {
-                //             _selectedProfilePath = imageFile.path;
-                //           });
-                //         }
-                //       },
-                //       icon: const Icon(
-                //         CupertinoIcons.person_add,
-                //       ),
-                //     ),
-                //   ),
-                // ),
               ],
             ),
           ),

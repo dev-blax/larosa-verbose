@@ -1,12 +1,13 @@
 import 'dart:convert';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:go_router/go_router.dart';
 import 'package:larosa_block/Services/log_service.dart';
 import 'package:larosa_block/Utils/helpers.dart';
 import 'package:larosa_block/Utils/links.dart';
 import 'package:larosa_block/Services/dio_service.dart';
+
+import 'verification_code_screen.dart';
 
 class ForgotPasswordScreen extends StatefulWidget {
   const ForgotPasswordScreen({super.key});
@@ -103,42 +104,22 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
                 // Sign in button
                 SlideTransition(
                   position: _leftOffsetAnimation,
-                  child: Container(
-                    height: 65,
-                    decoration: BoxDecoration(
-                        gradient: const LinearGradient(
-                            colors: [Color(0xff34a4f9), Color(0xff0a1282)],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight),
-                        borderRadius: BorderRadius.circular(20)),
-                    child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                          elevation: 0.0,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          padding: const EdgeInsets.all(16.0),
-                          backgroundColor: Colors.transparent),
-                      onPressed: isLoading
-                          ? null
-                          : () {
-                              handleForgotPassword();
-                            },
-                      child: isLoading
-                          ? const SpinKitCircle(
-                              color: Colors.blue,
-                            )
-                          : const Center(
-                              child: Text(
-                                'SEND LINK',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
+                  child: CupertinoButton.filled(
+                    onPressed: isLoading
+                        ? null
+                        : () {
+                            handleForgotPassword();
+                          },
+                    child: isLoading
+                        ? Center(
+                          child: const CupertinoActivityIndicator(
                             ),
-                    ),
+                        )
+                        : const Center(
+                            child: Text(
+                              'Get Verification Code',
+                            ),
+                          ),
                   ),
                 ),
               ],
@@ -156,9 +137,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
           isLoading = true;
         });
 
-        LogService.logInfo('sending forgot password ');
-
-        await _dioService.dio.post(
+        final response = await _dioService.dio.post(
           LarosaLinks.forgetPassword,
           data: jsonEncode(
             {
@@ -166,6 +145,21 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
             },
           ),
         );
+
+        if (response.statusCode == 200) {
+          if (mounted) {
+            //context.push('/verification', extra: emailController.text);
+            // cupertino page route
+            Navigator.push(
+              context,
+              CupertinoPageRoute(
+                builder: (context) => VerificationCodeScreen(
+                  email: emailController.text,
+                ),
+              ),
+            );
+          }
+        }
       } catch (e) {
         LogService.logError('Error $e');
       } finally {
@@ -176,3 +170,4 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen>
     }
   }
 }
+

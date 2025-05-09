@@ -9,6 +9,7 @@ import 'package:larosa_block/Services/navigation_service.dart';
 import 'package:larosa_block/Utils/colors.dart';
 import 'package:larosa_block/Utils/helpers.dart';
 import 'package:larosa_block/Utils/links.dart';
+import 'like_button_component.dart';
 
 class PostCommentTile extends StatefulWidget {
   final dynamic comment;
@@ -244,37 +245,11 @@ class _PostCommentTileState extends State<PostCommentTile> {
               Row(
                 children: [
                   // Like button
-                  GestureDetector(
-                    onTap: _handleLike,
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 300),
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: isLiked 
-                            ? LarosaColors.primary.withOpacity(0.1)
-                            : Colors.transparent,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Row(
-                        children: [
-                          Icon(
-                            isLiked ? CupertinoIcons.heart_fill : CupertinoIcons.heart,
-                            size: 16,
-                            color: isLiked ? LarosaColors.primary : Colors.grey,
-                          ),
-                          if (likeCount > 0) ...[
-                            const Gap(4),
-                            Text(
-                              likeCount.toString(),
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: isLiked ? LarosaColors.primary : Colors.grey,
-                              ),
-                            ),
-                          ],
-                        ],
-                      ),
-                    ),
+                  LarosaLikeButton(
+                    isLiked: isLiked,
+                    likeCount: likeCount,
+                    onTap: (isLiked) => _handleLike(),
+                    size: 16,
                   ),
                   const Gap(12),
                   // Reply button

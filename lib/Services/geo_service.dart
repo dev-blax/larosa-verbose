@@ -1,4 +1,5 @@
 import 'package:flutter/cupertino.dart';
+import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:larosa_block/Services/log_service.dart';
 import 'package:flutter/material.dart';
@@ -91,5 +92,56 @@ class GeoService {
       }
     }
     return null;
+  }
+
+
+  // Get location name from latitude and longitude
+  static Future<String?> getLocationNameFromCoordinates(double latitude, double longitude) async {
+    try {
+      List<Placemark> placemarks = await placemarkFromCoordinates(
+        latitude,
+        longitude,
+        // -6.7474,
+        // 39.2817
+      );
+
+      if (placemarks.isNotEmpty) {
+        final place = placemarks.first;
+        LogService.logInfo('Location name: ${place.toString()}');
+
+        final locality = place.locality ?? '';
+        final subLocality = place.subLocality ?? '';
+        final country = place.country ?? '';
+
+        if(subLocality.isNotEmpty){
+          final locationName = '$subLocality, $locality';
+          return locationName;
+        }
+        if(locality.isNotEmpty && country.isNotEmpty){
+          final locationName = '$locality, $country';
+          return locationName;
+        }
+
+        return null;
+      }
+    } catch (e) {
+      LogService.logError('Error getting location name: $e');
+    }
+    return null;
+  }
+
+
+  // get locations names from an array of latitude and longitudes
+  static Future<List<String?>> getLocationsNamesFromCoordinates(List<double> latitudes, List<double> longitudes) async {
+    try {
+      List<String?> locationNames = [];
+      for (int i = 0; i < latitudes.length; i++) {
+        locationNames.add(await getLocationNameFromCoordinates(latitudes[i], longitudes[i]));
+      }
+      return locationNames;
+    } catch (e) {
+      LogService.logError('Error getting locations names: $e');
+      return [];
+    }
   }
 }

@@ -4,6 +4,7 @@ import 'dart:ui';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:timeago/timeago.dart' as timeago;
 
 import '../../../Services/auth_service.dart';
 import '../../../Services/log_service.dart';
@@ -30,7 +31,7 @@ class _OrdersWidgetState extends State<OrdersWidget> {
   }
 
   @override
-  void initState(){
+  void initState() {
     super.initState();
     asyncInit();
   }
@@ -111,8 +112,10 @@ class _OrdersWidgetState extends State<OrdersWidget> {
   Widget creativeOrderCard(Map<String, dynamic> order) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final items = (order['items'] as List?)?.cast<Map<String, dynamic>>() ?? [];
-    final totalItems = items.fold<int>(0, (sum, item) => sum + ((item['quantity'] as num?)?.toInt() ?? 0));
-    final deliveryLocation = order['deliveryLocation'] as Map<String, dynamic>? ?? {};
+    final totalItems = items.fold<int>(
+        0, (sum, item) => sum + ((item['quantity'] as num?)?.toInt() ?? 0));
+    final deliveryLocation =
+        order['deliveryLocation'] as Map<String, dynamic>? ?? {};
     final driver = order['driver'] as Map<String, dynamic>? ?? {};
 
     // Collect all media from items
@@ -149,7 +152,9 @@ class _OrdersWidgetState extends State<OrdersWidget> {
                 decoration: BoxDecoration(
                   border: Border(
                     bottom: BorderSide(
-                      color: isDark ? Colors.white10 : Colors.black.withOpacity(0.05),
+                      color: isDark
+                          ? Colors.white10
+                          : Colors.black.withOpacity(0.05),
                     ),
                   ),
                 ),
@@ -159,9 +164,11 @@ class _OrdersWidgetState extends State<OrdersWidget> {
                     Row(
                       children: [
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 10, vertical: 6),
                           decoration: BoxDecoration(
-                            color: _getStatusColor(order['status']?.toString()).withOpacity(0.1),
+                            color: _getStatusColor(order['status']?.toString())
+                                .withOpacity(0.1),
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Row(
@@ -170,15 +177,18 @@ class _OrdersWidgetState extends State<OrdersWidget> {
                                 width: 6,
                                 height: 6,
                                 decoration: BoxDecoration(
-                                  color: _getStatusColor(order['status']?.toString()),
+                                  color: _getStatusColor(
+                                      order['status']?.toString()),
                                   shape: BoxShape.circle,
                                 ),
                               ),
                               const SizedBox(width: 6),
                               Text(
-                                order['status']?.toString().toUpperCase() ?? 'PENDING',
+                                order['status']?.toString().toUpperCase() ??
+                                    'PENDING',
                                 style: TextStyle(
-                                  color: _getStatusColor(order['status']?.toString()),
+                                  color: _getStatusColor(
+                                      order['status']?.toString()),
                                   fontSize: 12,
                                   fontWeight: FontWeight.w600,
                                 ),
@@ -202,28 +212,32 @@ class _OrdersWidgetState extends State<OrdersWidget> {
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
-                        color: isDark ? LarosaColors.primary : LarosaColors.primary.withOpacity(0.8),
+                        color: isDark
+                            ? LarosaColors.primary
+                            : LarosaColors.primary.withOpacity(0.8),
                       ),
                     ),
                   ],
                 ),
               ),
-              
+
               // Media Gallery
               if (allMedia.isNotEmpty) ...[
                 Container(
                   height: 120,
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                   child: ListView.builder(
                     scrollDirection: Axis.horizontal,
                     itemCount: allMedia.length,
                     itemBuilder: (context, index) {
                       final mediaUrl = allMedia[index];
                       final isVideo = mediaUrl.toLowerCase().endsWith('.mp4');
-                      
+
                       return Container(
                         width: 100,
-                        margin: EdgeInsets.only(right: index < allMedia.length - 1 ? 12 : 0),
+                        margin: EdgeInsets.only(
+                            right: index < allMedia.length - 1 ? 12 : 0),
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(12),
                           boxShadow: [
@@ -244,20 +258,29 @@ class _OrdersWidgetState extends State<OrdersWidget> {
                                 fit: BoxFit.cover,
                                 errorBuilder: (context, error, stackTrace) {
                                   return Container(
-                                    color: isDark ? Colors.white12 : Colors.black.withOpacity(0.05),
+                                    color: isDark
+                                        ? Colors.white12
+                                        : Colors.black.withOpacity(0.05),
                                     child: Icon(
                                       CupertinoIcons.photo,
-                                      color: isDark ? Colors.white30 : Colors.black26,
+                                      color: isDark
+                                          ? Colors.white30
+                                          : Colors.black26,
                                     ),
                                   );
                                 },
-                                loadingBuilder: (context, child, loadingProgress) {
+                                loadingBuilder:
+                                    (context, child, loadingProgress) {
                                   if (loadingProgress == null) return child;
                                   return Container(
-                                    color: isDark ? Colors.white12 : Colors.black.withOpacity(0.05),
+                                    color: isDark
+                                        ? Colors.white12
+                                        : Colors.black.withOpacity(0.05),
                                     child: Center(
                                       child: CupertinoActivityIndicator(
-                                        color: isDark ? Colors.white54 : Colors.black45,
+                                        color: isDark
+                                            ? Colors.white54
+                                            : Colors.black45,
                                       ),
                                     ),
                                   );
@@ -291,7 +314,7 @@ class _OrdersWidgetState extends State<OrdersWidget> {
                   ),
                 ),
               ],
-              
+
               // Order Details
               Padding(
                 padding: const EdgeInsets.all(16),
@@ -312,9 +335,11 @@ class _OrdersWidgetState extends State<OrdersWidget> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                deliveryLocation['city']?.toString() ?? 'Location Pending',
+                                deliveryLocation['city']?.toString() ??
+                                    'Location Pending',
                                 style: TextStyle(
-                                  color: isDark ? Colors.white70 : Colors.black87,
+                                  color:
+                                      isDark ? Colors.white70 : Colors.black87,
                                   fontSize: 15,
                                   fontWeight: FontWeight.w500,
                                 ),
@@ -324,7 +349,9 @@ class _OrdersWidgetState extends State<OrdersWidget> {
                                 Text(
                                   'Driver: ${driver['name']}',
                                   style: TextStyle(
-                                    color: isDark ? Colors.white60 : Colors.black54,
+                                    color: isDark
+                                        ? Colors.white60
+                                        : Colors.black54,
                                     fontSize: 13,
                                   ),
                                 ),
@@ -334,14 +361,39 @@ class _OrdersWidgetState extends State<OrdersWidget> {
                         ),
                       ],
                     ),
+
                     const SizedBox(height: 12),
-                    
+
+                    // Time
+                    Row(
+                      children: [
+                        Icon(
+                          CupertinoIcons.clock,
+                          size: 18,
+                          color: isDark ? Colors.white60 : Colors.black45,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          timeago.format(
+                            DateTime.parse(order['createdAt'] ?? DateTime.now().toIso8601String()),
+                            allowFromNow: true,
+                          ),
+                          style: TextStyle(
+                            color: isDark ? Colors.white60 : Colors.black45,
+                            fontSize: 13,
+                          ),
+                        ),
+                      ],
+                    ),
+
+                    const SizedBox(height: 12),
+
                     // Items Summary
                     Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: isDark 
-                            ? Colors.white.withOpacity(0.05) 
+                        color: isDark
+                            ? Colors.white.withOpacity(0.05)
                             : LarosaColors.primary.withOpacity(0.04),
                         borderRadius: BorderRadius.circular(12),
                       ),
@@ -376,7 +428,7 @@ class _OrdersWidgetState extends State<OrdersWidget> {
   }
 
   Color _getStatusColor(String? status) {
-    switch(status?.toUpperCase()) {
+    switch (status?.toUpperCase()) {
       case 'COMPLETED':
         return Colors.green;
       case 'PENDING':
