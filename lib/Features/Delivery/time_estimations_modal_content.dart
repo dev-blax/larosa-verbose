@@ -1,23 +1,29 @@
+import 'dart:async';
 import 'dart:convert';
+import 'dart:typed_data';
 
 import 'package:avatar_glow/avatar_glow.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 import 'package:intl/intl.dart';
 import 'package:recase/recase.dart';
 import 'package:stomp_dart_client/stomp_dart_client.dart';
 
 import '../../Services/auth_service.dart';
+import '../../Services/fcm_service.dart';
 import '../../Services/hive_service.dart';
 import '../../Services/log_service.dart';
 import '../../Utils/colors.dart';
 import '../../Utils/helpers.dart';
 import '../../Utils/links.dart';
 import 'package:http/http.dart' as http;
+import 'dart:ui' as ui;
 
 class TimeEstimationsModalContent extends StatefulWidget {
   final Map<String, dynamic> estimations;
@@ -45,17 +51,28 @@ class _TimeEstimationsModalContentState
   final HiveService hiveService = HiveService();
   String? activeRideType;
 
+  late BitmapDescriptor _driverIcon;
+
+  // new: holds the latest driver-info payload
+  Map<String, dynamic>? driverInfo;
+  // new: subscription so we can cancel on dispose
+  StreamSubscription<Map<String, dynamic>>? _driverInfoSub;
+
   final Set<Marker> _markers = {};
 
   bool isRequestingRide = false;
 
   String paymentMethod = 'CASH';
 
-  String? _city; // Holds the current region (city)
+  // String? _city;
 
   final Set<Polyline> _polylines = {};
 
   late GoogleMapController _mapController;
+
+  late StompClient _stompClient;
+  String? _city;
+  String? _driverId;
 
   final _currencyFormatter = NumberFormat.decimalPattern();
 // or, if you want no decimal digits: NumberFormat('#,##0', 'en_US');
@@ -123,73 +140,241 @@ class _TimeEstimationsModalContentState
 
   late StompClient stompClient;
 
-  StompClient? _stompClient;
-  void _connectToStomp() {
+  // Future<void> _loadDriverIcon() async {
+  //   _driverIcon = await BitmapDescriptor.fromAssetImage(
+  //     const ImageConfiguration(size: Size(48, 48)),
+  //     'assets/icons/driver_pin.png', // ← your beautifully designed pin
+  //   );
+  // }
+
+  /// Creates a BitmapDescriptor by drawing your driver icon
+  /// and a chat-badge with the given [timeText].
+  Future<BitmapDescriptor> _createDriverMarkerWithBadge(
+    String assetPath,
+    int width,
+    String timeText,
+  ) async {
+    // Load base icon
+    final byteData = await rootBundle.load(assetPath);
+    final codec = await ui.instantiateImageCodec(
+      byteData.buffer.asUint8List(),
+      targetWidth: width,
+    );
+    final frame = await codec.getNextFrame();
+    final iconImage = frame.image;
+
+    // Start canvas
+    final recorder = ui.PictureRecorder();
+    final canvas = Canvas(recorder);
+    final paint = Paint();
+
+    // Draw driver icon
+    canvas.drawImage(iconImage, Offset.zero, paint);
+
+    // Badge parameters (large, readable)
+    const badgePadding = 32.0;
+    const badgeHeight = 60.0;
+    final fontSize = 28.0;
+
+    // Prepare text
+    final textStyle = ui.TextStyle(
+      color: Colors.white,
+      fontSize: fontSize,
+      fontWeight: FontWeight.bold,
+    );
+    final paragraphStyle = ui.ParagraphStyle(
+      textAlign: TextAlign.center,
+      maxLines: 1,
+    );
+    final paragraphBuilder = ui.ParagraphBuilder(paragraphStyle)
+      ..pushStyle(textStyle)
+      ..addText(timeText);
+    final constraints = ui.ParagraphConstraints(
+      width: width.toDouble(),
+    );
+    final paragraph = paragraphBuilder.build()..layout(constraints);
+
+    // Calculate badge size & position
+    final badgeWidth = paragraph.maxIntrinsicWidth + badgePadding * 2;
+    final badgeRect = RRect.fromRectAndRadius(
+      Rect.fromLTWH(
+        (width - badgeWidth) / 2, // center horizontally
+        iconImage.height + 8, // small gap below icon
+        badgeWidth,
+        badgeHeight,
+      ),
+      Radius.circular(badgeHeight / 2), // <-- Fully rounded like a pill
+    );
+
+    // 🟦 Draw badge background with LarosaColors.primary
+    paint.color = LarosaColors.primary; // Or LarosaColors.primary
+    canvas.drawRRect(badgeRect, paint);
+
+    // Draw text inside badge
+    canvas.drawParagraph(
+      paragraph,
+      Offset(
+        badgeRect.left +
+            (badgeWidth - paragraph.width) / 2, // center text properly
+        badgeRect.top + (badgeHeight - paragraph.height) / 2,
+      ),
+    );
+
+    // End recording & convert
+    final picture = recorder.endRecording();
+    final img = await picture.toImage(
+      width,
+      iconImage.height + badgeHeight.toInt() + 8,
+    );
+    final pngBytes = await img.toByteData(format: ui.ImageByteFormat.png);
+
+    return BitmapDescriptor.fromBytes(pngBytes!.buffer.asUint8List());
+  }
+
+//  Future<void> _loadDriverIcon() async {
+//   final Uint8List markerBytes =
+//       await _getBytesFromAsset('assets/icons/driver_pin.png', 84);
+//   _driverIcon = BitmapDescriptor.fromBytes(markerBytes);
+//   setState(() {});  // make sure anything depending on _driverIcon rebuilds
+// }
+
+  Future<void> _loadDriverIcon() async {
+    _driverIcon = await _createDriverMarkerWithBadge(
+      'assets/icons/driver_pin.png',
+      84,
+      '5 M', // placeholder until you wire real-time data
+    );
+    setState(() {});
+  }
+
+  Future<Uint8List> _getBytesFromAsset(String path, int width) async {
+    final ByteData data = await rootBundle.load(path);
+    final ui.Codec codec = await ui.instantiateImageCodec(
+      data.buffer.asUint8List(),
+      targetWidth: width,
+    );
+    final ui.FrameInfo fi = await codec.getNextFrame();
+    final ByteData? byteData =
+        await fi.image.toByteData(format: ui.ImageByteFormat.png);
+    return byteData!.buffer.asUint8List();
+  }
+
+  // StompClient? _stompClient;
+  // void _connectToStomp() {
+  //   _stompClient = StompClient(
+  //     config: StompConfig(
+  //       url: LarosaLinks.baseWsUrl,
+  //       onConnect: _onStompConnect,
+  //       onWebSocketError: (dynamic error) {
+  //         setState(() {
+  //           // isLoading = false; // Stop shimmer on WebSocket failure
+  //         });
+  //       },
+  //       reconnectDelay: const Duration(seconds: 5),
+  //     ),
+  //   );
+
+  //   _stompClient!.activate();
+  // }
+
+  Future<void> _connectToStomp() async {
+    final token = await AuthService.getToken();
+
     _stompClient = StompClient(
       config: StompConfig(
-        url: LarosaLinks.baseWsUrl,
-        onConnect: _onStompConnect,
-        onWebSocketError: (dynamic error) {
-          setState(() {
-            // isLoading = false; // Stop shimmer on WebSocket failure
-          });
+        url: LarosaLinks.baseWsUrl, // e.g. 'wss://…/ws'
+        stompConnectHeaders: {
+          // send your Bearer token
+          'Authorization': 'Bearer $token',
         },
+        onConnect: _onStompConnect,
+        onWebSocketError: (err) => LogService.logError('WS error: $err'),
+        onStompError: (frame) => LogService.logError(
+            'STOMP ERROR cmd=${frame.command} hdrs=${frame.headers} body=${frame.body}'),
         reconnectDelay: const Duration(seconds: 5),
       ),
     );
 
-    _stompClient!.activate();
+    _stompClient.activate();
   }
 
+  // void _onStompConnect(StompFrame frame) {
+  //   print('Connected to WebSocket server: ${frame.headers}');
+
+  //   // Subscribe to the driver-specific topic
+  //   // _stompClient!.subscribe(
+  //   //   destination: '/topic/driver/$driverId', // Use driverId from Hive
+  //   //   callback: (StompFrame message) {
+  //   //     final messageBody = message.body;
+  //   //     if (messageBody != null) {
+  //   //       print('Update for driver ($driverId): $messageBody');
+  //   //     }
+  //   //   },
+  //   // );
+
+  //   // Subscribe to the city topic for location updates
+  //   // _stompClient!.subscribe(
+  //   //   destination: '/topic/$_city',
+  //   //   callback: (StompFrame message) {
+  //   //     final messageBody = message.body;
+  //   //     if (messageBody != null) {
+  //   //       print('Location update for city ($_city): $messageBody');
+  //   //       final locationUpdate = _parseLocationUpdate(messageBody);
+  //   //       if (locationUpdate != null) {
+  //   //         print(
+  //   //             'Latitude: ${locationUpdate['latitude']}, Longitude: ${locationUpdate['longitude']}');
+  //   //       }
+  //   //     }
+  //   //   },
+  //   // );
+
+  //   _stompClient!.subscribe(
+  //     destination: '/topic/$_city}',
+  //     callback: (StompFrame message) {
+  //       final messageBody = message.body;
+  //       // if (messageBody != null) {
+  //       final data = jsonDecode(messageBody!);
+  //       HelperFunctions.larosaLogger('Update for driver larosa : $messageBody');
+  //       // } else {
+  //       //   print('Message body is null.');
+  //       // }
+  //     },
+  //   );
+
+  //   HelperFunctions.larosaLogger('Successfully subscribed to /topic/$_city');
+
+  //   // Send the initial driver location update
+  //   // if (_latitude != null && _longitude != null) {
+  //   //   _sendDriverLocationUpdate(_latitude!, _longitude!);
+  //   // }
+  // }
+
   void _onStompConnect(StompFrame frame) {
-    print('Connected to WebSocket server: ${frame.headers}');
+    LogService.logInfo('STOMP CONNECTED — headers: ${frame.headers}');
 
-    // Subscribe to the driver-specific topic
-    // _stompClient!.subscribe(
-    //   destination: '/topic/driver/$driverId', // Use driverId from Hive
-    //   callback: (StompFrame message) {
-    //     final messageBody = message.body;
-    //     if (messageBody != null) {
-    //       print('Update for driver ($driverId): $messageBody');
-    //     }
-    //   },
-    // );
+    if (_city == null || _city!.isEmpty) {
+      LogService.logError('⚠️ City is null or empty, cannot subscribe');
+      return;
+    }
 
-    // Subscribe to the city topic for location updates
-    // _stompClient!.subscribe(
-    //   destination: '/topic/$_city',
-    //   callback: (StompFrame message) {
-    //     final messageBody = message.body;
-    //     if (messageBody != null) {
-    //       print('Location update for city ($_city): $messageBody');
-    //       final locationUpdate = _parseLocationUpdate(messageBody);
-    //       if (locationUpdate != null) {
-    //         print(
-    //             'Latitude: ${locationUpdate['latitude']}, Longitude: ${locationUpdate['longitude']}');
-    //       }
-    //     }
-    //   },
-    // );
+    // final topic = '/topic/${_city!}';
+    final topic = '/topic/dodoma';
+    LogService.logInfo('👉 Subscribing to $topic');
+    _stompClient.subscribe(
+      destination: topic,
+      callback: (StompFrame f) {
+        try {
+          final data = jsonDecode(f.body!);
+          LogService.logInfo('⬇️ Message on $topic: $data');
 
-    _stompClient!.subscribe(
-      destination: '/topic/$_city}',
-      callback: (StompFrame message) {
-        final messageBody = message.body;
-        // if (messageBody != null) {
-        final data = jsonDecode(messageBody!);
-        HelperFunctions.larosaLogger('Update for driver larosa : $messageBody');
-        // } else {
-        //   print('Message body is null.');
-        // }
+          final lat = (data['latitude'] as num).toDouble();
+          final lng = (data['longitude'] as num).toDouble();
+          _updateDriverMarker(lat, lng);
+        } catch (e) {
+          LogService.logError('Failed to parse STOMP message: $e');
+        }
       },
     );
-
-    HelperFunctions.larosaLogger('Successfully subscribed to /topic/$_city');
-
-    // Send the initial driver location update
-    // if (_latitude != null && _longitude != null) {
-    //   _sendDriverLocationUpdate(_latitude!, _longitude!);
-    // }
   }
 
   Future<void> _requestRide({required String selectedVehicleType}) async {
@@ -276,8 +461,10 @@ class _TimeEstimationsModalContentState
         body: jsonEncode(requestBody),
       );
 
-      LogService.logDebug("Response Status Code: ${response.statusCode}");
-      LogService.logDebug("Response Body: ${response.body}");
+      print('frs 12343242456346452345234 : ${requestBody}');
+
+      LogService.logDebug("frs Response Status Code: ${response.statusCode}");
+      LogService.logDebug("frs Response Body: ${response.body}");
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         LogService.logInfo('Ride request successful');
@@ -357,18 +544,143 @@ class _TimeEstimationsModalContentState
     return {"country": "Unknown", "city": "Unknown"};
   }
 
+  // void _updateDriverMarker(double lat, double lng) {
+  //   final id = const MarkerId('driver');
+  //   // Remove old driver marker (if any)
+  //   _markers.removeWhere((m) => m.markerId == id);
+  //   // Add new one
+  //   _markers.add(
+  //     Marker(
+  //       markerId: id,
+  //       position: LatLng(lat, lng),
+  //       icon: _driverIcon,
+  //       infoWindow: const InfoWindow(title: 'Your driver'),
+  //     ),
+  //   );
+  //   // Optionally recenter map on driver:
+  //   _mapController.animateCamera(CameraUpdate.newLatLng(LatLng(lat, lng)));
+  //   setState(() {});
+  // }
+
+  void _updateDriverMarker(double lat, double lng) {
+    final id = const MarkerId('driver');
+
+    // Remove any old driver marker
+    _markers.removeWhere((m) => m.markerId == id);
+
+    // Add the new one
+    _markers.add(
+      Marker(
+        markerId: id,
+        position: LatLng(lat, lng),
+        icon: _driverIcon,
+        infoWindow: const InfoWindow(title: 'Your driver'),
+      ),
+    );
+
+    // Optionally move the camera
+    if (_mapController != null) {
+      _mapController.animateCamera(
+        CameraUpdate.newLatLng(LatLng(lat, lng)),
+      );
+    }
+
+    setState(() {});
+  }
+
+  // @override
+  // void initState() {
+  //   super.initState();
+
+  //   // Load any previously booked ride
+  //   activeRideType =
+  //       hiveService.getData<String>('bookingBox', 'activeRideType');
+
+  //   _initializeMarkers();
+  //   _drawRoute();
+  //   _updateCurrentCityFromLocation();
+  //   // _connectToStomp();
+
+  //   _loadDriverIcon().then((_) {
+  //     // 1) Get city, then…
+  //     _updateCurrentCityFromLocation().then((_) async {
+  //       // 2) Ensure 'userBox' is open, then read profileId
+  //       Box box;
+  //       if (Hive.isBoxOpen('userBox')) {
+  //         box = Hive.box('userBox');
+  //       } else {
+  //         box = await Hive.openBox('userBox');
+  //       }
+
+  //       _driverId = box.get('profileId')?.toString() ??
+  //           AuthService.getProfileId().toString();
+
+  //       // 3) Now finally connect
+  //       _connectToStomp();
+  //     });
+  //   });
+  // }
+
   @override
   void initState() {
     super.initState();
+    _bootstrap();
 
-    // Load any previously booked ride
-    activeRideType =
-        hiveService.getData<String>('bookingBox', 'activeRideType');
+    // ─── subscribe to driver-info FCM stream
+    _driverInfoSub = FcmService()
+        .driverInfoStream
+        .listen((payload) => setState(() => driverInfo = payload));
 
+    // ─── rehydrate any cached payload (background case)
+    _rehydrateDriverInfo();
+  }
+
+  Future<void> _bootstrap() async {
+    // 1️⃣ Load your custom driver icon
+    await _loadDriverIcon();
+
+    // 2️⃣ Read any previously booked ride
+    activeRideType = hiveService.getData<String>(
+      'bookingBox',
+      'activeRideType',
+    );
+
+    // 3️⃣ Add source/destination markers & draw your route
     _initializeMarkers();
-    _drawRoute();
-    _updateCurrentCityFromLocation();
+    await _drawRoute();
+
+    // 4️⃣ Reverse‐geocode your current city
+    await _updateCurrentCityFromLocation();
+
+    // 5️⃣ Open Hive userBox and read profileId
+    Box userBox;
+    if (Hive.isBoxOpen('userBox')) {
+      userBox = Hive.box('userBox');
+    } else {
+      userBox = await Hive.openBox('userBox');
+    }
+    _driverId = userBox.get('profileId')?.toString() ??
+        AuthService.getProfileId().toString();
+
+    // 6️⃣ Finally connect to STOMP (driver icon is loaded, city & driverId set)
     _connectToStomp();
+  }
+
+  Future<void> _rehydrateDriverInfo() async {
+    final box = await Hive.openBox('fcmCache');
+    final cached = box.get('latest_driver_info');
+    if (cached != null) {
+      box.delete('latest_driver_info');
+      setState(() => driverInfo = Map<String, dynamic>.from(cached));
+    }
+  }
+
+  @override
+  void dispose() {
+    _stompClient.deactivate();
+    _driverInfoSub?.cancel();
+    _stompClient.deactivate();
+    super.dispose();
   }
 
   void _initializeMarkers() {
@@ -581,6 +893,29 @@ class _TimeEstimationsModalContentState
           ),
 
           // ─── Map ───
+          // Expanded(
+          //   flex: 4,
+          //   child: ClipRRect(
+          //     borderRadius: BorderRadius.circular(12),
+          //     child: GoogleMap(
+          //       initialCameraPosition: CameraPosition(
+          //         target: LatLng(widget.sourceLatitude, widget.sourceLongitude),
+          //         zoom: 4,
+          //       ),
+          //       markers: _markers,
+          //       polylines: _polylines,
+          //       onMapCreated: (c) {
+          //         _mapController = c;
+          //         _fitMapToBounds([
+          //           LatLng(widget.sourceLatitude, widget.sourceLongitude),
+          //           LatLng(widget.destinationLatitude,
+          //               widget.destinationLongitude),
+          //         ]);
+          //       },
+          //     ),
+          //   ),
+          // ),
+
           Expanded(
             flex: 4,
             child: ClipRRect(
@@ -590,6 +925,21 @@ class _TimeEstimationsModalContentState
                   target: LatLng(widget.sourceLatitude, widget.sourceLongitude),
                   zoom: 12,
                 ),
+
+                // ─── New flags added here ───
+                zoomControlsEnabled: true, // shows + / – buttons
+                zoomGesturesEnabled: true, // pinch to zoom
+                compassEnabled: true, // little compass icon
+                mapToolbarEnabled:
+                    true, // Android map toolbar (open in Maps, StreetView)
+                myLocationButtonEnabled: true, // “go to my location” button
+                myLocationEnabled:
+                    true, // actually draws your blue dot (requires permission)
+                indoorViewEnabled: true, // 3D indoor view
+                rotateGesturesEnabled: true, // two-finger rotate
+                tiltGesturesEnabled: true, // two-finger tilt
+                scrollGesturesEnabled: true, // pan
+
                 markers: _markers,
                 polylines: _polylines,
                 onMapCreated: (c) {
@@ -624,7 +974,6 @@ class _TimeEstimationsModalContentState
                         color: LarosaColors.textSecondary,
                       ),
                     ),
-
                     TextSpan(
                       text: '${distance.toStringAsFixed(2)} ',
                       style: const TextStyle(
@@ -646,6 +995,13 @@ class _TimeEstimationsModalContentState
               ),
             ],
           ),
+
+          const SizedBox(height: 8),
+          Text('Driver ID: ${driverInfo?['driverId'] ?? ''}'),
+          Text('Driver Token: ${driverInfo?['driverToken'] ?? ''}'),
+          Text('Driver Latitude: ${driverInfo?['lat'] ?? ''}'),
+          Text('Driver Longitude: ${driverInfo?['lng'] ?? ''}'),
+          const SizedBox(height: 12),
 
           const SizedBox(height: 12),
 
@@ -914,7 +1270,7 @@ class _TimeEstimationsModalContentState
     final isBooked = rawType == activeRideType;
 
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final cardColor = isDark ? LarosaColors.dark : LarosaColors.light;
+    final cardColor = isDark ? LarosaColors.dark : null;
 
     final hasDiscount = offerCost < cost;
     final displayPrice = hasDiscount ? offerCost : cost;
@@ -924,36 +1280,92 @@ class _TimeEstimationsModalContentState
 
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 4),
-      // decoration: BoxDecoration(
-      //   color: cardColor,
-      //   border: const Border(
-      //     top: BorderSide(color: LarosaColors.borderPrimary, width: 1),
-      //     bottom: BorderSide(color: LarosaColors.borderPrimary, width: 1),
-      //   ),
-      //   borderRadius: BorderRadius.circular(12),
-      // ),
+      decoration: BoxDecoration(
+        color: cardColor,
+        border: const Border(
+          top: BorderSide(color: LarosaColors.borderPrimary, width: 1),
+          bottom: BorderSide(color: LarosaColors.borderPrimary, width: 1),
+        ),
+        borderRadius: BorderRadius.circular(12),
+      ),
       child: Padding(
         padding: const EdgeInsets.all(12),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Vehicle Icon + Type
+            // Row(
+            //   children: [
+            //     CircleAvatar(
+            //       radius: 18,
+            //       backgroundColor: LarosaColors.primary.withOpacity(0.1),
+            //       child: Icon(icon, size: 18, color: LarosaColors.primary),
+            //     ),
+            //     const SizedBox(width: 8),
+            //     Text(
+            //       type,
+            //       style: TextStyle(
+            //         fontSize: 13,
+            //         fontWeight: FontWeight.w600,
+            //         color: isDark ? LarosaColors.white : LarosaColors.black,
+            //       ),
+            //     ),
+            //   ],
+            // ),
+
             Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                CircleAvatar(
-                  radius: 18,
-                  backgroundColor: LarosaColors.primary.withOpacity(0.1),
-                  child: Icon(icon, size: 18, color: LarosaColors.primary),
+                // your existing avatar + text
+                Row(
+                  children: [
+                    CircleAvatar(
+                      radius: 18,
+                      backgroundColor: LarosaColors.primary.withOpacity(0.1),
+                      child: Icon(icon, size: 18, color: LarosaColors.primary),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      type,
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: isDark ? LarosaColors.white : LarosaColors.black,
+                      ),
+                    ),
+                  ],
                 ),
-                const SizedBox(width: 8),
-                Text(
-                  type,
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: isDark ? LarosaColors.white : LarosaColors.black,
+
+                // the call icon on the right
+                if (isBooked || available)
+                  GestureDetector(
+                    child: Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        gradient: const LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [
+                            LarosaColors.primary,
+                            LarosaColors.secondary
+                          ],
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.2),
+                            blurRadius: 6,
+                            offset: const Offset(0, 3),
+                          ),
+                        ],
+                      ),
+                      child: const Icon(
+                        Icons.phone,
+                        size: 24,
+                        color: Colors.white,
+                      ),
+                    ),
                   ),
-                ),
               ],
             ),
 
@@ -1002,13 +1414,12 @@ class _TimeEstimationsModalContentState
             // ),
 
             Row(
-  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-  children: [
-    _tinyInfo(Icons.access_time, 'Arrival:', formatTime(pickupMin)),
-    _tinyInfo(Icons.route_rounded, 'Route:',   formatTime(travelMin)),
-  ],
-),
-
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                _tinyInfo(Icons.access_time, 'Arrival:', formatTime(pickupMin)),
+                _tinyInfo(Icons.route_rounded, 'Route:', formatTime(travelMin)),
+              ],
+            ),
 
             const SizedBox(height: 10),
 
@@ -1039,69 +1450,70 @@ class _TimeEstimationsModalContentState
                   //     ),
                   //   )
 
-             ?   Padding(
-  padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 0),
-  child: Row(
-    children: [
-      // ─── Animated “Driver is on the way” ───
-      AvatarGlow(
-        glowColor: Colors.greenAccent,
-        glowRadiusFactor: .5,
-        duration: const Duration(milliseconds: 1500),
-        repeat: true,
-        // showTwoGlows: true,
-        child:  Icon(
-          // Icons.local_taxi,
-           icon,
-          size: 24,
-          color: Colors.green,
-        ),
-      ),
-      const SizedBox(width: 8),
-      const Text(
-        'Driver is on the way',
-        style: TextStyle(
-          fontSize: 14,
-          fontWeight: FontWeight.w600,
-          color: Colors.green,
-        ),
-      ),
-
-      const Spacer(),
-
-      // ─── Cancel Button ───
-      Container(
-        decoration: BoxDecoration(
-                            gradient: LarosaColors.dangerGradient,
-                            borderRadius: BorderRadius.circular(8),
+                  ? Padding(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 0, vertical: 0),
+                      child: Row(
+                        children: [
+                          // ─── Animated “Driver is on the way” ───
+                          AvatarGlow(
+                            glowColor: Colors.greenAccent,
+                            glowRadiusFactor: .5,
+                            duration: const Duration(milliseconds: 1500),
+                            repeat: true,
+                            // showTwoGlows: true,
+                            child: Icon(
+                              // Icons.local_taxi,
+                              icon,
+                              size: 24,
+                              color: Colors.green,
+                            ),
                           ),
-        child: TextButton.icon(
-          onPressed: _cancelBooking,
-          icon: Icon(
-            icon,
-            size: 18,
-            color: Colors.white,
-          ),
-          label: const Text(
-            'Cancel',
-            style: TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
-            ),
-          ),
-          style: TextButton.styleFrom(
+                          const SizedBox(width: 8),
+                          const Text(
+                            'Driver is on the way',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.green,
+                            ),
+                          ),
+
+                          const Spacer(),
+
+                          // ─── Cancel Button ───
+                          Container(
+                            decoration: BoxDecoration(
+                              gradient: LarosaColors.dangerGradient,
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: TextButton.icon(
+                              onPressed: _cancelBooking,
+                              icon: Icon(
+                                icon,
+                                size: 18,
+                                color: Colors.white,
+                              ),
+                              label: const Text(
+                                'Cancel',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                ),
+                              ),
+                              style: TextButton.styleFrom(
                                 backgroundColor: Colors.transparent,
                                 padding: const EdgeInsets.symmetric(
                                     horizontal: 16, vertical: 6),
                                 minimumSize: const Size(0, 28),
                                 tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                               ),
-        ),
-      ),
-    ],
-  ),
-)
+                            ),
+                          ),
+                        ],
+                      ),
+                    )
                   : (available
                       // Available → gradient Select
                       ? Container(
@@ -1115,18 +1527,18 @@ class _TimeEstimationsModalContentState
                                 : () =>
                                     _requestRide(selectedVehicleType: rawType),
                             icon: isRequestingRide
-                                ?  SizedBox(
+                                ? SizedBox(
                                     width: 14,
                                     height: 14,
                                     child: Padding(
                                       padding: const EdgeInsets.all(8.0),
                                       child: CupertinoActivityIndicator(
                                         radius: 8,
-                                        color: Colors.white, animating: true,),
-                                    )
-                                  )
-                                : Icon(icon,
-            size: 18, color: Colors.white),
+                                        color: Colors.white,
+                                        animating: true,
+                                      ),
+                                    ))
+                                : Icon(icon, size: 18, color: Colors.white),
                             label: Text(
                               isRequestingRide ? '' : 'Select',
                               style: const TextStyle(
@@ -1194,24 +1606,23 @@ class _TimeEstimationsModalContentState
   // }
 
   Widget _tinyInfo(IconData icon, String label, String? value) {
-  // parse “5 min” → 5, or null/invalid → 0
-  final minutes = int.tryParse(value!.replaceAll(RegExp(r'[^0-9]'), '')) ?? 0;
+    // parse “5 min” → 5, or null/invalid → 0
+    final minutes = int.tryParse(value!.replaceAll(RegExp(r'[^0-9]'), '')) ?? 0;
 
-  // nothing to show for zero minutes
-  if (minutes == 0) return const SizedBox.shrink();
+    // nothing to show for zero minutes
+    if (minutes == 0) return const SizedBox.shrink();
 
-  return Row(
-    children: [
-      Icon(icon, size: 14, color: LarosaColors.mediumGray),
-      const SizedBox(width: 4),
-      Text(
-        '$label $value',
-        style: const TextStyle(fontSize: 12),
-      ),
-    ],
-  );
-}
-
+    return Row(
+      children: [
+        Icon(icon, size: 14, color: LarosaColors.mediumGray),
+        const SizedBox(width: 4),
+        Text(
+          '$label $value',
+          style: const TextStyle(fontSize: 12),
+        ),
+      ],
+    );
+  }
 
   String formatTime(double minutes) {
     int hours = (minutes / 60).floor();

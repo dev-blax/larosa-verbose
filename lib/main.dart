@@ -36,5 +36,8 @@ Future<void> main() async {
 
   await dotenv.load(fileName: ".env");
 
+
+  // await FcmService().initialize();
+
   runApp(const App());
 }

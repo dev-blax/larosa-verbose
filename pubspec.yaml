@@ -110,6 +110,7 @@ flutter:
     - assets/lotties/
     - .env
     - assets/music/magic_tone.mp3
+    - assets/icons/driver_pin.png
 
   fonts:
     - family: NotoColorEmoji

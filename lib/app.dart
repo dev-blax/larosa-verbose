@@ -34,6 +34,25 @@ class _AppState extends State<App> {
   final String socketChannel =
       '${LarosaLinks.baseurl}/ws/topic/customer/${AuthService.getProfileId()}';
 
+  // Future<void> _socketConnection2() async {
+  //   const String wsUrl = '${LarosaLinks.baseurl}/ws';
+  //   stompClient = StompClient(
+  //     config: StompConfig.sockJS(
+  //       url: wsUrl,
+  //       onConnect: onConnect,
+  //       onWebSocketError: (dynamic error) =>
+  //           LogService.logError('WebSocket error: $error'),
+  //       onStompError: (StompFrame frame) =>
+  //           LogService.logWarning('Stomp error: ${frame.body}'),
+  //       onDisconnect: (StompFrame frame) =>
+  //           LogService.logFatal('Disconnected from WebSocket'),
+  //     ),
+  //   );
+
+  //   stompClient.activate();
+  // }
+
+
   Future<void> _socketConnection2() async {
     const String wsUrl = '${LarosaLinks.baseurl}/ws';
     stompClient = StompClient(
@@ -59,7 +78,7 @@ class _AppState extends State<App> {
     setState(() {
       connectedToSocket = true;
     });
-    LogService.logInfo('Connected to WebSocket server: $frame');
+    LogService.logInfo('STOMP CONNECTED — headers: ${frame.headers}');
 
     stompClient.subscribe(
       destination: '/topic/customer/${AuthService.getProfileId()}',

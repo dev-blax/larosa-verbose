@@ -1289,6 +1289,7 @@ class _NewDeliveryState extends State<NewDelivery> {
     try {
       final response = await http.get(Uri.parse(endpoint), headers: headers);
       print('frs : ${response.body}');
+      print('frs 123  : ${response.statusCode}');
       if (response.statusCode == 200 || response.statusCode == 201) {
         setState(() {
           driverOffer = jsonDecode(response.body);
@@ -1364,6 +1365,7 @@ class _NewDeliveryState extends State<NewDelivery> {
         headers: headers,
         body: jsonEncode(requestBody),
       );
+      
       if (response.statusCode == 200 || response.statusCode == 201) {
         LogService.logInfo("Time Estimation Response: ${response.body}");
         return jsonDecode(response.body);
@@ -1663,7 +1665,7 @@ class _NewDeliveryState extends State<NewDelivery> {
   "cityName": "Dodoma"
     };
 
-    print('→ Payload: ${jsonEncode(requestBody)}');
+    print('→ frs Payload: ${jsonEncode(requestBody)}');
 
     try {
       final response = await http.post(
@@ -1674,7 +1676,7 @@ class _NewDeliveryState extends State<NewDelivery> {
         },
         body: jsonEncode(requestBody),
       );
-
+print('frs costs : ${response.statusCode}');
       setState(() => isFetchingTimeEstimations = false);
 
       if (response.statusCode == 200 || response.statusCode == 201) {
@@ -1906,7 +1908,7 @@ class _NewDeliveryState extends State<NewDelivery> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        centerTitle: true,
+        // centerTitle: true,
         automaticallyImplyLeading: false,
         // title: const Text(
         //   'Delivery',
@@ -1915,30 +1917,30 @@ class _NewDeliveryState extends State<NewDelivery> {
         title: GestureDetector(
           onTap: _loadDriverOffer,
           child: const Text(
-            'Delivery',
+            'Larosa Deliveries',
             style: TextStyle(fontSize: 18),
           ),
         ),
         actions: [
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8.0),
-            child: Container(
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [LarosaColors.secondary, LarosaColors.purple],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                shape: BoxShape.circle,
-              ),
-              child: IconButton(
-                icon: const Icon(Icons.explore, color: Colors.white),
-                onPressed: () {
-                  Navigator.of(context).push(_createRoute());
-                },
-              ),
-            ),
-          ),
+          // Padding(
+          //   padding: const EdgeInsets.symmetric(horizontal: 8.0),
+          //   child: Container(
+          //     decoration: const BoxDecoration(
+          //       gradient: LinearGradient(
+          //         colors: [LarosaColors.secondary, LarosaColors.purple],
+          //         begin: Alignment.topLeft,
+          //         end: Alignment.bottomRight,
+          //       ),
+          //       shape: BoxShape.circle,
+          //     ),
+          //     child: IconButton(
+          //       icon: const Icon(Icons.explore, color: Colors.white),
+          //       onPressed: () {
+          //         Navigator.of(context).push(_createRoute());
+          //       },
+          //     ),
+          //   ),
+          // ),
         ],
       ),
       body: Stack(
@@ -2171,6 +2173,7 @@ class _NewDeliveryState extends State<NewDelivery> {
                     ),
                   ),
                 ),
+                
               const Gap(10),
               const Divider(),
               const Gap(10),

@@ -183,7 +183,7 @@ class _PersonalRegisterScreenState extends State<PersonalRegisterScreen> {
                             ),
                           ),
                           const Gap(10),
-                          const OauthButtons(),
+                          // const OauthButtons(),
                           const Gap(10),
                           const Divider(),
                           const Row(
