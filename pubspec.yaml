@@ -1,7 +1,7 @@
 name: larosa_block
 description: "A new Flutter project."
 publish_to: 'none'
-version: 2.44.2+65
+version: 2.44.3+43
 
 environment:
   sdk: ^3.6.0
@@ -109,6 +109,7 @@ flutter:
     - assets/gifs/
     - assets/lotties/
     - .env
+    - assets/icons/driver_pin.png
 
   fonts:
     - family: NotoColorEmoji

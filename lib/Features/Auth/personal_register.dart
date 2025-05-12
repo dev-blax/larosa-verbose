@@ -195,34 +195,34 @@ class _PersonalRegisterScreenState extends State<PersonalRegisterScreen> {
                             ),
                           ),
                           const Gap(10),
-                          const OauthButtons(),
+                          // const OauthButtons(),
                           const Gap(10),
                           const Divider(),
-                          const Row(
-                            children: [
-                              Flexible(
-                                child: Divider(
-                                  color: Colors.white,
-                                  thickness: 3,
-                                  indent: 10,
-                                  endIndent: 5,
-                                ),
-                              ),
-                              Text(
-                                'OR',
-                                style: TextStyle(
-                                    fontWeight: FontWeight.w700,
-                                    color: Colors.white),
-                              ),
-                              Flexible(
-                                  child: Divider(
-                                color: Colors.white,
-                                thickness: 3,
-                                indent: 5,
-                                endIndent: 10,
-                              )),
-                            ],
-                          ),
+                          // const Row(
+                          //   children: [
+                          //     Flexible(
+                          //       child: Divider(
+                          //         color: Colors.white,
+                          //         thickness: 3,
+                          //         indent: 10,
+                          //         endIndent: 5,
+                          //       ),
+                          //     ),
+                          //     Text(
+                          //       'OR',
+                          //       style: TextStyle(
+                          //           fontWeight: FontWeight.w700,
+                          //           color: Colors.white),
+                          //     ),
+                          //     Flexible(
+                          //         child: Divider(
+                          //       color: Colors.white,
+                          //       thickness: 3,
+                          //       indent: 5,
+                          //       endIndent: 10,
+                          //     )),
+                          //   ],
+                          // ),
                           const Gap(10),
 
                           Animate(

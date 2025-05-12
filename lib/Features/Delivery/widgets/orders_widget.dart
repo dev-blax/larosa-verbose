@@ -415,11 +415,11 @@ class _OrdersWidgetState extends State<OrdersWidget> {
               ),
               Container(
                 decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [LarosaColors.secondary, LarosaColors.purple],
-                    begin: Alignment.centerLeft,
-                    end: Alignment.centerRight,
-                  ),
+                  // gradient: const LinearGradient(
+                  //   colors: [LarosaColors.secondary, LarosaColors.purple],
+                  //   begin: Alignment.centerLeft,
+                  //   end: Alignment.centerRight,
+                  // ),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: TextButton(

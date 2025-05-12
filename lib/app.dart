@@ -34,29 +34,60 @@ class _AppState extends State<App> {
   final String socketChannel =
       '${LarosaLinks.baseurl}/ws/topic/customer/${AuthService.getProfileId()}';
 
-  Future<void> _socketConnection2() async {
-    const String wsUrl = '${LarosaLinks.baseurl}/ws';
-    stompClient = StompClient(
-      config: StompConfig.sockJS(
-        url: wsUrl,
-        onConnect: onConnect,
-        onWebSocketError: (dynamic error) =>
-            LogService.logError('WebSocket error: $error'),
-        onStompError: (StompFrame frame) =>
-            LogService.logWarning('Stomp error: ${frame.body}'),
-        onDisconnect: (StompFrame frame) =>
-            LogService.logFatal('Disconnected from WebSocket'),
-      ),
-    );
+  // Future<void> _socketConnection2() async {
+  //   const String wsUrl = '${LarosaLinks.baseurl}/ws';
+  //   stompClient = StompClient(
+  //     config: StompConfig.sockJS(
+  //       url: wsUrl,
+  //       onConnect: onConnect,
+  //       onWebSocketError: (dynamic error) =>
+  //           LogService.logError('WebSocket error: $error'),
+  //       onStompError: (StompFrame frame) =>
+  //           LogService.logWarning('Stomp error: ${frame.body}'),
+  //       onDisconnect: (StompFrame frame) =>
+  //           LogService.logFatal('Disconnected from WebSocket'),
+  //     ),
+  //   );
 
-    stompClient.activate();
-  }
+  //   stompClient.activate();
+  // }
+
+
+  Future<void> _socketConnection2() async {
+  final token = await AuthService.getToken(); // however you fetch it
+
+  stompClient = StompClient(
+    config: StompConfig.sockJS(
+      url: '${LarosaLinks.baseurl}/ws',
+      onConnect: onConnect,
+      onWebSocketError: (error) =>
+          LogService.logError('WebSocket error: $error'),
+      onStompError: (frame) {
+        LogService.logError(
+          'STOMP ERROR (${frame.command}) headers=${frame.headers} body=${frame.body}'
+        );
+      },
+      onDisconnect: (frame) =>
+          LogService.logFatal('Disconnected: ${frame.headers}'),
+      // ← HERE:
+      stompConnectHeaders: {
+        'Authorization': 'Bearer $token',
+      },
+      // (optional) fine-tune heartbeats:
+      heartbeatIncoming: Duration(seconds: 0),
+      heartbeatOutgoing: Duration(seconds: 20),
+    ),
+  );
+
+  stompClient.activate();
+}
+
 
   void onConnect(StompFrame frame) {
     setState(() {
       connectedToSocket = true;
     });
-    LogService.logInfo('Connected to WebSocket server: $frame');
+    LogService.logInfo('STOMP CONNECTED — headers: ${frame.headers}');
 
     stompClient.subscribe(
       destination: '/topic/customer/${AuthService.getProfileId()}',

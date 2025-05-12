@@ -5,6 +5,7 @@ import 'package:larosa_block/Services/hive_service.dart';
 import 'package:larosa_block/app.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
+import 'Services/fcm_service.dart';
 import 'firebase_options.dart';
 
 bool connectedToSocket = false;
@@ -36,6 +37,9 @@ Future<void> main() async {
   await hiveService.openBox<String>('bookingBox');
   await hiveService.openBox('profileBox');
   await dotenv.load(fileName: ".env");
+
+
+  // await FcmService().initialize();
 
   runApp(const App());
 }
