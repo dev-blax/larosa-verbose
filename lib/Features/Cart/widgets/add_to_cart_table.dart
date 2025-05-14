@@ -201,7 +201,7 @@ class _AddToCartTableState extends State<AddToCartTable> {
             _buildDivider(),
             _buildInfoRow(
               context,
-              'Product(s) Price',
+               widget.isReservation ? 'Product(s) Price' : 'Reservation Price',
               'Tsh ${HelperFunctions.formatPrice(widget.price * widget.itemCount)}/=',
               icon: CupertinoIcons.tag,
               primaryColor: primaryColor,

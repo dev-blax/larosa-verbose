@@ -3,12 +3,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:larosa_block/Utils/helpers.dart';
-import '../../../Services/dio_service.dart';
-import '../../../Services/log_service.dart';
-import '../../../Utils/colors.dart';
+import '../../Services/dio_service.dart';
+import '../../Services/log_service.dart';
+import '../../Utils/colors.dart';
 import 'package:intl/intl.dart';
 
-import '../../../Utils/links.dart';
+import '../../Utils/links.dart';
 import 'package:intl_phone_field/intl_phone_field.dart';
 import 'package:intl_phone_field/countries.dart';
 
@@ -143,13 +143,14 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
 
       LogService.logInfo('Payment URL: $url');
 
+
       Map<String, dynamic> body = {
         "items": widget.items,
         "provider": _selectedMethod,
         "paymentMethod": (paymentMethods.firstWhere((method) => method['value'] == _selectedMethod)['type'] ?? '').toUpperCase(),
         "accountNumber": '0${_accountController.text}',
         "phoneNumber": '0${_accountController.text}',
-        "amount": widget.totalPrice,
+        "amountToBePaidNow": widget.totalPrice,
         "latitude": widget.deliveryLatitude ?? 0,
         "longitude": widget.deliveryLongitude ?? 0,
         "city": "Dodoma",
@@ -165,6 +166,8 @@ class _PaymentMethodScreenState extends State<PaymentMethodScreen> {
           "checkOutDate": DateFormat('yyyy-MM-dd').format(widget.checkOutDate!),
         });
       }
+
+      LogService.logTrace('Payment Body: ${body.toString()}');
 
       final response = await dio.post(url, data: body);
       

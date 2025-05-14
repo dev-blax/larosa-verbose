@@ -32,12 +32,9 @@ Future<void> main() async {
   await hiveService.openBox<String>('bookingBox');
   await hiveService.openBox('profileBox');
   
-  await FcmService().initialize();
+  FcmService().initialize();
 
   await dotenv.load(fileName: ".env");
-
-
-  // await FcmService().initialize();
 
   runApp(const App());
 }

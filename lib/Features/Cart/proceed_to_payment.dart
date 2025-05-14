@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_svg/svg.dart';
@@ -5,7 +6,6 @@ import 'package:gap/gap.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:iconsax/iconsax.dart';
 import 'package:intl/intl.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -23,7 +23,7 @@ import 'widgets/media_gallery_view.dart';
 import 'widgets/payment_proceed_table.dart';
 import 'widgets/payment_shimmer.dart';
 import 'widgets/payment_summary_card.dart';
-import 'screens/payment_method_screen.dart';
+import 'payment_method_screen.dart';
 
 class PrepareForPayment extends StatefulWidget {
   final List<int> productIds;
@@ -272,67 +272,7 @@ class _PrepareForPaymentState extends State<PrepareForPayment> {
     }
   }
 
-  Future<void> _pickCheckInDate(BuildContext context) async {
-    final DateTime? picked = await showDatePicker(
-      context: context,
-      initialDate: checkInDate ?? DateTime.now(),
-      firstDate: DateTime.now(),
-      lastDate: DateTime(2100),
-    );
 
-    if (picked != null) {
-      setState(() {
-        checkInDate = picked;
-
-        // Adjust check-out date if it lags behind the new check-in date
-        if (checkOutDate == null || checkOutDate!.isBefore(checkInDate!)) {
-          checkOutDate = checkInDate!.add(const Duration(days: 1));
-
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                'Check-Out Date adjusted to ${getFormattedDate(checkOutDate)} to ensure it follows Check-In Date.',
-                style: const TextStyle(color: Colors.white),
-              ),
-              backgroundColor: Colors.orange,
-              duration: const Duration(seconds: 9),
-            ),
-          );
-        }
-      });
-    }
-  }
-
-  Future<void> _pickCheckOutDate(BuildContext context) async {
-    final DateTime? picked = await showDatePicker(
-      context: context,
-      initialDate: checkOutDate ?? DateTime.now().add(const Duration(days: 1)),
-      firstDate: checkInDate ?? DateTime.now(),
-      lastDate: DateTime(2100),
-    );
-
-    if (picked != null) {
-      setState(() {
-        if (picked.isBefore(checkInDate!)) {
-          // Ensure check-out date is at least 1 day after the check-in date
-          checkOutDate = checkInDate!.add(const Duration(days: 1));
-
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                'Check-Out Date must be after Check-In Date. Adjusted to ${getFormattedDate(checkOutDate)}.',
-                style: const TextStyle(color: Colors.white),
-              ),
-              backgroundColor: Colors.orange,
-              duration: const Duration(seconds: 3),
-            ),
-          );
-        } else {
-          checkOutDate = picked;
-        }
-      });
-    }
-  }
 
   String getFormattedDate(DateTime? date) {
     if (date == null) return 'Not Set';
@@ -410,7 +350,7 @@ class _PrepareForPaymentState extends State<PrepareForPayment> {
   @override
   void initState() {
     super.initState();
-    LogService.logInfo('Items: ${widget.items}');
+    LogService.logInfo('Items: ${widget.itemsToDisplay}');
     _fetchExchangeRate();
     _getCurrentLocation().then((_) => fetchTransportCost());
     _getSupplierLocations();
@@ -514,25 +454,24 @@ class _PrepareForPaymentState extends State<PrepareForPayment> {
                                             );
                                           },
                                           child: Hero(
-                                            tag:
-                                                '${item['productId']}_$imgIndex',
-                                            child: Image.network(
-                                              imageUrls[imgIndex],
-                                              width: double.infinity,
-                                              fit: BoxFit.cover,
-                                              errorBuilder: (context, error,
-                                                      stackTrace) =>
-                                                  Container(
-                                                color: Colors.grey[200],
-                                                child: const Center(
-                                                  child: Icon(
-                                                      CupertinoIcons.photo,
-                                                      size: 40,
-                                                      color: Colors.grey),
+                                              tag:
+                                                  '${item['productId']}_$imgIndex',
+                                              child: CachedNetworkImage(
+                                                imageUrl: imageUrls[imgIndex],
+                                                width: double.infinity,
+                                                fit: BoxFit.cover,
+                                                errorWidget: (context, error,
+                                                        stackTrace) =>
+                                                    Container(
+                                                  color: Colors.grey[200],
+                                                  child: const Center(
+                                                    child: Icon(
+                                                        CupertinoIcons.photo,
+                                                        size: 40,
+                                                        color: Colors.grey),
+                                                  ),
                                                 ),
-                                              ),
-                                            ),
-                                          ),
+                                              )),
                                         );
                                       },
                                     ),
@@ -567,77 +506,87 @@ class _PrepareForPaymentState extends State<PrepareForPayment> {
                                 Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Row(
-                                      children: [
-                                        Icon(CupertinoIcons.cube_box,
-                                            color:
-                                                Theme.of(context).brightness ==
-                                                        Brightness.dark
-                                                    ? Colors.grey[300]
-                                                    : Colors.grey[700]),
-                                        Gap(4),
-                                        Text(
-                                          NumberFormat.currency(
-                                            locale: 'sw_TZ',
-                                            symbol: 'Tsh ',
-                                            decimalDigits: 2,
-                                          ).format(
-                                              item['price'] * item['quantity']),
-                                          style: TextStyle(
-                                            color:
-                                                Theme.of(context).brightness ==
-                                                        Brightness.dark
-                                                    ? Colors.grey[300]
-                                                    : Colors.grey[700],
-                                            fontSize: 13,
-                                            fontWeight: FontWeight.w600,
+                                    Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                        vertical: 2,
+                                      ),
+                                      child: Row(
+                                        children: [
+                                          Icon(
+                                            CupertinoIcons.tag_solid,
+                                            size: 20,
                                           ),
-                                        ),
-                                      ],
+                                          Gap(4),
+                                          Text(
+                                            NumberFormat.currency(
+                                              locale: 'sw_TZ',
+                                              symbol: 'Tsh ',
+                                              decimalDigits: 2,
+                                            ).format(item['price'] *
+                                                item['quantity']),
+                                            style: TextStyle(
+                                              color: Theme.of(context)
+                                                          .brightness ==
+                                                      Brightness.dark
+                                                  ? Colors.grey[300]
+                                                  : Colors.grey[700],
+                                              fontSize: 13,
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
                                     ),
-                                    Row(
-                                      children: [
-                                        SvgPicture.asset(
-                                          SvgIconsPaths.deliveryTruck,
-                                          width: 24,
-                                          height: 24,
-                                          colorFilter: ColorFilter.mode(
-                                            Theme.of(context).brightness ==
-                                                    Brightness.dark
-                                                ? Colors.grey[300]!
-                                                : Colors.grey[700]!,
-                                            BlendMode.srcIn,
+                                    if (!widget.reservationType)
+                                      Row(
+                                        children: [
+                                          SvgPicture.asset(
+                                            SvgIconsPaths.deliveryTruck,
+                                            width: 24,
+                                            height: 24,
+                                            colorFilter: ColorFilter.mode(
+                                              Theme.of(context).brightness ==
+                                                      Brightness.dark
+                                                  ? Colors.grey[300]!
+                                                  : Colors.grey[700]!,
+                                              BlendMode.srcIn,
+                                            ),
                                           ),
-                                        ),
-                                        const Gap(4),
-                                        Text(
-                                          productDeliveryCosts[
-                                                  widget.productIds[index]] ??
-                                              'Calculating...',
-                                          style: TextStyle(
-                                            color:
-                                                Theme.of(context).brightness ==
-                                                        Brightness.dark
-                                                    ? Colors.grey[300]
-                                                    : Colors.grey[700],
-                                            fontSize: 14,
+                                          const Gap(4),
+                                          Text(
+                                            productDeliveryCosts[
+                                                    widget.productIds[index]] ??
+                                                'Calculating...',
+                                            style: TextStyle(
+                                              color: Theme.of(context)
+                                                          .brightness ==
+                                                      Brightness.dark
+                                                  ? Colors.grey[300]
+                                                  : Colors.grey[700],
+                                              fontSize: 14,
+                                            ),
                                           ),
-                                        ),
-                                      ],
-                                    ),
-                                    Row(
-                                      children: [
-                                        Icon(
-                                          Iconsax.location,
-                                          size: 20,
-                                        ),
-                                        Gap(5),
-                                        Text(_supplierLocationNames.length >
-                                                index
-                                            ? (_supplierLocationNames[index] ??
-                                                'Location not available')
-                                            : 'Loading location...')
-                                      ],
+                                        ],
+                                      ),
+                                    Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                        vertical: 2,
+                                      ),
+                                      child: Row(
+                                        children: [
+                                          Icon(
+                                            CupertinoIcons.location_solid,
+                                            size: 20,
+                                          ),
+                                          Gap(5),
+                                          Text(_supplierLocationNames.length >
+                                                  index
+                                              ? (_supplierLocationNames[
+                                                      index] ??
+                                                  'Location not available')
+                                              : 'Loading location...')
+                                        ],
+                                      ),
                                     )
                                   ],
                                 ),
@@ -732,8 +681,6 @@ class _PrepareForPaymentState extends State<PrepareForPayment> {
                                         totalPrice: widget.totalPrice,
                                         itemCount: itemCount,
                                         exchangeRate: _exchangeRate,
-                                        pickCheckInDate: _pickCheckInDate,
-                                        pickCheckOutDate: _pickCheckOutDate,
                                         onAdultsChanged: (value) {
                                           setState(() {
                                             adults = value;

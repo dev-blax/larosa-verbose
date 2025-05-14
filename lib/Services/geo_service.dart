@@ -101,8 +101,6 @@ class GeoService {
       List<Placemark> placemarks = await placemarkFromCoordinates(
         latitude,
         longitude,
-        // -6.7474,
-        // 39.2817
       );
 
       if (placemarks.isNotEmpty) {
@@ -111,14 +109,14 @@ class GeoService {
 
         final locality = place.locality ?? '';
         final subLocality = place.subLocality ?? '';
-        final country = place.country ?? '';
+        final administrativeArea = place.administrativeArea ?? '';
 
         if(subLocality.isNotEmpty){
-          final locationName = '$subLocality, $locality';
+          final locationName = '$subLocality, $locality, $administrativeArea';
           return locationName;
         }
-        if(locality.isNotEmpty && country.isNotEmpty){
-          final locationName = '$locality, $country';
+        if(locality.isNotEmpty){
+          final locationName = '$locality, $administrativeArea';
           return locationName;
         }
 

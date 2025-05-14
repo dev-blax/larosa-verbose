@@ -23,7 +23,7 @@ import '../../Services/auth_service.dart';
 import '../../Utils/colors.dart';
 import '../../Utils/links.dart';
 import 'proceed_to_payment.dart';
-import 'screens/payment_method_screen.dart';
+import 'payment_method_screen.dart';
 import 'widgets/add_to_cart_table.dart';
 
 class AddToCartScreen extends StatefulWidget {
@@ -451,7 +451,9 @@ class _AddToCartScreenState extends State<AddToCartScreen> {
   }
 
   Future<bool> _addItemToCart(
-      int profileId, List<Map<String, dynamic>> items) async {
+    int profileId,
+    List<Map<String, dynamic>> items,
+  ) async {
     final Uri uri = Uri.https(
       LarosaLinks.nakedBaseUrl,
       '/cart/add-item',

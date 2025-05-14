@@ -73,14 +73,15 @@ class _PersonalRegisterScreenState extends State<PersonalRegisterScreen> {
       await box.clear();
 
       try {
-
         if (mounted) {
           Navigator.push(
-              context,
-              CupertinoPageRoute(
-                  builder: (context) => EmailVerificationCodeScreen(
-                        email: _emailController.text,
-                      )));
+            context,
+            CupertinoPageRoute(
+              builder: (context) => EmailVerificationCodeScreen(
+                email: _emailController.text,
+              ),
+            ),
+          );
         }
       } catch (storageError) {
         LogService.logError('Failed to store user data: $storageError');
@@ -107,7 +108,8 @@ class _PersonalRegisterScreenState extends State<PersonalRegisterScreen> {
               try {
                 final parsedData = jsonDecode(responseData);
                 LogService.logError(
-                    'Registration failed with message: ${parsedData}');
+                  'Registration failed with message: $parsedData',
+                );
                 errorMessage = parsedData['message'] ?? 'Please try again.';
               } catch (_) {
                 errorMessage += responseData.toString();
@@ -119,7 +121,7 @@ class _PersonalRegisterScreenState extends State<PersonalRegisterScreen> {
         }
       }
 
-      //HelperFunctions.showToast(errorMessage, false);
+      LogService.logDebug(errorMessage);
     } finally {
       if (mounted) {
         setState(() {
@@ -183,7 +185,7 @@ class _PersonalRegisterScreenState extends State<PersonalRegisterScreen> {
                             ),
                           ),
                           const Gap(10),
-                          // const OauthButtons(),
+                          const OauthButtons(),
                           const Gap(10),
                           const Divider(),
                           const Row(
@@ -248,29 +250,38 @@ class _PersonalRegisterScreenState extends State<PersonalRegisterScreen> {
                                   builder: (BuildContext context) => Container(
                                     height: 300,
                                     padding: const EdgeInsets.only(top: 6.0),
-                                    color: CupertinoColors.systemBackground.darkColor,
+                                    color: CupertinoColors
+                                        .systemBackground.darkColor,
                                     child: SafeArea(
                                       top: false,
                                       child: Column(
                                         children: [
                                           Row(
-                                            mainAxisAlignment: MainAxisAlignment.end,
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.end,
                                             children: [
                                               CupertinoButton(
-                                                onPressed: () => Navigator.pop(context),
+                                                onPressed: () =>
+                                                    Navigator.pop(context),
                                                 child: const Text('Done'),
                                               ),
                                             ],
                                           ),
                                           Expanded(
                                             child: CupertinoDatePicker(
-                                              mode: CupertinoDatePickerMode.date,
-                                              initialDateTime: DateTime.now().subtract(const Duration(days: 365 * 18)),
+                                              mode:
+                                                  CupertinoDatePickerMode.date,
+                                              initialDateTime: DateTime.now()
+                                                  .subtract(const Duration(
+                                                      days: 365 * 18)),
                                               maximumDate: DateTime.now(),
                                               minimumDate: DateTime(1900),
-                                              onDateTimeChanged: (DateTime newDate) {
+                                              onDateTimeChanged:
+                                                  (DateTime newDate) {
                                                 setState(() {
-                                                  _dobController.text = DateFormat('yyyy-MM-dd').format(newDate);
+                                                  _dobController.text =
+                                                      DateFormat('yyyy-MM-dd')
+                                                          .format(newDate);
                                                 });
                                               },
                                             ),
@@ -282,11 +293,14 @@ class _PersonalRegisterScreenState extends State<PersonalRegisterScreen> {
                                 );
                               },
                               keyboardType: TextInputType.datetime,
-                              style: const TextStyle(color: CupertinoColors.white),
+                              style:
+                                  const TextStyle(color: CupertinoColors.white),
                               decoration: InputDecoration(
-                                prefixIcon: Icon(Iconsax.calendar, color: CupertinoColors.white),
+                                prefixIcon: Icon(Iconsax.calendar,
+                                    color: CupertinoColors.white),
                                 hintText: 'Date of Birth',
-                                hintStyle: const TextStyle(color: CupertinoColors.white),
+                                hintStyle: const TextStyle(
+                                    color: CupertinoColors.white),
                                 border: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(20),
                                   borderSide: const BorderSide(
@@ -402,7 +416,8 @@ class _PersonalRegisterScreenState extends State<PersonalRegisterScreen> {
                                   ),
                                 ),
                                 checkColor: Colors.white,
-                                fillColor: WidgetStatePropertyAll(CupertinoColors.systemBlue),
+                                fillColor: WidgetStatePropertyAll(
+                                    CupertinoColors.systemBlue),
                               ),
                               Expanded(
                                 child: GestureDetector(
@@ -453,7 +468,8 @@ class _PersonalRegisterScreenState extends State<PersonalRegisterScreen> {
                                     Radius.circular(5),
                                   ),
                                 ),
-                                fillColor: WidgetStatePropertyAll(CupertinoColors.systemBlue),
+                                fillColor: WidgetStatePropertyAll(
+                                    CupertinoColors.systemBlue),
                               ),
                               Expanded(
                                 child: GestureDetector(

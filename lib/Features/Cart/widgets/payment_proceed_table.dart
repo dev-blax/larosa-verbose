@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 
 class PaymentProceedTable extends StatelessWidget {
@@ -15,8 +14,6 @@ class PaymentProceedTable extends StatelessWidget {
   final double totalPrice;
   final int itemCount;
   final double? exchangeRate;
-  final Function(BuildContext) pickCheckInDate;
-  final Function(BuildContext) pickCheckOutDate;
   final Function(int) onAdultsChanged;
   final Function(int) onChildrenChanged;
 
@@ -34,8 +31,6 @@ class PaymentProceedTable extends StatelessWidget {
     required this.totalPrice,
     required this.itemCount,
     this.exchangeRate,
-    required this.pickCheckInDate,
-    required this.pickCheckOutDate,
     required this.onAdultsChanged,
     required this.onChildrenChanged,
   });
@@ -85,38 +80,11 @@ class PaymentProceedTable extends StatelessWidget {
               value: totalQuantity.toString(),
             ),
             if (!isReservation) ...[
-              _buildSliderTile(
-                icon: Icons.person_outline,
-                label: 'Adults',
-                value: adults,
-                min: 1,
-                max: 20,
-                onChanged: onAdultsChanged,
-                context: context,
-              ),
-              _buildSliderTile(
-                icon: Icons.child_care,
-                label: 'Children',
-                value: children,
-                min: 0,
-                max: 20,
-                onChanged: onChildrenChanged,
-                context: context,
-              ),
-              _buildDateTile(
-                icon: Icons.calendar_today_outlined,
-                label: 'Check-In',
-                date: checkInDate,
-                onTap: () => pickCheckInDate(context),
-                context: context,
-              ),
-              _buildDateTile(
-                icon: Icons.calendar_today_outlined,
-                label: 'Check-Out',
-                date: checkOutDate,
-                onTap: () => pickCheckOutDate(context),
-                context: context,
-              ),
+
+              _buildInfoTile(icon: Icons.person_outline, label: 'Adults', value: adults.toString()),
+              _buildInfoTile(icon: Icons.child_care, label: 'Children', value: children.toString()),
+              _buildInfoTile(icon: Icons.calendar_today_outlined, label: 'Check-In', value: getFormattedDate(checkInDate)),
+              _buildInfoTile(icon: Icons.calendar_today_outlined, label: 'Check-Out', value: getFormattedDate(checkOutDate)),
             ],
           ],
         ),
@@ -218,7 +186,7 @@ class PaymentProceedTable extends StatelessWidget {
           Icon(icon, size: 20),
           const SizedBox(width: 12),
           Expanded(
-            child: Column(
+            child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
@@ -228,7 +196,7 @@ class PaymentProceedTable extends StatelessWidget {
                     fontSize: 14,
                   ),
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(width: 4),
                 Text(
                   value,
                   style: valueStyle ?? TextStyle(
@@ -240,128 +208,6 @@ class PaymentProceedTable extends StatelessWidget {
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildSliderTile({
-    required IconData icon,
-    required String label,
-    required int value,
-    required double min,
-    required double max,
-    required Function(int) onChanged,
-    required BuildContext context,
-  }) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Row(
-        children: [
-          Icon(icon, size: 20),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      label,
-                      style: const TextStyle(
-                        color: Colors.grey,
-                        fontSize: 14,
-                      ),
-                    ),
-                    Text(
-                      value.toString(),
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w500,
-                        fontSize: 14,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 4),
-                SliderTheme(
-                  data: SliderTheme.of(context).copyWith(
-                    trackHeight: 2,
-                    thumbShape: const RoundSliderThumbShape(
-                      enabledThumbRadius: 6,
-                    ),
-                  ),
-                  child: Slider(
-                    value: value.toDouble(),
-                    min: min,
-                    max: max,
-                    divisions: max.toInt(),
-                    activeColor: isDark ? Colors.white : Colors.black,
-                    inactiveColor: (isDark ? Colors.white : Colors.black).withOpacity(0.2),
-                    onChanged: (value) {
-                      onChanged(value.toInt());
-                      HapticFeedback.lightImpact();
-                    },
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildDateTile({
-    required IconData icon,
-    required String label,
-    required DateTime? date,
-    required VoidCallback onTap,
-    required BuildContext context,
-  }) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(8),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 8),
-        child: Row(
-          children: [
-            Icon(icon, size: 20),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    label,
-                    style: const TextStyle(
-                      color: Colors.grey,
-                      fontSize: 14,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    date == null ? 'Select Date' : getFormattedDate(date),
-                    style: TextStyle(
-                      fontSize: 15,
-                      color: date == null
-                          ? (isDark ? Colors.grey[400] : Colors.grey[600])
-                          : null,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Icon(
-              Icons.chevron_right,
-              size: 20,
-              color: isDark ? Colors.grey[400] : Colors.grey[600],
-            ),
-          ],
-        ),
       ),
     );
   }

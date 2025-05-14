@@ -216,7 +216,7 @@ class _OldPostCompoentState extends State<OldPostCompoent>
                                 ? Icon(
                                     CupertinoIcons.wifi_slash,
                                     size: 20,
-                                    color: Colors.white,
+                                    color: Colors.white.withOpacity(0.8),
                                   )
                                 : Icon(
                                     CupertinoIcons.wifi,
@@ -224,7 +224,7 @@ class _OldPostCompoentState extends State<OldPostCompoent>
                                     color: Colors.white,
                                   ),
                             Gap(5),
-                            Text('Wifi')
+                            Text('Wifi', style: TextStyle(color: Colors.white))
                           ],
                         ),
                         Gap(10),
@@ -236,7 +236,7 @@ class _OldPostCompoentState extends State<OldPostCompoent>
                                 ? SvgPicture.asset(
                                     SvgIconsPaths.poolOff,
                                     colorFilter: ColorFilter.mode(
-                                      Colors.white,
+                                      Colors.white.withOpacity(0.8),
                                       BlendMode.srcIn,
                                     ),
                                     height: 20,
@@ -250,7 +250,7 @@ class _OldPostCompoentState extends State<OldPostCompoent>
                                     height: 20,
                                   ),
                             Gap(5),
-                            Text('Swimming')
+                            Text('Swimming', style: TextStyle(color: Colors.white))
                           ],
                         ),
                         Gap(10),
@@ -263,7 +263,7 @@ class _OldPostCompoentState extends State<OldPostCompoent>
                                 SvgPicture.asset(
                                   SvgIconsPaths.gymIcon,
                                   colorFilter: ColorFilter.mode(
-                                    Colors.white,
+                                    Colors.white.withOpacity(0.8),
                                     BlendMode.srcIn,
                                   ),
                                   height: 20,
@@ -271,7 +271,7 @@ class _OldPostCompoentState extends State<OldPostCompoent>
                               ],
                             ),
                             Gap(5),
-                            Text('Gym')
+                            Text('Gym', style: TextStyle(color: Colors.white))
                           ],
                         ),
                         Gap(10),
@@ -283,7 +283,7 @@ class _OldPostCompoentState extends State<OldPostCompoent>
                                 ? SvgPicture.asset(
                                     'assets/svg_icons/LucideCircleParkingOff.svg',
                                     colorFilter: ColorFilter.mode(
-                                      Colors.white,
+                                      Colors.white.withOpacity(0.8),
                                       BlendMode.srcIn,
                                     ),
                                     height: 20,
@@ -297,7 +297,7 @@ class _OldPostCompoentState extends State<OldPostCompoent>
                                     height: 20,
                                   ),
                             Gap(5),
-                            Text('Parking')
+                            Text('Parking', style: TextStyle(color: Colors.white))
                           ],
                         ),
                         Gap(10),
@@ -309,7 +309,7 @@ class _OldPostCompoentState extends State<OldPostCompoent>
                                 ? SvgPicture.asset(
                                     'assets/svg_icons/PepiconsPencilCupOff.svg',
                                     colorFilter: ColorFilter.mode(
-                                      Colors.white,
+                                      Colors.white.withOpacity(0.8),
                                       BlendMode.srcIn,
                                     ),
                                     height: 20,
@@ -323,7 +323,7 @@ class _OldPostCompoentState extends State<OldPostCompoent>
                                     height: 20,
                                   ),
                             Gap(5),
-                            Text('Breakfast')
+                            Text('Breakfast', style: TextStyle(color: Colors.white))
                           ],
                         ),
                       ],
@@ -587,295 +587,296 @@ class _OldPostCompoentState extends State<OldPostCompoent>
   }
 
   Widget _postInteracts() {
-    return Padding(
-      padding: const EdgeInsets.only(left: 9.0, right: 0.0),
-      child: Container(
-        decoration: BoxDecoration(
-          color: Theme.of(context).scaffoldBackgroundColor,
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            // Like Section
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                // Second LikeButton (small)
-                LikeButton(
-                  size: 23.0,
-                  isLiked: _isLiked,
-                  likeCount: _likesCount,
-                  animationDuration: const Duration(milliseconds: 500),
-                  bubblesColor: const BubblesColor(
-                    dotPrimaryColor: Color.fromRGBO(180, 23, 12, 1),
-                    dotSecondaryColor: Colors.orange,
-                    dotThirdColor: Colors.yellow,
-                    dotLastColor: Colors.red,
-                  ),
-                  circleColor: const CircleColor(
-                    start: Color.fromRGBO(255, 204, 0, 1),
-                    end: Color.fromRGBO(180, 23, 12, 1),
-                  ),
-                  likeBuilder: (bool isLiked) {
-                    return SvgPicture.asset(
+    return Container(
+      padding: const EdgeInsets.only(left: 8.0, right: 0.0),
+      decoration: BoxDecoration(
+        color: Theme.of(context).scaffoldBackgroundColor,
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          // Like Section
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              // Second LikeButton (small)
+              LikeButton(
+                size: 23.0,
+                isLiked: _isLiked,
+                likeCount: _likesCount,
+                animationDuration: const Duration(milliseconds: 500),
+                bubblesColor: const BubblesColor(
+                  dotPrimaryColor: Color.fromRGBO(180, 23, 12, 1),
+                  dotSecondaryColor: Colors.orange,
+                  dotThirdColor: Colors.yellow,
+                  dotLastColor: Colors.red,
+                ),
+                circleColor: const CircleColor(
+                  start: Color.fromRGBO(255, 204, 0, 1),
+                  end: Color.fromRGBO(180, 23, 12, 1),
+                ),
+                likeBuilder: (bool isLiked) {
+                  return SvgPicture.asset(
+                    isLiked
+                        ? 'assets/icons/SolarHeartAngleBold.svg'
+                        : 'assets/icons/SolarHeartAngleLinear.svg',
+                    // width: 25,
+                    // height: 25,
+                    colorFilter: ColorFilter.mode(
                       isLiked
-                          ? 'assets/icons/SolarHeartAngleBold.svg'
-                          : 'assets/icons/SolarHeartAngleLinear.svg',
-                      // width: 25,
-                      // height: 25,
-                      colorFilter: ColorFilter.mode(
-                        isLiked
-                            ? const Color.fromRGBO(180, 23, 12, 1)
-                            : Theme.of(context).colorScheme.secondary,
-                        BlendMode.srcIn,
-                      ),
-                      semanticsLabel: 'Like icon',
-                    );
-                  },
-                  likeCountPadding: const EdgeInsets.only(left: 8.0),
-                  countBuilder: (int? count, bool isLiked, String text) {
-                    return Text(
-                      text,
-                      style: Theme.of(context).textTheme.bodySmall,
-                    );
-                  },
-                  onTap: (bool isLiked) {
-                    _toggleLike();
-                    return Future.value(_isLiked);
-                  },
+                          ? const Color.fromRGBO(180, 23, 12, 1)
+                          : Theme.of(context).colorScheme.secondary,
+                      BlendMode.srcIn,
+                    ),
+                    semanticsLabel: 'Like icon',
+                  );
+                },
+                likeCountPadding: const EdgeInsets.only(left: 8.0),
+                countBuilder: (int? count, bool isLiked, String text) {
+                  return Text(
+                    text,
+                    style: Theme.of(context).textTheme.bodySmall,
+                  );
+                },
+                onTap: (bool isLiked) {
+                  _toggleLike();
+                  return Future.value(_isLiked);
+                },
+              ),
+            ],
+          ),
+    
+          Row(
+            children: [
+              LikeButton(
+                size: 23.0,
+                isLiked: _isFavorite,
+                likeCount: _favoriteCount,
+                animationDuration: const Duration(milliseconds: 500),
+                bubblesColor: const BubblesColor(
+                  dotPrimaryColor: Color.fromRGBO(255, 215, 0, 1),
+                  dotSecondaryColor: Colors.orange,
+                  dotThirdColor: Colors.yellow,
+                  dotLastColor: Colors.red,
                 ),
-              ],
-            ),
-
-            Row(
-              children: [
-                LikeButton(
-                  size: 23.0,
-                  isLiked: _isFavorite,
-                  likeCount: _favoriteCount,
-                  animationDuration: const Duration(milliseconds: 500),
-                  bubblesColor: const BubblesColor(
-                    dotPrimaryColor: Color.fromRGBO(255, 215, 0, 1),
-                    dotSecondaryColor: Colors.orange,
-                    dotThirdColor: Colors.yellow,
-                    dotLastColor: Colors.red,
-                  ),
-                  circleColor: const CircleColor(
-                    start: Color.fromRGBO(255, 223, 0, 1),
-                    end: Color.fromRGBO(255, 215, 0, 1),
-                  ),
-                  likeBuilder: (bool isLiked) {
-                    return SvgPicture.asset(
+                circleColor: const CircleColor(
+                  start: Color.fromRGBO(255, 223, 0, 1),
+                  end: Color.fromRGBO(255, 215, 0, 1),
+                ),
+                likeBuilder: (bool isLiked) {
+                  return SvgPicture.asset(
+                    isLiked
+                        ? SvgIconsPaths.starBold
+                        : SvgIconsPaths.starOutline,
+                    // width: 25,
+                    // height: 25,
+                    colorFilter: ColorFilter.mode(
                       isLiked
-                          ? SvgIconsPaths.starBold
-                          : SvgIconsPaths.starOutline,
-                      // width: 25,
-                      // height: 25,
-                      colorFilter: ColorFilter.mode(
-                        isLiked
-                            ? LarosaColors.gold
-                            : Theme.of(context).colorScheme.secondary,
-                        BlendMode.srcIn,
-                      ),
-                      semanticsLabel: 'Star icon',
-                    );
-                  },
-                  likeCountPadding: const EdgeInsets.only(left: 8.0),
-                  countBuilder: (int? count, bool isLiked, String text) {
-                    return Text(
-                      text,
-                      style: Theme.of(context).textTheme.bodySmall,
-                    );
-                  },
-                  onTap: (bool isLiked) {
-                    _isFavorite = !isLiked;
-                    _favoriteCount =
-                        _isFavorite ? _favoriteCount + 1 : _favoriteCount - 1;
-                    setState(() {});
-                    Future.microtask(() => _favouritePost());
-                    return Future.value(_isFavorite);
-                  },
-                ),
-              ],
-            ),
-            // comment icon
-            Row(
-              children: [
-                IconButton(
-                  onPressed: () {
-                    showMaterialModalBottomSheet(
-                      context: context,
-                      builder: (BuildContext context) => Container(
-                        constraints: const BoxConstraints(minHeight: 200),
-                        child: CommentSection(
-                          postId: widget.post['id'],
-                          names: widget.post['names'],
-                          onCommentAdded: (newCommentCount) {
-                            setState(() {
-                              widget.post['comments'] = newCommentCount;
-                            });
-                          },
-                        ),
-                      ),
-                    );
-                  },
-                  icon: Icon(
-                    CupertinoIcons.chat_bubble,
-                    color: Theme.of(context).colorScheme.secondary,
-                    size: 23,
-                  ),
-                ),
-                Text(
-                  widget.post['comments'].toString(),
-                  style: Theme.of(context).textTheme.bodySmall,
-                )
-              ],
-            ),
-
-            // Share
-            IconButton(
-              onPressed: () {
-                showCupertinoModalPopup(
-                  context: context,
-                  builder: (context) => CupertinoActionSheet(
-                    actions: [
-                      CupertinoActionSheetAction(
-                        onPressed: () {
-                          Navigator.pop(context);
-                          HelperFunctions.shareLink(
-                            widget.post['id'].toString(),
-                          );
+                          ? LarosaColors.gold
+                          : Theme.of(context).colorScheme.secondary,
+                      BlendMode.srcIn,
+                    ),
+                    semanticsLabel: 'Star icon',
+                  );
+                },
+                likeCountPadding: const EdgeInsets.only(left: 8.0),
+                countBuilder: (int? count, bool isLiked, String text) {
+                  return Text(
+                    text,
+                    style: Theme.of(context).textTheme.bodySmall,
+                  );
+                },
+                onTap: (bool isLiked) {
+                  _isFavorite = !isLiked;
+                  _favoriteCount =
+                      _isFavorite ? _favoriteCount + 1 : _favoriteCount - 1;
+                  setState(() {});
+                  Future.microtask(() => _favouritePost());
+                  return Future.value(_isFavorite);
+                },
+              ),
+            ],
+          ),
+          // comment icon
+          Row(
+            children: [
+              IconButton(
+                onPressed: () {
+                  showMaterialModalBottomSheet(
+                    context: context,
+                    builder: (BuildContext context) => Container(
+                      constraints: const BoxConstraints(minHeight: 200),
+                      child: CommentSection(
+                        postId: widget.post['id'],
+                        names: widget.post['names'],
+                        onCommentAdded: (newCommentCount) {
+                          setState(() {
+                            widget.post['comments'] = newCommentCount;
+                          });
                         },
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(CupertinoIcons.share,
-                                color: Theme.of(context).colorScheme.primary),
-                            const SizedBox(width: 8),
-                            const Text('Share Post'),
-                          ],
-                        ),
                       ),
+                    ),
+                  );
+                },
+                icon: Icon(
+                  CupertinoIcons.chat_bubble,
+                  color: Theme.of(context).colorScheme.secondary,
+                  size: 23,
+                ),
+              ),
+              Text(
+                widget.post['comments'].toString(),
+                style: Theme.of(context).textTheme.bodySmall,
+              )
+            ],
+          ),
+    
+          // Share
+          IconButton(
+            onPressed: () {
+              showCupertinoModalPopup(
+                context: context,
+                builder: (context) => CupertinoActionSheet(
+                  actions: [
+                    CupertinoActionSheetAction(
+                      onPressed: () {
+                        Navigator.pop(context);
+                        HelperFunctions.shareLink(
+                          widget.post['id'].toString(),
+                        );
+                      },
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(CupertinoIcons.share,
+                              color: Theme.of(context).colorScheme.primary),
+                          const SizedBox(width: 8),
+                          const Text('Share Post'),
+                        ],
+                      ),
+                    ),
+                    CupertinoActionSheetAction(
+                      isDestructiveAction: true,
+                      onPressed: () {
+                        Navigator.pop(context);
+                        showCupertinoDialog(
+                          context: context,
+                          builder: (context) => ReportPostComponent(
+                            postId: widget.post['id'].toString(),
+                          ),
+                        );
+                      },
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(CupertinoIcons.exclamationmark_triangle,
+                              color: CupertinoColors.activeOrange),
+                          const SizedBox(width: 8),
+                          const Text('Report Post',
+                              style: TextStyle(
+                                  color: CupertinoColors.activeOrange)),
+                        ],
+                      ),
+                    ),
+                    if (widget.post['profileId'] ==
+                        AuthService.getProfileId())
+                      // Delete Post
                       CupertinoActionSheetAction(
-                        isDestructiveAction: true,
-                        onPressed: () {
+                        onPressed: () async {
                           Navigator.pop(context);
-                          showCupertinoDialog(
+                          
+                          final shouldDelete = await showCupertinoDialog<bool>(
                             context: context,
-                            builder: (context) => ReportPostComponent(
-                              postId: widget.post['id'].toString(),
+                            builder: (BuildContext dialogContext) => CupertinoAlertDialog(
+                              title: const Text('Delete Post'),
+                              content: const Text('Are you sure you want to delete this post?'),
+                              actions: [
+                                CupertinoDialogAction(
+                                  child: const Text('Cancel'),
+                                  onPressed: () => Navigator.pop(dialogContext, false),
+                                ),
+                                CupertinoDialogAction(
+                                  isDestructiveAction: true,
+                                  child: const Text('Delete'),
+                                  onPressed: () => Navigator.pop(dialogContext, true),
+                                ),
+                              ],
                             ),
                           );
+    
+                          if (shouldDelete == true && mounted) {
+                            try {
+                              final success = await BusinessCategoryProvider.deletePost(widget.post['id']);
+                              if (success && mounted) {
+                                HelperFunctions.showToast('Post deleted successfully', true);
+                              }
+                            } catch (e) {
+                              if (mounted) {
+                                HelperFunctions.showToast('Failed to delete post', false);
+                              }
+                            }
+                        }
                         },
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            const Icon(CupertinoIcons.exclamationmark_triangle,
-                                color: CupertinoColors.activeOrange),
+                            const Icon(
+                              CupertinoIcons.trash,
+                              color: CupertinoColors.destructiveRed,
+                            ),
                             const SizedBox(width: 8),
-                            const Text('Report Post',
-                                style: TextStyle(
-                                    color: CupertinoColors.activeOrange)),
+                            const Text(
+                              'Delete Post',
+                              style: TextStyle(
+                                color: CupertinoColors.destructiveRed,
+                              ),
+                            ),
                           ],
                         ),
                       ),
-                      if (widget.post['profileId'] ==
-                          AuthService.getProfileId())
-                        // Delete Post
-                        CupertinoActionSheetAction(
-                          onPressed: () async {
-                            Navigator.pop(context);
-                            
-                            final shouldDelete = await showCupertinoDialog<bool>(
-                              context: context,
-                              builder: (BuildContext dialogContext) => CupertinoAlertDialog(
-                                title: const Text('Delete Post'),
-                                content: const Text('Are you sure you want to delete this post?'),
-                                actions: [
-                                  CupertinoDialogAction(
-                                    child: const Text('Cancel'),
-                                    onPressed: () => Navigator.pop(dialogContext, false),
-                                  ),
-                                  CupertinoDialogAction(
-                                    isDestructiveAction: true,
-                                    child: const Text('Delete'),
-                                    onPressed: () => Navigator.pop(dialogContext, true),
-                                  ),
-                                ],
-                              ),
-                            );
-
-                            if (shouldDelete == true && mounted) {
-                              try {
-                                final success = await BusinessCategoryProvider.deletePost(widget.post['id']);
-                                if (success && mounted) {
-                                  HelperFunctions.showToast('Post deleted successfully', true);
-                                }
-                              } catch (e) {
-                                if (mounted) {
-                                  HelperFunctions.showToast('Failed to delete post', false);
-                                }
-                              }
-                          }
-                          },
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              const Icon(
-                                CupertinoIcons.trash,
-                                color: CupertinoColors.destructiveRed,
-                              ),
-                              const SizedBox(width: 8),
-                              const Text(
-                                'Delete Post',
-                                style: TextStyle(
-                                  color: CupertinoColors.destructiveRed,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                    ],
-                    cancelButton: CupertinoActionSheetAction(
-                      onPressed: () => Navigator.pop(context),
-                      child: const Text('Cancel'),
-                    ),
+                  ],
+                  cancelButton: CupertinoActionSheetAction(
+                    onPressed: () => Navigator.pop(context),
+                    child: const Text('Cancel'),
                   ),
-                );
-              },
-              icon: Icon(
-                Icons.more_vert,
-                color: Theme.of(context).colorScheme.secondary,
-                size: 23,
-              ),
+                ),
+              );
+            },
+            icon: Icon(
+              Icons.more_vert,
+              color: Theme.of(context).colorScheme.secondary,
+              size: 23,
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        _mediaAndIntro(),
-        _postInteracts(),
-        PostDetails(
-          caption: widget.post['caption'],
-          username: widget.post['username'],
-          date: widget.post['duration'],
-        ),
-        const Padding(
-          padding: EdgeInsets.only(top: 1, bottom: 0), // Eliminates all padding
-          child: Divider(
-            height: 1,
-            thickness: 1,
+    return Container(
+      color: Theme.of(context).scaffoldBackgroundColor,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _mediaAndIntro(),
+          _postInteracts(),
+          PostDetails(
+            caption: widget.post['caption'],
+            username: widget.post['username'],
+            date: widget.post['duration'],
           ),
-        )
-      ],
+          const Padding(
+            padding: EdgeInsets.only(top: 1, bottom: 0), // Eliminates all padding
+            child: Divider(
+              height: 1,
+              thickness: 1,
+            ),
+          )
+        ],
+      ),
     );
   }
 }

@@ -31,8 +31,10 @@ Future<List<Map<String, dynamic>>> listCartItems(int profileId) async {
     );
 
     final List<dynamic> data = response.data;
+    LogService.logInfo('Cart items: ${data[0]}');
     return List<Map<String, dynamic>>.from(
         data.reversed.map((item) => item as Map<String, dynamic>));
+    
   } catch (error) {
     LogService.logError('Error in listCartItems: $error');
     return [];
@@ -773,12 +775,17 @@ class _MyCartState extends State<MyCart> {
                     return;
                   }
 
+                  LogService.logInfo('Selected items: $selectedItems');
+                  
+
                   List<int> productIds = [];
                   double totalPrice = 0.0;
                   int totalQuantity = 0;
                   List<String> combinedNamesList = [];
                   List<Map<String, dynamic>> items = [];
                   List<Map<String, dynamic>> itemsToDisplay = [];
+
+                  LogService.logInfo('Cart items: $cartItems');
 
                   for (var productId in selectedItems) {
                     LogService.logInfo('selected item: $productId');
@@ -812,6 +819,8 @@ class _MyCartState extends State<MyCart> {
                   }
 
                   String combinedNames = combinedNamesList.join(',');
+
+                  LogService.logInfo('Items to display: $itemsToDisplay');
 
                   Navigator.push(
                     context,

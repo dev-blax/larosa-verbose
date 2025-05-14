@@ -22,7 +22,7 @@ class OauthService {
 
   Future<GoogleSignInAccount?> signinWithGoogle({BuildContext? context}) async {
     try {
-      LogService.logInfo('Starting Google Sign In process');
+      LogService.logInfo('Starting Google Sign In Process');
       final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
       if (googleUser != null) {
         final GoogleSignInAuthentication auth = await googleUser.authentication;
@@ -37,10 +37,11 @@ class OauthService {
 
         LogService.logInfo('Starting location fetch');
         try {
-          final position = await _geoService.getCurrentLocation(context: context);
-          LogService.logInfo('Location fetch result: ${position?.latitude}, ${position?.longitude}');
-          final double latitude = position?.latitude ?? 0.0;
-          final double longitude = position?.longitude ?? 0.0;
+
+          // final position = await _geoService.getCurrentLocation(context: context);
+          // LogService.logInfo('Location fetch result: ${position?.latitude}, ${position?.longitude}');
+          // final double latitude = position?.latitude ?? 0.0;
+          // final double longitude = position?.longitude ?? 0.0;
 
           LogService.logInfo('Making API request to ${LarosaLinks.baseurl}${LarosaLinks.socialLogin}');
           var response = await _dioService.dio.post(
@@ -48,8 +49,10 @@ class OauthService {
             data: {
               'token': auth.idToken,
               'authProvider': 'GOOGLE',
-              'latitude': latitude,
-              'longitude': longitude,
+              // 'latitude': latitude,
+              // 'longitude': longitude,
+              'latitude': 0.0,
+              'longitude': 0.0,
             },
           );
 

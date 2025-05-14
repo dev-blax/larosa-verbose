@@ -28,6 +28,8 @@ import 'Features/Profiles/Components/blocked_users.dart';
 import 'Features/Stories/screens/create_story_screen.dart';
 import 'Features/Stories/screens/stories_page.dart';
 import 'Services/log_service.dart';
+import 'Utils/exit_wrapper.dart';
+import 'Utils/home_screen_wrapper.dart';
 
 class RouterService {
   static bool _onboarded() {
@@ -63,17 +65,17 @@ class RouterService {
       GoRoute(
         name: 'home',
         path: '/',
-        builder: (context, state) => const OldHomeFeedsScreen(),
+        builder: (context, state) => ExitWrapper(child: const OldHomeFeedsScreen()),
       ),
       GoRoute(
         name: 'homeprofile',
         path: '/homeprofile',
-        builder: (context, state) => const HomeProfileScreen(),
+        builder: (context, state) => HomeScreenWrapper(child: const HomeProfileScreen()),
       ),
       GoRoute(
         name: 'search',
         path: '/search',
-        builder: (context, state) => const SearchScreen(),
+        builder: (context, state) => HomeScreenWrapper(child: const SearchScreen()),
       ),
 
       // stories routes
@@ -90,7 +92,7 @@ class RouterService {
       GoRoute(
         name: 'maindelivery',
         path: '/maindelivery',
-        builder: (context, state) => const NewDelivery(),
+        builder: (context, state) => HomeScreenWrapper(child: const NewDelivery()),
       ),
       GoRoute(
         name: 'main-post',
