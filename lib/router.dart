@@ -9,21 +9,28 @@ import 'package:larosa_block/Features/Auth/signin.dart';
 import 'package:larosa_block/Features/Cart/main_cart.dart';
 import 'package:larosa_block/Features/Chat/chats_land.dart';
 import 'package:larosa_block/Features/Chat/conversation.dart';
+import 'package:larosa_block/Features/Delivery/explore_services.dart';
 import 'package:larosa_block/Features/Delivery/new_delivery.dart';
+import 'package:larosa_block/Features/Explore/screens/BeautifulWorld/beautiful_world_screen.dart';
 import 'package:larosa_block/Features/Feeds/business_post.dart';
 import 'package:larosa_block/Features/Feeds/camera_content.dart';
 import 'package:larosa_block/Features/Feeds/old_home_feeds.dart';
 import 'package:larosa_block/Features/Feeds/profile_posts.dart';
+import 'package:larosa_block/Features/Nearby/screens/reservations_screen.dart';
 import 'package:larosa_block/Features/Onboarding/onboarding_screen.dart';
 import 'package:larosa_block/Features/Profiles/profile_edit.dart';
 import 'package:larosa_block/Features/Profiles/profile_visit.dart';
 import 'package:larosa_block/Features/Profiles/self_profile.dart';
 import 'package:larosa_block/Features/Reels/reels.dart';
+import 'package:larosa_block/Features/Ride/ride_provider.dart';
 import 'package:larosa_block/Features/Search/search.dart';
 import 'package:larosa_block/Features/Settings/settings.dart';
+import 'package:larosa_block/Features/Shopping/screens/marketplace_screen.dart';
 import 'package:larosa_block/splash_screen.dart';
 import 'package:provider/provider.dart';
+import 'Features/Explore/screens/main_explore_screen.dart';
 import 'Features/Feeds/Controllers/business_post_controller.dart';
+import 'Features/Movies/screens/movies_screen.dart';
 import 'Features/Profiles/Components/blocked_users.dart';
 import 'Features/Stories/screens/create_story_screen.dart';
 import 'Features/Stories/screens/stories_page.dart';
@@ -73,6 +80,11 @@ class RouterService {
         builder: (context, state) => HomeScreenWrapper(child: const HomeProfileScreen()),
       ),
       GoRoute(
+        name: 'explore',
+        path: '/explore',
+        builder: (context, state) => HomeScreenWrapper(child: const MainExploreScreen()),
+      ),
+      GoRoute(
         name: 'search',
         path: '/search',
         builder: (context, state) => HomeScreenWrapper(child: const SearchScreen()),
@@ -92,8 +104,39 @@ class RouterService {
       GoRoute(
         name: 'maindelivery',
         path: '/maindelivery',
-        builder: (context, state) => HomeScreenWrapper(child: const NewDelivery()),
+        builder: (context, state) => const NewDelivery(),
       ),
+      // explore modal
+      GoRoute(
+        name: 'explore-modal',
+        path: '/explore-modal',
+        builder: (context, state) => const ExploreModal(),
+      ),
+      
+      GoRoute(
+        name: 'reservations',
+        path: '/reservations',
+        builder: (context, state) => const ReservationsScreen(),
+      ),
+
+      GoRoute(
+        name: 'marketplace',
+        path: '/marketplace',
+        builder: (context, state) => const MarketplaceScreen(),
+      ),
+
+      GoRoute(
+        name: 'beautiful-world',
+        path: '/beautiful-world',
+        builder: (context, state) => const BeautifulWorldScreen(),
+      ),
+
+      GoRoute(
+        name: 'movies',
+        path: '/movies',
+        builder: (context, state) => const MoviesScreen(),
+      ),
+
       GoRoute(
         name: 'main-post',
         path: '/main-post',
@@ -168,6 +211,13 @@ class RouterService {
         name: 'blockedList',
         path: '/blockedList',
         builder: (context, state) => const BlockedUsersScreen(),
+      ),
+      
+      // ride route
+      GoRoute(
+        name: 'ride',
+        path: '/ride',
+        builder: (context, state) => const RideProvider(),
       ),
 
       // auth routes

@@ -1189,9 +1189,7 @@ import 'package:stomp_dart_client/stomp_dart_client.dart';
 
 import '../../Utils/colors.dart';
 import 'explore_services.dart';
-import 'map_service.dart';
 import 'time_estimations_modal_content.dart';
-import 'widgets/ride_history_modal.dart';
 
 class NewDelivery extends StatefulWidget {
   const NewDelivery({super.key});
@@ -1241,42 +1239,43 @@ class _NewDeliveryState extends State<NewDelivery> {
   }
 
   Future<void> _loadDriverOffer() async {
-  print('123');
-  setState(() {
-    isLoadingDriverOffer = true;
-  });
+    print('123');
+    setState(() {
+      isLoadingDriverOffer = true;
+    });
 
-  // If source location is not set, attempt to retrieve the current location.
-  if (sourceLatitude == null || sourceLongitude == null) {
-    print('Source location not set, attempting to get current location');
-    await _getCurrentLocation(true);
-    // Recheck whether location is available.
+    // If source location is not set, attempt to retrieve the current location.
     if (sourceLatitude == null || sourceLongitude == null) {
-      print('Source location is still null after attempting to retrieve it.');
+      print('Source location not set, attempting to get current location');
+      await _getCurrentLocation(true);
+      // Recheck whether location is available.
+      if (sourceLatitude == null || sourceLongitude == null) {
+        print('Source location is still null after attempting to retrieve it.');
+        setState(() {
+          isLoadingDriverOffer = false;
+        });
+        return;
+      }
+    }
+
+    // Get the city name using the source location.
+    final placeDetails =
+        await getCountryAndCity(sourceLatitude!, sourceLongitude!);
+    print('Place details: $placeDetails');
+    final cityName = placeDetails["city"] ?? "";
+    print('City name: $cityName');
+    if (cityName.isEmpty) {
+      print('City name is empty.');
       setState(() {
         isLoadingDriverOffer = false;
       });
       return;
     }
-  }
 
-  // Get the city name using the source location.
-  final placeDetails = await getCountryAndCity(sourceLatitude!, sourceLongitude!);
-  print('Place details: $placeDetails');
-  final cityName = placeDetails["city"] ?? "";
-  print('City name: $cityName');
-  if (cityName.isEmpty) {
-    print('City name is empty.');
-    setState(() {
-      isLoadingDriverOffer = false;
-    });
-    return;
-  }
+    print('fred'); // Debug point: Proceeding to call driver offer endpoint.
 
-  print('fred'); // Debug point: Proceeding to call driver offer endpoint.
-
-  // final String endpoint =
-  //     '${LarosaLinks.baseurl}/api/v1/ride-offers/driver/best-offer?cityName=$cityName';
+    // final String endpoint =
+    //     '${LarosaLinks.baseurl}/api/v1/ride-offers/driver/best-offer?cityName=$cityName';
 
     final String endpoint =
         '${LarosaLinks.baseurl}/api/v1/ride-offers/ustomer/best-offer?cityName=Dodoma';
@@ -1365,13 +1364,17 @@ class _NewDeliveryState extends State<NewDelivery> {
         headers: headers,
         body: jsonEncode(requestBody),
       );
-      
+
       if (response.statusCode == 200 || response.statusCode == 201) {
         LogService.logInfo("Time Estimation Response: ${response.body}");
         return jsonDecode(response.body);
       } else {
-        LogService.logError("Failed to fetch time estimation: ${response.statusCode}");
-        return {"error": "Failed to fetch time estimation. Status code: ${response.statusCode}"};
+        LogService.logError(
+            "Failed to fetch time estimation: ${response.statusCode}");
+        return {
+          "error":
+              "Failed to fetch time estimation. Status code: ${response.statusCode}"
+        };
       }
     } catch (e) {
       LogService.logError("Error estimating time: $e");
@@ -1634,11 +1637,13 @@ class _NewDeliveryState extends State<NewDelivery> {
     setState(() {
       isFetchingTimeEstimations = true;
     });
-    final placeDetails = await getCountryAndCity(sourceLatitude!, sourceLongitude!);
+    final placeDetails =
+        await getCountryAndCity(sourceLatitude!, sourceLongitude!);
     final String country = placeDetails["country"] ?? "Unknown";
     final String rawCity = placeDetails["city"] ?? "Unknown";
 
-    const String endpoint = '${LarosaLinks.baseurl}/api/v1/transport-cost/calculate';
+    const String endpoint =
+        '${LarosaLinks.baseurl}/api/v1/transport-cost/calculate';
     Map<String, String> headers = {
       "Content-Type": "application/json",
       "Access-Control-Allow-Origin": "*",
@@ -1654,15 +1659,13 @@ class _NewDeliveryState extends State<NewDelivery> {
       // "city": city,
       // "cityName": city,
 
-
-      
-  "startLat": -6.1620,
-  "startLng": 35.7516,
-  "endLat":   -6.1750,
-  "endLng":   35.7497,
-  "country":  "Tanzania",
-  "city":     "Dodoma",
-  "cityName": "Dodoma"
+      "startLat": -6.1620,
+      "startLng": 35.7516,
+      "endLat": -6.1750,
+      "endLng": 35.7497,
+      "country": "Tanzania",
+      "city": "Dodoma",
+      "cityName": "Dodoma"
     };
 
     print('→ frs Payload: ${jsonEncode(requestBody)}');
@@ -1676,7 +1679,7 @@ class _NewDeliveryState extends State<NewDelivery> {
         },
         body: jsonEncode(requestBody),
       );
-print('frs costs : ${response.statusCode}');
+      print('frs costs : ${response.statusCode}');
       setState(() => isFetchingTimeEstimations = false);
 
       if (response.statusCode == 200 || response.statusCode == 201) {
@@ -1684,8 +1687,8 @@ print('frs costs : ${response.statusCode}');
         bool allDriversBusy = estimations["vehicleEstimations"]
             .every((estimation) => estimation["pickupDuration"] == 0);
         if (allDriversBusy) {
-           showTimeEstimationsModal(context, estimations);
-           
+          showTimeEstimationsModal(context, estimations);
+
           // HelperFunctions.displayInfo(
           //   context,
           //   "Our system is experiencing high demand at the moment. Please hold on while we secure the best available driver for you. Your comfort and safety are our top priority."
@@ -1694,7 +1697,9 @@ print('frs costs : ${response.statusCode}');
           showTimeEstimationsModal(context, estimations);
         }
       } else {
-        HelperFunctions.showToast("Failed to fetch transport cost. Status code: ${response.statusCode}", true);
+        HelperFunctions.showToast(
+            "Failed to fetch transport cost. Status code: ${response.statusCode}",
+            true);
       }
     } catch (e) {
       setState(() => isFetchingTimeEstimations = false);
@@ -1922,272 +1927,257 @@ print('frs costs : ${response.statusCode}');
           ),
         ),
         actions: [
-          // Padding(
-          //   padding: const EdgeInsets.symmetric(horizontal: 8.0),
-          //   child: Container(
-          //     decoration: const BoxDecoration(
-          //       gradient: LinearGradient(
-          //         colors: [LarosaColors.secondary, LarosaColors.purple],
-          //         begin: Alignment.topLeft,
-          //         end: Alignment.bottomRight,
-          //       ),
-          //       shape: BoxShape.circle,
-          //     ),
-          //     child: IconButton(
-          //       icon: const Icon(Icons.explore, color: Colors.white),
-          //       onPressed: () {
-          //         Navigator.of(context).push(_createRoute());
-          //       },
-          //     ),
-          //   ),
-          // ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8.0),
+            child: Container(
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [LarosaColors.secondary, LarosaColors.purple],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                shape: BoxShape.circle,
+              ),
+              child: IconButton(
+                icon: const Icon(Icons.explore, color: Colors.white),
+                onPressed: () {
+                  Navigator.of(context).push(_createRoute());
+                },
+              ),
+            ),
+          ),
         ],
       ),
-      body: Stack(
+      body: ListView(
         children: [
-          ListView(
-            children: [
-              Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: TypeAheadField<Map<String, String>>(
-                  suggestionsCallback: _getPlaceSuggestions,
-                  itemBuilder: (context, Map<String, String> suggestion) {
-                    if (suggestion['place_id'] == '') {
-                      return Center(
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 10.0),
-                          child: Text(
-                            suggestion['description']!,
-                            style: const TextStyle(
-                              fontSize: 14,
-                              color: Colors.grey,
-                              fontStyle: FontStyle.italic,
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: TypeAheadField<Map<String, String>>(
+              suggestionsCallback: _getPlaceSuggestions,
+              itemBuilder: (context, Map<String, String> suggestion) {
+                if (suggestion['place_id'] == '') {
+                  return Center(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 10.0),
+                      child: Text(
+                        suggestion['description']!,
+                        style: const TextStyle(
+                          fontSize: 14,
+                          color: Colors.grey,
+                          fontStyle: FontStyle.italic,
                         ),
-                      );
-                    }
-                    return ListTile(
-                      title: Text(suggestion['description']!),
-                    );
-                  },
-                  onSelected: (Map<String, String> suggestion) async {
-                    if (suggestion['place_id'] != '') {
-                      _sourceController.text = suggestion['description']!;
-                      final placeId = suggestion['place_id']!;
-                      await _getPlaceDetails(placeId, true);
-                      // Optionally reload the driver offer after updating source location.
-                      await _loadDriverOffer();
-                    } else {
-                      LogService.logInfo(
-                          'Invalid selection: ${suggestion['description']}');
-                    }
-                  },
-                  direction: VerticalDirection.down,
-                  builder: (context, controller, focusNode) {
-                    return TextField(
-                      controller: controller,
-                      focusNode: focusNode,
-                      decoration: InputDecoration(
-                        labelText: 'Pickup location',
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8.0),
-                        ),
-                        prefixIcon: const Icon(CupertinoIcons.pin),
-                        suffixIcon: isLoadingSource
-                            ? const Padding(
-                                padding: EdgeInsets.all(8.0),
-                                child:
-                                    CircularProgressIndicator(strokeWidth: 2),
-                              )
-                            : IconButton(
-                                icon: const Icon(Ionicons.locate),
-                                onPressed: () => _getCurrentLocation(true),
-                              ),
+                        textAlign: TextAlign.center,
                       ),
-                    );
-                  },
-                  controller: _sourceController,
+                    ),
+                  );
+                }
+                return ListTile(
+                  title: Text(suggestion['description']!),
+                );
+              },
+              onSelected: (Map<String, String> suggestion) async {
+                if (suggestion['place_id'] != '') {
+                  _sourceController.text = suggestion['description']!;
+                  final placeId = suggestion['place_id']!;
+                  await _getPlaceDetails(placeId, true);
+                  // Optionally reload the driver offer after updating source location.
+                  await _loadDriverOffer();
+                } else {
+                  LogService.logInfo(
+                      'Invalid selection: ${suggestion['description']}');
+                }
+              },
+              direction: VerticalDirection.down,
+              builder: (context, controller, focusNode) {
+                return TextField(
+                  controller: controller,
+                  focusNode: focusNode,
+                  decoration: InputDecoration(
+                    labelText: 'Pickup location',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8.0),
+                    ),
+                    prefixIcon: const Icon(CupertinoIcons.pin),
+                    suffixIcon: isLoadingSource
+                        ? const Padding(
+                            padding: EdgeInsets.all(8.0),
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : IconButton(
+                            icon: const Icon(Ionicons.locate),
+                            onPressed: () => _getCurrentLocation(true),
+                          ),
+                  ),
+                );
+              },
+              controller: _sourceController,
+            ),
+          ),
+          const Gap(5),
+          // Destination location input.
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: TypeAheadField<Map<String, String>>(
+              suggestionsCallback: _getPlaceSuggestions,
+              itemBuilder: (context, Map<String, String> suggestion) {
+                if (suggestion['place_id'] == '') {
+                  return Center(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 10.0),
+                      child: Text(
+                        suggestion['description']!,
+                        style: const TextStyle(
+                          fontSize: 14,
+                          color: Colors.grey,
+                          fontStyle: FontStyle.italic,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                  );
+                }
+                return ListTile(
+                  title: Text(suggestion['description']!),
+                );
+              },
+              onSelected: (Map<String, String> suggestion) async {
+                if (suggestion['place_id'] != '') {
+                  _destinationController.text = suggestion['description']!;
+                  final placeId = suggestion['place_id']!;
+                  await _getPlaceDetails(placeId, false);
+                } else {
+                  LogService.logInfo(
+                      'Invalid selection: ${suggestion['description']}');
+                }
+              },
+              direction: VerticalDirection.down,
+              builder: (context, controller, focusNode) {
+                return TextField(
+                  controller: controller,
+                  focusNode: focusNode,
+                  decoration: InputDecoration(
+                    labelText: 'Destination',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8.0),
+                    ),
+                    prefixIcon: const Icon(CupertinoIcons.location_circle),
+                    suffixIcon: isLoadingDestination
+                        ? const Padding(
+                            padding: EdgeInsets.all(8.0),
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : IconButton(
+                            icon: const Icon(Ionicons.locate),
+                            onPressed: () => _getCurrentLocation(false),
+                          ),
+                  ),
+                );
+              },
+              controller: _destinationController,
+            ),
+          ),
+          const Gap(5),
+          // Initiate Ride Request button.
+          Container(
+            margin: const EdgeInsets.symmetric(horizontal: 20),
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [LarosaColors.secondary, LarosaColors.purple],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(30),
+            ),
+            child: FilledButton(
+              style: ButtonStyle(
+                backgroundColor: WidgetStateProperty.all(Colors.transparent),
+                padding: WidgetStateProperty.all(
+                  const EdgeInsets.symmetric(vertical: 12, horizontal: 24),
+                ),
+                shape: WidgetStateProperty.all(
+                  RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(30),
+                  ),
                 ),
               ),
-              const Gap(5),
-              // Destination location input.
-              Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: TypeAheadField<Map<String, String>>(
-                  suggestionsCallback: _getPlaceSuggestions,
-                  itemBuilder: (context, Map<String, String> suggestion) {
-                    if (suggestion['place_id'] == '') {
-                      return Center(
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 10.0),
-                          child: Text(
-                            suggestion['description']!,
-                            style: const TextStyle(
-                              fontSize: 14,
-                              color: Colors.grey,
-                              fontStyle: FontStyle.italic,
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                        ),
-                      );
-                    }
-                    return ListTile(
-                      title: Text(suggestion['description']!),
-                    );
-                  },
-                  onSelected: (Map<String, String> suggestion) async {
-                    if (suggestion['place_id'] != '') {
-                      _destinationController.text = suggestion['description']!;
-                      final placeId = suggestion['place_id']!;
-                      await _getPlaceDetails(placeId, false);
-                    } else {
-                      LogService.logInfo(
-                          'Invalid selection: ${suggestion['description']}');
-                    }
-                  },
-                  direction: VerticalDirection.down,
-                  builder: (context, controller, focusNode) {
-                    return TextField(
-                      controller: controller,
-                      focusNode: focusNode,
-                      decoration: InputDecoration(
-                        labelText: 'Destination',
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8.0),
-                        ),
-                        prefixIcon: const Icon(CupertinoIcons.location_circle),
-                        suffixIcon: isLoadingDestination
-                            ? const Padding(
-                                padding: EdgeInsets.all(8.0),
-                                child:
-                                    CircularProgressIndicator(strokeWidth: 2),
-                              )
-                            : IconButton(
-                                icon: const Icon(Ionicons.locate),
-                                onPressed: () => _getCurrentLocation(false),
-                              ),
-                      ),
-                    );
-                  },
-                  controller: _destinationController,
-                ),
-              ),
-              const Gap(5),
-              // Initiate Ride Request button.
-              Container(
-                margin: const EdgeInsets.symmetric(horizontal: 20),
+              onPressed: isRequestingRide ? null : fetchTimeEstimations,
+              child: isFetchingTimeEstimations
+                  ? const CupertinoActivityIndicator(
+                      color: Colors.white, radius: 10.0)
+                  : const Text(
+                      'Initiate Ride Request',
+                      style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 1.0,
+                          fontSize: 15),
+                    ),
+            ),
+          ),
+          const Gap(10),
+          // Display Driver Offer (Driver Side)
+          if (isLoadingDriverOffer)
+            const Padding(
+              padding: EdgeInsets.all(8.0),
+              child: Center(child: CupertinoActivityIndicator()),
+            )
+          else if (driverOffer != null)
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Container(
                 decoration: BoxDecoration(
                   gradient: const LinearGradient(
                     colors: [LarosaColors.secondary, LarosaColors.purple],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
-                  borderRadius: BorderRadius.circular(30),
+                  borderRadius: BorderRadius.circular(12),
                 ),
-                child: FilledButton(
-                  style: ButtonStyle(
-                    backgroundColor:
-                        WidgetStateProperty.all(Colors.transparent),
-                    padding: WidgetStateProperty.all(
-                      const EdgeInsets.symmetric(vertical: 12, horizontal: 24),
+                padding: const EdgeInsets.all(12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      "Driver Offer",
+                      style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                          color: Colors.white),
                     ),
-                    shape: WidgetStateProperty.all(
-                      RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(30),
+                    const SizedBox(height: 8),
+                    Text(
+                      "Offer ID: ${driverOffer!['offerId']}",
+                      style: const TextStyle(
+                        color: Colors.white,
                       ),
                     ),
-                  ),
-                  onPressed: isRequestingRide ? null : fetchTimeEstimations,
-                  child: isFetchingTimeEstimations
-                      ? const CupertinoActivityIndicator(
-                          color: Colors.white, radius: 10.0)
-                      : const Text(
-                          'Initiate Ride Request',
-                          style: TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                              letterSpacing: 1.0,
-                              fontSize: 15),
-                        ),
+                    Text(
+                      "Driver: ${driverOffer!['driverName']}",
+                      style: const TextStyle(
+                        color: Colors.white,
+                      ),
+                    ),
+                    Text(
+                      "Amount: Tsh ${driverOffer!['offerAmount']}",
+                      style: const TextStyle(
+                        color: Colors.white,
+                      ),
+                    ),
+                    Text(
+                      "City: ${driverOffer!['cityName']}",
+                      style: const TextStyle(
+                        color: Colors.white,
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              const Gap(10),
-              // Display Driver Offer (Driver Side)
-              if (isLoadingDriverOffer)
-                const Padding(
-                  padding: EdgeInsets.all(8.0),
-                  child: Center(child: CupertinoActivityIndicator()),
-                )
-              else if (driverOffer != null)
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Container(
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: [LarosaColors.secondary, LarosaColors.purple],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    padding: const EdgeInsets.all(12),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          "Driver Offer",
-                          style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 16,
-                              color: Colors.white),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          "Offer ID: ${driverOffer!['offerId']}",
-                          style: const TextStyle(
-                            color: Colors.white,
-                          ),
-                        ),
-                        Text(
-                          "Driver: ${driverOffer!['driverName']}",
-                          style: const TextStyle(
-                            color: Colors.white,
-                          ),
-                        ),
-                        Text(
-                          "Amount: Tsh ${driverOffer!['offerAmount']}",
-                          style: const TextStyle(
-                            color: Colors.white,
-                          ),
-                        ),
-                        Text(
-                          "City: ${driverOffer!['cityName']}",
-                          style: const TextStyle(
-                            color: Colors.white,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                
-              const Gap(10),
-              const Divider(),
-              const Gap(10),
-              OrdersWidget(),
-            ],
-          ),
-          const Positioned(
-            bottom: 10,
-            left: 10,
-            right: 10,
-            child: BottomNavigation(
-              activePage: ActivePage.delivery,
             ),
-          ),
+
+          const Gap(10),
+          const Divider(),
+          const Gap(10),
+          // OrdersWidget(),
         ],
       ),
     );

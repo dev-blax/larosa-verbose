@@ -69,9 +69,14 @@ class _BottomNavigationState extends State<BottomNavigation> {
             filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
             child: Container(
               decoration: BoxDecoration(
-                color: brightness == Brightness.light
-                    ? Colors.white.withValues(alpha: .1)
-                    : Colors.black.withValues(alpha: .1),
+                gradient: LinearGradient(
+                  colors: [
+                    LarosaColors.primary.withValues(alpha: .5),
+                    LarosaColors.purple.withValues(alpha: .5),
+                  ],
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                ),
                 borderRadius: const BorderRadius.only(
                   topLeft: Radius.circular(50),
                   topRight: Radius.circular(50),
@@ -102,25 +107,28 @@ class _BottomNavigationState extends State<BottomNavigation> {
                     ),
                     _buildNavItem(
                       context,
-                      icon: Icons.search_outlined,
-                      label: 'Search',
-                      isActive: widget.activePage == ActivePage.search,
-                      onTap: () => context.push('/search'),
-                    ),
-                    _buildFloatingActionButton(context),
-                    _buildNavItem(
-                      context,
-                      icon: Icons.local_shipping_outlined,
-                      label: 'Delivery',
+                      icon: CupertinoIcons.globe,
+                      label: 'Explore',
                       isActive: widget.activePage == ActivePage.delivery,
                       onTap: () {
                         if (AuthService.getToken().isEmpty) {
                           context.pushNamed('login');
                           return;
                         }
-                        context.pushNamed('maindelivery');
+                        context.pushNamed('explore');
                       },
                     ),
+                    
+                    _buildFloatingActionButton(context),
+
+                    _buildNavItem(
+                      context,
+                      icon: Icons.search_outlined,
+                      label: 'Search',
+                      isActive: widget.activePage == ActivePage.search,
+                      onTap: () => context.push('/search'),
+                    ),
+                    
                     _buildNavItem(
                       context,
                       icon: Icons.person_outline,
@@ -159,21 +167,16 @@ class _BottomNavigationState extends State<BottomNavigation> {
           AnimatedContainer(
             duration: const Duration(milliseconds: 200),
             curve: Curves.easeInOut,
-            // height: isActive ? 28 : 22, // Larger size for active
-            // width: isActive ? 28 : 22,
             child: Icon(
               icon,
-              // size: isActive ? 30 : 22,
-              // color: isActive ? LarosaColors.secondary : Colors.black87,
               color: isActive ? Colors.white : Colors.white60,
             ),
           ),
           if (isActive) ...[
-            // const SizedBox(height: 4), // Spacing between icon and label
             Text(
               label,
               style: TextStyle(
-                fontSize: 12, // Adjust font size as needed
+                fontSize: 12,
                 fontWeight: FontWeight.bold,
                 color: Colors.white,
               ),

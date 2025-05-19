@@ -74,7 +74,15 @@ class _BusinessPostScreenState extends State<BusinessPostScreen>
 
   void _asyncInit() async {
     _isBusinessAccount = AuthService.isBusinessAccount();
+
+    if(!_isBusinessAccount){
+      return;
+    }
+    await Provider.of<SecondBusinessCategoryProvider>(context, listen: false)
+          .fetchBrandCategories();
+
     await _loadReservationTypes();
+
     _reservationCategories =
         (await BusinessCategoryProvider.fetchReservationCategoriesIds())
             .map<int>((id) => id as int)
@@ -85,6 +93,7 @@ class _BusinessPostScreenState extends State<BusinessPostScreen>
     mySubcategories = _myBusinessCategories
         .expand((category) => category.subcategories)
         .toList();
+
     _myBusinessCategoriesIds =
         _myBusinessCategories.map((category) => category.id).toList();
 
@@ -105,10 +114,6 @@ class _BusinessPostScreenState extends State<BusinessPostScreen>
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      Provider.of<SecondBusinessCategoryProvider>(context, listen: false)
-          .fetchBrandCategories();
-    });
     _asyncInit();
   }
 

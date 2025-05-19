@@ -28,9 +28,12 @@ class LarosaLinks {
 
   // Cart
   static const String cartList = '$baseurl/cart/list';
+  static const String reservationList = '$baseurl/api/v1/reservation-cart/view';
   static const String cartAddItem = '$baseurl/cart/add-item';
   static const String cartRemoveItem = '$baseurl/cart/remove-item';
   static const String addCartItemQuantity = '$baseurl/cart/increase-quantity';
   static const String decreaseCartItemQuantity = '$baseurl/cart/decrease-quantity';
+
+
   
 }

@@ -10,6 +10,7 @@ import 'package:larosa_block/Utils/links.dart';
 import '../../Services/auth_service.dart';
 import '../../Services/log_service.dart';
 import '../../Services/dio_service.dart';
+import '../../Services/reservation_service.dart';
 import '../../Utils/colors.dart';
 import '../../Utils/helpers.dart';
 import 'proceed_to_payment.dart';
@@ -17,7 +18,7 @@ import 'widgets/brand_button.dart';
 import 'widgets/cart_shimmer.dart';
 import 'widgets/media_gallery_view.dart';
 
- enum UpdateType { increase, decrease }
+enum UpdateType { increase, decrease }
 
 Future<List<Map<String, dynamic>>> listCartItems(int profileId) async {
   final dio = DioService().dio;
@@ -34,7 +35,6 @@ Future<List<Map<String, dynamic>>> listCartItems(int profileId) async {
     LogService.logInfo('Cart items: ${data[0]}');
     return List<Map<String, dynamic>>.from(
         data.reversed.map((item) => item as Map<String, dynamic>));
-    
   } catch (error) {
     LogService.logError('Error in listCartItems: $error');
     return [];
@@ -70,6 +70,7 @@ class MyCart extends StatefulWidget {
 
 class _MyCartState extends State<MyCart> {
   List<Map<String, dynamic>> cartItems = [];
+  List<Map<String, dynamic>> reservationItems = [];
   bool isLoading = true;
   List<int> selectedItems = [];
   int _selectedTabIndex = 0;
@@ -79,8 +80,9 @@ class _MyCartState extends State<MyCart> {
 
   @override
   void dispose() {
-    // Cancel all active timers
-    _debounceTimers.values.forEach((timer) => timer?.cancel());
+    for (var timer in _debounceTimers.values) {
+      timer?.cancel();
+    }
     super.dispose();
   }
 
@@ -88,6 +90,7 @@ class _MyCartState extends State<MyCart> {
   void initState() {
     super.initState();
     _loadCartItems();
+    _loadReservationItems();
   }
 
   Future<void> _loadCartItems() async {
@@ -101,6 +104,19 @@ class _MyCartState extends State<MyCart> {
       cartItems = items;
       isLoading = false;
     });
+
+    LogService.logTrace('Cart items: ${cartItems[0]}');
+  }
+
+  Future<void> _loadReservationItems() async {
+    List<dynamic> items = await ReservationService.getReservationsInCart();
+    setState(() {
+      reservationItems =
+          items.map((item) => Map<String, dynamic>.from(item)).toList();
+      isLoading = false;
+    });
+
+    LogService.logTrace('Reservation items: ${reservationItems[0]}');
   }
 
   Future<void> _increaseCartItemQuantity(int productId, int quantity) async {
@@ -150,28 +166,24 @@ class _MyCartState extends State<MyCart> {
       Map<String, dynamic> item, int newQuantity, UpdateType type) async {
     if (newQuantity < 1) return;
 
-    final productId = item['productId'];
+    final productId = item['productId'] ?? item['reservationId'];
     final currentQuantity = _pendingQuantities[productId] ?? item['quantity'];
 
-    // Don't update if the new quantity is the same as current
     if (newQuantity == currentQuantity) return;
 
-    // Cancel any existing timer for this product
     _debounceTimers[productId]?.cancel();
 
-    // Update the UI immediately with the new quantity
     setState(() {
       _pendingQuantities[productId] = newQuantity;
       _isUpdatingQuantity[productId] = true;
     });
 
-    // Create a new timer
     _debounceTimers[productId] =
         Timer(const Duration(milliseconds: 500), () async {
       try {
-        if(type == UpdateType.increase){
+        if (type == UpdateType.increase) {
           await _increaseCartItemQuantity(productId, newQuantity);
-        }else{
+        } else {
           await _decreaseCartItemQuantity(productId, newQuantity);
         }
       } finally {
@@ -235,8 +247,8 @@ class _MyCartState extends State<MyCart> {
 
   @override
   Widget build(BuildContext context) {
-    List<Map<String, dynamic>> reservationItems =
-        cartItems.where((item) => item['type'] == 'RESERVATION').toList();
+    // List<Map<String, dynamic>> reservationItems =
+    //     cartItems.where((item) => item['type'] == 'RESERVATION').toList();
     List<Map<String, dynamic>> businessPostItems =
         cartItems.where((item) => item['type'] == 'BUSINESS_POST').toList();
 
@@ -367,8 +379,14 @@ class _MyCartState extends State<MyCart> {
                             final item = _selectedTabIndex == 0
                                 ? reservationItems[index]
                                 : businessPostItems[index];
-                            final productId = item['productId'];
+                            final productId =
+                                item['productId'] ?? item['reservationId'];
                             final imageUrls = (item['names'] ?? '').split(',');
+                            final double price =
+                                item['price'] ?? item['pricePerNight'];
+
+                            final caption = item['caption'] ?? item['description'];
+                            LogService.logInfo('Caption: $caption');
 
                             return Padding(
                               padding: const EdgeInsets.only(bottom: 16),
@@ -549,7 +567,7 @@ class _MyCartState extends State<MyCart> {
                                             children: [
                                               Text(
                                                 HelperFunctions.decodeEmoji(
-                                                    item['caption']),
+                                                    caption ?? ''),
                                                 style: const TextStyle(
                                                   fontSize: 16,
                                                   fontWeight: FontWeight.w400,
@@ -590,7 +608,7 @@ class _MyCartState extends State<MyCart> {
                                                         child: Row(
                                                           children: [
                                                             Text(
-                                                              '@${NumberFormat('#,##0', 'en_US').format(item['price'])}',
+                                                              '@${NumberFormat('#,##0', 'en_US').format(price)}',
                                                               style: TextStyle(
                                                                 color: Theme.of(context)
                                                                             .brightness ==
@@ -646,8 +664,10 @@ class _MyCartState extends State<MyCart> {
                                                                   ? null
                                                                   : () => _handleQuantityUpdate(
                                                                       item,
-                                                                      item['quantity'] -1,
-                                                                      UpdateType.decrease),
+                                                                      item['quantity'] -
+                                                                          1,
+                                                                      UpdateType
+                                                                          .decrease),
                                                               child: Icon(
                                                                 CupertinoIcons
                                                                     .minus,
@@ -710,7 +730,14 @@ class _MyCartState extends State<MyCart> {
                                                                           productId] ==
                                                                       true
                                                                   ? null
-                                                                  : () => _handleQuantityUpdate(item,item['quantity'] + 1,UpdateType.increase,),
+                                                                  : () =>
+                                                                      _handleQuantityUpdate(
+                                                                        item,
+                                                                        item['quantity'] +
+                                                                            1,
+                                                                        UpdateType
+                                                                            .increase,
+                                                                      ),
                                                               child: Icon(
                                                                 CupertinoIcons
                                                                     .plus,
@@ -735,7 +762,7 @@ class _MyCartState extends State<MyCart> {
                                                     ],
                                                   ),
                                                   Text(
-                                                    'Tsh ${NumberFormat('#,##0', 'en_US').format(item['price'] * item['quantity'])}',
+                                                    'Tsh ${NumberFormat('#,##0', 'en_US').format(price * item['quantity'])}',
                                                     style: TextStyle(
                                                       color: Theme.of(context)
                                                                   .brightness ==
@@ -776,7 +803,6 @@ class _MyCartState extends State<MyCart> {
                   }
 
                   LogService.logInfo('Selected items: $selectedItems');
-                  
 
                   List<int> productIds = [];
                   double totalPrice = 0.0;
@@ -788,34 +814,68 @@ class _MyCartState extends State<MyCart> {
                   LogService.logInfo('Cart items: $cartItems');
 
                   for (var productId in selectedItems) {
-                    LogService.logInfo('selected item: $productId');
-                    var item = cartItems
-                        .firstWhere((item) => item['productId'] == productId);
+                    // for reservations (selected tab index == 0)
+                    LogService.logInfo('selected tab index: $_selectedTabIndex');
+                    if (_selectedTabIndex == 0) {
+                      var item = reservationItems
+                          .firstWhere((item) => item['reservationId'] == productId);
 
-                    LogService.logInfo('item: $item');
-                    double supplierLongitude = item['supplierLongitude'] ?? 0.0;
-                    double supplierLatitude = item['supplierLatitude'] ?? 0.0;
+                      LogService.logTrace('reservations: $item');
+                      double supplierLongitude =
+                          item['supplierLongitude'] ?? 0.0;
+                      double supplierLatitude = item['supplierLatitude'] ?? 0.0;
 
-                    productIds.add(item['productId']);
-                    totalPrice +=
-                        (item['price'] ?? 0.0) * (item['quantity'] ?? 1);
-                    totalQuantity += (item['quantity'] ?? 1) as int;
+                      productIds.add(item['reservationId']);
+                      totalPrice +=
+                          (item['pricePerNight'] ?? 0.0) * (item['quantity'] ?? 1);
+                      totalQuantity += (item['quantity'] ?? 1) as int;
 
-                    var names = (item['names'] ?? '').split(',');
-                    combinedNamesList.addAll(names);
+                      var names = (item['names'] ?? '').split(',');
+                      combinedNamesList.addAll(names);
 
-                    items.add({
-                      'productId': item['productId'],
-                      'quantity': item['quantity'] ?? 1
-                    });
+                      items.add({
+                        'productId': item['reservationId'],
+                        'quantity': item['quantity'] ?? 1
+                      });
 
-                    itemsToDisplay.add({
-                      'names': item['names'] ?? 'Unnamed Item',
-                      'price': item['price'] ?? 0.0,
-                      'quantity': item['quantity'] ?? 1,
-                      'supplierLongitude': supplierLongitude,
-                      'supplierLatitude': supplierLatitude,
-                    });
+                      itemsToDisplay.add({
+                        'names': item['names'] ?? 'Unnamed Item',
+                        'price': item['pricePerNight'],
+                        'quantity': item['quantity'] ?? 1,
+                        'supplierLongitude': supplierLongitude,
+                        'supplierLatitude': supplierLatitude,
+                      });
+                    } else {
+                      var item = cartItems
+                          .firstWhere((item) => item['productId'] == productId);
+
+                      LogService.logInfo('item: $item');
+                      double supplierLongitude =
+                          item['supplierLongitude'] ?? 0.0;
+                      double supplierLatitude = item['supplierLatitude'] ?? 0.0;
+
+                      productIds.add(item['productId']);
+                      totalPrice +=
+                          (item['price'] ?? 0.0) * (item['quantity'] ?? 1);
+                      totalQuantity += (item['quantity'] ?? 1) as int;
+
+                      var names = (item['names'] ?? '').split(',');
+                      combinedNamesList.addAll(names);
+
+                      items.add({
+                        'productId': item['productId'] ?? item['reservationId'],
+                        'quantity': item['quantity'] ?? 1
+                      });
+
+                      itemsToDisplay.add({
+                        'names': item['names'] ?? 'Unnamed Item',
+                        'price':
+                            item['price'] ?? item['reservationPrice'] ?? 0.0,
+                        'quantity': item['quantity'] ?? 1,
+                        'supplierLongitude': supplierLongitude,
+                        'supplierLatitude': supplierLatitude,
+                      });
+                    }
                   }
 
                   String combinedNames = combinedNamesList.join(',');

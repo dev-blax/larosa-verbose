@@ -58,6 +58,7 @@ class PaymentProceedTable extends StatelessWidget {
                 icon: Icons.location_on_outlined,
                 label: 'Delivery Location',
                 value: currentStreetName ?? 'N/A',
+                context: context,
               ),
               // _buildInfoTile(
               //   icon: Icons.timer_outlined,
@@ -78,13 +79,14 @@ class PaymentProceedTable extends StatelessWidget {
               icon: isReservation ? Icons.shopping_bag_outlined : Icons.hotel_outlined,
               label: isReservation ? 'Quantity' : 'Rooms',
               value: totalQuantity.toString(),
+              context: context,
             ),
             if (!isReservation) ...[
 
-              _buildInfoTile(icon: Icons.person_outline, label: 'Adults', value: adults.toString()),
-              _buildInfoTile(icon: Icons.child_care, label: 'Children', value: children.toString()),
-              _buildInfoTile(icon: Icons.calendar_today_outlined, label: 'Check-In', value: getFormattedDate(checkInDate)),
-              _buildInfoTile(icon: Icons.calendar_today_outlined, label: 'Check-Out', value: getFormattedDate(checkOutDate)),
+              _buildInfoTile(icon: Icons.person_outline, label: 'Adults', value: adults.toString(), context: context),
+              _buildInfoTile(icon: Icons.child_care, label: 'Children', value: children.toString(), context: context),
+              _buildInfoTile(icon: Icons.calendar_today_outlined, label: 'Check-In', value: getFormattedDate(checkInDate), context: context),
+              _buildInfoTile(icon: Icons.calendar_today_outlined, label: 'Check-Out', value: getFormattedDate(checkOutDate), context: context),
             ],
           ],
         ),
@@ -102,6 +104,7 @@ class PaymentProceedTable extends StatelessWidget {
                 decimalDigits: 2,
               ).format(totalPrice * itemCount),
               valueColor: Theme.of(context).primaryColor,
+              context: context,
             ),
             if (isReservation)
               _buildInfoTile(
@@ -114,6 +117,7 @@ class PaymentProceedTable extends StatelessWidget {
                         decimalDigits: 2,
                       ).format(double.parse(deliveryCost.replaceAll('Tsh ', '').trim()))
                     : 'Calculating...',
+                context: context,
               ),
             if (isReservation)
               Container(
@@ -143,6 +147,7 @@ class PaymentProceedTable extends StatelessWidget {
                     fontSize: 16,
                     color: Theme.of(context).primaryColor,
                   ),
+                  context: context,
                 ),
               ),
           ],
@@ -178,25 +183,24 @@ class PaymentProceedTable extends StatelessWidget {
     Color? valueColor,
     TextStyle? labelStyle,
     TextStyle? valueStyle,
+    required BuildContext context,
   }) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: Row(
         children: [
-          Icon(icon, size: 20),
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: Theme.of(context).primaryColor.withOpacity(0.1),
+            ),
+            child: Icon(icon, size: 20),),
           const SizedBox(width: 12),
           Expanded(
-            child: Row(
+            child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  label,
-                  style: labelStyle ?? const TextStyle(
-                    color: Colors.grey,
-                    fontSize: 14,
-                  ),
-                ),
-                const SizedBox(width: 4),
                 Text(
                   value,
                   style: valueStyle ?? TextStyle(
@@ -204,6 +208,15 @@ class PaymentProceedTable extends StatelessWidget {
                     color: valueColor,
                   ),
                 ),
+                const SizedBox(height: 4),
+                Text(
+                  label,
+                  style: labelStyle ?? const TextStyle(
+                    color: Colors.grey,
+                    fontSize: 14,
+                  ),
+                ),
+                
               ],
             ),
           ),

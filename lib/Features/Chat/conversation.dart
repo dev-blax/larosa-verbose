@@ -228,7 +228,6 @@ class _LarosaConversationState extends State<LarosaConversation> {
         
         final List<Map<String, dynamic>> messagesList = await Future.wait(
           data.map((message) async {
-            LogService.logFatal('Processing message: $message');
             String content = message['content'] ?? '';
             final symmetricKey = message['symmetricKey'];
             final status = message['status'] ?? '';
@@ -253,10 +252,13 @@ class _LarosaConversationState extends State<LarosaConversation> {
               }
             }
 
+            bool isEndtoEndEncypted = message['endToEndEncrypted'] ?? false  ;
+
             // if e2e is true
-            if (message['endToEndEncrypted'] && decryptedPrivateKey != null) {
+            LogService.logTrace(' messge ${message}');
+            if (isEndtoEndEncypted) {
               try {
-                content = await encryptionService.decrypt(content, decryptedPrivateKey);
+                content = await encryptionService.decrypt(content, decryptedPrivateKey!);
                 LogService.logInfo('E2E message decrypted successfully');
               } catch (e) {
                 LogService.logError('Failed to decrypt E2E message: $e');

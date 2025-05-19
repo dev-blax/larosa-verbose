@@ -103,7 +103,9 @@ class _SearchScreenState extends State<SearchScreen> {
   }
 
   void _onScroll() {
-    if (_scrollController.position.pixels == _scrollController.position.maxScrollExtent && !isLoadingMore) {
+    if (_scrollController.position.pixels ==
+            _scrollController.position.maxScrollExtent &&
+        !isLoadingMore) {
       _loadMoreSuggestions();
     }
   }
@@ -124,9 +126,9 @@ class _SearchScreenState extends State<SearchScreen> {
     LogService.logInfo('body: $body');
 
     final response = await DioService().dio.post(
-      LarosaLinks.discover,
-      data: body,
-    );
+          LarosaLinks.discover,
+          data: body,
+        );
 
     if (response.statusCode == 302 || response.statusCode == 403) {
       await AuthService.refreshToken();
@@ -153,7 +155,9 @@ class _SearchScreenState extends State<SearchScreen> {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     prefs.setString('suggestions', json.encode(suggestions));
 
-    for (int i = suggestions.length - newData.length; i < suggestions.length; i++) {
+    for (int i = suggestions.length - newData.length;
+        i < suggestions.length;
+        i++) {
       String firstMedia = suggestions[i]['names'].split(',').toList()[0];
       LogService.logDebug(firstMedia);
       if (_isVideo(firstMedia)) {
@@ -176,9 +180,9 @@ class _SearchScreenState extends State<SearchScreen> {
     LogService.logInfo('body: $body');
 
     final response = await DioService().dio.post(
-      LarosaLinks.discover,
-      data: body,
-    );
+          LarosaLinks.discover,
+          data: body,
+        );
 
     if (response.statusCode == 302 || response.statusCode == 403) {
       await AuthService.refreshToken();
@@ -304,8 +308,10 @@ class _SearchScreenState extends State<SearchScreen> {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (_) =>
-                                  FullScreenVideoViewer(videoUrl: firstMedia, post: suggestions[index],),
+                              builder: (_) => FullScreenVideoViewer(
+                                videoUrl: firstMedia,
+                                post: suggestions[index],
+                              ),
                             ),
                           );
                         },
@@ -330,7 +336,11 @@ class _SearchScreenState extends State<SearchScreen> {
                                   color: LarosaColors.primary,
                                 ),
                               ),
-                            Container(
+                            ClipRRect(
+                              borderRadius: const BorderRadius.all(
+                                Radius.circular(10),
+                              ),
+                              child: Container(
                               height: 70,
                               decoration: BoxDecoration(
                                 gradient: LinearGradient(
@@ -342,6 +352,7 @@ class _SearchScreenState extends State<SearchScreen> {
                                   end: Alignment.topCenter,
                                 ),
                               ),
+                            ),
                             ),
                             Padding(
                               padding: const EdgeInsets.all(8.0),
@@ -420,8 +431,9 @@ class _SearchScreenState extends State<SearchScreen> {
                             );
                           },
                           child: ClipRRect(
-                            borderRadius:
-                                const BorderRadius.all(Radius.circular(10)),
+                            borderRadius: const BorderRadius.all(
+                              Radius.circular(10),
+                            ),
                             child: CachedNetworkImage(
                               width: double.infinity,
                               height: double.infinity,
@@ -430,16 +442,21 @@ class _SearchScreenState extends State<SearchScreen> {
                             ),
                           ),
                         ),
-                        Container(
-                          height: 70,
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              colors: [
-                                Colors.black.withOpacity(.8),
-                                Colors.transparent,
-                              ],
-                              begin: Alignment.bottomCenter,
-                              end: Alignment.topCenter,
+                        ClipRRect(
+                          borderRadius: const BorderRadius.all(
+                            Radius.circular(10),
+                          ),
+                          child: Container(
+                            height: 70,
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: [
+                                  Colors.black.withOpacity(.8),
+                                  Colors.transparent,
+                                ],
+                                begin: Alignment.bottomCenter,
+                                end: Alignment.topCenter,
+                              ),
                             ),
                           ),
                         ),
