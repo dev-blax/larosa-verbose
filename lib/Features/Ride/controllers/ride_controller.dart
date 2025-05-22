@@ -9,6 +9,7 @@ import 'package:location/location.dart' as loc;
 import '../../../Services/dio_service.dart';
 import '../../../Services/maps_service.dart';
 import '../models/ride_model.dart';
+import 'package:logger/logger.dart';
 
 class RideController extends ChangeNotifier {
   // Location
@@ -104,6 +105,8 @@ class RideController extends ChangeNotifier {
           _currentLocation!.latitude!,
           _currentLocation!.longitude!,
         );
+
+        Logger().i('current location: $_currentLocation');
 
         if (placemarks.isNotEmpty) {
           final placemark = placemarks.first;
@@ -376,11 +379,14 @@ class RideController extends ChangeNotifier {
 
     LogService.logTrace('Request body: $requestBody');
 
-    await DioService().dio.post(
+    var response = await DioService().dio.post(
       '${LarosaLinks.baseurl}/api/v1/ride/request',
       data: requestBody,
     );
 
+    if(response.statusCode == 200){
+      LogService.logTrace(response.data);
+    }
 
     _isBookingInProgress = false;
     notifyListeners();
